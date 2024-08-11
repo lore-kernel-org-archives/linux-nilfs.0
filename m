@@ -1,173 +1,160 @@
-Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com [209.85.216.43])
+Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C73D2376F1;
-	Sun, 11 Aug 2024 10:03:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EDD701803E;
+	Sun, 11 Aug 2024 19:41:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723370610; cv=none; b=H9unxoXLnbeolFGFYOVV+NZ8YVEDPXG+OUV47l/Oq7J5CyePO9/9y0Lt6Cpox2Hyvckkxzo1a8Oj5R0hoyfkTUUffRxIDMnj+HRaw/J9PlwSzyissxQq/SAY8PIFp68tjjuyUPONEL+0ahtg+Q8rU9RiTNEi7SFZeSsuxgxfUts=
+	t=1723405315; cv=none; b=kZmxAtLxQFfrhe5UJIth8gYHL9TSj2XsaN3TiFfbvalP1sJqJOCsDFFxIOzyVqhMmyp+qU+b7v6ZX43Adah0dNbh8xUnRi+xyXLOHdNoueUVv+aoq439YhXu0gjdYIMNa5hwKeyTluRsikHZzOt/W63jyZmGU7eqkfqmhzDwhy0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723370610; c=relaxed/simple;
-	bh=aGU/jBbzchZyBT+GV3ovfu6PArw3iySYty0LV+q7LLw=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=W8pZrar3eoeW6Rx/KFa2xeE4FQb6AqY0aNxhyNe5HgcnsHOpOuNDA3NZS9YyfzSopIz97N4RtfAUQzT+Cju9GfwZbemStOWqeIHunQlHrU82YtCm6/UanRvrvjWzjRNFoc1Ll4vCKoLR2RiwVWkC8QEVdLzbXHBv3pExZ+oPEes=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=hIS+R1LI; arc=none smtp.client-ip=209.85.216.43
+	s=arc-20240116; t=1723405315; c=relaxed/simple;
+	bh=YyQd/yA86a2aU6mq6hOdKt6lyRtO14DZQVwjCPI74I8=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=U9iHQROJ4ZQ1l5CgdxBb1oI2hKYH0kQ2gg/H4Nz6sJC3adZKDkJpFDCrHSnxdqvh0XcA/I4+iaTRkIwHgxcbW/2lJeOu2Nrpeif4/++P0CzbYSE/hxokb1GcqRfH7OpZVwG1jmRaN3pYpIqqK+JwWwzHgPlI2mxIYBi/H3HVqOo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eaJGlbXJ; arc=none smtp.client-ip=209.85.167.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hIS+R1LI"
-Received: by mail-pj1-f43.google.com with SMTP id 98e67ed59e1d1-2cb64529a36so2370090a91.0;
-        Sun, 11 Aug 2024 03:03:28 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eaJGlbXJ"
+Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-530e2548dfdso3758807e87.1;
+        Sun, 11 Aug 2024 12:41:53 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723370608; x=1723975408; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=xIOl8OsZI63rJ5MOQ8aWvipATQqMN50CEJzU+2GZD54=;
-        b=hIS+R1LIQ/OjSVNKVljwPTv7gS3ls787JD+aie0d6lhzD/1wPBGt3Ou4PoLMWrdGU3
-         WKCdHhtNgSq+xz6uuQKnKriwMT/cmjrUhyDIEIlgMpCsHYw8B3VcORSLIFEMqdK0cn70
-         Ik1AeUTn/qKD51yP/UhuhXpCsTK6WSGNS8ypI4sJgitmW01rE+lpDi1fp+ez2r6FjhFv
-         p1uD7K5ANNDMQWe7Wrr2UntpSr7ctQhlUG7ACdy63Wgu1hIRVRqQ7K+ZeX7ZzpPSXaRN
-         IyxxaGcDDfYLDfgpj+g2yf5tSTFNarczquAEHzhGeWl6wfrY4c458xiniPKnp/JsN39x
-         qYaA==
+        d=gmail.com; s=20230601; t=1723405312; x=1724010112; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=14/7lz43ghojpFaVsYu905V4R9qFCjIVkgYPqIp9GLE=;
+        b=eaJGlbXJ+6Y3gfRwrvr4qvPWP8GZS+qnKHACwFXmUJrTEvJFgVKj9uiDv1OIUG8xTZ
+         DTqi2qJcCxsTACYDbAqeCXJaJIo6SJFc5dm6xeRFa3+ABuvHa2FAtVWxo0YH2Kkcln0/
+         oihZoVVzvQgMBKst3QABWAnx3QJuw+6rjiwwUSLnvyrysL1smPTSIuyazlf+Jk3+O7th
+         rSZgE9eHSVdVdW8tjsO9leZNdqpz1KeBkkGxCg3p2LieiIm3q9TTkO7LQbkZIs3XRJ8Z
+         COXEkPuCQoW+jOiYCs/xQOamSBfqHSE2vgkUvE4oaFFHAN4JqErE49cGxCAiWYMCIvfs
+         Ybew==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723370608; x=1723975408;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=xIOl8OsZI63rJ5MOQ8aWvipATQqMN50CEJzU+2GZD54=;
-        b=l3e7mQZjMFBtAOCiQQIJEbr7ehRQ+C2M1gYqRW0e4H86Bhzf7S+EN24ZzLu6WgY3Jo
-         KgdNcXhgmx1Q8E0tHinohKOCJ+qCsIuxcVOGyGZpVvkrMRD9J7AyYHnDyl7Q47BG6kCm
-         G8i3dx/we4rNvkbnPjULg/C17rPjUoahdVvEyRYk1BPvE3U0oW/6aaDWQnBvf06FTiKg
-         8b+wljUoN7ie68KJCh2GPrawzGwVjyTZfZwTijT/1fa6eljL1CzLdPCdhTjBX3hM5EJW
-         YUmUaKtIqj0Ysb+fh3LP1X1TR7Q4xQ3Z/qCmMMfahscz+rEOGQzp/P1SAWegmCiY3Cye
-         4U5A==
-X-Forwarded-Encrypted: i=1; AJvYcCUCi38HoFgmdCyDvlKQN4dpVCctrBCUbf9wXi7Qpc4RHfflH1d5tu2bsbZ4LlwddCPwConywlTlcl2RAIKzHMU0L89Lf/B7yRhY+xbn
-X-Gm-Message-State: AOJu0Yyx/BygpnlsK+PRt/DC4V9sl+NCMS8mcqP0uvRdr4Ec8aX+rsaz
-	uZNbZPjhMg2oObhtW11kC1n6ZmuIQOLBVn4+QCSfV3iKlDHs56Femgr/ww==
-X-Google-Smtp-Source: AGHT+IHoQnSQ1/gfO3dPhPZvCBm5J18YdTBeLC459Jv9d7IaH3Xi4DEHsjmouetHxRY00RX8mc9nUw==
-X-Received: by 2002:a17:90a:90f:b0:2ca:4a6f:1dd with SMTP id 98e67ed59e1d1-2d1e806a397mr4486236a91.41.1723370607917;
-        Sun, 11 Aug 2024 03:03:27 -0700 (PDT)
-Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2d1fcf06589sm2802637a91.25.2024.08.11.03.03.25
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 11 Aug 2024 03:03:27 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] nilfs2: protect references to superblock parameters exposed in sysfs
-Date: Sun, 11 Aug 2024 19:03:20 +0900
-Message-Id: <20240811100320.9913-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.34.1
+        d=1e100.net; s=20230601; t=1723405312; x=1724010112;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=14/7lz43ghojpFaVsYu905V4R9qFCjIVkgYPqIp9GLE=;
+        b=n90DMGxV0ubP8ea16YLz3/rct+B/TmfPk3kR6WXwl8Kz0z/WtkAejJn/m6E7cDfdhi
+         RXRAQuiK0EFo/DEDOpCz+3d9Fzp/OKubfg0rHkdg/PxZzEIm8d7cr68cUU6akOulysy8
+         y50rzuZqB1z9KkOQo6N96a+/rBUdC0TouuE4KMCIQsk2tx60ZnzK2JwAuvOnY+UfQpN6
+         oe7UiT3b0fAS3lFbP9wohKl8u1cULkGeRCVfyGUix7Y1jodTsv23+sY+EJ7gfEvqobe/
+         6wnsrrpoqXqG5tuMcAwu3b3dOXGqqG12wOpR6hs0R38ZUCFHl376kFbacf46WirZl2Nd
+         +P/A==
+X-Forwarded-Encrypted: i=1; AJvYcCVVeGqioY6wFk9UKyLmntgydPAi3ZoI7wZWJgheo46LJVrtS4X6anBUedYG6mVXY+obsxIut6Qcf8+TcQ+6IBl/F3yS4CQ/A2sC58hB
+X-Gm-Message-State: AOJu0YwNF4nq+3JpLPBucS0ZblLIsJD5ce+yyzWXqk3e6TUxhYkW4F0j
+	Psk5UDtuUGbM85OBY/Dlt/B53cvUt19rg4hajMLPed+4lFtzyaTCFakXDMKrMOJnWq1AV5Y+XcY
+	ND3x5x906U7w51o0GEczy/Ft9yiCdCOVB
+X-Google-Smtp-Source: AGHT+IHG1A/8PQZEOXPP2N8wBlJRy3/YRr/GCA+ScfvLOZReFEmVn/Z3uOCFmATrorjThuefzry+F3onEIm+iVcIMlM=
+X-Received: by 2002:a05:6512:2346:b0:52f:368:5018 with SMTP id
+ 2adb3069b0e04-530ee9dcad6mr5392121e87.43.1723405311574; Sun, 11 Aug 2024
+ 12:41:51 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20240807230742.11151-1-konishi.ryusuke@gmail.com>
+In-Reply-To: <20240807230742.11151-1-konishi.ryusuke@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Mon, 12 Aug 2024 04:41:35 +0900
+Message-ID: <CAKFNMomFfeeXmeATyG2jARXqvodms+P89TPmcxF70MWdPz2_wA@mail.gmail.com>
+Subject: Re: [PATCH] nilfs2: fix state management in error path of log writing function
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-The superblock buffers of nilfs2 can not only be overwritten at
-runtime for modifications/repairs, but they are also regularly
-swapped, replaced during resizing, and even abandoned when degrading
-to one side due to backing device issues.  So, accessing them requires
-mutual exclusion using the reader/writer semaphore "nilfs->ns_sem".
+On Thu, Aug 8, 2024 at 8:07=E2=80=AFAM Ryusuke Konishi wrote:
+>
+> After commit a694291a6211 ("nilfs2: separate wait function from
+> nilfs_segctor_write") was applied, the log writing function
+> nilfs_segctor_do_construct() was able to issue I/O requests
+> continuously even if user data blocks were split into multiple logs
+> across segments, but two potential flaws were introduced in its error
+> handling.
+>
+> First, if nilfs_segctor_begin_construction() fails while creating the
+> second or subsequent logs, the log writing function returns without
+> calling nilfs_segctor_abort_construction(), so the writeback flag set
+> on pages/folios will remain uncleared.  This causes page cache
+> operations to hang waiting for the writeback flag.  For example,
+> truncate_inode_pages_final(), which is called via nilfs_evict_inode()
+> when an inode is evicted from memory, will hang.
+>
+> Second, the NILFS_I_COLLECTED flag set on normal inodes remain
+> uncleared.  As a result, if the next log write involves checkpoint
+> creation, that's fine, but if a partial log write is performed that
+> does not, inodes with NILFS_I_COLLECTED set are erroneously removed
+> from the "sc_dirty_files" list, and their data and b-tree blocks may
+> not be written to the device, corrupting the block mapping.
+>
+> Fix these issues by correcting the jump destination of the error
+> branch in nilfs_segctor_do_construct() and the condition for calling
+> nilfs_redirty_inodes(), which clears the NILFS_I_COLLECTED flag.
+>
+> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+> Fixes: a694291a6211 ("nilfs2: separate wait function from nilfs_segctor_w=
+rite")
+> Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+> Cc: stable@vger.kernel.org
+> ---
+> Hi Andrew, please apply this as a bug fix.
+>
+> This fixes error path flaws of the log writing function that was
+> discovered during error injection testing, which could lead to a hang
+> due to the writeback flag not being cleared on folios, and potential
+> filesystem corruption due to missing blocks in the log after an error.
+>
+> Thanks,
+> Ryusuke Konishi
 
-Some sysfs attribute show methods read this superblock buffer without
-the necessary mutual exclusion, which can cause problems with pointer
-dereferencing and memory access, so fix it.
+Andrew, please stop sending this patch upstream.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Fixes: da7141fb78db ("nilfs2: add /sys/fs/nilfs2/<device> group")
-Cc: stable@vger.kernel.org
----
-Andrew, please apply this as a bug fix.
+I found a problem with changing the error path in this patch in
+another error injection test, so I would like to create a revised
+version.
 
-This fixes possible memory access problem when retrieving superblock
-information from the sysfs interface.
+The other two bug fix patches I have sent will not be affected.
 
 Thanks,
 Ryusuke Konishi
 
- fs/nilfs2/sysfs.c | 43 +++++++++++++++++++++++++++++++++----------
- 1 file changed, 33 insertions(+), 10 deletions(-)
-
-diff --git a/fs/nilfs2/sysfs.c b/fs/nilfs2/sysfs.c
-index a5569b7f47a3..14868a3dd592 100644
---- a/fs/nilfs2/sysfs.c
-+++ b/fs/nilfs2/sysfs.c
-@@ -836,9 +836,15 @@ ssize_t nilfs_dev_revision_show(struct nilfs_dev_attr *attr,
- 				struct the_nilfs *nilfs,
- 				char *buf)
- {
--	struct nilfs_super_block **sbp = nilfs->ns_sbp;
--	u32 major = le32_to_cpu(sbp[0]->s_rev_level);
--	u16 minor = le16_to_cpu(sbp[0]->s_minor_rev_level);
-+	struct nilfs_super_block *raw_sb;
-+	u32 major;
-+	u16 minor;
-+
-+	down_read(&nilfs->ns_sem);
-+	raw_sb = nilfs->ns_sbp[0];
-+	major = le32_to_cpu(raw_sb->s_rev_level);
-+	minor = le16_to_cpu(raw_sb->s_minor_rev_level);
-+	up_read(&nilfs->ns_sem);
- 
- 	return sysfs_emit(buf, "%d.%d\n", major, minor);
- }
-@@ -856,8 +862,13 @@ ssize_t nilfs_dev_device_size_show(struct nilfs_dev_attr *attr,
- 				    struct the_nilfs *nilfs,
- 				    char *buf)
- {
--	struct nilfs_super_block **sbp = nilfs->ns_sbp;
--	u64 dev_size = le64_to_cpu(sbp[0]->s_dev_size);
-+	struct nilfs_super_block *raw_sb;
-+	u64 dev_size;
-+
-+	down_read(&nilfs->ns_sem);
-+	raw_sb = nilfs->ns_sbp[0];
-+	dev_size = le64_to_cpu(raw_sb->s_dev_size);
-+	up_read(&nilfs->ns_sem);
- 
- 	return sysfs_emit(buf, "%llu\n", dev_size);
- }
-@@ -879,9 +890,15 @@ ssize_t nilfs_dev_uuid_show(struct nilfs_dev_attr *attr,
- 			    struct the_nilfs *nilfs,
- 			    char *buf)
- {
--	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+	struct nilfs_super_block *raw_sb;
-+	ssize_t len;
- 
--	return sysfs_emit(buf, "%pUb\n", sbp[0]->s_uuid);
-+	down_read(&nilfs->ns_sem);
-+	raw_sb = nilfs->ns_sbp[0];
-+	len = sysfs_emit(buf, "%pUb\n", raw_sb->s_uuid);
-+	up_read(&nilfs->ns_sem);
-+
-+	return len;
- }
- 
- static
-@@ -889,10 +906,16 @@ ssize_t nilfs_dev_volume_name_show(struct nilfs_dev_attr *attr,
- 				    struct the_nilfs *nilfs,
- 				    char *buf)
- {
--	struct nilfs_super_block **sbp = nilfs->ns_sbp;
-+	struct nilfs_super_block *raw_sb;
-+	ssize_t len;
-+
-+	down_read(&nilfs->ns_sem);
-+	raw_sb = nilfs->ns_sbp[0];
-+	len = scnprintf(buf, sizeof(raw_sb->s_volume_name), "%s\n",
-+			raw_sb->s_volume_name);
-+	up_read(&nilfs->ns_sem);
- 
--	return scnprintf(buf, sizeof(sbp[0]->s_volume_name), "%s\n",
--			 sbp[0]->s_volume_name);
-+	return len;
- }
- 
- static const char dev_readme_str[] =
--- 
-2.34.1
-
+>
+>  fs/nilfs2/segment.c | 7 +++----
+>  1 file changed, 3 insertions(+), 4 deletions(-)
+>
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 0ca3110d6386..8b3225bd08ed 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -2056,7 +2056,7 @@ static int nilfs_segctor_do_construct(struct nilfs_=
+sc_info *sci, int mode)
+>
+>                 err =3D nilfs_segctor_begin_construction(sci, nilfs);
+>                 if (unlikely(err))
+> -                       goto out;
+> +                       goto failed;
+>
+>                 /* Update time stamp */
+>                 sci->sc_seg_ctime =3D ktime_get_real_seconds();
+> @@ -2120,10 +2120,9 @@ static int nilfs_segctor_do_construct(struct nilfs=
+_sc_info *sci, int mode)
+>         return err;
+>
+>   failed_to_write:
+> -       if (sci->sc_stage.flags & NILFS_CF_IFILE_STARTED)
+> -               nilfs_redirty_inodes(&sci->sc_dirty_files);
+> -
+>   failed:
+> +       if (mode =3D=3D SC_LSEG_SR && nilfs_sc_cstage_get(sci) >=3D NILFS=
+_ST_IFILE)
+> +               nilfs_redirty_inodes(&sci->sc_dirty_files);
+>         if (nilfs_doing_gc())
+>                 nilfs_redirty_inodes(&sci->sc_gc_inodes);
+>         nilfs_segctor_abort_construction(sci, nilfs, err);
+> --
+> 2.34.1
+>
