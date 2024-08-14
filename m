@@ -1,160 +1,76 @@
-Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
+Received: from mail-yb1-f176.google.com (mail-yb1-f176.google.com [209.85.219.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EDD701803E;
-	Sun, 11 Aug 2024 19:41:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9575423AB
+	for <linux-nilfs@vger.kernel.org>; Wed, 14 Aug 2024 01:10:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723405315; cv=none; b=kZmxAtLxQFfrhe5UJIth8gYHL9TSj2XsaN3TiFfbvalP1sJqJOCsDFFxIOzyVqhMmyp+qU+b7v6ZX43Adah0dNbh8xUnRi+xyXLOHdNoueUVv+aoq439YhXu0gjdYIMNa5hwKeyTluRsikHZzOt/W63jyZmGU7eqkfqmhzDwhy0=
+	t=1723597811; cv=none; b=HqataIzvTP1edre8u60u9yg45RJqJLlZeT0r2kMn64Hkg22jCLfflvERpTh4WXai+LnJaz/rNNYu4ZjtaNY3CKgiIgttqCHoZrT9w0rJL2/quSxrqkOEyGOl6CLdqYDARJ0HdrrzI8rCbaFjx0PL7Xtz3vWNuhigglfYlWQi2CA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723405315; c=relaxed/simple;
-	bh=YyQd/yA86a2aU6mq6hOdKt6lyRtO14DZQVwjCPI74I8=;
+	s=arc-20240116; t=1723597811; c=relaxed/simple;
+	bh=w+m4BtSU08bqc17+hpSfYVQGgJWJJtBa8HgaYD23KzY=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=U9iHQROJ4ZQ1l5CgdxBb1oI2hKYH0kQ2gg/H4Nz6sJC3adZKDkJpFDCrHSnxdqvh0XcA/I4+iaTRkIwHgxcbW/2lJeOu2Nrpeif4/++P0CzbYSE/hxokb1GcqRfH7OpZVwG1jmRaN3pYpIqqK+JwWwzHgPlI2mxIYBi/H3HVqOo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eaJGlbXJ; arc=none smtp.client-ip=209.85.167.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 To:Cc:Content-Type; b=MqtMdOqBU9dITgFKBu8qnnNtmriYZBfrBkKQLy0tjGwpsMW9evOXl7+ibMLNDJNnNLk/n99V17oOeYeJVwy0wYoVALoTVPURgZw+JtZ72c2XlKl5rIGrChQgOuKbrYXR4wXgNAQW0ZElCn2WKEhyjGjqUIU1Hz+XX8Ltidb3Jf8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cs.stonybrook.edu; spf=pass smtp.mailfrom=cs.stonybrook.edu; dkim=pass (1024-bit key) header.d=stonybrook.edu header.i=@stonybrook.edu header.b=rm9ngOAC; arc=none smtp.client-ip=209.85.219.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cs.stonybrook.edu
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.stonybrook.edu
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eaJGlbXJ"
-Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-530e2548dfdso3758807e87.1;
-        Sun, 11 Aug 2024 12:41:53 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=stonybrook.edu header.i=@stonybrook.edu header.b="rm9ngOAC"
+Received: by mail-yb1-f176.google.com with SMTP id 3f1490d57ef6-e115ee08372so33277276.3
+        for <linux-nilfs@vger.kernel.org>; Tue, 13 Aug 2024 18:10:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723405312; x=1724010112; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=14/7lz43ghojpFaVsYu905V4R9qFCjIVkgYPqIp9GLE=;
-        b=eaJGlbXJ+6Y3gfRwrvr4qvPWP8GZS+qnKHACwFXmUJrTEvJFgVKj9uiDv1OIUG8xTZ
-         DTqi2qJcCxsTACYDbAqeCXJaJIo6SJFc5dm6xeRFa3+ABuvHa2FAtVWxo0YH2Kkcln0/
-         oihZoVVzvQgMBKst3QABWAnx3QJuw+6rjiwwUSLnvyrysL1smPTSIuyazlf+Jk3+O7th
-         rSZgE9eHSVdVdW8tjsO9leZNdqpz1KeBkkGxCg3p2LieiIm3q9TTkO7LQbkZIs3XRJ8Z
-         COXEkPuCQoW+jOiYCs/xQOamSBfqHSE2vgkUvE4oaFFHAN4JqErE49cGxCAiWYMCIvfs
-         Ybew==
+        d=stonybrook.edu; s=sbu-gmail; t=1723597807; x=1724202607; darn=vger.kernel.org;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=8zIBD/Tngb9DR3NVNtr8SRjzFGMbrZogkUVSrCW2ENg=;
+        b=rm9ngOACjcpANWwsOVrNxvj8wthd9X1gCO2NVY97t0h+GL0vbrAucqpSZvPHQIVTEG
+         2wsA34+kPP9p22Kb3hVBZXEDWhbOqtSBPw4LscYqqlY3793bXuFVQnLV+USnRLUMbc9R
+         BatCXRLNOq59fGtnKkM/CrLBI/WJStFBGNNG8=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723405312; x=1724010112;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=14/7lz43ghojpFaVsYu905V4R9qFCjIVkgYPqIp9GLE=;
-        b=n90DMGxV0ubP8ea16YLz3/rct+B/TmfPk3kR6WXwl8Kz0z/WtkAejJn/m6E7cDfdhi
-         RXRAQuiK0EFo/DEDOpCz+3d9Fzp/OKubfg0rHkdg/PxZzEIm8d7cr68cUU6akOulysy8
-         y50rzuZqB1z9KkOQo6N96a+/rBUdC0TouuE4KMCIQsk2tx60ZnzK2JwAuvOnY+UfQpN6
-         oe7UiT3b0fAS3lFbP9wohKl8u1cULkGeRCVfyGUix7Y1jodTsv23+sY+EJ7gfEvqobe/
-         6wnsrrpoqXqG5tuMcAwu3b3dOXGqqG12wOpR6hs0R38ZUCFHl376kFbacf46WirZl2Nd
-         +P/A==
-X-Forwarded-Encrypted: i=1; AJvYcCVVeGqioY6wFk9UKyLmntgydPAi3ZoI7wZWJgheo46LJVrtS4X6anBUedYG6mVXY+obsxIut6Qcf8+TcQ+6IBl/F3yS4CQ/A2sC58hB
-X-Gm-Message-State: AOJu0YwNF4nq+3JpLPBucS0ZblLIsJD5ce+yyzWXqk3e6TUxhYkW4F0j
-	Psk5UDtuUGbM85OBY/Dlt/B53cvUt19rg4hajMLPed+4lFtzyaTCFakXDMKrMOJnWq1AV5Y+XcY
-	ND3x5x906U7w51o0GEczy/Ft9yiCdCOVB
-X-Google-Smtp-Source: AGHT+IHG1A/8PQZEOXPP2N8wBlJRy3/YRr/GCA+ScfvLOZReFEmVn/Z3uOCFmATrorjThuefzry+F3onEIm+iVcIMlM=
-X-Received: by 2002:a05:6512:2346:b0:52f:368:5018 with SMTP id
- 2adb3069b0e04-530ee9dcad6mr5392121e87.43.1723405311574; Sun, 11 Aug 2024
- 12:41:51 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1723597807; x=1724202607;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=8zIBD/Tngb9DR3NVNtr8SRjzFGMbrZogkUVSrCW2ENg=;
+        b=LRIxvYSnoeCv3aptmWLSeUnEfDoF8HCzQkw1h8wc3GhyiqJQHUbf3I5hnfIukaWM47
+         v2G2/fpwWHVpQOgHgOZU2v6ClbkQJc93LRsdL+enMqJIuAUeZxkLWCqQuNNjLQQ3JwY3
+         E03yVYyln5hurcKqNqXnttjNAxFqc4jGMB0JrwvLsQbSaOFBsjyvxnco2pdH/Sjhu2vn
+         LH09Ge+aXaM9JLGgKepQdOKaGRq10vF/28AUujNPSwY7E2QdBXrtE1MqcLKvLjwB1nX1
+         6nNPPdpgr63rcS+zMRxweEcfp3Whd9T6dQ7Swu7DbxhoIA/pmMKbh/hGwraN450Z3geA
+         PoTQ==
+X-Gm-Message-State: AOJu0Yy+RLWcZ1wjUVRANggnypbPyIib+tMZyffv9iTE5AFdL3USoHCS
+	lI6A2fp3S/bOW8YrKFjg1cvadJKmVU2/wFQlXakXHFOEPL0oCTdEQ8LEbDu/Bgseea4aBW+OSeO
+	KS/KJ8DY4UtB/3U4ZLsB6HNVxBY0bVHjuPoMFHg==
+X-Google-Smtp-Source: AGHT+IGx8yh9bjwN3+ksjglZPayMu/Ufu8Lz0yUUXAUQyiNkd2jUQEK7s8EqWNEMDMXBsfgwl+AKDcU4EoF/60qBXOY=
+X-Received: by 2002:a05:6902:240a:b0:e04:e298:3755 with SMTP id
+ 3f1490d57ef6-e1155adb6f7mr1576359276.28.1723597807366; Tue, 13 Aug 2024
+ 18:10:07 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240807230742.11151-1-konishi.ryusuke@gmail.com>
-In-Reply-To: <20240807230742.11151-1-konishi.ryusuke@gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Mon, 12 Aug 2024 04:41:35 +0900
-Message-ID: <CAKFNMomFfeeXmeATyG2jARXqvodms+P89TPmcxF70MWdPz2_wA@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: fix state management in error path of log writing function
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <CABHrer3rrUS8x+te16eXF7HMdyYCRcoj+CS6c2T-5EmxjKO-7g@mail.gmail.com>
+ <CAKFNMo=gnn5TL7moJR7hgtvH_ML_3V3XXgnntPqiYq6RpzHT+A@mail.gmail.com>
+ <CABHrer2U3nNFQzT0QLjTHJ9yUiwOuxtcP44jEP4huTSRTED2tg@mail.gmail.com> <CAKFNMokChMGs5FaXRhCDsh6Nd0XtEdoF_LBs_6HYXY8HV=khrg@mail.gmail.com>
+In-Reply-To: <CAKFNMokChMGs5FaXRhCDsh6Nd0XtEdoF_LBs_6HYXY8HV=khrg@mail.gmail.com>
+From: Yifei Liu <yifeliu@cs.stonybrook.edu>
+Date: Tue, 13 Aug 2024 21:09:56 -0400
+Message-ID: <CABHrer1zSr7GETOarUaVn7w08eWOcofD=oDX4T8X6DpePL1q-Q@mail.gmail.com>
+Subject: Re: Potential Bug in NILFS2: Disk Space Not Freed After File Deletion
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org, Erez Zadok <ezk@cs.stonybrook.edu>, 
+	Geoff Kuenning <geoff@cs.hmc.edu>, Scott Smolka <sas@cs.stonybrook.edu>
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, Aug 8, 2024 at 8:07=E2=80=AFAM Ryusuke Konishi wrote:
->
-> After commit a694291a6211 ("nilfs2: separate wait function from
-> nilfs_segctor_write") was applied, the log writing function
-> nilfs_segctor_do_construct() was able to issue I/O requests
-> continuously even if user data blocks were split into multiple logs
-> across segments, but two potential flaws were introduced in its error
-> handling.
->
-> First, if nilfs_segctor_begin_construction() fails while creating the
-> second or subsequent logs, the log writing function returns without
-> calling nilfs_segctor_abort_construction(), so the writeback flag set
-> on pages/folios will remain uncleared.  This causes page cache
-> operations to hang waiting for the writeback flag.  For example,
-> truncate_inode_pages_final(), which is called via nilfs_evict_inode()
-> when an inode is evicted from memory, will hang.
->
-> Second, the NILFS_I_COLLECTED flag set on normal inodes remain
-> uncleared.  As a result, if the next log write involves checkpoint
-> creation, that's fine, but if a partial log write is performed that
-> does not, inodes with NILFS_I_COLLECTED set are erroneously removed
-> from the "sc_dirty_files" list, and their data and b-tree blocks may
-> not be written to the device, corrupting the block mapping.
->
-> Fix these issues by correcting the jump destination of the error
-> branch in nilfs_segctor_do_construct() and the condition for calling
-> nilfs_redirty_inodes(), which clears the NILFS_I_COLLECTED flag.
->
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Fixes: a694291a6211 ("nilfs2: separate wait function from nilfs_segctor_w=
-rite")
-> Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Cc: stable@vger.kernel.org
-> ---
-> Hi Andrew, please apply this as a bug fix.
->
-> This fixes error path flaws of the log writing function that was
-> discovered during error injection testing, which could lead to a hang
-> due to the writeback flag not being cleared on folios, and potential
-> filesystem corruption due to missing blocks in the log after an error.
->
-> Thanks,
-> Ryusuke Konishi
+> Well, what you're saying is that the file system got stuck.  And you
+> cannot recover it even by running the "nilfs-clean" command or
+> manually starting nilfs_cleanerd.  Right?
 
-Andrew, please stop sending this patch upstream.
+Yes, that's right.
 
-I found a problem with changing the error path in this patch in
-another error injection test, so I would like to create a revised
-version.
+Thank you so much for the explanation and feedback!
 
-The other two bug fix patches I have sent will not be affected.
-
-Thanks,
-Ryusuke Konishi
-
->
->  fs/nilfs2/segment.c | 7 +++----
->  1 file changed, 3 insertions(+), 4 deletions(-)
->
-> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> index 0ca3110d6386..8b3225bd08ed 100644
-> --- a/fs/nilfs2/segment.c
-> +++ b/fs/nilfs2/segment.c
-> @@ -2056,7 +2056,7 @@ static int nilfs_segctor_do_construct(struct nilfs_=
-sc_info *sci, int mode)
->
->                 err =3D nilfs_segctor_begin_construction(sci, nilfs);
->                 if (unlikely(err))
-> -                       goto out;
-> +                       goto failed;
->
->                 /* Update time stamp */
->                 sci->sc_seg_ctime =3D ktime_get_real_seconds();
-> @@ -2120,10 +2120,9 @@ static int nilfs_segctor_do_construct(struct nilfs=
-_sc_info *sci, int mode)
->         return err;
->
->   failed_to_write:
-> -       if (sci->sc_stage.flags & NILFS_CF_IFILE_STARTED)
-> -               nilfs_redirty_inodes(&sci->sc_dirty_files);
-> -
->   failed:
-> +       if (mode =3D=3D SC_LSEG_SR && nilfs_sc_cstage_get(sci) >=3D NILFS=
-_ST_IFILE)
-> +               nilfs_redirty_inodes(&sci->sc_dirty_files);
->         if (nilfs_doing_gc())
->                 nilfs_redirty_inodes(&sci->sc_gc_inodes);
->         nilfs_segctor_abort_construction(sci, nilfs, err);
-> --
-> 2.34.1
->
+Best regards,
+Yifei
