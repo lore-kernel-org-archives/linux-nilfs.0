@@ -1,67 +1,35 @@
-Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com [209.85.214.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from szxga07-in.huawei.com (szxga07-in.huawei.com [45.249.212.35])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 34B4E1AD9C2;
-	Wed, 14 Aug 2024 10:11:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 014361109
+	for <linux-nilfs@vger.kernel.org>; Wed, 14 Aug 2024 12:31:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.35
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723630286; cv=none; b=aWBDehS7o5WB0bXtTFLr8j0r0CcXPma4PepdHAXwUI7KWvHg+T/4wc04Rx0p1BkPMKhgoH/16qvYsqYxkY9RSw/FdgN+wSgo93+HcBcBwolK4NuOleT1lMFfVJOODemsZ7DjLl7a3yBMuKfK7rsv43FwqD/5Ir4GRRPWHX9Gv7M=
+	t=1723638672; cv=none; b=t0u+r1i+p3sBA1S0BtynpcDf3Noh60ihivWlLa9utJdDxe+PA1nSKzSzqt+4144Xj2rIk+w2DnSSNL/FbVhXcyBuzCAw6qhmW1PWhyyNOWneYyuAnG8wvh3pxSgz0HlKO+7WsWFxCcVYUuH35bOsUa33bTqma2uUUV/xKI0GVT0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723630286; c=relaxed/simple;
-	bh=gjEWhU6xc7MgcXwDvwjZmLLupkYNrjmhcRovxp/YkOA=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=R+7lWv6pK4ciH4KSVRRPOnpLgfSVPE0srYuzNM6JVC/S4trC1Y09vjZ8szvbWB4yJum+RbgvFI4qPloAJS5OvYMYn75VD/9TrmkyhuPv6s4gCX3CoYUFsBTC1fWVrad9VQ/AueMt2CmXjB0x+EkVTM/3+MO6OqM45vXveqI6kqA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=S5A3ypO/; arc=none smtp.client-ip=209.85.214.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="S5A3ypO/"
-Received: by mail-pl1-f175.google.com with SMTP id d9443c01a7336-1fd90c2fc68so45089465ad.1;
-        Wed, 14 Aug 2024 03:11:24 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723630284; x=1724235084; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=aLAWGueIDsUOOdrNlrNyvVXSsuDgnHJV/4WnHDRAVT4=;
-        b=S5A3ypO/xTej60NMWFV2Lj1veEv1++uPSGIwQysGeGsbGtxoSgu1dUoM3MdBFdCElm
-         AMkvmUkpuYRf3Et3QYftLNrzVi44ilGxT7wl2VnTrJAV95ZGnYtEGyd+iUsNq3ts1NoB
-         EXfDKKIvwpodP6O6sAmXP0+aziQiq3dUUvEiqcnKhc92CILqiTTtpZnt9ox3cNmmcd9L
-         N9gn8LZCIu2hCuwEBcpCVhzlF88b7JWBOWeMLKQHSSAQT4cXFoDLf+gd0E1ATN5NJsHn
-         v0VjBhLSVhsvVwVdhQ/ecaLDqEmJ4SfyvPBkVA7QKcvunEsx8vo0tFaujy7npnN4G+IE
-         uGCQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723630284; x=1724235084;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=aLAWGueIDsUOOdrNlrNyvVXSsuDgnHJV/4WnHDRAVT4=;
-        b=NTMrMd3YOoNmN96JryJj32WkfvEV9Nun6IRnO3al3sj9Nn3KvLcFwJSPU5cMnd6qIJ
-         6yJOS3YSc6yOMhNRFSTle0WO9h6QRROo5WGkIMGSwayYOC2JFhJttDZHA7cPXZSyulm1
-         btZuUbzzce0DRkqDo5X301+POleY82THwuaN849AI3X2IjuKvboDorjvuXZlh83iR15K
-         r7mHVpc+aOPdam+aJYAwDoccu+2U2xXhVM0RsbefVO2xfZnYEea2affSNWT+gaJe1THh
-         7T/1S3Ch1d5kKyg5p0JbvQwJlXNT4zIunTGOh/RetAMxznzuyL6Id1cueMHZfbwH3jg1
-         VG9Q==
-X-Forwarded-Encrypted: i=1; AJvYcCUE37C85xldE202lF8r6gQ8g/s9fGmK/YW9Z/vcuSlR4nv+vKPOSQdidsnP3n5tQVpDFRleOMBraNHNh2k=@vger.kernel.org
-X-Gm-Message-State: AOJu0YxlMTObtOvKAjA63WLiPkEvFCyJ/x0+guzRZVwqunZylywNgtPl
-	j6MGS5oYA9NG8gesnEh1a7jhX82/i8HG/7dqmmGAZg2kLx68YvJXGWLRWQ==
-X-Google-Smtp-Source: AGHT+IGyHQkBaeuzoQq+yG2Xx4lrOpTKcgb1mWV7lBLwXoia5IzAszLLilkcWUB8ouu9TLawUjUlNA==
-X-Received: by 2002:a17:902:cece:b0:1fb:37fa:fedb with SMTP id d9443c01a7336-201d639379emr30058505ad.10.1723630284235;
-        Wed, 14 Aug 2024 03:11:24 -0700 (PDT)
-Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-201cd1b486csm26656485ad.206.2024.08.14.03.11.22
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 14 Aug 2024 03:11:23 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH v2] nilfs2: fix state management in error path of log writing function
-Date: Wed, 14 Aug 2024 19:11:19 +0900
-Message-Id: <20240814101119.4070-1-konishi.ryusuke@gmail.com>
+	s=arc-20240116; t=1723638672; c=relaxed/simple;
+	bh=Th2Shj8pXwQ6o35psNEnTVmFOnLYXyUtmGQDNoqjCjY=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=ZWb4YTVuMyVeMiekrms05mLn8tr7kGqz65wnPXgwZyLP42afT+gLxMw1SSpSYIAS1JlEZhliSY4ez5SjamnKJ0oXHtLucH/MoeAX5fwA6KKSXpb0DhaiB8felpNh/RqZOqw6jEpzBt4EHkloMk8bkdRFZEtewULDK8IM0JHsELA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.35
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
+Received: from mail.maildlp.com (unknown [172.19.88.234])
+	by szxga07-in.huawei.com (SkyGuard) with ESMTP id 4WkSCf6B1tz1S7tW
+	for <linux-nilfs@vger.kernel.org>; Wed, 14 Aug 2024 20:26:06 +0800 (CST)
+Received: from dggpemm500021.china.huawei.com (unknown [7.185.36.109])
+	by mail.maildlp.com (Postfix) with ESMTPS id 4E2DF14022D
+	for <linux-nilfs@vger.kernel.org>; Wed, 14 Aug 2024 20:30:59 +0800 (CST)
+Received: from huawei.com (10.90.53.73) by dggpemm500021.china.huawei.com
+ (7.185.36.109) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.1.2507.39; Wed, 14 Aug
+ 2024 20:30:58 +0800
+From: Huang Xiaojia <huangxiaojia2@huawei.com>
+To: <konishi.ryusuke@gmail.com>, <yuehaibing@huawei.com>
+CC: <linux-nilfs@vger.kernel.org>, <huangxiaojia2@huawei.com>
+Subject: [PATCH -next] nilfs2: use common implementation of file type
+Date: Wed, 14 Aug 2024 20:38:01 +0800
+Message-ID: <20240814123801.1196678-1-huangxiaojia2@huawei.com>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240807230742.11151-1-konishi.ryusuke@gmail.com>
-References: <20240807230742.11151-1-konishi.ryusuke@gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -69,94 +37,136 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
+ dggpemm500021.china.huawei.com (7.185.36.109)
 
-After commit a694291a6211 ("nilfs2: separate wait function from
-nilfs_segctor_write") was applied, the log writing function
-nilfs_segctor_do_construct() was able to issue I/O requests
-continuously even if user data blocks were split into multiple logs
-across segments, but two potential flaws were introduced in its error
-handling.
+Deduplicate the nilfs2 file type conversion implementation and
+remove NILFS_FT_* definitions since it's the same as defined
+by POSIX.
 
-First, if nilfs_segctor_begin_construction() fails while creating the
-second or subsequent logs, the log writing function returns without
-calling nilfs_segctor_abort_construction(), so the writeback flag set
-on pages/folios will remain uncleared.  This causes page cache
-operations to hang waiting for the writeback flag.  For example,
-truncate_inode_pages_final(), which is called via nilfs_evict_inode()
-when an inode is evicted from memory, will hang.
-
-Second, the NILFS_I_COLLECTED flag set on normal inodes remain
-uncleared.  As a result, if the next log write involves checkpoint
-creation, that's fine, but if a partial log write is performed that
-does not, inodes with NILFS_I_COLLECTED set are erroneously removed
-from the "sc_dirty_files" list, and their data and b-tree blocks may
-not be written to the device, corrupting the block mapping.
-
-Fix these issues by uniformly calling
-nilfs_segctor_abort_construction() on failure of each step in the loop
-in nilfs_segctor_do_construct(), having it clean up logs and segment
-usages according to progress, and correcting the conditions for
-calling nilfs_redirty_inodes() to ensure that the NILFS_I_COLLECTED
-flag is cleared.
-
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Fixes: a694291a6211 ("nilfs2: separate wait function from nilfs_segctor_write")
-Tested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: stable@vger.kernel.org
+Signed-off-by: Huang Xiaojia <huangxiaojia2@huawei.com>
 ---
-Andrew, please apply this as a bug fix instead of the one dropped
-recently.
+ fs/nilfs2/dir.c                    | 44 ++++--------------------------
+ include/uapi/linux/nilfs2_ondisk.h | 16 -----------
+ 2 files changed, 5 insertions(+), 55 deletions(-)
 
-This fixes error path flaws of the log writing function, which could
-lead to a hang due to the writeback flag not being cleared on folios,
-and potential filesystem corruption due to missing blocks in the log
-after an error.
-
-v1->v2: fixed a regression that caused unexpected cleanup when
-        handling an error at a stage where no logs were ready.
-
-Thanks,
-Ryusuke Konishi
-
- fs/nilfs2/segment.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
-
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 0ca3110d6386..871ec35ea8e8 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1812,6 +1812,9 @@ static void nilfs_segctor_abort_construction(struct nilfs_sc_info *sci,
- 	nilfs_abort_logs(&logs, ret ? : err);
+diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+index 4a29b0138d75..ba6bc6efcf11 100644
+--- a/fs/nilfs2/dir.c
++++ b/fs/nilfs2/dir.c
+@@ -231,37 +231,6 @@ static struct nilfs_dir_entry *nilfs_next_entry(struct nilfs_dir_entry *p)
+ 					  nilfs_rec_len_from_disk(p->rec_len));
+ }
  
- 	list_splice_tail_init(&sci->sc_segbufs, &logs);
-+	if (list_empty(&logs))
-+		return; /* if the first segment buffer preparation failed */
-+
- 	nilfs_cancel_segusage(&logs, nilfs->ns_sufile);
- 	nilfs_free_incomplete_logs(&logs, nilfs);
- 
-@@ -2056,7 +2059,7 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
- 
- 		err = nilfs_segctor_begin_construction(sci, nilfs);
- 		if (unlikely(err))
--			goto out;
-+			goto failed;
- 
- 		/* Update time stamp */
- 		sci->sc_seg_ctime = ktime_get_real_seconds();
-@@ -2120,10 +2123,9 @@ static int nilfs_segctor_do_construct(struct nilfs_sc_info *sci, int mode)
- 	return err;
- 
-  failed_to_write:
--	if (sci->sc_stage.flags & NILFS_CF_IFILE_STARTED)
--		nilfs_redirty_inodes(&sci->sc_dirty_files);
+-static unsigned char
+-nilfs_filetype_table[NILFS_FT_MAX] = {
+-	[NILFS_FT_UNKNOWN]	= DT_UNKNOWN,
+-	[NILFS_FT_REG_FILE]	= DT_REG,
+-	[NILFS_FT_DIR]		= DT_DIR,
+-	[NILFS_FT_CHRDEV]	= DT_CHR,
+-	[NILFS_FT_BLKDEV]	= DT_BLK,
+-	[NILFS_FT_FIFO]		= DT_FIFO,
+-	[NILFS_FT_SOCK]		= DT_SOCK,
+-	[NILFS_FT_SYMLINK]	= DT_LNK,
+-};
 -
-  failed:
-+	if (mode == SC_LSEG_SR && nilfs_sc_cstage_get(sci) >= NILFS_ST_IFILE)
-+		nilfs_redirty_inodes(&sci->sc_dirty_files);
- 	if (nilfs_doing_gc())
- 		nilfs_redirty_inodes(&sci->sc_gc_inodes);
- 	nilfs_segctor_abort_construction(sci, nilfs, err);
+-#define S_SHIFT 12
+-static unsigned char
+-nilfs_type_by_mode[(S_IFMT >> S_SHIFT) + 1] = {
+-	[S_IFREG >> S_SHIFT]	= NILFS_FT_REG_FILE,
+-	[S_IFDIR >> S_SHIFT]	= NILFS_FT_DIR,
+-	[S_IFCHR >> S_SHIFT]	= NILFS_FT_CHRDEV,
+-	[S_IFBLK >> S_SHIFT]	= NILFS_FT_BLKDEV,
+-	[S_IFIFO >> S_SHIFT]	= NILFS_FT_FIFO,
+-	[S_IFSOCK >> S_SHIFT]	= NILFS_FT_SOCK,
+-	[S_IFLNK >> S_SHIFT]	= NILFS_FT_SYMLINK,
+-};
+-
+-static void nilfs_set_de_type(struct nilfs_dir_entry *de, struct inode *inode)
+-{
+-	umode_t mode = inode->i_mode;
+-
+-	de->file_type = nilfs_type_by_mode[(mode & S_IFMT)>>S_SHIFT];
+-}
+-
+ static int nilfs_readdir(struct file *file, struct dir_context *ctx)
+ {
+ 	loff_t pos = ctx->pos;
+@@ -297,10 +266,7 @@ static int nilfs_readdir(struct file *file, struct dir_context *ctx)
+ 			if (de->inode) {
+ 				unsigned char t;
+ 
+-				if (de->file_type < NILFS_FT_MAX)
+-					t = nilfs_filetype_table[de->file_type];
+-				else
+-					t = DT_UNKNOWN;
++				t = fs_ftype_to_dtype(de->file_type);
+ 
+ 				if (!dir_emit(ctx, de->name, de->name_len,
+ 						le64_to_cpu(de->inode), t)) {
+@@ -444,7 +410,7 @@ void nilfs_set_link(struct inode *dir, struct nilfs_dir_entry *de,
+ 	err = nilfs_prepare_chunk(folio, from, to);
+ 	BUG_ON(err);
+ 	de->inode = cpu_to_le64(inode->i_ino);
+-	nilfs_set_de_type(de, inode);
++	de->file_type = fs_umode_to_ftype(inode->i_mode);
+ 	nilfs_commit_chunk(folio, mapping, from, to);
+ 	inode_set_mtime_to_ts(dir, inode_set_ctime_current(dir));
+ }
+@@ -531,7 +497,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
+ 	de->name_len = namelen;
+ 	memcpy(de->name, name, namelen);
+ 	de->inode = cpu_to_le64(inode->i_ino);
+-	nilfs_set_de_type(de, inode);
++	de->file_type = fs_umode_to_ftype(inode->i_mode);
+ 	nilfs_commit_chunk(folio, folio->mapping, from, to);
+ 	inode_set_mtime_to_ts(dir, inode_set_ctime_current(dir));
+ 	nilfs_mark_inode_dirty(dir);
+@@ -612,14 +578,14 @@ int nilfs_make_empty(struct inode *inode, struct inode *parent)
+ 	de->rec_len = nilfs_rec_len_to_disk(NILFS_DIR_REC_LEN(1));
+ 	memcpy(de->name, ".\0\0", 4);
+ 	de->inode = cpu_to_le64(inode->i_ino);
+-	nilfs_set_de_type(de, inode);
++	de->file_type = fs_umode_to_ftype(inode->i_mode);
+ 
+ 	de = (struct nilfs_dir_entry *)(kaddr + NILFS_DIR_REC_LEN(1));
+ 	de->name_len = 2;
+ 	de->rec_len = nilfs_rec_len_to_disk(chunk_size - NILFS_DIR_REC_LEN(1));
+ 	de->inode = cpu_to_le64(parent->i_ino);
+ 	memcpy(de->name, "..\0", 4);
+-	nilfs_set_de_type(de, inode);
++	de->file_type = fs_umode_to_ftype(inode->i_mode);
+ 	kunmap_local(kaddr);
+ 	nilfs_commit_chunk(folio, mapping, 0, chunk_size);
+ fail:
+diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
+index c23f91ae5fe8..f52c338103a5 100644
+--- a/include/uapi/linux/nilfs2_ondisk.h
++++ b/include/uapi/linux/nilfs2_ondisk.h
+@@ -306,22 +306,6 @@ struct nilfs_dir_entry {
+ 	char    pad;
+ };
+ 
+-/*
+- * NILFS directory file types.  Only the low 3 bits are used.  The
+- * other bits are reserved for now.
+- */
+-enum {
+-	NILFS_FT_UNKNOWN,
+-	NILFS_FT_REG_FILE,
+-	NILFS_FT_DIR,
+-	NILFS_FT_CHRDEV,
+-	NILFS_FT_BLKDEV,
+-	NILFS_FT_FIFO,
+-	NILFS_FT_SOCK,
+-	NILFS_FT_SYMLINK,
+-	NILFS_FT_MAX
+-};
+-
+ /*
+  * NILFS_DIR_PAD defines the directory entries boundaries
+  *
 -- 
 2.34.1
 
