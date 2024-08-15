@@ -1,64 +1,64 @@
-Received: from mail-oi1-f170.google.com (mail-oi1-f170.google.com [209.85.167.170])
+Received: from mail-pf1-f174.google.com (mail-pf1-f174.google.com [209.85.210.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC51C18C345;
-	Thu, 15 Aug 2024 07:45:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD5361991BB;
+	Thu, 15 Aug 2024 07:45:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723707909; cv=none; b=cb4zQYH7x0NkxXylO3jBOhg4Axk5uTJH0wzZOdg6H6/pXQdZOILz569UIo6HbMw+Mw7LsdZ4MLvBep7ud4R05K+dbHgnTtRQ6h/Hd38nwxnnuEK8nZIrVwLPymCjNGvMt1UmS4r+0RhbDTezZfMea+fVRutfLshQsxAKIuHJR0w=
+	t=1723707911; cv=none; b=TSkx/4prWHqU4odRRuRbuKUxLh8jrXAJHbMSEvUV4HSIgxylEjBjChPGGsCvN7lDp8zgHem21Q+h6OH2dKx+nvs9wvj9TZq5KALqw1gpYzpmf0lEmUvAHC6pkjrqmuPKDf/+Cyomb6+7V25ngFpjaLYkY79vskkRz8HGBTbVR+s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723707909; c=relaxed/simple;
-	bh=/mB/mlfQrIgD0frh/4DcIeHDLda+/2ewOJd7MQOI3yc=;
+	s=arc-20240116; t=1723707911; c=relaxed/simple;
+	bh=IDvYOCVCPbT/qeH11iEvMpxTuSmtxkTPmEqG9TXDLh8=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=qIHWSCWawB7XpR5Uhp7Qp2sjZiAGElhi9QnaEUl6TrwqCQJ10ZJbwtWg5BJbhohl1CeCR+ABShAIrSEYDNyAFpCDSy1RDe8zxH1O25DW/kyeyrVymMTO4Q+bgM97jFa2mFRheqYnG64FU94wfg7q1yGla/rJtWjo4n20kxUcvWI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MHkquwVv; arc=none smtp.client-ip=209.85.167.170
+	 MIME-Version; b=A0v4hXOAaLpEYrDG524Iqw3K7FsoYsKJJIl4bAv76zizFNQESxFPV52gHZwWqU7xr7OLvbvBL9qNqElKgSMKYMqBrUsfby8NaBXwKUyUs4hk2HXvPLb/1JFtaWXR8bhyAtwsWhur6eiklix9b29rDTidBBFpHYNVBWxVRHKg2oc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NLsGQcop; arc=none smtp.client-ip=209.85.210.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MHkquwVv"
-Received: by mail-oi1-f170.google.com with SMTP id 5614622812f47-3db504ab5f3so399843b6e.0;
-        Thu, 15 Aug 2024 00:45:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NLsGQcop"
+Received: by mail-pf1-f174.google.com with SMTP id d2e1a72fcca58-70d199fb3dfso509620b3a.3;
+        Thu, 15 Aug 2024 00:45:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723707907; x=1724312707; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1723707909; x=1724312709; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=bU0q1yZ+PWK8s4WWyTu7zQH49E1o8+TlEE7m0tArHx8=;
-        b=MHkquwVvxeeUUPD1TGK4h+ZMcn5JEfy0OKps0bYAvih9GksV7ejxh+T8pmUMkHrf3q
-         x7EE971f/Pdagxl/uahddXv3d0jb2zQ9PAnNvulpsJxI9ePHgTmQl2YsYW8FOjiPPomb
-         kRHluAoo+R3Y1O8C1wQito8JLeKYbUBfvj0yZKVQEWX5CSdIX9ys+bUY7I2dc9Vx/soU
-         Nb/AzGSVz2MAABkA8ld7p6q7P7hGn+DngYaq/tbCNHaTecrOAFxzxkfy49+Z9LBMf2GK
-         8QjGVqiwhEaZDGG0k/EkpycJ09d6jRz8RohWu16Fg+fguBHEjFDl1jeDQJIe6EFXhTn8
-         tfgQ==
+        bh=l06nKOKRPIo9HloPx88hF5Lof023RSJ43kuiUzqTLDE=;
+        b=NLsGQcopqInTAfsmVIN+OrSNpxcgqB7MsbS2VUMJVgGaGXBQXFdHa3MzN6b52DXLVh
+         A+tUfWA9SCTRHxdSfHR81kVAhDqhpph9bWpJZOmuoFL0tplZJOzgbMgCQLbN3fcEl2qP
+         bUvCK89yS0v0QG2AsSQuzDAB2eL+XbxwQZRLMtrV68srUZTFqDOv2vEjMWG4GLjgJ2Mn
+         DypBkGPFgcBikSq6ZZar/XW1TGtExg+8IQ0ysx6XW3suL9QGv9urG6J2+zOGV+XD5pPq
+         0zD0VXu5VF66xSrAoK8yAKXAt8/BWJ6q1K77OfziT6caHclikHpl9Wn7RPJWUmk1OSoE
+         PnEQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723707907; x=1724312707;
+        d=1e100.net; s=20230601; t=1723707909; x=1724312709;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=bU0q1yZ+PWK8s4WWyTu7zQH49E1o8+TlEE7m0tArHx8=;
-        b=LmVupO7nXLOVOPKGMO3OLbRPEuhbbuGwU32MOWZLsvB64g3VRgBuWOhlj/CoVqFm5a
-         q4AN4WV7qnbSk6hI2PyIcm8+Whbiep3m+XKbU+hkk9tn+9vSqU1dZASaRjnWEqWxRse8
-         DLUJW2DvLCakSERM4pc4RPSooAFZb9Mz0jZF8W6IXDoSjHcTgQlDD6wsFeQwxZaWXKGU
-         VWI1UvdGxUqBS76s6vDMzgQRFbex/wOhEMdduQCjxY13W+WpFI7aHdumQsbXs4qEAdM7
-         X4IhpcLT0qn1CvN6EU0YUMaLm11G/4lwTK/CjX48nIFaztmjyIeBubnGCoJRIsuD26PB
-         I4jA==
-X-Forwarded-Encrypted: i=1; AJvYcCXf+T9BI5kpFQDymzp3GCndSdyHPLuLbxB8jCjydBXu7saR5858jWxFCLjSDIQxcadtBE8t0YTOV9rDYQHU6wxQH6Cy7Cq+U2EoIT2H
-X-Gm-Message-State: AOJu0YxOms6vf2SDUnfPB6WYrwAoxjnhTWYPLYhbidl2Du41P2A0mZda
-	EcyIae7doaSP1e73Qelwr83+z6Cgz4+SWrGuaUZ3wkRYg4MQ5UBzqvHxeQ==
-X-Google-Smtp-Source: AGHT+IGf1Ia5UvOW1nviDnQ+6Olj1OBL2BE1pruYmmbR28+ThG7CXAV9Vh88PbbD3/YTOAWgOEGsCA==
-X-Received: by 2002:a05:6870:d60a:b0:25d:e3d:b441 with SMTP id 586e51a60fabf-26fe5be0ac4mr5839090fac.40.1723707906818;
-        Thu, 15 Aug 2024 00:45:06 -0700 (PDT)
+        bh=l06nKOKRPIo9HloPx88hF5Lof023RSJ43kuiUzqTLDE=;
+        b=fbmP9DsPuUCjDQwTMClak8Oik9JU1qaHUU1IgzP0GytVwLy0qfXZBak6zVzkyBwMbW
+         0G7bsOntx4/B6KzTvz3HhWspKVF61PDmpPpznkJ/Ali2xvugjWRuHZBvZ0rnnF61/NPJ
+         4+ijrhJDrhS6vF9o4wb4bv5QfmgljZvT9bTxMr3KeyIyAWkz9D+xRcw13b1WszakCHyG
+         XnW9ZBf13EhblDaGkLRfInJX2GD5qK/ClujxHJPjoD80N/KQ8dwLvHcw18E52orhs5MW
+         cqRqxrI7ki/i2iiEf1QqcvTYW7nU/TebtQ9y0Lo6OZk2f55v7e5CIX+Cb+If+sDqQE/R
+         rmXw==
+X-Forwarded-Encrypted: i=1; AJvYcCVXWbxYkcsJ8KVLVpJrzNrgT0r9fBeGNkMXPqIjCigTWgdFc1pIRp46E/1EkcoOWgv0unK4aMxzqH6v2tLG0Y0xkMzBf7nIxGql1kw4
+X-Gm-Message-State: AOJu0YzS8XeWS2zptmkIuZmte5bC1NbWusxhqKd/TkkJlAAWYBJB2fFH
+	D3EKnzYPetXMhN1sFtC2y/Q2ObMG55GKVsFhfgWqo8chknVBzmLOwaRtYg==
+X-Google-Smtp-Source: AGHT+IHGNIWz3NPAKuxFCFBnV6PN4X0LYw6p9V1/mKoQgIG6Wk21ZTWjGkwb8gd0agiV5yzBDFvdfw==
+X-Received: by 2002:a05:6a20:49a1:b0:1c8:ed18:b552 with SMTP id adf61e73a8af0-1c8ed18b57dmr4349601637.2.1723707909087;
+        Thu, 15 Aug 2024 00:45:09 -0700 (PDT)
 Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-7127add721dsm584767b3a.42.2024.08.15.00.45.04
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-7127add721dsm584767b3a.42.2024.08.15.00.45.07
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 15 Aug 2024 00:45:06 -0700 (PDT)
+        Thu, 15 Aug 2024 00:45:08 -0700 (PDT)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-nilfs@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 1/4] nilfs2: add support for FS_IOC_GETUUID
-Date: Thu, 15 Aug 2024 16:44:05 +0900
-Message-Id: <20240815074408.5550-2-konishi.ryusuke@gmail.com>
+Subject: [PATCH 2/4] nilfs2: add support for FS_IOC_GETFSSYSFSPATH
+Date: Thu, 15 Aug 2024 16:44:06 +0900
+Message-Id: <20240815074408.5550-3-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240815074408.5550-1-konishi.ryusuke@gmail.com>
 References: <20240815074408.5550-1-konishi.ryusuke@gmail.com>
@@ -70,28 +70,28 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Expose the UUID of a file system instance using the super_set_uuid
-helper and support the FS_IOC_GETUUID ioctl.
+Use the standard helper super_set_sysfs_name_bdev() to give the sysfs
+subpath of the filesystem for the FS_IOC_GETFSSYSFSPATH ioctl.
+
+For nilfs2, it will output "nilfs2/<dev>".
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/nilfs2/super.c | 3 +++
- 1 file changed, 3 insertions(+)
+ fs/nilfs2/super.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index e835e1f5a712..167050b3ce7e 100644
+index 167050b3ce7e..76e35e6773d1 100644
 --- a/fs/nilfs2/super.c
 +++ b/fs/nilfs2/super.c
-@@ -1063,6 +1063,9 @@ nilfs_fill_super(struct super_block *sb, struct fs_context *fc)
- 	if (err)
- 		goto failed_nilfs;
+@@ -1065,6 +1065,7 @@ nilfs_fill_super(struct super_block *sb, struct fs_context *fc)
  
-+	super_set_uuid(sb, nilfs->ns_sbp[0]->s_uuid,
-+		       sizeof(nilfs->ns_sbp[0]->s_uuid));
-+
+ 	super_set_uuid(sb, nilfs->ns_sbp[0]->s_uuid,
+ 		       sizeof(nilfs->ns_sbp[0]->s_uuid));
++	super_set_sysfs_name_bdev(sb);
+ 
  	cno = nilfs_last_cno(nilfs);
  	err = nilfs_attach_checkpoint(sb, cno, true, &fsroot);
- 	if (err) {
 -- 
 2.34.1
 
