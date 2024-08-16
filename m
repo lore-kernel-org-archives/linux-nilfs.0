@@ -1,64 +1,64 @@
-Received: from mail-oo1-f47.google.com (mail-oo1-f47.google.com [209.85.161.47])
+Received: from mail-oi1-f175.google.com (mail-oi1-f175.google.com [209.85.167.175])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9624712BF32;
-	Fri, 16 Aug 2024 07:43:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72DF812D758;
+	Fri, 16 Aug 2024 07:43:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723794215; cv=none; b=QUKUSxysIOekmPzamtajbOrBx/rzC9NQulUzdIQjtDjv4lYzN2pRwJb/7GAyU7oLr0Y+PB4uo8UfsCOvwXVTx3No0hQTdDBXkrKhJuAqvBUyrIDfjPESZUdNOCU1/qzCHcOrTfPGFwG+3EtATl5VwR68qgYj3BJmKEVIwoubT+M=
+	t=1723794217; cv=none; b=k2GxSZxxJWuIf3dIHXfmkvEXAqTMnRc/yA/LDZw0Jcol69baqXCUr263zDC3bjzMzIm1iIsHCDt9Bcle+QkzVeNmuCbQNgOBmE8nhsh4orF9fRH5nUO4G5rh/FXD737t2pdFEY83Zc2icKeubNrD+ZjKpsLFpnHOCslIkrRGCU0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723794215; c=relaxed/simple;
-	bh=QkJcD+/7+feE3IKtKVd5MY7QxZ35Ciq4ku4FJsISGwg=;
+	s=arc-20240116; t=1723794217; c=relaxed/simple;
+	bh=0O3wDAmTm2R1VMrqJvvg3nYqYNOHRJm6KgJ2d0woyj0=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=LH3svkCUW1JzUyGDTw7GHbYx0/2bApbHxDSpXJHp9STn/wFSiO598vbVIA7I4vzHbCo+lydo0rrLaDl4nZ5pinMJ8q54sOdE5kl9cdkh9zhg5GaT2M0ZoWPrGZILatAavFvssOjhnT0Y1OpFtbgh3uRqnNeOKPALQfnqRFAphec=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jOLfe1Ku; arc=none smtp.client-ip=209.85.161.47
+	 MIME-Version; b=JLamBFa8TrMxpPzTBNBW5STLtIh3+xbhpqwh8VswiEbA+dk17PkRZ7hkC8xmJH4PHXjCnBNZyF70Tix6NqY0FpG47L/9v1eG5yMnU++0p2ribSztzPVpflNT7JCgaezWxm0A2mpm4vMs0XVAyFgVSHa+bsyOTuJw1haSocAKw/0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Qna0m8lr; arc=none smtp.client-ip=209.85.167.175
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jOLfe1Ku"
-Received: by mail-oo1-f47.google.com with SMTP id 006d021491bc7-5d5bb03fe42so994043eaf.3;
-        Fri, 16 Aug 2024 00:43:33 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Qna0m8lr"
+Received: by mail-oi1-f175.google.com with SMTP id 5614622812f47-3db14339fb0so991916b6e.2;
+        Fri, 16 Aug 2024 00:43:35 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723794212; x=1724399012; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1723794214; x=1724399014; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=f6eyKXO4gQ7WsuUsRihPfatUBDrlwvh2bJ1+YnjG9XA=;
-        b=jOLfe1Kuu2UKVuJ5W0HIvh3D2rHxWQ3f1buc0IDUkIcMKQDLP80l73HjmPBvkTDe0j
-         NyUCojBueuxJkZOlgqlf6XCFSeDwt8uOSsEPZeQYHmM+V/BP5EIuEhaTkE291yMqqMDw
-         vtDnUxKxKIW0McZAwHnq3ryNXyzjj3dTItJPuEn9OKCIFHV4JHZhXV5HBny9YLhsXx7q
-         Y5N62v6luAPeUBPSwXLzEJbSRkQZ2TvudDEUDIL2D3DYOKOcSvEt6XKkhIKKKP7B4CpH
-         uG1IHGWwLhcXWVs4b1AJnAYCemjW9wEq5yPucR/Ei/gI3SS5R8uzRBJs06e6ajSRks9j
-         FusQ==
+        bh=Tkr4pPScm9JM4FL7Xb5OEIFIgdaIIjYg1Mhw7IU/3oY=;
+        b=Qna0m8lrDF2ia+AthA0KKRDuyXZCfMBuagZIqtjZq5j/d9d5xm+jc4x/kRBalYdQUt
+         KlK2aNlDpALJ/6Q+Bo/dNmPN9yLHHpBOmFTi7QeKlVuZ5rTOhivU4KdmQh6xHc5v8XZP
+         X8w8m7c1fFMJPPsUDNIQ7SQKTW5Sbe1ymhWx8u1r0yzYL8zZ4VIIr4T9AlN3BZaDoI+L
+         TtyQMfnVTWGp5fV5Skynr6d1HMG3n2h+4Qi/vXEY0Xt8fHTvBsp+Q9fySR+Et6yPa2Sg
+         FjRfk4xUkQPWMyZx8DxvE+1xpNDWHyh0esGhyFL7H5/P087/0RmzJe8QxMjTvFNrhhbp
+         gsLQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723794212; x=1724399012;
+        d=1e100.net; s=20230601; t=1723794214; x=1724399014;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=f6eyKXO4gQ7WsuUsRihPfatUBDrlwvh2bJ1+YnjG9XA=;
-        b=Ym2OIVef5N4jMZ9tAMIus9f8yF636WqVlpYxWcc2qY2Pdax9jowMCuCJPQyeob+bBb
-         Vcln2OjMuBp5cliSxmr+t6BNuVIfkDgiwUI1PJcM3ov0Amzu8MzlrT2tbWXdc98fiz1X
-         kNYrv01OC7hli6OxgLGjlvN2XlRHT2ZFrFRjjwa+jhmzf1FoKPX1s6krNa308dfin7Wl
-         mZR//VZ7B6v4Ua0yECLcrtqPYWoZ4i5stcP9jpKViXPsLIjX2BWY6eUa4bccRI1O01eK
-         YuglwoeeZ8+EliZn6NUHIAqYKEXIv159x5M3gLN9sIPMtYDIA8PHu8DOQxVYIQgx+rDr
-         rxBg==
-X-Forwarded-Encrypted: i=1; AJvYcCVQ9LHDOyAP+Z0FXPlnHVAc/S22nhV+KaK+GUxbOwPa+k/pQWpdjgEf4nfy4RjSBqOTlFd+xZrFu51GRlPreA2T2aHCfbYiZ2Gro+cX
-X-Gm-Message-State: AOJu0Ywx4kfFedHG1f5OhocsON8tANTQ7J4aB27d6EvLu3iyVS2UmqHl
-	4msiqzq/nH5HKi6ajrAxqr8P/vOUN4Uld9ck2fq8sJ55seBOf9GCvGpAsg==
-X-Google-Smtp-Source: AGHT+IHhsZA0iQUnIsJIWt6Xqia6sfSohcfChNNJ0cALOZccgegDiKNxUuL/bSfLoYMbuclcynQPPg==
-X-Received: by 2002:a05:6870:5687:b0:254:a09c:6ddf with SMTP id 586e51a60fabf-2701c3f7b34mr2314519fac.24.1723794212377;
-        Fri, 16 Aug 2024 00:43:32 -0700 (PDT)
+        bh=Tkr4pPScm9JM4FL7Xb5OEIFIgdaIIjYg1Mhw7IU/3oY=;
+        b=j0ArYZs1fa8IWkw1gnw/pRXNfabXVs5unOagOA2wr3wdpfgQkuf509UB+B4Nni2aqT
+         u+nsHPOEAMZcqcuzuXbvoYN0s0gIakD4OJ2o5xvTrO6w6K088KSrfIjW2xn7qRjooDN1
+         Sx/ANX8z25bO+ZfjDE1pdicXekeZKREmTzXH5uWLAoPJjxsg4s5M2Lrk4K1UUSvEF4c/
+         IiJ1bCDZkClbDdzDL4zLM5tTuC7A5pPekiyeZYEijs+fE3ckWvTiCwh1AbOV8S/f37kF
+         sJCKL2dXHU2u9iKRMrLU/3OMxAXUit9toVsrCxKPTU1w+7AO1KfcHvjle7Y3x80VfVWT
+         sysg==
+X-Forwarded-Encrypted: i=1; AJvYcCUinRvSGsJ+1T/H/0WUKpec9zrPQ0OvPCmDpTdRdhzrTYF+GmF6qgGTtyW2nGu8f0mtrKnrnFJqWQ1FKiOo+HukZMXXan8vLX21ZQw8
+X-Gm-Message-State: AOJu0Yzc+17fnkBfiXdc1OLeR+kO7Q7IucTL4S4Ygh4sLyL8VjtB1QoB
+	hEhvHq2omY+6TfPQvw88IH01lG/3LdVy7gnNhLsqac4GtnbXoRAiTdf/FQ==
+X-Google-Smtp-Source: AGHT+IGMu8hARPHej8oEN2vm6zpj/KqMKT81sLaIr6ulqQ1zduObVayQj2yRqUUChAcfsCZIR9in5A==
+X-Received: by 2002:a05:6808:1513:b0:3d5:5fbe:b2fa with SMTP id 5614622812f47-3dd3ae00e4amr1937514b6e.35.1723794214503;
+        Fri, 16 Aug 2024 00:43:34 -0700 (PDT)
 Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-7c6b61e7c7asm2365971a12.45.2024.08.16.00.43.30
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-7c6b61e7c7asm2365971a12.45.2024.08.16.00.43.32
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 16 Aug 2024 00:43:31 -0700 (PDT)
+        Fri, 16 Aug 2024 00:43:33 -0700 (PDT)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-nilfs@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 1/8] nilfs2: add missing argument description for __nilfs_error()
-Date: Fri, 16 Aug 2024 16:43:12 +0900
-Message-Id: <20240816074319.3253-2-konishi.ryusuke@gmail.com>
+Subject: [PATCH 2/8] nilfs2: add missing argument descriptions for ioctl-related helpers
+Date: Fri, 16 Aug 2024 16:43:13 +0900
+Message-Id: <20240816074319.3253-3-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240816074319.3253-1-konishi.ryusuke@gmail.com>
 References: <20240816074319.3253-1-konishi.ryusuke@gmail.com>
@@ -70,36 +70,72 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add missing argument description to __nilfs_error function and remove
-the following warnings from kernel-doc script output:
+Add missing argument descriptions and return value information to the
+kernel-doc comments for ioctl helper functions, and eliminate the
+following warnings output by the kernel-doc script:
 
- fs/nilfs2/super.c:121: warning: Function parameter or struct member 'sb'
-  not described in '__nilfs_error'
- fs/nilfs2/super.c:121: warning: Function parameter or struct member
-  'function' not described in '__nilfs_error'
- fs/nilfs2/super.c:121: warning: Function parameter or struct member 'fmt'
-  not described in '__nilfs_error'
+ fs/nilfs2/ioctl.c:120: warning: Function parameter or struct member
+  'dentry' not described in 'nilfs_fileattr_get'
+ fs/nilfs2/ioctl.c:120: warning: Function parameter or struct member 'fa'
+  not described in 'nilfs_fileattr_get'
+ fs/nilfs2/ioctl.c:133: warning: Function parameter or struct member 'idmap'
+  not described in 'nilfs_fileattr_set'
+ fs/nilfs2/ioctl.c:133: warning: Function parameter or struct member
+  'dentry' not described in 'nilfs_fileattr_set'
+ fs/nilfs2/ioctl.c:133: warning: Function parameter or struct member 'fa'
+  not described in 'nilfs_fileattr_set'
+ fs/nilfs2/ioctl.c:164: warning: Function parameter or struct member 'inode'
+  not described in 'nilfs_ioctl_getversion'
+ fs/nilfs2/ioctl.c:164: warning: Function parameter or struct member 'argp'
+  not described in 'nilfs_ioctl_getversion'
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/nilfs2/super.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ fs/nilfs2/ioctl.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 76e35e6773d1..8eb8dbc9f51c 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -105,6 +105,10 @@ static void nilfs_set_error(struct super_block *sb)
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 297989e51ee6..fa77f78df681 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -115,7 +115,11 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
+ }
  
  /**
-  * __nilfs_error() - report failure condition on a filesystem
-+ * @sb:       super block instance
-+ * @function: name of calling function
-+ * @fmt:      format string for message to be output
-+ * @...:      optional arguments to @fmt
-  *
-  * __nilfs_error() sets an ERROR_FS flag on the superblock as well as
-  * reporting an error message.  This function should be called when
+- * nilfs_fileattr_get - ioctl to support lsattr
++ * nilfs_fileattr_get - retrieve miscellaneous file attributes
++ * @dentry: the object to retrieve from
++ * @fa:     fileattr pointer
++ *
++ * Return: always 0 as success.
+  */
+ int nilfs_fileattr_get(struct dentry *dentry, struct fileattr *fa)
+ {
+@@ -127,7 +131,12 @@ int nilfs_fileattr_get(struct dentry *dentry, struct fileattr *fa)
+ }
+ 
+ /**
+- * nilfs_fileattr_set - ioctl to support chattr
++ * nilfs_fileattr_set - change miscellaneous file attributes
++ * @idmap:  idmap of the mount
++ * @dentry: the object to change
++ * @fa:     fileattr pointer
++ *
++ * Return: 0 on success, or a negative error code on failure.
+  */
+ int nilfs_fileattr_set(struct mnt_idmap *idmap,
+ 		       struct dentry *dentry, struct fileattr *fa)
+@@ -160,6 +169,10 @@ int nilfs_fileattr_set(struct mnt_idmap *idmap,
+ 
+ /**
+  * nilfs_ioctl_getversion - get info about a file's version (generation number)
++ * @inode: inode object
++ * @argp:  userspace memory where the generation number of @inode is stored
++ *
++ * Return: 0 on success, or %-EFAULT on error.
+  */
+ static int nilfs_ioctl_getversion(struct inode *inode, void __user *argp)
+ {
 -- 
 2.34.1
 
