@@ -1,63 +1,67 @@
-Received: from mail-oa1-f43.google.com (mail-oa1-f43.google.com [209.85.160.43])
+Received: from mail-oo1-f47.google.com (mail-oo1-f47.google.com [209.85.161.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D01C04F602;
-	Fri, 16 Aug 2024 07:43:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9624712BF32;
+	Fri, 16 Aug 2024 07:43:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1723794213; cv=none; b=T3PVPeCvgejizbVUR19ritBKYW2aDZxoYoQwdnh8iOcSMc5jJcGYMPzqHgQhg+F4oy70rakjKamPlSMP+Ifs0U4EDGroWClZZB3v/erCJPUBeo+LdH5AnFH18462S5yNGlsdl3pbzfi1EI8B25Ck9E/hu7YDQ8Px9JjdIQXQGPs=
+	t=1723794215; cv=none; b=QUKUSxysIOekmPzamtajbOrBx/rzC9NQulUzdIQjtDjv4lYzN2pRwJb/7GAyU7oLr0Y+PB4uo8UfsCOvwXVTx3No0hQTdDBXkrKhJuAqvBUyrIDfjPESZUdNOCU1/qzCHcOrTfPGFwG+3EtATl5VwR68qgYj3BJmKEVIwoubT+M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1723794213; c=relaxed/simple;
-	bh=zaApHtQg2oSp+QYGp9b1CE8d7V38jbZLbHqogLU+glc=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=oh55VpMSlBi7Vj0gtKqFN2gz7ExylnaPmy+BgMEN+27wkX7CH8YbjIDokd+Ud68reeZ7CsRsx/Xw7UXvMYOGO1rhQAybkxQUxioYlE5pqnsMrwLYrf0g1Rqd4FaTkZOkTNiUOTE1v19lnMq4oyu7ylNI2IHFb50BmqLUaSbxVTg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Z75pRi7s; arc=none smtp.client-ip=209.85.160.43
+	s=arc-20240116; t=1723794215; c=relaxed/simple;
+	bh=QkJcD+/7+feE3IKtKVd5MY7QxZ35Ciq4ku4FJsISGwg=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=LH3svkCUW1JzUyGDTw7GHbYx0/2bApbHxDSpXJHp9STn/wFSiO598vbVIA7I4vzHbCo+lydo0rrLaDl4nZ5pinMJ8q54sOdE5kl9cdkh9zhg5GaT2M0ZoWPrGZILatAavFvssOjhnT0Y1OpFtbgh3uRqnNeOKPALQfnqRFAphec=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jOLfe1Ku; arc=none smtp.client-ip=209.85.161.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z75pRi7s"
-Received: by mail-oa1-f43.google.com with SMTP id 586e51a60fabf-27010ae9815so780596fac.2;
-        Fri, 16 Aug 2024 00:43:31 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jOLfe1Ku"
+Received: by mail-oo1-f47.google.com with SMTP id 006d021491bc7-5d5bb03fe42so994043eaf.3;
+        Fri, 16 Aug 2024 00:43:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1723794210; x=1724399010; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=jpU1zDE8vWcy5g8XvrytGvPiuUH7nyo8mC+3JbG9J0k=;
-        b=Z75pRi7skihqgrUhIx3zHYr3LfeAPcQu5pdUuewzXSjdO3WP2HYSZXy8D7i9H9cNmh
-         sOO2KqOt3ZiN+3qYZgK5RK813Ie4oULlaA+gJpdIxTq57ywZSOMpJ2VWOiyZdSGCVLIO
-         XUsMswpMbd/efdw5gtLZ6/W1oAN2vuWBQ6u50Ib8m4rulpK7zIRVqPm0THuPdJzFeQS8
-         xnSO+Jmn7Qhrhu5+cIqgUnAdjQkCqCqFjtm4o5OuycRaZy/DynaU9zrINCumg62ekE9+
-         8oQEkbbz2U+RarWyVNqinPc3SQulIBGij3qN9tvkr+lU0WHXIJEm0PCY2Cwj7b58P/37
-         nqCQ==
+        d=gmail.com; s=20230601; t=1723794212; x=1724399012; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=f6eyKXO4gQ7WsuUsRihPfatUBDrlwvh2bJ1+YnjG9XA=;
+        b=jOLfe1Kuu2UKVuJ5W0HIvh3D2rHxWQ3f1buc0IDUkIcMKQDLP80l73HjmPBvkTDe0j
+         NyUCojBueuxJkZOlgqlf6XCFSeDwt8uOSsEPZeQYHmM+V/BP5EIuEhaTkE291yMqqMDw
+         vtDnUxKxKIW0McZAwHnq3ryNXyzjj3dTItJPuEn9OKCIFHV4JHZhXV5HBny9YLhsXx7q
+         Y5N62v6luAPeUBPSwXLzEJbSRkQZ2TvudDEUDIL2D3DYOKOcSvEt6XKkhIKKKP7B4CpH
+         uG1IHGWwLhcXWVs4b1AJnAYCemjW9wEq5yPucR/Ei/gI3SS5R8uzRBJs06e6ajSRks9j
+         FusQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1723794210; x=1724399010;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=jpU1zDE8vWcy5g8XvrytGvPiuUH7nyo8mC+3JbG9J0k=;
-        b=NVF5aOaPLeW4fuNznRLOvLKuEb069L56mkTmKrAQMwQCPOnUuoe69UcJXFIcU974/F
-         DZiACR7hJJOPSDojNlmXJXsrI49y/7KGvV0hU50lg23ZonpUhOSFMpdNTBKoACG8q/2e
-         CMlfZe4s+yICws+NCiEvK/RX3WAZFb3XnLi8avSGUOUYmhVFndNUIfjHR76TSKkbcYNM
-         4vqTvRmlR/V7FX5bVeHlwVA3jBHcMf/vwWN+jaIl/O6ImacikjPcm5w/QX51LK4HrcKy
-         LFnFJK1cqNKXGOjmuMjDdhkc3brPZOLG4Suz9Iy9c6a9C7OBza41IpTVb21LnLInQqca
-         myJg==
-X-Forwarded-Encrypted: i=1; AJvYcCXab/df3yaPwYsdDoCwRFH4z9N1aeH9dyTpGf+ddZfDX2d1664znhMbxzJIqBXlPfCuWy/hIXKPPWLAq+pTwoYYolY0Q56e1ea1Iq+D
-X-Gm-Message-State: AOJu0Yw48/2ayLeV0m/gFSGEXDWqA6ZXa24INYc+QWSi3K5aL2HXBc9u
-	uuG5B3dCokYhlOwXpWe+m4FTvFTT7zh62CHtuH7bX2uFvgUgLK1rxuYDxQ==
-X-Google-Smtp-Source: AGHT+IHSkjb0amXBZJyLteOFF1JfTwiarpRF6PbhvIghe9GeACLdCDy6AyqH/FWVADhs3O2ARwvfqA==
-X-Received: by 2002:a05:6870:5254:b0:261:9c7:a0bb with SMTP id 586e51a60fabf-2701c590a08mr2157662fac.48.1723794210205;
-        Fri, 16 Aug 2024 00:43:30 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1723794212; x=1724399012;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=f6eyKXO4gQ7WsuUsRihPfatUBDrlwvh2bJ1+YnjG9XA=;
+        b=Ym2OIVef5N4jMZ9tAMIus9f8yF636WqVlpYxWcc2qY2Pdax9jowMCuCJPQyeob+bBb
+         Vcln2OjMuBp5cliSxmr+t6BNuVIfkDgiwUI1PJcM3ov0Amzu8MzlrT2tbWXdc98fiz1X
+         kNYrv01OC7hli6OxgLGjlvN2XlRHT2ZFrFRjjwa+jhmzf1FoKPX1s6krNa308dfin7Wl
+         mZR//VZ7B6v4Ua0yECLcrtqPYWoZ4i5stcP9jpKViXPsLIjX2BWY6eUa4bccRI1O01eK
+         YuglwoeeZ8+EliZn6NUHIAqYKEXIv159x5M3gLN9sIPMtYDIA8PHu8DOQxVYIQgx+rDr
+         rxBg==
+X-Forwarded-Encrypted: i=1; AJvYcCVQ9LHDOyAP+Z0FXPlnHVAc/S22nhV+KaK+GUxbOwPa+k/pQWpdjgEf4nfy4RjSBqOTlFd+xZrFu51GRlPreA2T2aHCfbYiZ2Gro+cX
+X-Gm-Message-State: AOJu0Ywx4kfFedHG1f5OhocsON8tANTQ7J4aB27d6EvLu3iyVS2UmqHl
+	4msiqzq/nH5HKi6ajrAxqr8P/vOUN4Uld9ck2fq8sJ55seBOf9GCvGpAsg==
+X-Google-Smtp-Source: AGHT+IHhsZA0iQUnIsJIWt6Xqia6sfSohcfChNNJ0cALOZccgegDiKNxUuL/bSfLoYMbuclcynQPPg==
+X-Received: by 2002:a05:6870:5687:b0:254:a09c:6ddf with SMTP id 586e51a60fabf-2701c3f7b34mr2314519fac.24.1723794212377;
+        Fri, 16 Aug 2024 00:43:32 -0700 (PDT)
 Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-7c6b61e7c7asm2365971a12.45.2024.08.16.00.43.28
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-7c6b61e7c7asm2365971a12.45.2024.08.16.00.43.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 16 Aug 2024 00:43:29 -0700 (PDT)
+        Fri, 16 Aug 2024 00:43:31 -0700 (PDT)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-nilfs@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 0/8] nilfs2: clean up kernel-doc warnings
-Date: Fri, 16 Aug 2024 16:43:11 +0900
-Message-Id: <20240816074319.3253-1-konishi.ryusuke@gmail.com>
+Subject: [PATCH 1/8] nilfs2: add missing argument description for __nilfs_error()
+Date: Fri, 16 Aug 2024 16:43:12 +0900
+Message-Id: <20240816074319.3253-2-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20240816074319.3253-1-konishi.ryusuke@gmail.com>
+References: <20240816074319.3253-1-konishi.ryusuke@gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -66,43 +70,36 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Hi Andrew, please add this series to the queue for the next cycle.
+Add missing argument description to __nilfs_error function and remove
+the following warnings from kernel-doc script output:
 
-This series fixes a number of formatting issues in kernel doc comments
-that were detected as warnings by the kernel-doc script, making
-violations more noticeable when adding or modifying kernel doc.
+ fs/nilfs2/super.c:121: warning: Function parameter or struct member 'sb'
+  not described in '__nilfs_error'
+ fs/nilfs2/super.c:121: warning: Function parameter or struct member
+  'function' not described in '__nilfs_error'
+ fs/nilfs2/super.c:121: warning: Function parameter or struct member 'fmt'
+  not described in '__nilfs_error'
 
-There are still warnings output by "kernel-doc -Wall", but they are
-widespread, so I plan to fix them at another time while considering
-priorities.
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+ fs/nilfs2/super.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-Thanks,
-Ryusuke Konishi
-
-Ryusuke Konishi (8):
-  nilfs2: add missing argument description for __nilfs_error()
-  nilfs2: add missing argument descriptions for ioctl-related helpers
-  nilfs2: improve kernel-doc comments for b-tree node helpers
-  nilfs2: fix incorrect kernel-doc declaration of nilfs_palloc_req
-    structure
-  nilfs2: add missing description of nilfs_btree_path structure
-  nilfs2: describe the members of nilfs_bmap_operations structure
-  nilfs2: fix inconsistencies in kernel-doc comments in segment.h
-  nilfs2: fix missing initial short descriptions of kernel-doc comments
-
- fs/nilfs2/alloc.h   |  2 +-
- fs/nilfs2/bmap.c    |  2 +-
- fs/nilfs2/bmap.h    | 15 ++++++++++-
- fs/nilfs2/btnode.c  | 63 ++++++++++++++++++++++++++++++++++++++-------
- fs/nilfs2/btree.h   |  1 +
- fs/nilfs2/cpfile.c  | 32 +++++++++++------------
- fs/nilfs2/dat.c     | 17 +++++-------
- fs/nilfs2/ioctl.c   | 17 ++++++++++--
- fs/nilfs2/segment.h |  7 ++---
- fs/nilfs2/sufile.c  | 20 ++++++--------
- fs/nilfs2/super.c   |  4 +++
- 11 files changed, 125 insertions(+), 55 deletions(-)
-
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 76e35e6773d1..8eb8dbc9f51c 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -105,6 +105,10 @@ static void nilfs_set_error(struct super_block *sb)
+ 
+ /**
+  * __nilfs_error() - report failure condition on a filesystem
++ * @sb:       super block instance
++ * @function: name of calling function
++ * @fmt:      format string for message to be output
++ * @...:      optional arguments to @fmt
+  *
+  * __nilfs_error() sets an ERROR_FS flag on the superblock as well as
+  * reporting an error message.  This function should be called when
 -- 
 2.34.1
 
