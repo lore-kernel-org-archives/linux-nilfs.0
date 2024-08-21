@@ -1,64 +1,64 @@
-Received: from mail-pj1-f46.google.com (mail-pj1-f46.google.com [209.85.216.46])
+Received: from mail-pg1-f174.google.com (mail-pg1-f174.google.com [209.85.215.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE51C1B6550;
-	Wed, 21 Aug 2024 15:46:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 42F311B78FB;
+	Wed, 21 Aug 2024 15:46:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724255198; cv=none; b=ucpkdcXtpWvIrhulTN//iCzroVDwGHoBfXxVAg88Ipxpzy9IymrfcT+vNcLUwAc2kVvC3iejICCjEytmXAF7MPSyPoUZ8cEvhBZR25fMCEnzteI/ApXE9rzjWqAh1KXrwAPTuwc5eEhhJmkl3o9cZUxK9ICWK2Yz+Gtrb3hXWXA=
+	t=1724255200; cv=none; b=bviQSqsD/6fBo3sES5/v9R/5bOGSRP7YY9zChfmfEntAlQjJixh1dstB8FTXPMEKYbHyLqV+IM0tdZGPHPyz9Wy3R2hfP0gNLldiXWKTT3Q8nsTbt6yUbLqITXN7kmzTEoS4lStnU2CkrJooEW0Wh2xLJ8xWkizyR0MVEO7RUJY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724255198; c=relaxed/simple;
-	bh=tievpw9Idzq/oDwpY74VDYg1KuGt/WQKEAFeRIU6Tw0=;
+	s=arc-20240116; t=1724255200; c=relaxed/simple;
+	bh=dyHwrmDque8X9gPKXwTCf9t+4xdKw1IeaYWHDDK6ZNs=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=trrBeLimGRGhWBi4rprHdWq6MZjc4R1H2sYtT+XZ2alQqLTiuIGCZjNb7VxsiPpt1b1d/xi7PNArQgzt6F1DuFLNQFTxqfJCS92dd8yWezmqoXGByHIL3aPoVSEcTom+ByNBCWXbZHA0j4XvYOW3jWqyzDTGOIGuWwofuniC8Ro=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LPhsF0st; arc=none smtp.client-ip=209.85.216.46
+	 MIME-Version; b=eFC4OdALYnZ8c2RMiYSV78Wi41sho7dMjcfzuS8VC1+8tEkYD8LBAfj12W/fALaWMSFKgj3yevHocgww49abqqFt8HPDSKSSVhugSnsBhYsHCGJso2Tsb+86FryvXhe6okS07aCF2AelrfZVl3fMzFHGai8O3KpEuogqn85XcWE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Z7DliZKU; arc=none smtp.client-ip=209.85.215.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LPhsF0st"
-Received: by mail-pj1-f46.google.com with SMTP id 98e67ed59e1d1-2d3c08541cdso5089967a91.2;
-        Wed, 21 Aug 2024 08:46:36 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z7DliZKU"
+Received: by mail-pg1-f174.google.com with SMTP id 41be03b00d2f7-7c1324be8easo706314a12.1;
+        Wed, 21 Aug 2024 08:46:38 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724255196; x=1724859996; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1724255198; x=1724859998; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=eglKytNjuCU8vkKlyKNC2ri1I5cDFqQw1/9BtAZicU0=;
-        b=LPhsF0stKm3sDUbNF7Gs0QgFrEqCvgmsnxSSS1oPi3Ki1af3uTA2FlkESfqYMKtfAD
-         rBwQc2p3BvwUrQ6BCpo8BuJevakgslERrx4xKB5FvuMJuswqkStkHa/Tk4/FGlNEB7dG
-         2MgIwfGno35ffsjBn9BGbPUd+yBBJPx+TFXlZ+pJ1sSTQ/Jc0hSGs/xmNA8g7javxakb
-         1KfiVyJdNuRMXznlvOIjIB0JPMtJYSud7sxYShAY08JhylEffUMNBvhUUVhNkdNzNbNG
-         DV0OHbnRRFpW1PGQtSFKGpC4tLUBTEynawfGYHOI/UnEHRnTzHFhapLnWwsUwVeJEloZ
-         4YdQ==
+        bh=okyjJddQCAR4b4zTRnWTqLOmAFuejt6oQ+YBSC01fX4=;
+        b=Z7DliZKU4vlcZtcRYkQnSOVH07t9v8WWyGwWV5TKMLPYDP03ki3GsXZfmh3zN64M2o
+         HmrdvGyJ3miIGih7M9r88NyIlaDXjtAZfAeFPUSVdbC8cbFWQ+Kxx4Vg3ynLRQ9jhhwN
+         Ofjf6C7ssM7idhMoq2qzbFr2Ydb9zQmGNxwqNitYvl5oAhq9zRdxKAqCPp62SUuv3Ilq
+         E7fLY4d9O9PKOc9BTw5nwKgws3AfTNOoJZ2fkjFqoWhTM+B9nit0N5hDNw5onsXPMOKH
+         Zgwr3GIHWQ80Uq0gpRPzQBEC75AavLLPLR3n6nZUXTG/n+eVYHlS7CrqAKAwwbcZI7hm
+         saMw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724255196; x=1724859996;
+        d=1e100.net; s=20230601; t=1724255198; x=1724859998;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=eglKytNjuCU8vkKlyKNC2ri1I5cDFqQw1/9BtAZicU0=;
-        b=Qq1d78pwkERZFEHUjdouxmK3YBA8s2+aHyr+wc87zzl2OPZctMa3kTa9tSdQJA2KVg
-         ZpUj2IcADjGx2u0pMY3DRep/6OUEPLv9CFKAv0xzCKaKB3RpLwErLksYWsJHWTb1dteS
-         fp10WjsfMT+AhPxLELYFmNkSqeecchifiuh6Sdlafq97i4EJe2XnIs19zEQGob1x0x5K
-         e4MF0S7GB7xcAsLtk4sGiff6xXoqv70JpW97V/lI/UR5ruv5MOpCfFAM560d37B6L4Wv
-         nqj7nxmvLpeDBNCJ7zOALzcseu5avGFL4D4N0l/bvWbtc1t7F/WZuQA96te+Ah0rX+Du
-         hS9w==
-X-Forwarded-Encrypted: i=1; AJvYcCV+TZmC1io+zwzDZ0IjV3E+16NtHWW0xSDBm6gh+XZq3YUL6w7U7PEopyEv0J3RpBOB/e7kjXAryR6aitc=@vger.kernel.org
-X-Gm-Message-State: AOJu0YwG41zIppmSrNjytxwmXzL3vgelybVUKrNXNXIQxyqZKhvUahKA
-	aqOxAPxIzEXa97ccwDE1B110iGX/voxrwAv7qrBLI/aXb1fW3eme1A24wA==
-X-Google-Smtp-Source: AGHT+IHi5sDL4TxM47XCmRNFrC4fXQubFcUySiYsrocJ/D5FB87rcLO+Z3hXJNl/opQOg2gHqRtPjA==
-X-Received: by 2002:a17:90b:4f89:b0:2d3:dca0:89b7 with SMTP id 98e67ed59e1d1-2d5e99fb6d1mr3427976a91.3.1724255196035;
-        Wed, 21 Aug 2024 08:46:36 -0700 (PDT)
+        bh=okyjJddQCAR4b4zTRnWTqLOmAFuejt6oQ+YBSC01fX4=;
+        b=w9bcZGWlF4txU/ojty18sQrFq53P/witoXjsit7K4RbIRhMP183r9ALYJ3KYJCgXyp
+         luMBEnoAs/6wLOg2F/HWTUY/dfvBWjiUtaqVDIm2P0GA0sNd8eBHmeXy7QV3t279JAiN
+         JcDuS5X+MTxOsQIlx4UUAalHoPcsAhjVaUtKEcdn96UxRDCfeIZJ8AN4CFbwgPjdpw9D
+         lxtowo1cFrSZg/msjK5KIAabuxR4VBOVLW0MYzP423g7RSL2X/7MkWtI79b2+yBsqb2T
+         mXWOOWQxtpFWDFKOmM/vw0gKoTlOIkWdgqyWtcLsPiX7/xN3tikoPMAW3uKBOyMzn/lM
+         i2cA==
+X-Forwarded-Encrypted: i=1; AJvYcCXKWRiQy0X1iO/XM1rA/As+gbRtKnKJaN16/5I5PRMnqYeTMobIAHxHrpWXl3jbyeFJbklQgB+HnrY9eco=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxCIgqlr/zoapztNJ0QHlVxShqf74oVO01HdGEeRZ1+WF8vCmjj
+	dxylQntdXxBr5196sjhvVDItIgMkd2e8DONC7whe2fibUE4hnnlZ
+X-Google-Smtp-Source: AGHT+IGUe+42oaOCNfh33/iFC6htXHjHsWlSmbUzbWJNwInYx75OQd4Yv66ZzH9SsfOWE1yQ2RbblQ==
+X-Received: by 2002:a17:90b:4c8f:b0:2d3:c084:9d93 with SMTP id 98e67ed59e1d1-2d60a9c68b7mr60493a91.14.1724255198148;
+        Wed, 21 Aug 2024 08:46:38 -0700 (PDT)
 Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2d5eba2e538sm2021098a91.17.2024.08.21.08.46.34
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2d5eba2e538sm2021098a91.17.2024.08.21.08.46.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Aug 2024 08:46:35 -0700 (PDT)
+        Wed, 21 Aug 2024 08:46:37 -0700 (PDT)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-nilfs@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 2/5] nilfs2: treat missing cpfile header block as metadata corruption
-Date: Thu, 22 Aug 2024 00:46:24 +0900
-Message-Id: <20240821154627.11848-3-konishi.ryusuke@gmail.com>
+Subject: [PATCH 3/5] nilfs2: do not propagate ENOENT error from sufile during recovery
+Date: Thu, 22 Aug 2024 00:46:25 +0900
+Message-Id: <20240821154627.11848-4-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20240821154627.11848-1-konishi.ryusuke@gmail.com>
 References: <20240821154627.11848-1-konishi.ryusuke@gmail.com>
@@ -70,61 +70,43 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The cpfile, a metadata file that holds metadata for checkpoint management,
-also has statistical information in its first block, and if reading this
-block fails, it receives the internal code -ENOENT and returns that code
-to the callers.
+nilfs_sufile_free() returns the error code -ENOENT when the block
+where the segment usage should be placed does not exist (hole block
+case), but this error should not be propagated upwards to the mount
+system call.
 
-As with sufile, to prevent this -ENOENT from being propagated to system
-calls, return -EIO instead when reading the header block fails.
+In nilfs_prepare_segment_for_recovery(), one of the recovery steps
+during mount, nilfs_sufile_free() is used and may return -ENOENT as
+is, so in that case return -EINVAL instead.
 
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 ---
- fs/nilfs2/cpfile.c | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
+ fs/nilfs2/recovery.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index 9c8d531cffa7..f0ce37552446 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -125,10 +125,17 @@ static void nilfs_cpfile_block_init(struct inode *cpfile,
- 	}
- }
- 
--static inline int nilfs_cpfile_get_header_block(struct inode *cpfile,
--						struct buffer_head **bhp)
-+static int nilfs_cpfile_get_header_block(struct inode *cpfile,
-+					 struct buffer_head **bhp)
- {
--	return nilfs_mdt_get_block(cpfile, 0, 0, NULL, bhp);
-+	int err = nilfs_mdt_get_block(cpfile, 0, 0, NULL, bhp);
-+
-+	if (unlikely(err == -ENOENT)) {
-+		nilfs_error(cpfile->i_sb,
-+			    "missing header block in checkpoint metadata");
-+		err = -EIO;
+diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
+index 61e25a980f73..cd364cd26a97 100644
+--- a/fs/nilfs2/recovery.c
++++ b/fs/nilfs2/recovery.c
+@@ -433,8 +433,17 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
+ 	 * The next segment is invalidated by this recovery.
+ 	 */
+ 	err = nilfs_sufile_free(sufile, segnum[1]);
+-	if (unlikely(err))
++	if (unlikely(err)) {
++		if (err == -ENOENT) {
++			nilfs_err(sb,
++				  "checkpoint log inconsistency at block %llu (segment %llu): next segment %llu is unallocated",
++				  (unsigned long long)nilfs->ns_last_pseg,
++				  (unsigned long long)nilfs->ns_segnum,
++				  (unsigned long long)segnum[1]);
++			err = -EINVAL;
++		}
+ 		goto failed;
 +	}
-+	return err;
- }
  
- static inline int nilfs_cpfile_get_checkpoint_block(struct inode *cpfile,
-@@ -283,14 +290,9 @@ int nilfs_cpfile_create_checkpoint(struct inode *cpfile, __u64 cno)
- 
- 	down_write(&NILFS_MDT(cpfile)->mi_sem);
- 	ret = nilfs_cpfile_get_header_block(cpfile, &header_bh);
--	if (unlikely(ret < 0)) {
--		if (ret == -ENOENT) {
--			nilfs_error(cpfile->i_sb,
--				    "checkpoint creation failed due to metadata corruption.");
--			ret = -EIO;
--		}
-+	if (unlikely(ret < 0))
- 		goto out_sem;
--	}
-+
- 	ret = nilfs_cpfile_get_checkpoint_block(cpfile, cno, 1, &cp_bh);
- 	if (unlikely(ret < 0))
- 		goto out_header;
+ 	for (i = 1; i < 4; i++) {
+ 		err = nilfs_segment_list_add(head, segnum[i]);
 -- 
 2.34.1
 
