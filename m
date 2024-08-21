@@ -1,77 +1,101 @@
-Received: from mail-oi1-f178.google.com (mail-oi1-f178.google.com [209.85.167.178])
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3A591BA87C
-	for <linux-nilfs@vger.kernel.org>; Tue, 20 Aug 2024 17:39:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF95E1B1D68;
+	Wed, 21 Aug 2024 15:46:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724175589; cv=none; b=rS8dSkfru8ooJFCQczlHkdR17ty9+UDv7g8AlLwWQa4nveyRcYgF1goNWtKzxcmifl722JDiXDZ8bMz9UtJzRGiS3ijuEp29SdQ1q1zeGqK6QKIY97ZX+QrtbdRNiMqe/XXnoscKupK6ZfVSV07+7fIi7b9R4Qc/5HkUKxweycM=
+	t=1724255194; cv=none; b=BKdn9RahU1SW0IFtggvxFaMEhd7xtWwBjHAKNK+z4EoLZVTGC5WKecAWgiAfYArUDUq5tslcTXrq+pfgkGK/8hAth2UVoajX2IDSPVGkp7CiEmOTrUWy616iVvqgEixa5O+eN3oYiYU1gFAcG+yL/MUNfy4hAWREgvd3NNm0hdg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724175589; c=relaxed/simple;
-	bh=XfBa8gBGh5/VdEW6uW3HRVScp+RUTMj67wBueykQS9M=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=V/BnYwBvTtLivbUrVWBrndYBcXd/EBN1gLfcWLaINEGymUeyEhtoNEtVZLZYht4cTxYrZAPt0tl/n01J8aQDmufM6JOGdRFb8OjK+DWL+0RjwW4ayURWa0FQ2AZLCyWKOqTrQuY8K3brwQzEtSCzd7gZ/lJFBzLX6I1ne88iCZ0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HnAzaPC5; arc=none smtp.client-ip=209.85.167.178
+	s=arc-20240116; t=1724255194; c=relaxed/simple;
+	bh=q6kOuv7JmGx5f0uRi29l8qYMyWDFaKek+Zzbz3CBl0U=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=cJoGUaB3sOIZUHwun9bGg6lfuor7i3RnNRP3MwFUeQYMVA1qDjsr0dIbCFYMadbBfiAw34+SKNDtu4fgGxOl5Uwy71Z+mcJIsZ2IOjacEHUG/98bl2ZlxObka0VDefBeTgmy0cts7TsLZMoIoabueKFO1EfOuQaTgCd6q9KLiM8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gNYuhW3L; arc=none smtp.client-ip=209.85.216.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HnAzaPC5"
-Received: by mail-oi1-f178.google.com with SMTP id 5614622812f47-3db14339fb0so3585676b6e.2
-        for <linux-nilfs@vger.kernel.org>; Tue, 20 Aug 2024 10:39:47 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gNYuhW3L"
+Received: by mail-pj1-f41.google.com with SMTP id 98e67ed59e1d1-2cd5d6b2581so4811235a91.2;
+        Wed, 21 Aug 2024 08:46:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724175587; x=1724780387; darn=vger.kernel.org;
-        h=to:subject:message-id:date:reply-to:from:mime-version:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=XfBa8gBGh5/VdEW6uW3HRVScp+RUTMj67wBueykQS9M=;
-        b=HnAzaPC5gdLP/jHNSJ5t4NBQ70MYKIvHELMG61yW+tYyJMiMWA8DDWORGfHq6lb4sS
-         OqggQaTH1Q607Et6ciGbpblPbcE/SA/3yFteHSztfbeMTilAbyR+xm8DQ7qb68WBVjQp
-         Lo/po43UdI4LebksPm8dspLsweP0eZDW0AUydHFXbBq2dgZC8Iiq6B5rrEIUp4daK5Lp
-         k7+Rq8h5ORqdSHRPy/W/srpriPgmqDrgfeSlrwi+un1QwcWmVeWcwg48Vb1DYn2AndCG
-         tZSgoVftXAQFpRXEbpnjY0NSAopIatUJjytBM79a7KYxdP8IVezweQOhmf+SqIJ2DSqe
-         XWyg==
+        d=gmail.com; s=20230601; t=1724255192; x=1724859992; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=kDmBWhoAI1BJ7q9OkqxwWxT0egyDSchGz+xNu+LWMYM=;
+        b=gNYuhW3LvIARaJ+uCebtd07OfWnQhCxpNoqrur7qeePrsCb7kiSfqZDpI3JBliHc1H
+         pAc/QbU/KS0Ytr0NC5cbnWvau+BSMA7bGoVDbR4YSKJbm1kBKCOBaC66u6Vm4wCTM707
+         LsF7qaXMCY0IAb04V0cl+33uf1l1ZldvtzyX7ykiOwqFEbbGtZe6T8hrZcK8iCHmPhB4
+         9YJy4TTgl3Kn0c1O/75GSwHMWXKv6Z39c1RM55yqBG2Dc6yLA9wtWNXjotIEMUwMqPul
+         /vmXoPv2WbiuZsx0X/ZNMgU45nSJDj8j3/WwCZsdriPZj529nCvH6Hq1gpeIoMaqKZW5
+         jk8Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724175587; x=1724780387;
-        h=to:subject:message-id:date:reply-to:from:mime-version
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=XfBa8gBGh5/VdEW6uW3HRVScp+RUTMj67wBueykQS9M=;
-        b=prOof0Cb6XYcqvg8RPyKZMV7KkswL9RogbMCxZtDhE4QFoHTWEyb84Kb6XmT+ORlWR
-         UwxdSeK6EDx5CASU1u+Q4LGSreZURVRylT16n8QvgypE3rH0vQOzhaleSX6AJMUvaM2f
-         raf+wcK/bnMZaU8iS564zfTimMvZblnaFf6YqETN3XNMREZPXP2OtbTF9jZSS4amTuZx
-         gMYljT3Ylwtal765blNhdGcw3ICPnTXY2aqV5npGjnoKp/PCM+E4to/BXlV0pCqkKOi6
-         OKnPUzAk8XUY7MiVVOss5E+Yqw27CbIysAM+uTt2Zn1sVydHL4XNU4g/4elIEUOf5A1t
-         5jVw==
-X-Gm-Message-State: AOJu0Yx9GR7PCci2+bc0Byw8mH6GtbuJKGxTR8pw3CCyhg3fvQuzfqvZ
-	eweIoVUNJE+/3H+mNYe0GqY3nMFky2a5QqLkbJEyn+pTvkwCu9xfLTrLKKhhrW5h1RaUzWR05k9
-	DX23ohu5TiABbCmk1huugZxIX2laFng==
-X-Google-Smtp-Source: AGHT+IHGSbXCmZ9nJQDWY0orkt2MF9+x9p85dj6S0/oE4HwT/vdNmlF8gyqvYQAN5zaakp/Wu9vsG9Jy3ensx8I1ioo=
-X-Received: by 2002:a05:6808:30aa:b0:3db:1ca7:3618 with SMTP id
- 5614622812f47-3de1950b97cmr13110b6e.23.1724175586858; Tue, 20 Aug 2024
- 10:39:46 -0700 (PDT)
-Received: from 927538837578 named unknown by gmailapi.google.com with
- HTTPREST; Tue, 20 Aug 2024 10:39:46 -0700
+        d=1e100.net; s=20230601; t=1724255192; x=1724859992;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=kDmBWhoAI1BJ7q9OkqxwWxT0egyDSchGz+xNu+LWMYM=;
+        b=BpAf1OkYxj60ra907PlGFO1yU5BP/4eLmogQUYPVR9p7FekYimnKsru3lv7jIr3QF1
+         Dwvgvb8HKqNfs+7cCVAZwSvOJyM4en5Nvg81kzfZP+WYD/HIWz8hteujromx7QiczWkO
+         dZv1Hi8d6Ng+vDqCQwLgOmpI9UOLXYqe0lj/oOeoRDlHIVlP1JCLWJRL8NRSKxCKubDo
+         MnzKToeOlt4ZNqF44c/vomwe0J+scVyuqX++pSmpYbm+xvyF0d8KtAW7g2Fp98lAWx/k
+         w7uOKMh7ckjNJ69ctOjNfwOwJrxVGGvi/+QuZeRQ2/h5q+NpRfAXlwjbYo6JVHK0fUB4
+         /5/Q==
+X-Forwarded-Encrypted: i=1; AJvYcCVsv6TDW0mcjPG6tUAWcpLY/AgPygF2++Ur1vyHj/+irQ9d0gHKD8q7mPQH0/67RFumx5ryMPQNAYUpMRI=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxtA7QTzMXGBK5C7l7NZ3lkImFs9szx4AriyXu0u2DK6rYcE+1a
+	iPtujW+0f/IcZ7CaHtZY9SkK9f9fQlQWbzljmi2JmM1gQ/v4iXPs2/rZyA==
+X-Google-Smtp-Source: AGHT+IHNNf3tcFS62X2a8jmPdzJkFEsKrVes+d8/KVGitk6PNAdZfipICkG7LEm3//jaK6bt27+i5A==
+X-Received: by 2002:a17:90a:cc0c:b0:2d0:86a:fbd with SMTP id 98e67ed59e1d1-2d5e9ec9558mr2958050a91.32.1724255191909;
+        Wed, 21 Aug 2024 08:46:31 -0700 (PDT)
+Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2d5eba2e538sm2021098a91.17.2024.08.21.08.46.29
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 21 Aug 2024 08:46:31 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 0/5] nilfs2: prevent unexpected ENOENT propagation
+Date: Thu, 22 Aug 2024 00:46:22 +0900
+Message-Id: <20240821154627.11848-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-From: "Linux NILFS <linuxnilfs@gmail.com>" <linuxnilfs@gmail.com>
-Reply-To: Linux NILFS <linux-nilfs@vger.kernel.org>
-Date: Tue, 20 Aug 2024 10:39:46 -0700
-Message-ID: <CAE7Udf-XLt592O3_d8q05XiWG=k4qAjpeGebF0PyxgZrVH17mA@mail.gmail.com>
-Subject: Published nilfs2-kmod10 preliminarily.
-To: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Published nilfs2-kmod10, a standalone kernel module for CentOS Stream
+Hi Andrew,
 
-10. Please not that this kernel module release is experimental, and
+please add this series to the queue for the next cycle.
 
-depending on future changes to the distro kernel, there is a high
+This series fixes potential issues where the result code -ENOENT,
+which is returned internally when a metadata file operation encouters
+a hole block, is exposed to user space without being properly handled.
 
-possibility that problems may arise, such as the inability to build or a
+Several issues with the same cause leading to hangs or WARN_ON check
+failures have been reported by syzbot and fixed each time in the past.
+This collectively fixes the missing -ENOENT conversions that do not
+cause stability issues and are not covered by syzbot.
 
-loss of OS stability. For details, please see nilfs2-kmod10 releases (or
+Thanks,
+Ryusuke Konishi
 
-ChangeLog, commits).
 
-from https://nilfs.sourceforge.io/en/index.html#n140
+Ryusuke Konishi (5):
+  nilfs2: treat missing sufile header block as metadata corruption
+  nilfs2: treat missing cpfile header block as metadata corruption
+  nilfs2: do not propagate ENOENT error from sufile during recovery
+  nilfs2: do not propagate ENOENT error from sufile during GC
+  nilfs2: do not propagate ENOENT error from nilfs_sufile_mark_dirty()
+
+ fs/nilfs2/cpfile.c   | 22 ++++++++-------
+ fs/nilfs2/recovery.c | 11 +++++++-
+ fs/nilfs2/segment.c  | 64 ++++++++++++++++++++++++++++++++++++++------
+ fs/nilfs2/sufile.c   | 32 +++++++++++++++++-----
+ 4 files changed, 104 insertions(+), 25 deletions(-)
+
+-- 
+2.34.1
+
