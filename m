@@ -1,67 +1,63 @@
-Received: from mail-pj1-f50.google.com (mail-pj1-f50.google.com [209.85.216.50])
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com [209.85.214.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 509271B81CB;
-	Wed, 21 Aug 2024 15:46:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A66B19884C;
+	Mon, 26 Aug 2024 17:41:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724255204; cv=none; b=Z4OeLrBNdOoRNqBouAF7BwMDqJ8GigxjLCWiFOtjAgq10uJO+XQ02LB5n2gO8N9s472QH4I5Owr8qRAjP2YC2qNwRdbV9G6Dr7e+g8cSp4QqIpy4gf2zVZI79NfCgANnI8IJ7LFDt/Yi6sJedisDr/2qLVqSTFV8PFScJrXkAzQ=
+	t=1724694093; cv=none; b=lgzJDwuFuSe/o+oNcnwy+BBIjr33ZQpbArF+M0R/cwbJL7cM+vozhNYcnkCPT5MUaUUXr4bGzp50BFNJ9KJIl2In48lCtK8dPqytlEZhvMZyf5Et4pJYQHNKmS/qDRcEXUD0Pct/fSuaHkIjlKBBGJCRBQwyXN3M1jJq/SsZ6vw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724255204; c=relaxed/simple;
-	bh=JFhvxudKAyDcJoff+u30SQwG262RmxSemzEJxC4bf7k=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=H/L1oxBoR/+wd9BSJwGQK6bPjWZGYDqU9bg9yxVxn+7jekT7mf9EVCsE/jBKNUfAmiscQNGPLol1tvdLkoq+SZ4hyx0UPlEm4/Fb3NEPSHqNMrtf0O+qea7mxmY5EGN1nvrRJ1xsdO0u5RiBXWDNfJ0OJ3dbVTrsgDpKFfn5JJs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TgIfCWgq; arc=none smtp.client-ip=209.85.216.50
+	s=arc-20240116; t=1724694093; c=relaxed/simple;
+	bh=mdE56Rylrt2hy2vypS115yKOruMwiY7pJphlpSJYe8c=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=LamPmB0lDVxGcA79PQgAq39awo5BhVpgJGFyAiXSiPVaMr16bX7CiefrLlz5ADwada7ZpOhp2gUTN3W16YsAdNdf8KWXIVfRAOHRE6Fh6jdZZCZWEEhHp/3JOT4CirWBhUWzOZcflFyeFfuVOZWnjcHEwloSS6stUQEOICoT0QU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WwB1Pa5m; arc=none smtp.client-ip=209.85.214.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TgIfCWgq"
-Received: by mail-pj1-f50.google.com with SMTP id 98e67ed59e1d1-2d3c5f769d6so4797345a91.3;
-        Wed, 21 Aug 2024 08:46:43 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WwB1Pa5m"
+Received: by mail-pl1-f174.google.com with SMTP id d9443c01a7336-201d5af11a4so40392205ad.3;
+        Mon, 26 Aug 2024 10:41:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1724255202; x=1724860002; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=sJ754iKlMI0/FfjFl9UoTlxsvxa5x9Z9ZGZU52BNo2A=;
-        b=TgIfCWgqiNV2SC0Foy4z7xlaci37ZfHW+R4IuH4uG3qxwxFcr41yVdwmJF1nkZSlYt
-         HtD2CtgjDzEEirHNNjRnzw6NE7z7+DSB94Z9zo29l4Ees9MJ3WAEdv177/7mkROTSysO
-         79HjMFhGZ2GkXrBtAQiJzp+G3hVlmbprcWvYmqLesOMtZPtLysVNHiyc04ujCdXqK+wB
-         QYAmTKmpeLzbZMY+AeRcnRV/lIk8CmCmHcv5vG4n5rSVtfTlV51GHJKaw7kvYYrAWAmQ
-         Bxx7F1qIAmvPEwzLh6V22fLdydphyr6ZEn7b6O89RPeUODo2Flyh9mwxQOrx4qDw40b8
-         toBQ==
+        d=gmail.com; s=20230601; t=1724694091; x=1725298891; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=YFt2mJ1X3Rb4fKf4vP3EK+dw/lN+io4rc1YtQ6OpOWo=;
+        b=WwB1Pa5mXA0PSr8zVLctP7BHOVLtO0fn8q6nmoMwqQVWYtiFTO8X9sOQYOBQgbQemH
+         9LppzH33PcFx43k1nvsHO2Q5WgVBz3x7PpYXZKkUmpLov6/IsqCwFyc5f/it3uwMJaAi
+         sPnM3/0RFdvN8nnlwWhx+0dKgF2FoV04KJKWa64748TMYxqO9f7ghwA+JHTsf5Gi7qow
+         uWfexGmno9EbXyKz1/oknz7mhP42pa2v4el721zSKvKub/LzboWHvO8bSf9ETAP15hmB
+         Y7Ql+y9RyCplzOzBYkFrJ9JB6sq2ENMxpd58fU5WfBX2G3eKo+NriNHkJmcIamVPgg6o
+         vRbA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1724255202; x=1724860002;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=sJ754iKlMI0/FfjFl9UoTlxsvxa5x9Z9ZGZU52BNo2A=;
-        b=ij1IM/QzWtBa8HxM2ONc0pq5ZEvNbjfZh/bDqPa1clyJ0TduWsdBAbQNBapTy1cpee
-         QeWtOLD9VrHKcbPL1YYoZGx+tt3OvCG9r3VHD3UgMLVwNwZuvM8LNoRBv9X0JLR+5lVe
-         5hJXXA9kSxOXq3Vd7C2uk+ZKh5J5dTkAvyHHYwfvjywOYBFStsRrVbJ3mkjaHYMyxUIH
-         Mfea4/rjj087j3YMkX8LnFE/Oju3RoaeOVdPNzAv93/OIF3EZ12TUXGg051sg0oBwo4m
-         Nh8eJR2PkfDufxmTRYBUjqMETPaNwecTAykMoYY9G3xPad/3i8wS8QWwAv8PV+fegZAR
-         oToQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWB9GwdZzz4ll41UYV6UWkNr3i17bS/NM9qFJRfvOqo063D3IWfPjmI40SvC1vkjrLr88K7jFsFbLG8QQg=@vger.kernel.org
-X-Gm-Message-State: AOJu0YzKI5m/096PX2Z6We0Li+1XmD1DDbCi5To7wiqLeVv4wkmYfsfr
-	iK7PiQFNZLTPhIEEhL0P6p23eHmKMCC1jbJvY+77gs69nwvV7P20DHgFSw==
-X-Google-Smtp-Source: AGHT+IHfGsDV7o6EBNNiTzBgeLr2GJHrti9TDmVj/Y33OPr4IXAGi1WakkKwHV1OzKV6vOzEt6F4Fw==
-X-Received: by 2002:a17:90a:b00a:b0:2c8:da73:af82 with SMTP id 98e67ed59e1d1-2d5e99ec785mr2906918a91.10.1724255202323;
-        Wed, 21 Aug 2024 08:46:42 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1724694091; x=1725298891;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=YFt2mJ1X3Rb4fKf4vP3EK+dw/lN+io4rc1YtQ6OpOWo=;
+        b=qtSx9RGULqcwzxUbPOsIZfMKdClpbCSQIhnRRQ0KE4rxnNOrWQQVEeFm0o8KlomzKe
+         4cMGGf1OCDfNiSSlRFdsh44GjLscvTqA0KxTqfB0QSzG2DEvLOf9terWbQgJMJ/XVNfc
+         /6obrq3pbT69/gHX6M2HtGMuI48LJerB382G3ZGgEKDH5ZG3w2Z3ZAX1l2wM527zwRQJ
+         aU1p4Q92aFQfEdDjJTRJHedM8XNJg+GPiC/IT7F7Mz/punhMBxMgnm0RyvVRLx+gcooj
+         Ceq8cvTB6wo62xsZiNkmW9RxQIbzWUbwaz4YALsYuyxJAhVrGCqEGRIWTv27/6eXYrbm
+         X89Q==
+X-Forwarded-Encrypted: i=1; AJvYcCX1o/tzntL3h4CLMKGKADDSnVFGEpkbrb0yfQhLNgwX57J+VuDCx+ndfj0VyFxQQG8cXFNlErDmvrw6snY=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yw+9mk+ryPDNqArxcAI9ilg56m00Kwqk+g1+wZjfBptaKFcINgM
+	wtMGQAEAa3DfH/tFCsU3KQNrmFshyNOeaiN/fgnJ0xf73iCW0hkj
+X-Google-Smtp-Source: AGHT+IF2G1WgA/D44MW5BVGjbL3HYJVs6Pi8VPEs7KXm1SBSBNpRwkDKwrISF5RNmBUnR+sD/b04Zw==
+X-Received: by 2002:a17:903:1210:b0:203:8b7c:c8d0 with SMTP id d9443c01a7336-204df4def85mr3995535ad.40.1724694091282;
+        Mon, 26 Aug 2024 10:41:31 -0700 (PDT)
 Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2d5eba2e538sm2021098a91.17.2024.08.21.08.46.40
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-203855665besm70057055ad.34.2024.08.26.10.41.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Aug 2024 08:46:41 -0700 (PDT)
+        Mon, 26 Aug 2024 10:41:30 -0700 (PDT)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-nilfs@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 5/5] nilfs2: do not propagate ENOENT error from nilfs_sufile_mark_dirty()
-Date: Thu, 22 Aug 2024 00:46:27 +0900
-Message-Id: <20240821154627.11848-6-konishi.ryusuke@gmail.com>
+Subject: [PATCH 0/8] nilfs2: assorted cleanups
+Date: Tue, 27 Aug 2024 02:41:08 +0900
+Message-Id: <20240826174116.5008-1-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240821154627.11848-1-konishi.ryusuke@gmail.com>
-References: <20240821154627.11848-1-konishi.ryusuke@gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -70,41 +66,44 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-nilfs_sufile_mark_dirty(), which marks a block in the sufile metadata
-file as dirty in preparation for log writing, returns -ENOENT to the
-caller if the block containing the segment usage of the specified
-segment is missing.
+Hi Andrew,
 
-This internal code can propagate through the log writer to system
-calls such as fsync.  To prevent this, treat this case as a filesystem
-error and return -EIO instead.
+please add this series to the queue for the next cycle.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- fs/nilfs2/sufile.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+This is a collection of cleanup patches, with only the last three
+focused on the log writer thread, the rest are miscellaneous.
 
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index f071eba48163..eea5a6a12f7b 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -513,8 +513,15 @@ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
- 
- 	down_write(&NILFS_MDT(sufile)->mi_sem);
- 	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
--	if (ret)
-+	if (unlikely(ret)) {
-+		if (ret == -ENOENT) {
-+			nilfs_error(sufile->i_sb,
-+				    "segment usage for segment %llu is unreadable due to a hole block",
-+				    (unsigned long long)segnum);
-+			ret = -EIO;
-+		}
- 		goto out_sem;
-+	}
- 
- 	kaddr = kmap_local_page(bh->b_page);
- 	su = nilfs_sufile_block_get_segment_usage(sufile, segnum, bh, kaddr);
+Patches 1/8, 4/8, and 7/8 adopt common implementations, 2/8 uses a
+generic macro, 5/8 removes dead code, 6/8 removes an unnecessary
+reference, and 3/8 and 8/8 each simplify a paticular messy
+implementation.
+
+Thanks,
+Ryusuke Konishi
+
+Huang Xiaojia (1):
+  nilfs2: use common implementation of file type
+
+Ryusuke Konishi (7):
+  nilfs2: use the BITS_PER_LONG macro
+  nilfs2: separate inode type information from i_state field
+  nilfs2: eliminate the shared counter and spinlock for i_generation
+  nilfs2: do not repair reserved inode bitmap in nilfs_new_inode()
+  nilfs2: remove sc_timer_task
+  nilfs2: use kthread_create and kthread_stop for the log writer thread
+  nilfs2: refactor nilfs_segctor_thread()
+
+ fs/nilfs2/bmap.h      |   5 +-
+ fs/nilfs2/dir.c       |  44 ++---------
+ fs/nilfs2/inode.c     |  75 ++++---------------
+ fs/nilfs2/nilfs.h     |  15 +++-
+ fs/nilfs2/segment.c   | 170 ++++++++++++++++++------------------------
+ fs/nilfs2/segment.h   |   5 --
+ fs/nilfs2/super.c     |   1 +
+ fs/nilfs2/the_nilfs.c |   5 --
+ fs/nilfs2/the_nilfs.h |   6 --
+ 9 files changed, 108 insertions(+), 218 deletions(-)
+
 -- 
 2.34.1
 
