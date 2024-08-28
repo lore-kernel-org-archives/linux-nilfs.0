@@ -1,43 +1,44 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFE785B216;
-	Wed, 28 Aug 2024 16:24:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE24D16CD32;
+	Wed, 28 Aug 2024 23:52:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724862242; cv=none; b=fS2zi9TUqJaLuoEKgDBC8jg3fGV83Ase16UY7zlbMXGUuUQtIgeSGWnsRu5zbWZ87hxmaOx0KLxb4LUuNUnsRELsDzVGsRRm9dKc5RyuOGeKsMkgqQmgLPAKwingNRWrCIypSh76Srb97gdiD95nba0cpKFFyrBKD3lDutEmCOA=
+	t=1724889150; cv=none; b=srypaxDUYiGHSN6lonzyu1WYGhTGzmrXi0VPwk9/zsCJMFjdDPsmlLC3lJ3iqUqYOM9EjZE74KUfG7HEtIRQy3SjlH6lLHOOJXr03XX66SaolDitJ395kyIgZpj2mSSsNWgBboU7lBpLIE8XmsJJaN7B1yRzF2X7ZOjKXIU/SUw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724862242; c=relaxed/simple;
-	bh=ek64Ez7ALjiYZoEu8O8UR2K7pZSJzTJIRhJiWuUvKVM=;
+	s=arc-20240116; t=1724889150; c=relaxed/simple;
+	bh=9Cn5zgF08teqjN1yl3pfC4JjsBYn6aKJCtMX7STasc4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=OzJhDf0Zm8QzYv6uwWlHW5ihCRwWxRvsrA6Yr0lpxcrYQWKcpQe16iGtUFhQgpstUSnCqAyJ51RqleEQRWYsbI/id/LiPtNRtP31z2/cKMVl9nEBIWofbtbatuFb/BD+gaxnWww/cu5Krl6w6bjSwZPHYcGJvZayMy1i1tYeMoc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=XfuDFhQd; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=UXv4jBQnq585NR2Mo7Z2JQTWXHkquFxnv/ocwzK4lYkWvap3d79RRvsMUbL2PPeu8q/TpD0J2md4HYb6db2y/c01s2e35xjZEIBk3cnt5Sqop47c6RmVLVu5dCSZxIatHvXOF2I/uug1QDQ101s2vfU4NIP2yuP4SwWTbqgsYiU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jC81/Reh; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="XfuDFhQd"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 293CFC4CED9;
-	Wed, 28 Aug 2024 16:24:02 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jC81/Reh"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 46BDDC4CEC0;
+	Wed, 28 Aug 2024 23:52:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1724862242;
-	bh=ek64Ez7ALjiYZoEu8O8UR2K7pZSJzTJIRhJiWuUvKVM=;
+	s=k20201202; t=1724889149;
+	bh=9Cn5zgF08teqjN1yl3pfC4JjsBYn6aKJCtMX7STasc4=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=XfuDFhQdK9DmS9eYIEIOuHtwsigN4kYgMA52ZtixYFqYZVocAEMSeTpaZRuWM6qzs
-	 DcWt3P9mT1qoGtTNxyB390kFVPFeBAbPKV1/wvlVka6g9idWxxBt+fziSChLO+c2/c
-	 SMryVhxPvGNuzndVlx2N29GQ2GhumBHTd7sD4DQ6oYoUp1v3dyDphPzOV39rPQWQ5g
-	 JBkJvtMT1U+kjbx0+wt5zMH7JVHtdqkfzhYVWxWXGU1bQHqE34u4GfTjTPiuFMcxm8
-	 tzIl13bouFK0lSYb+b3qj8iCNFme0erPlq4oCAqtogr2KrqJcp5fenGCFXo0teEbYu
-	 HgCsfVXiBi8Bg==
-Date: Wed, 28 Aug 2024 09:24:01 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
+	b=jC81/RehKEr3dq7VhVsMtOSxmECo3gWllzFBzUynQUgJx5lyC9cfBQ+Xxr8xO+Psg
+	 w4aBStMkVtN12EHw9j5CWzfm4GISwqppo08HNCq3itpIxsrpmfMIk9wCxbxpwPCQmP
+	 vFjfnCl53SHJ98dmJyEOh2fLgfomewYPKpTxYT2Gb0qsaGeXgNaQV84k7WVX4TWPu3
+	 iSyqToh7EekwJ9PnPj+n5fsSnNmkD0JFYTgJege0R/XTQzZ8BJqBPovEfLl5Scz0pS
+	 9wKBQbFiJ9NjWhI/AS+IWmFl1XP4qRD6951/rIvPh8HR4jQQLjZqU//PwwC6SvFMns
+	 S1toNIULVztzw==
+Date: Wed, 28 Aug 2024 23:52:27 +0000
+From: Eric Biggers <ebiggers@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>,
 	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
 	Chandan Babu R <chandan.babu@oracle.com>,
+	"Darrick J. Wong" <djwong@kernel.org>,
 	Hongbo Li <lihongbo22@huawei.com>,
 	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
 	linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
 	linux-xfs@vger.kernel.org
 Subject: Re: [PATCH 2/3] fs: add STATX_DIO_READ_ALIGN
-Message-ID: <20240828162401.GM1977952@frogsfrogsfrogs>
+Message-ID: <20240828235227.GB558903@google.com>
 References: <20240828051149.1897291-1-hch@lst.de>
  <20240828051149.1897291-3-hch@lst.de>
 Precedence: bulk
@@ -60,12 +61,6 @@ On Wed, Aug 28, 2024 at 08:11:02AM +0300, Christoph Hellwig wrote:
 > sucks, so applications benefit from knowing the actual write alignment.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
-
-Looks fine to me...
-Reviewed-by: Darrick J. Wong <djwong@kernel.org>
-
---D
-
 > ---
 >  fs/stat.c                 | 1 +
 >  include/linux/stat.h      | 1 +
@@ -117,8 +112,27 @@ Reviewed-by: Darrick J. Wong <djwong@kernel.org>
 > +#define STATX_DIO_READ_ALIGN	0x00020000U	/* Want/got dio read alignment info */
 >  
 >  #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
->  
-> -- 
-> 2.43.0
-> 
-> 
+
+Thanks.  We maybe should have included read/write separation in STATX_DIOALIGN,
+but at the time the only case that was brought up was "DIO reads are supported
+but DIO writes are not" which people had argued was not useful.
+
+Is this patch meant to support that case, or just the case where DIO in both
+directions is supported but with different alignments?  Is that different file
+offset alignments, different memory alignments, or both?  This patch doesn't add
+a stx_dio_read_mem_align field, so it's still assumed that both directions share
+the existing stx_dio_mem_align property, including whether DIO is supported at
+all (0 vs. nonzero).  So as proposed, the only case it helps with is where DIO
+in both directions is supported with the same memory alignment but different
+file offset alignments.  Maybe that is intended, but it's not clear to me.
+
+Are there specific userspace applications that would like to take advantage of a
+smaller value of stx_dio_read_offset_align compared to the existing
+stx_dio_offset_align?  Even in the case of a discrepancy between reads and
+writes, applications are supposed to be able to just use stx_dio_offset_align
+since it has to be the greater of the two alignments.
+
+And as always, new UAPIs need to be accompanied by documentation.  In this case
+that's an update to the statx man page.
+
+- Eric
