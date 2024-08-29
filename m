@@ -1,81 +1,69 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from out-171.mta0.migadu.com (out-171.mta0.migadu.com [91.218.175.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAA0D4CB36;
-	Thu, 29 Aug 2024 03:52:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA836146592
+	for <linux-nilfs@vger.kernel.org>; Thu, 29 Aug 2024 07:16:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1724903568; cv=none; b=KV8EiEdqqOvk46+eCKhyJr7H78fS8fqP4wAw0bz51Ta+0BBO3Uxy9VaamJ5/PlOxY7PL8HatnxqJDygapv0kDcwAbdM3jF/W7aQvpzvm8vu256fwKsgRuAQILDp0mC72FjNcm5umuxoAAiJgcTZV0/TUuwfTS+Hll7rDCpDXdDg=
+	t=1724915770; cv=none; b=bQ4iM4yV0vM07ORtUUXn7fY/9MMgROBMzdggkw89DbkPc5PnV0kyPKloAh0Dw2wwwID2mByNI20OqK5cjV4z7c3WmofvvUVaMOiUuyY578CNAL66boUJTCGQwAyza9Arjt+zj/bEkch5ehwSSEuTZCuBKwc61T5GqtTHmcHrono=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1724903568; c=relaxed/simple;
-	bh=ajsYe1bvalPfkROPql2EFfKGi+n1wIpOjIa06f29fEA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JRKwT+EMvfTA+DatR3RA3BwOSHNMbI2Vg2ng0R94bhvHrXOSU0S1wpYiBPNjy+jZcrF6FhdyAoj/5hn2ag9ecL4XSd+wPZpqB0NJHzZ8zJBdJ07nSK4AkP5X5uAb+CBsv3lLaNKgxOfXVF4DFWKlcvqZl3ojIdZmQmMfXW267nw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id C076568AA6; Thu, 29 Aug 2024 05:44:26 +0200 (CEST)
-Date: Thu, 29 Aug 2024 05:44:26 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
-	Chandan Babu R <chandan.babu@oracle.com>,
-	"Darrick J. Wong" <djwong@kernel.org>,
-	Hongbo Li <lihongbo22@huawei.com>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-xfs@vger.kernel.org
-Subject: Re: [PATCH 2/3] fs: add STATX_DIO_READ_ALIGN
-Message-ID: <20240829034426.GA3854@lst.de>
-References: <20240828051149.1897291-1-hch@lst.de> <20240828051149.1897291-3-hch@lst.de> <20240828235227.GB558903@google.com>
+	s=arc-20240116; t=1724915770; c=relaxed/simple;
+	bh=8BPOSniWHrQvyGuJwHUdifQmH4rIEpBku5MkeNEdRyk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cOnHRSh3x28Mhif0yVL9mxYCnReHG1F6XbQzf+zt+yIjE4vnMz3KdTb7i6e18nXqqV8vaUXqUvCDawTcmh2CYyCpbPOxpWbjZRFfjU8Vsf/NCQVOQ8+fPEyJRUYkpm+msmL+nOvHkHAKgq3cjxNUHAxCuWTrES9tXRCSG5Xp8Mw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=BKdnPUrZ; arc=none smtp.client-ip=91.218.175.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="BKdnPUrZ"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1724915764;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=i0xeUGCoMFjPpXS2CoMByWeQ2WkworfO2h9ojNKikDc=;
+	b=BKdnPUrZ6noU8tgVCXevmJGCnRSxEavE+YxglUD1ePg89mqvsqLcft0uTmhFdNSotZVHTP
+	2rgD509Se+g8J6h6yUoGIVCZ+rVvfi8ZDEDTryqW8CvytdVAH1yFvIMiEh2hXJRFRUs+UW
+	KvzNn1syB2z0v4PWwSV0IHuhNrbeE1Q=
+From: Kunwu Chan <kunwu.chan@linux.dev>
+To: konishi.ryusuke@gmail.com
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Kunwu Chan <chentao@kylinos.cn>
+Subject: [PATCH] nilfs2: Remove duplicate 'unlikely()' usage
+Date: Thu, 29 Aug 2024 15:16:00 +0800
+Message-ID: <20240829071600.30706-1-kunwu.chan@linux.dev>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240828235227.GB558903@google.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-On Wed, Aug 28, 2024 at 11:52:27PM +0000, Eric Biggers wrote:
-> Thanks.  We maybe should have included read/write separation in STATX_DIOALIGN,
-> but at the time the only case that was brought up was "DIO reads are supported
-> but DIO writes are not" which people had argued was not useful.
-> 
-> Is this patch meant to support that case,
+From: Kunwu Chan <chentao@kylinos.cn>
 
-Why would anyone support direct I/O reads but not writes?  That seems
-really weird, but maybe I'm missing something important.
+nested unlikely() calls, IS_ERR already uses unlikely() internally
 
-> or just the case where DIO in both
-> directions is supported but with different alignments?  Is that different file
-> offset alignments, different memory alignments, or both?  This patch doesn't add
-> a stx_dio_read_mem_align field, so it's still assumed that both directions share
-> the existing stx_dio_mem_align property, including whether DIO is supported at
-> all (0 vs. nonzero).
+Signed-off-by: Kunwu Chan <chentao@kylinos.cn>
+---
+ fs/nilfs2/page.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Yes.  The memory alignment really is dependent on the underlying storage
-hardware DMA engine, which doesn't distinguish between reads and writes.
-
-> So as proposed, the only case it helps with is where DIO
-> in both directions is supported with the same memory alignment but different
-> file offset alignments.
-
-Yes.
-
-> Maybe that is intended, but it's not clear to me.
-
-Well, that's good feedback to make it more clear.
-
-> Are there specific userspace applications that would like to take advantage of a
-> smaller value of stx_dio_read_offset_align compared to the existing
-> stx_dio_offset_align?
-
-There are a lot of read-heavy workloads where smaller reads do make
-a difference.
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 7797903e014e..9c0b7cddeaae 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -262,7 +262,7 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
+ 			NILFS_FOLIO_BUG(folio, "inconsistent dirty state");
+ 
+ 		dfolio = filemap_grab_folio(dmap, folio->index);
+-		if (unlikely(IS_ERR(dfolio))) {
++		if (IS_ERR(dfolio)) {
+ 			/* No empty page is added to the page cache */
+ 			folio_unlock(folio);
+ 			err = PTR_ERR(dfolio);
+-- 
+2.41.0
 
