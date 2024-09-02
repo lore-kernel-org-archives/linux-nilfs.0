@@ -1,103 +1,73 @@
-Received: from mx0b-0064b401.pphosted.com (mx0b-0064b401.pphosted.com [205.220.178.238])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-il1-f199.google.com (mail-il1-f199.google.com [209.85.166.199])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F6CD1311AC;
-	Mon,  2 Sep 2024 09:18:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.178.238
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F359F13AD18
+	for <linux-nilfs@vger.kernel.org>; Mon,  2 Sep 2024 10:08:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.199
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725268722; cv=none; b=XaGu1ZFFV6PTR56E6fkM9WJhvEcaUR2pz6w4QKU1OFgOphI6X207Omyw7n1+yEhrJsk3xEKNKWGChPbVwE6NghyxFo8t8lIMTHG9IJ2ZyldySwVxYXCH7932GcXR0aIAKCEeDeLtjRxRZPHovmhGGvEz0pywtionliXUOWjC/1M=
+	t=1725271684; cv=none; b=qEca9IZ09y/mzVDJWr+N3B6KOdAzCiMJ99W0x++CwgXL29ud5safF8dK8MfokIItrCVgOhs7r1tynkFpjX6GVi/RBtUqzacYfADz9Sad4crtIuHWQo2zA6z+ozIeE4AADgcjKbnNLVgt9BDyco+v4JF9FXLuAiR6QUaTdtmSEXM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725268722; c=relaxed/simple;
-	bh=mYnaA3W7BnHNcW32FHjhvnG/23Om+iW8rhoDnTRFG54=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=GI6I+zjknmed1xr8QaCRa6LQZRSF1QyzYqzy4VVsNdAZ0x7f24go0Roo1XUHDy5NIB6W1rijswbv7mC8J4XnYmiYESsPeyp92d/i8OncxRnUSm9C5aAoNaVKtm5TtvQBnpWDk681iN8mrTCHHcR/SYbjRPtwtb4lOixLxyJfIEE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com; spf=pass smtp.mailfrom=windriver.com; arc=none smtp.client-ip=205.220.178.238
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=windriver.com
-Received: from pps.filterd (m0250811.ppops.net [127.0.0.1])
-	by mx0a-0064b401.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4825A2Nd013860;
-	Mon, 2 Sep 2024 08:41:12 GMT
-Received: from ala-exchng02.corp.ad.wrs.com (ala-exchng02.wrs.com [147.11.82.254])
-	by mx0a-0064b401.pphosted.com (PPS) with ESMTPS id 41brd19sb9-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT);
-	Mon, 02 Sep 2024 08:41:11 +0000 (GMT)
-Received: from ALA-EXCHNG02.corp.ad.wrs.com (147.11.82.254) by
- ALA-EXCHNG02.corp.ad.wrs.com (147.11.82.254) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.39; Mon, 2 Sep 2024 01:41:10 -0700
-Received: from pek-lpd-ccm6.wrs.com (147.11.136.210) by
- ALA-EXCHNG02.corp.ad.wrs.com (147.11.82.254) with Microsoft SMTP Server id
- 15.1.2507.39 via Frontend Transport; Mon, 2 Sep 2024 01:41:09 -0700
-From: Lizhi Xu <lizhi.xu@windriver.com>
-To: <syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com>
-CC: <konishi.ryusuke@gmail.com>, <linux-kernel@vger.kernel.org>,
-        <linux-nilfs@vger.kernel.org>, <syzkaller-bugs@googlegroups.com>
-Subject: Re: [syzbot] [nilfs?] general protection fault in nilfs_btree_insert (2)
-Date: Mon, 2 Sep 2024 16:41:01 +0800
-Message-ID: <20240902084101.138971-1-lizhi.xu@windriver.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <000000000000b4cf9a062114d132@google.com>
-References: <000000000000b4cf9a062114d132@google.com>
+	s=arc-20240116; t=1725271684; c=relaxed/simple;
+	bh=dz+y38FjFkmz7PztH6vb+3wA8b1++1ZfWQ9hV9dueT8=;
+	h=MIME-Version:Date:In-Reply-To:Message-ID:Subject:From:To:
+	 Content-Type; b=T8zYiBaE8qkV9DwwL7cFacmJzkfQ07nftx8vj8hjZDaJuJB5DqIK2JzK+Xl4zVJ09O7/Yw6HGnVaI7g34w+NxmCuXDDvzaqVMqK1azhqooP8T4Ye3/objwpE/iUTY67ZwPDIzsj4q4SDsMVpvYKA0vrfcS6ltynhqrmu1Dvkwzo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.199
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f199.google.com with SMTP id e9e14a558f8ab-39f510b3f81so15836805ab.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 02 Sep 2024 03:08:02 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1725271682; x=1725876482;
+        h=to:from:subject:message-id:in-reply-to:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=S1ZI8Z1mNTH3uczMmGtu5HRADTUqD8qSIuklYf+UieE=;
+        b=AjfKZwQcKojZFoRxWNrO145TgxG3ZgZcmvHuhcMwnU0UCqc75CWbLN2/OiXxoHcQ7p
+         lIk8HBnZUj290p17c0fhOoosnhQcOIFjLnGwKfnM/rdFBIegbET6AA1sxXHHEdcmS9N6
+         Daw8Y3Uyr/ZeA4Dnb3NQgOCr8cMh97KJLwR6O3uezAuLMJUd6YV/TM+jV1IxWNocK/pj
+         7eCjUWPHZCt1EIfJXeaG4XC52eIYwrYfi7bjpJzffOIEHMSbKH5mIOOnFxQjz6ShwQz8
+         OlS9AE4SMLCSmQftF2c7spVNcY2ieoPShvv3hgJ9j2cpdQpcXP8uPM1wfq8LC3VoSRth
+         rcgA==
+X-Forwarded-Encrypted: i=1; AJvYcCWWtvZPhntdxjXhbN90B7Nf+XwrLwhCLMx7wqZH6IePDyYHhd6860DHeAejZF1bLjF2Wlzxa2ub+SsLmg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyQw1xczeLR9wXTOiFLhevZV2n5mjd4MZvBGcSs9gSWdy2hbpm9
+	aM9Wm5fZnxhUjTytVwU4Mc7AWOmx4wzm8fQB7m14nO5P1kFKd7KZbJEmKgs4EP5oUTmT6TX34bt
+	gFuQ7W2jWNnNA1L3FwQsbWMSHEZo2ImbIfWMOiYebrSCUV9qylMG3EiI=
+X-Google-Smtp-Source: AGHT+IHEB10cbUaE1wUmk6yLQKuHBOE6EUNcUriJs2vNedp2BXIXZ5tEof05zrXQUZZhQ/xMGP9SpJRhKO+w73CHkYHi0zoJyeLp
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-Proofpoint-GUID: TLeBWkCKMHm2HmlA-6bx02Lq4ZpbSbHI
-X-Authority-Analysis: v=2.4 cv=Qdk0vdbv c=1 sm=1 tr=0 ts=66d57a27 cx=c_pps a=K4BcnWQioVPsTJd46EJO2w==:117 a=K4BcnWQioVPsTJd46EJO2w==:17 a=EaEq8P2WXUwA:10 a=MgNYAwz_8sOnGxLQ4WoA:9
-X-Proofpoint-ORIG-GUID: TLeBWkCKMHm2HmlA-6bx02Lq4ZpbSbHI
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1039,Hydra:6.0.680,FMLib:17.12.28.16
- definitions=2024-09-02_01,2024-08-30_01,2024-05-17_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxscore=0 adultscore=0
- phishscore=0 impostorscore=0 mlxlogscore=934 malwarescore=0
- lowpriorityscore=0 suspectscore=0 spamscore=0 bulkscore=0 clxscore=1011
- priorityscore=1501 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.21.0-2407110000 definitions=main-2409020070
+X-Received: by 2002:a05:6e02:1ca4:b0:396:256a:2e01 with SMTP id
+ e9e14a558f8ab-39f413707f2mr6320285ab.1.1725271682119; Mon, 02 Sep 2024
+ 03:08:02 -0700 (PDT)
+Date: Mon, 02 Sep 2024 03:08:02 -0700
+In-Reply-To: <20240902084101.138971-1-lizhi.xu@windriver.com>
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <000000000000c106810621201ddb@google.com>
+Subject: Re: [syzbot] [nilfs?] general protection fault in nilfs_btree_insert (2)
+From: syzbot <syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, lizhi.xu@windriver.com, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-In nilfs_btree_do_lookup, if the number of children in the btree root node is 0,
-path[x].bp_bh will not be initialized by __nilfs_btree_get_block,
-which will result in uaf when executing nilfs-btree_get_nonroot_node
-in nilfs_btree_prepare_insert.
+Hello,
 
-In nilfs_bmap_do_insert will run bop_check_insert, so implement
-bop_check_insert and determine the number of children in the btree root
-node within it. If it is 0, return a negative value to avoid calling
-bop_intsert.
+syzbot has tested the proposed patch and the reproducer did not trigger any issue:
 
-#syz test
+Reported-by: syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com
+Tested-by: syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com
 
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 862bdf23120e..d7fa4d914638 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -1231,6 +1231,17 @@ static void nilfs_btree_commit_insert(struct nilfs_bmap *btree,
- 		nilfs_bmap_set_dirty(btree);
- }
- 
-+static int nilfs_btree_check_insert(const struct nilfs_bmap *btree, __u64 key)
-+{
-+	struct nilfs_btree_node *node;
-+	int level;
-+
-+	node = nilfs_btree_get_root(btree);
-+	level = nilfs_btree_node_get_level(node);
-+	return (level < NILFS_BTREE_LEVEL_NODE_MIN ||
-+		nilfs_btree_node_get_nchildren(node) <= 0) ? -ENOENT : 0;
-+}
-+
- static int nilfs_btree_insert(struct nilfs_bmap *btree, __u64 key, __u64 ptr)
- {
- 	struct nilfs_btree_path *path;
-@@ -2385,7 +2396,7 @@ static const struct nilfs_bmap_operations nilfs_btree_ops = {
- 	.bop_seek_key		=	nilfs_btree_seek_key,
- 	.bop_last_key		=	nilfs_btree_last_key,
- 
--	.bop_check_insert	=	NULL,
-+	.bop_check_insert	=	nilfs_btree_check_insert,
- 	.bop_check_delete	=	nilfs_btree_check_delete,
- 	.bop_gather_data	=	nilfs_btree_gather_data,
- };
+Tested on:
+
+commit:         67784a74 Merge tag 'ata-6.11-rc7' of git://git.kernel...
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=1752cf2b980000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=94f4a91e4d2a2d49
+dashboard link: https://syzkaller.appspot.com/bug?extid=9bff4c7b992038a7409f
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+patch:          https://syzkaller.appspot.com/x/patch.diff?x=1012cf2b980000
+
+Note: testing is done by a robot and is best-effort only.
