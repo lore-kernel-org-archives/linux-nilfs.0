@@ -1,169 +1,96 @@
-Received: from mail-lj1-f176.google.com (mail-lj1-f176.google.com [209.85.208.176])
+Received: from mail-pg1-f175.google.com (mail-pg1-f175.google.com [209.85.215.175])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD95219CC03;
-	Mon,  2 Sep 2024 19:40:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58E57185B41;
+	Wed,  4 Sep 2024 08:14:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725306043; cv=none; b=mo6BQDM2d7wuBGvU/lI5by0fUb5pBCVsCRE71ANLAk55lGbH2zsnA5PV5pniY7kud4WiN4rSJzYLlWVfYB6HI1hwjnOAh1TwNUbTRYIPWMU/R7w8tUmeSEKB5008RV7LGzAXHhzkQDgQMBH2wMY6j09qEvRt9Nw5dWFxMm9TWy0=
+	t=1725437650; cv=none; b=RASJSVqgyOnv7uP9G67YxCDKfW6u8Vj0P6M13xzENLnsznL7oggUrmPctJo7ToT6rogyx9J+Tc+NnZUIpxKuJ3xoIKZV6ZtMamSVHqgpR319fvalD0sS3+G98IcdswmzZ85aoqzyEBMeA9hGkQlF6jd/nImfpFTzsdVgxPO7j9c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725306043; c=relaxed/simple;
-	bh=HnOo/lhyYG30a6WcorZmTIcDTZw4joZ5duCIPOEY1lE=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=a4CB5/iGDSibgue6xDJ94QopPQ8oAOp/W6qPamchyM4RjN8HnxPIWyI8VqnNbpOeQHreEusjfkx0pKqlZNTveYvRHq5jVLA7k0OeTI/g1wuUWgxLkapuPNriTl24w2exUsSice2/ImZEm+3MZUJj9BjLnyZMIVDs+WhyHw/2Arg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TaudoaM/; arc=none smtp.client-ip=209.85.208.176
+	s=arc-20240116; t=1725437650; c=relaxed/simple;
+	bh=7xeXDz0ogvxZ2opXy+/mlqtWj0vw9q7sHLRdtbF0STk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=TH2AvIyRk7bEkl7ZzDWhVO7K2+oQZx2Oa4rhpUfsMEilnuuqHvP0d0zsZ+2AQXFVTkWnTgGorNpHL/Q0/iUkvzJjh3Ux1oKZ3yDZraCaaWW6EuPy7V7BlDlFxGxULaDk+5FkgDmd73Kt/YUoMZ8M3PoMyI9J5jto7hBx/G282jA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Pv4Pr5ZQ; arc=none smtp.client-ip=209.85.215.175
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TaudoaM/"
-Received: by mail-lj1-f176.google.com with SMTP id 38308e7fff4ca-2f50966c448so51730211fa.2;
-        Mon, 02 Sep 2024 12:40:40 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Pv4Pr5ZQ"
+Received: by mail-pg1-f175.google.com with SMTP id 41be03b00d2f7-7d4f2e1d11cso436247a12.1;
+        Wed, 04 Sep 2024 01:14:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1725306039; x=1725910839; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1725437648; x=1726042448; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=HpWpRt3vqUwfo4uZB5tvXqlfhuEFClUtNuDAJ3mY3P8=;
-        b=TaudoaM/+ssJydxv/wCKvXkm8NdLHAQyBpIhSkLrhlE4SlgyOoNz3y2V9u2z3kY/XG
-         rznWnAbsUfkqbzTSz4Y5bjT6cr6HOeNHXYd4ctKLcfkNRSOJdXxGHmrUtc0SwJXjCMAa
-         9bYs1HdtMUdgFUalGgbX7GpFNgyE8ADl3bIH3k/AnLeBcHO51Uhbyi6uNMKZhmXe7FX4
-         EkNE0h/iMSekLCK4Wa+S65BZEzrMPkIT4ssRfygM7Qiso/n2HItRj7xoiRjXSKhJM+Op
-         S2nngO7fi1fo+v1TQ0/X5XS1PzwQoTUHb30/hsVdPSHH++495KJ097RJlBx3Ad3vsabT
-         ihRw==
+        bh=WDYSAyTGMhWQsvqMxqs2OTBOzQM2Nh8wMEQC0ec1bDY=;
+        b=Pv4Pr5ZQuqWm34Rw51shL9B5W3F9iRmoaA30r+5xa+GUXbvF6NuEUtJ80UenNv/ImS
+         xwNyBqQePRhl0KLlJs4IBzvPDf2WJ+zjRNHt4z7kkmTj0C99uxFQSFbZjrJEPOJAmWvq
+         t3dREpsUYn3GHndUN7qS5/vLvDzDBd76ZZpq1j43Mj0onhp5r3yInJZr71h+CQuPXns0
+         mKz+ZmfBwvszD1hwpfld9nXUYX871YiBJ83zvUpT9hmnwShA502v8atU8IaeOOKkucnB
+         N/HUScHdTHwqI5rYaJNLMIkgRzT19+x8wmyfbmSvj9qPMXjsT9p8klJM2luH5RebNWqM
+         EIQw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725306039; x=1725910839;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1725437648; x=1726042448;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=HpWpRt3vqUwfo4uZB5tvXqlfhuEFClUtNuDAJ3mY3P8=;
-        b=pwY5ahUZpyuF4quFPrvcwCoGqTPPE5zOvdQguccRzYGx0EjpFlFihwP/HfVc+otTJA
-         FsAmLARJUqNwpTpEmYfuj1xhyM5PH6PF5hHSyqzhPuCRUmadXwzfLyD+VtY+rx50WOUR
-         eJAbBuM6t8Q5uXjMQx4Bq0N4xJNNlwrpY0Pa80NI511PJy9S79z1KA+8ZgGaGJMQgVYV
-         DG3YXBJKvoj4DKqR99YhHiBsSyMj6Ej/RoNmou2gGhBfWGDZ8FiDLb6LBM3cuN/d+FAo
-         LAfnzcJINmDGznEl7b/spM1crT/uY8mjIwgda27cCw8FjzucsfXSRMIK9SsR7qyke01u
-         kxdA==
-X-Forwarded-Encrypted: i=1; AJvYcCVs/aw4fA4ifpYH01qLDlQhj6XIRobAuOXJo78cB8wGrr6Tdvtna8+tuLUIKyRPvP7hK3GL2+xWX+cCbvs=@vger.kernel.org, AJvYcCWHwLcOQlypBKdQsgrn7SkESm4H3DpqjBV0c3BjiezPZZHO6TFG44mXfjPN1f4QzrOoPG0liyvk4+hU2QI=@vger.kernel.org
-X-Gm-Message-State: AOJu0YwYLVSpMI2pQ/Gfa2+WDq91NQclTNDgQhRpB7dSqytSqgNKhKIM
-	FjW/dP+A7UhMHO8hBJDGEUACylOsD/16hzRjP0QJrPDTYJDL3punMNbUkMAWA8GorZzax7dW7wj
-	WzDfKRX3bzYlfrGAxldjXDuXR3SA=
-X-Google-Smtp-Source: AGHT+IHvqxlebRz23fBdc7+x4Kxynynh/CzQIlyEUmpae5/E7hDepmKTA1GmE4aPmagGHHDiX+k0jlIfHtrzeik2HdA=
-X-Received: by 2002:a05:6512:33ce:b0:52c:d27b:ddcb with SMTP id
- 2adb3069b0e04-53546afd60amr7874352e87.3.1725306038019; Mon, 02 Sep 2024
- 12:40:38 -0700 (PDT)
+        bh=WDYSAyTGMhWQsvqMxqs2OTBOzQM2Nh8wMEQC0ec1bDY=;
+        b=fkE+UY7nViyIY70kh//ZDlDs/E2f8LRegPCI6LH6fbJzpe0borPEmAQkj68Xqxt1X2
+         sxmg7cDRzS25HQbyQLn+91l5m4T6WTD9Z55rMjbjZmIxVq0l1pMPs3L3VBSJuGTExggo
+         iba2jSITchGE7ySAsa6dKC85jhXEBasQPqNHzvhaCwM/zSyFBTD4fpOgYJ415JBzoFy1
+         9meea/dua0JUUe3EJfP2u4dNRCApbJ/MPSX1RY3H7lU/Uh0rnEeXaM+OFm0kCl+3hGRN
+         PK+9ZGtcjM6Opp20gBvMYcbeJuehaiy9hBGXguN6JWzSe1GWDVJlHgvljuTsBq9PsN+F
+         16Dw==
+X-Forwarded-Encrypted: i=1; AJvYcCUCHdcSwkj40Wr1akYGsJ4vyg0jH5NA4OHdFXg4nKkK474F1OxcSaphwMxJqkvefG4QgfbEmP9GKtwVc8c=@vger.kernel.org
+X-Gm-Message-State: AOJu0YyAXKJW6ZJiayqsWQl2JQTZkYIAZta/s+X82GSxZNnh/ydSYs5a
+	g662rbi8NGcUd/A/jJHhDBvhqOVf5xp8QQjVBP1ruPPKWmmJ+50c
+X-Google-Smtp-Source: AGHT+IH/AVntGWfHxijvKfTvvpOpEjhHD+bMJUmAbfQSAPWIbNCTULB0UOvYruNiWSQ2sop4EX8ZrA==
+X-Received: by 2002:a05:6a20:e196:b0:1c4:9100:6a1b with SMTP id adf61e73a8af0-1cce101dfdfmr19510685637.30.1725437648157;
+        Wed, 04 Sep 2024 01:14:08 -0700 (PDT)
+Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-206aea5832dsm8836485ad.237.2024.09.04.01.14.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 04 Sep 2024 01:14:06 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
+	syzbot <syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com>,
+	syzkaller-bugs@googlegroups.com,
+	LKML <linux-kernel@vger.kernel.org>
+Subject: [PATCH 0/3] nilfs2: fix potential issues with empty b-tree nodes
+Date: Wed,  4 Sep 2024 17:13:06 +0900
+Message-ID: <20240904081401.16682-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <000000000000b4cf9a062114d132@google.com>
+References: <000000000000b4cf9a062114d132@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <000000000000b4cf9a062114d132@google.com> <20240902084101.138971-1-lizhi.xu@windriver.com>
-In-Reply-To: <20240902084101.138971-1-lizhi.xu@windriver.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Tue, 3 Sep 2024 04:40:21 +0900
-Message-ID: <CAKFNMom+we=aMXZz_f4zVGR6VRO3Zj+y1GC=KZSwLq8MdxO7BQ@mail.gmail.com>
-Subject: Re: [syzbot] [nilfs?] general protection fault in nilfs_btree_insert (2)
-To: Lizhi Xu <lizhi.xu@windriver.com>
-Cc: syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com, 
-	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Mon, Sep 2, 2024 at 5:41=E2=80=AFPM Lizhi Xu wrote:
->
-> In nilfs_btree_do_lookup, if the number of children in the btree root nod=
-e is 0,
-> path[x].bp_bh will not be initialized by __nilfs_btree_get_block,
-> which will result in uaf when executing nilfs-btree_get_nonroot_node
-> in nilfs_btree_prepare_insert.
->
-> In nilfs_bmap_do_insert will run bop_check_insert, so implement
-> bop_check_insert and determine the number of children in the btree root
-> node within it. If it is 0, return a negative value to avoid calling
-> bop_intsert.
+Hi Andrew,
 
-Thank you Lizhi for helping us solve this problem.
+please add this series to the queue for the next cycle.
 
-However, your proposed patch has a few issues (more on that later),
-and this anomaly detection should be done when the root node is read,
-not just before insertion.  So, instead of adding bop_check_insert, I
-will modify the existing sanity check routine
-nilfs_btree_root_broken() by adding the following failure condition:
-
-diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 862bdf23120e..d390b8ba00d4 100644
---- a/fs/nilfs2/btree.c
-+++ b/fs/nilfs2/btree.c
-@@ -381,7 +381,8 @@ static int nilfs_btree_root_broken(const struct
-nilfs_btree_node *node,
-        if (unlikely(level < NILFS_BTREE_LEVEL_NODE_MIN ||
-                     level >=3D NILFS_BTREE_LEVEL_MAX ||
-                     nchildren < 0 ||
--                    nchildren > NILFS_BTREE_ROOT_NCHILDREN_MAX)) {
-+                    nchildren > NILFS_BTREE_ROOT_NCHILDREN_MAX ||
-+                    (nchildren =3D=3D 0 && level > NILFS_BTREE_LEVEL_NODE_=
-MIN))) {
-                nilfs_crit(inode->i_sb,
-                           "bad btree root (ino=3D%lu): level =3D %d,
-flags =3D 0x%x, nchildren =3D %d",
-                           inode->i_ino, level, flags, nchildren);
-
----
-Going back to your proposed patch, there are two problems:
-
-(1) nilfs_btree_node_get_nchildren(node) =3D=3D 0 is a normal state in
-itself, so it is not OK to return this as an error.
-
-(2) Even if we use bop_check_insert to perform a sanity check, the
-error code that should be returned is -EINVAL.
--ENOENT is an internal error code, but if bop_check_insert() returns
-it, it may be wrongly exposed to userspace (i.e. system
-calls).  If it is -EINVAL, it will be treated as metadata corruption
-at the bmap layer with nilfs_bmap_convert_error(), and the error code
-will be converted for return to userspace.
-
-So this time I'll be fixing and testing it myself, and will mention
-your help in the patch commit log.
+This addresses three potential issues with empty b-tree nodes that can
+occur with corrupted filesystem images, including one recently
+discovered by syzbot.
 
 Thanks,
 Ryusuke Konishi
 
->
-> #syz test
->
-> diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-> index 862bdf23120e..d7fa4d914638 100644
-> --- a/fs/nilfs2/btree.c
-> +++ b/fs/nilfs2/btree.c
-> @@ -1231,6 +1231,17 @@ static void nilfs_btree_commit_insert(struct nilfs=
-_bmap *btree,
->                 nilfs_bmap_set_dirty(btree);
->  }
->
-> +static int nilfs_btree_check_insert(const struct nilfs_bmap *btree, __u6=
-4 key)
-> +{
-> +       struct nilfs_btree_node *node;
-> +       int level;
-> +
-> +       node =3D nilfs_btree_get_root(btree);
-> +       level =3D nilfs_btree_node_get_level(node);
-> +       return (level < NILFS_BTREE_LEVEL_NODE_MIN ||
-> +               nilfs_btree_node_get_nchildren(node) <=3D 0) ? -ENOENT : =
-0;
-> +}
-> +
->  static int nilfs_btree_insert(struct nilfs_bmap *btree, __u64 key, __u64=
- ptr)
->  {
->         struct nilfs_btree_path *path;
-> @@ -2385,7 +2396,7 @@ static const struct nilfs_bmap_operations nilfs_btr=
-ee_ops =3D {
->         .bop_seek_key           =3D       nilfs_btree_seek_key,
->         .bop_last_key           =3D       nilfs_btree_last_key,
->
-> -       .bop_check_insert       =3D       NULL,
-> +       .bop_check_insert       =3D       nilfs_btree_check_insert,
->         .bop_check_delete       =3D       nilfs_btree_check_delete,
->         .bop_gather_data        =3D       nilfs_btree_gather_data,
->  };
+Ryusuke Konishi (3):
+  nilfs2: fix potential null-ptr-deref in nilfs_btree_insert()
+  nilfs2: determine empty node blocks as corrupted
+  nilfs2: fix potential oob read in nilfs_btree_check_delete()
+
+ fs/nilfs2/btree.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+-- 
+2.43.0
+
