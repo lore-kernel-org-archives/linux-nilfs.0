@@ -1,66 +1,66 @@
-Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
+Received: from mail-pg1-f178.google.com (mail-pg1-f178.google.com [209.85.215.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51EA61865E7;
-	Wed,  4 Sep 2024 08:14:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49BAD1990DD;
+	Wed,  4 Sep 2024 08:14:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1725437653; cv=none; b=p3JWXhmHFAY43vxssJ0Cw+orVMYIUbkfWaUXDqkN+qje3ti5droIkdWQ/tydqA0jIC6t9bQA1yfSfUT24SelJ4A2PD3fXKMiqPba8msX0OGmMoX9AR+aje3AzdU11gdh0wEibXqhhy9j99xRZ8RVDdZW2w/PKMlqCjgft9sMRQ0=
+	t=1725437656; cv=none; b=jksPFq/XcUnsh7kB0zVnZd7MqcTnb/Sr2Aqrs0ipZNtkk5QdlC1bNKF68UPbV3wLKokm5nz2TiZYglsU+Fr4NIh9V85r64Glg7CLBBIyCDwX4yPhq9Qde4wy+46tO/bXUdAfcFHROL7Iyz/gTFfDxoRgJf7EfM6PEOaXJ9YI1qk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1725437653; c=relaxed/simple;
-	bh=zMGJdiSfLmXbb/VWHoXDxmssdo4mZPiGT41JDitryd8=;
+	s=arc-20240116; t=1725437656; c=relaxed/simple;
+	bh=QB0+ZygBpaO9VbdZ31kZaEGP4j7nJUqUXS2cOhC2TLI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=cNDymBoG83iV/kSBAz9oIixg+a3BI6FiS+pX+oXCTDDoaCUTQhlPRq8akCHUZ7Z9fRgW5AIJffwmvSdqvsgtY8DZ4x1P1hPlaaje5mN0hFYCLVOqA5VpRcIGvN6ghCrkvbmQridDZGNEnsBeWUqF4YW5/m5TmQkAOC3OOYvvqWc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TTWv76ks; arc=none smtp.client-ip=209.85.214.182
+	 MIME-Version; b=l2TUvP8Czp44966i8UkacHMnzIO+n16Ocps26Gx1UKWRJ/02ikFWdASZCeUrYTz2Aa8pIj2alWTj2KUm5AoRW3lxX470EUfCAttd4Hd5aF7xYAdBKmZwPBz6ZzKaAtd01IdG2wLoGGWuxOzqlopObIAJj6f1tXcZHsOQPVkI4PQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=C/4RsUfG; arc=none smtp.client-ip=209.85.215.178
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TTWv76ks"
-Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-2059112f0a7so23333355ad.3;
-        Wed, 04 Sep 2024 01:14:12 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="C/4RsUfG"
+Received: by mail-pg1-f178.google.com with SMTP id 41be03b00d2f7-7d4f85766f0so1008366a12.2;
+        Wed, 04 Sep 2024 01:14:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1725437651; x=1726042451; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1725437654; x=1726042454; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=mnCgmF/lXJyYAZItC9G+NbMh+b+sySa8+ME8RzAPTQE=;
-        b=TTWv76ks/VhOnhMFAihD5+xahkxGxHsD+mp5C76ifdjShYWObQVNIoe8EmIxu1lg1n
-         rjOn/AWjt9CoW9f19r3jo+3r+40nuUNHwp6eh3okY8WHWoPseD07TSPzOz6oiO0csmi4
-         XYU+txsQ6Itj4u/TqRKJpneWsTjgT/TkfavYx/7E8EY2Cm7tXy7xdqfpL5dA1cYub1IK
-         /Tmom5Vs5Vdw6dLdyPa/39Jh8CbCNjeQ8+axxMrVVNyKMTzjPhFAB/d1SRhM3L4PLy+Q
-         q7Of1wIc3gONdb+8yl96mDJqS4ymuqmc+4D4cRiEY145SOdiTC34AMjcUyH1/W9tp4LP
-         tWLA==
+        bh=cQFld60h6LdVlrl/yTUQ1xklQxHsZil+Jfy5e8vhEAs=;
+        b=C/4RsUfGwtD6Zbb1zvJckSC0jezPw3M9GRl1Aef0mSMn12HFpLRjvdI85/74qrOHaw
+         Lz6zvSjH60+nAI9ZVb4xdZCoQPGYeQPCB8wn6T7RZiy478ke6UMTqb5Ds7q3rWhv/HcC
+         Yn/odKy39Wqunh0yFsNu0hmme1VDUC9iCpfjkd8K98qMOZMG6/4gmn6Wrwq1dFvFqCHO
+         VJ9alm+4xN9S+K9DmUR8RoFOZ/kVx0YuYxFhjDV1GRnfX3eAJcKGTl5xCJYyV9rXsKwi
+         EuyzABRVn9RaE/xBOZy7SOpkfVITduslcGmdUhDiqu51T28p75Ms3xQUy71aIcNWFJI0
+         hHpA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1725437651; x=1726042451;
+        d=1e100.net; s=20230601; t=1725437654; x=1726042454;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=mnCgmF/lXJyYAZItC9G+NbMh+b+sySa8+ME8RzAPTQE=;
-        b=dFraDJtxTrEfZfXaTxkVkqi7yFSL3mLAQH6DPhuWWJz3r6NnBEr2ITFGV/QhII7+PC
-         9Xnqr1kGzYGp0S8MwQZqK9U4Dvk8EdJqSY+yh+4ZReH0cP+UO2A4xvs6sBCnPXcaa/WX
-         yYBQUgm1RIsoG/z3w13schPHdOeEoInuFoBLdbkmu9bFPQ2X/bsQcVbCXiGkZK9bVpGC
-         f748zb2PRdnfeMeZ2f4oz/3kMnaI/dH8nuaS20ocR0FYVr5PMuiAkQwzfRJVLrgmYvAv
-         6zFnrk5WzlIO8EcIPElTAJCfCEd9KhPI3UNBmUq8/uRXGUiPPRacUThEIAHLpxuVWPv9
-         yg9A==
-X-Forwarded-Encrypted: i=1; AJvYcCWYVM4zOqiMLY20OnWrJQggvlCQcS1QH7KNzt9ArdlFUof0F9Werkhk+txY4ibM0f+T+yG2BNu7ZV2W9cg=@vger.kernel.org
-X-Gm-Message-State: AOJu0YzpMriZCzLzjcyqYpAAJeNdj9bj5hJLIqGeLp+8D9vRH4Z3P3W2
-	9JQgcJ2ohhbBHKh26e+I1mFRP4TIuJnGTwPM13joW7QGMkMxntzv
-X-Google-Smtp-Source: AGHT+IGwz130RBhLmJu1S77cD14bnDhzCXN9XuFgJTyrxCdP6XYVx1dUW4auWO2BXOeKRPrkpi4zuQ==
-X-Received: by 2002:a17:902:ce82:b0:205:4fb0:e0a3 with SMTP id d9443c01a7336-2054fb0e2d9mr125508005ad.41.1725437651268;
-        Wed, 04 Sep 2024 01:14:11 -0700 (PDT)
+        bh=cQFld60h6LdVlrl/yTUQ1xklQxHsZil+Jfy5e8vhEAs=;
+        b=ImavMggBD7E6zzep6m9FdejWINZpoh6LvApeCWgxnWIQtEysX4U2RfhuDA1SlgGj/N
+         uZreilNnrzE6tlVTp6s8f8V1u3GlJ+rktyFRXV51EXkhJbS/M2DxCV/gX0PVBbbCHRIy
+         EL8sxTnC/EPvN9zgs3Ptuq8/Tc6l9L3dw1bS1/PL+JFQ40cCcSgQ2Jln60hBIjhizmVZ
+         J/XVlAcTay39g6skYRwTu9ztR6AccBSvBIM0iKRDXnH/7TlB6IrndVr/zs78c/Xq+ljH
+         Fay3bfntoat5C7+fHTkHBWYaMRc1tbEj7oVAtOWzvn7cW/+0myALFZ2HarAmdD3U4v8L
+         yNZw==
+X-Forwarded-Encrypted: i=1; AJvYcCUyfbnPmJ4I59nXF7372jPnvUzVctWo9V06UzTQFmpkgImBDVQysM1fp3kKP4DcWMSMqx1QUiSOak7QgSc=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yy1DxAzfDPQtElf0XYCA1H5lgNqtaMdg+Qs38iAy2LzuxHqKo/S
+	CoXAgVBAAdyVtSI15jd+BN2cZakmU4hjMt2iMeb7Jo5btXN2mpUh
+X-Google-Smtp-Source: AGHT+IHSOA1DXNa8RithznHkqua/xgL4yKBtGUr+aXuAzM8swf/Svf58MFFS/ddP6MVMTT8D0r73uA==
+X-Received: by 2002:a17:903:1cf:b0:206:9640:e751 with SMTP id d9443c01a7336-2069640ed91mr48240675ad.3.1725437654464;
+        Wed, 04 Sep 2024 01:14:14 -0700 (PDT)
 Received: from carrot.. (i222-151-34-139.s42.a014.ap.plala.or.jp. [222.151.34.139])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-206aea5832dsm8836485ad.237.2024.09.04.01.14.08
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-206aea5832dsm8836485ad.237.2024.09.04.01.14.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Sep 2024 01:14:09 -0700 (PDT)
+        Wed, 04 Sep 2024 01:14:12 -0700 (PDT)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
 	syzbot <syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com>,
 	syzkaller-bugs@googlegroups.com,
 	LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH 1/3] nilfs2: fix potential null-ptr-deref in nilfs_btree_insert()
-Date: Wed,  4 Sep 2024 17:13:07 +0900
-Message-ID: <20240904081401.16682-2-konishi.ryusuke@gmail.com>
+Subject: [PATCH 2/3] nilfs2: determine empty node blocks as corrupted
+Date: Wed,  4 Sep 2024 17:13:08 +0900
+Message-ID: <20240904081401.16682-3-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240904081401.16682-1-konishi.ryusuke@gmail.com>
 References: <000000000000b4cf9a062114d132@google.com>
@@ -73,49 +73,38 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-If a b-tree is broken on the device, and the b-tree height is greater
-than 2 (the level of the root node is greater than 1) even if the
-number of child nodes of the b-tree root is 0, a NULL pointer
-dereference occurs in nilfs_btree_prepare_insert(), which is called
-from nilfs_btree_insert().
+Due to the nature of b-trees, nilfs2 itself and admin tools such as
+mkfs.nilfs2 will never create an intermediate b-tree node block with 0
+child nodes, nor will they delete (key, pointer)-entries that would
+result in such a state.  However, it is possible that a b-tree node
+block is corrupted on the backing device and is read with 0 child
+nodes.
 
-This is because, when the number of child nodes of the b-tree root is
-0, nilfs_btree_do_lookup() does not set the block buffer head in any
-of path[x].bp_bh, leaving it as the initial value of NULL, but if the
-level of the b-tree root node is greater than 1,
-nilfs_btree_get_nonroot_node(), which accesses the buffer memory of
-path[x].bp_bh, is called.
+Because operation is not guaranteed if the number of child nodes is 0
+for intermediate node blocks other than the root node, modify
+nilfs_btree_node_broken(), which performs sanity checks when reading a
+b-tree node block, so that such cases will be judged as metadata
+corruption.
 
-Fix this issue by adding a check to nilfs_btree_root_broken(), which
-performs sanity checks when reading the root node from the device, to
-detect this inconsistency.
-
-Thanks to Lizhi Xu for trying to solve the bug and clarifying the
-cause early on.
-
-Link: https://lkml.kernel.org/r/20240902084101.138971-1-lizhi.xu@windriver.com
 Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: syzbot+9bff4c7b992038a7409f@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=9bff4c7b992038a7409f
 Fixes: 17c76b0104e4 ("nilfs2: B-tree based block mapping")
 ---
- fs/nilfs2/btree.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ fs/nilfs2/btree.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
-index 862bdf23120e..d390b8ba00d4 100644
+index d390b8ba00d4..dedd3c480842 100644
 --- a/fs/nilfs2/btree.c
 +++ b/fs/nilfs2/btree.c
-@@ -381,7 +381,8 @@ static int nilfs_btree_root_broken(const struct nilfs_btree_node *node,
+@@ -350,7 +350,7 @@ static int nilfs_btree_node_broken(const struct nilfs_btree_node *node,
  	if (unlikely(level < NILFS_BTREE_LEVEL_NODE_MIN ||
  		     level >= NILFS_BTREE_LEVEL_MAX ||
- 		     nchildren < 0 ||
--		     nchildren > NILFS_BTREE_ROOT_NCHILDREN_MAX)) {
-+		     nchildren > NILFS_BTREE_ROOT_NCHILDREN_MAX ||
-+		     (nchildren == 0 && level > NILFS_BTREE_LEVEL_NODE_MIN))) {
+ 		     (flags & NILFS_BTREE_NODE_ROOT) ||
+-		     nchildren < 0 ||
++		     nchildren <= 0 ||
+ 		     nchildren > NILFS_BTREE_NODE_NCHILDREN_MAX(size))) {
  		nilfs_crit(inode->i_sb,
- 			   "bad btree root (ino=%lu): level = %d, flags = 0x%x, nchildren = %d",
- 			   inode->i_ino, level, flags, nchildren);
+ 			   "bad btree node (ino=%lu, blocknr=%llu): level = %d, flags = 0x%x, nchildren = %d",
 -- 
 2.43.0
 
