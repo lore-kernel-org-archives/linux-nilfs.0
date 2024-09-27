@@ -1,140 +1,176 @@
-Received: from mx0b-0064b401.pphosted.com (mx0b-0064b401.pphosted.com [205.220.178.238])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19C92157A72;
-	Fri, 27 Sep 2024 15:19:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.178.238
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1825E16EBED;
+	Fri, 27 Sep 2024 18:18:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727450356; cv=none; b=UxNeYrg/xnjR3rnDfFIwRnDGFSs5+XflHcC+0xaa8UxexrnOIFAP5u7QEpd6erWkHxSvIDqkLyJDgQWToh72gGSEw7/CdQXxvjbDP/Fj1ol1U2trZJ69YCUDaSWbdN7CS1jw4xBD3v/ncaneAuGk/VPZxXDfjPBhcFWqKz/jqHE=
+	t=1727461137; cv=none; b=pgilg+L91lg7QEZIVX35pXPxuO/0wsdoJUNOhsWJ9OhfLG3hJxIO1YaN5KPmVuX03o9qqQyHzn1v7hwTNa7L79jQLN0Rfz2jAYLmdPmYEVW7k1DQlJ+eENKH4pK/mOSqLJSHqDM6N3izUk/ScJ3TzyK9eHKo5N/JPiZOTzoeyXw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727450356; c=relaxed/simple;
-	bh=YLFzYQuBP3w8Ms/jaGDp8hR9hPfwcZeRccyqsB5OIJE=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=ZWAOJDo0wdrjVi38Pnxqxxr9fZGmU8KdZ4l4ORgQw+g9rG2t0AdQ3XrL6B6ly912eGzv+MWTIPNxLNb8cZ229XXATJNr5SK1qhhocRwasGxQxQi+rfH9lVuxPMAxFEXW7H4mPn6RQmOk8XdWm+QuQMH/kKbR63F7W1sFxuigAz8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com; spf=pass smtp.mailfrom=windriver.com; arc=none smtp.client-ip=205.220.178.238
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=windriver.com
-Received: from pps.filterd (m0250812.ppops.net [127.0.0.1])
-	by mx0a-0064b401.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 48RAdYlM032580;
-	Fri, 27 Sep 2024 15:19:04 GMT
-Received: from ala-exchng01.corp.ad.wrs.com (ala-exchng01.wrs.com [147.11.82.252])
-	by mx0a-0064b401.pphosted.com (PPS) with ESMTPS id 41um4xmvgb-2
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT);
-	Fri, 27 Sep 2024 15:19:04 +0000 (GMT)
-Received: from ALA-EXCHNG02.corp.ad.wrs.com (147.11.82.254) by
- ala-exchng01.corp.ad.wrs.com (147.11.82.252) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.39; Fri, 27 Sep 2024 08:19:02 -0700
-Received: from pek-lpd-ccm6.wrs.com (147.11.136.210) by
- ALA-EXCHNG02.corp.ad.wrs.com (147.11.82.254) with Microsoft SMTP Server id
- 15.1.2507.39 via Frontend Transport; Fri, 27 Sep 2024 08:19:01 -0700
-From: Lizhi Xu <lizhi.xu@windriver.com>
-To: <lizhi.xu@windriver.com>
-CC: <syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com>,
-        <linux-kernel@vger.kernel.org>, <konishi.ryusuke@gmail.com>,
-        <linux-nilfs@vger.kernel.org>, <syzkaller-bugs@googlegroups.com>
-Subject: [PATCH] nilfs2: add ratelimiting to nilfs2 message
-Date: Fri, 27 Sep 2024 23:19:00 +0800
-Message-ID: <20240927151900.2596508-1-lizhi.xu@windriver.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20240927134620.2081991-1-lizhi.xu@windriver.com>
-References: <20240927134620.2081991-1-lizhi.xu@windriver.com>
+	s=arc-20240116; t=1727461137; c=relaxed/simple;
+	bh=Cc5bpfgc2ebNZO49EDB8yezKrZ2PpSx1H7KVunV5si0=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=AbYXl+WzTzepgZQfA8NgDhE1JuXSboKvoEIoKKj1ob/QNNEaApg8bcy7k763K7sQzZA6J1jrzMld4gCTRFOWfBpFsNs4pTkvunqN014VVdzuC24owSIqTNN0/8UBkzChXHZ1E+Qo5kAalDsettlompFvjAOwlBuOBRppN8tyt+s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=O6nWKt3H; arc=none smtp.client-ip=209.85.167.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="O6nWKt3H"
+Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-5389fbb28f3so1261395e87.1;
+        Fri, 27 Sep 2024 11:18:54 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1727461133; x=1728065933; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=e9PaMjUupnuNud0DUF/86pCwupCkYKS/FGdmFFBzQL0=;
+        b=O6nWKt3H52e1tO3xJLYzvHi+735fFF2lsDo9nKuo3eedsTHNtt5fe/q2IvTvvTyaOn
+         SHkOJgcaqNzjdaNEJ8wGsxIRM1RRM56srlo6Kjtx1/cukGKkbp2vEBsKQz46LtYuCY61
+         FD4BLC7zivRsYvDxID6OuIEvnt6Bce3Zlj8SKNI4Zia6OdQrg8NpsDKJMx6aMcoVeIcV
+         x3m7lzFx4eZe83fgjgMIRCZfFCwyN4pGzVXYRem0dy26fyFrgJn9MUyIhcoy6e4gVhf6
+         0TngXsxAqNvVZupYh6KlrZPTtdaTNGdiJ9MQXZgygCwYGYy6OZv5uGNcMTzia4F3qWvS
+         clWA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1727461133; x=1728065933;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=e9PaMjUupnuNud0DUF/86pCwupCkYKS/FGdmFFBzQL0=;
+        b=JNw7YAR3QugkwsP79Sqbf29lwx6hQv74T6GKONxSEq2QaEwnaXVFcwAaYPxh8rj7w0
+         iNBRhdR3AL9T+rMtJ5663ZHtgVdaTCW5aTMOP2X9XwgwN4RfB0Ui1oEs9eMT8yUcSc+M
+         LDH3hhaKSkmoFbusB3zTPlAOETM3/kagZwNWxMvad/xvHIRSy9+yp+gclr7PyndGOcLk
+         6VuMa/CH1PHw9k2we0Uvs9T3lniYbfuQVY62w9DBG5k5g19g7/U/OlHLtcvDE9YBjy1V
+         n8D/NXnUXReVBBYpqCesVRsQgX3X+x6d+DT1rpRoWGXp26rHmk5gPwwh0AT0BL7iesK7
+         isvg==
+X-Forwarded-Encrypted: i=1; AJvYcCVGn0SvXTZa39AXUniwDFdoa94iXvYebFusIYravUsk6vaVp8zEhwDvcrvwC11fnR5X0Ff6BTYuDg4ySOk=@vger.kernel.org, AJvYcCVRe8Qoph0PFGFWutSrAW/GlwMcPweXUDapYbLEf4z9U1g4JxG6Klop3dGzN2Ci1nlNSVqiEEm9ikpM9Qo=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxQqF7Zq5Fdzs01CrfNK8Fz820XjhnIjzPrqTrXjs5QahaKLBez
+	D8audVknnLbuIIEyN0zw7HXT+/GzfvpLjJNuFEMuQETlJ2ZBtxdIoXt8XG1djyKGsPyZlT4MFfF
+	eheIRp7eqIhjCKUa+do0P3eI/r8k=
+X-Google-Smtp-Source: AGHT+IFdO5S/Y8L92PGVYCZAgYyhjP2oGeM0AjzZypQ0eDHipMZjOizLQ0cgN+MFOVXRXbDityG0VwFKpcH8SUPhurs=
+X-Received: by 2002:a05:6512:12d2:b0:533:4784:6aec with SMTP id
+ 2adb3069b0e04-5389ef21ed2mr1708061e87.27.1727461132851; Fri, 27 Sep 2024
+ 11:18:52 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-Proofpoint-ORIG-GUID: nakrBJ0QlNptnxEb3qeSZ387IXUwW2kF
-X-Authority-Analysis: v=2.4 cv=e+1USrp/ c=1 sm=1 tr=0 ts=66f6cce8 cx=c_pps a=/ZJR302f846pc/tyiSlYyQ==:117 a=/ZJR302f846pc/tyiSlYyQ==:17 a=EaEq8P2WXUwA:10 a=hSkVLCK3AAAA:8 a=edf1wS77AAAA:8 a=t7CeM3EgAAAA:8 a=LDpvdhc8yH1BBIb8LwkA:9 a=cQPPKAXgyycSBL8etih5:22
- a=DcSpbTIhAlouE1Uv7lRv:22 a=FdTzh2GWekK77mhwV6Dw:22
-X-Proofpoint-GUID: nakrBJ0QlNptnxEb3qeSZ387IXUwW2kF
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1051,Hydra:6.0.680,FMLib:17.12.60.29
- definitions=2024-09-27_06,2024-09-27_01,2024-09-02_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 adultscore=0 clxscore=1011
- spamscore=0 lowpriorityscore=0 impostorscore=0 mlxscore=0 phishscore=0
- malwarescore=0 bulkscore=0 suspectscore=0 mlxlogscore=999
- priorityscore=1501 classifier=spam authscore=0 adjust=0 reason=mlx
- scancount=1 engine=8.21.0-2408220000 definitions=main-2409270102
+References: <20240927134620.2081991-1-lizhi.xu@windriver.com> <20240927151900.2596508-1-lizhi.xu@windriver.com>
+In-Reply-To: <20240927151900.2596508-1-lizhi.xu@windriver.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Sat, 28 Sep 2024 03:18:36 +0900
+Message-ID: <CAKFNMok4U8OTVDV0YFDUGotsShSZKST532snzL3fQBVFcUL9TQ@mail.gmail.com>
+Subject: Re: [PATCH] nilfs2: add ratelimiting to nilfs2 message
+To: Lizhi Xu <lizhi.xu@windriver.com>
+Cc: syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com, 
+	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Syzbot report a task hung in vcs_open.
-When rec_len too small in nilfs_check_folio, it can result in a huge flood
-of messages being sent to the console. It eventually caused tty to hung when
-retrieving the console_lock().
+On Sat, Sep 28, 2024 at 12:19=E2=80=AFAM Lizhi Xu wrote:
+>
+> Syzbot report a task hung in vcs_open.
+> When rec_len too small in nilfs_check_folio, it can result in a huge floo=
+d
+> of messages being sent to the console. It eventually caused tty to hung w=
+hen
+> retrieving the console_lock().
+>
+> Reported-by: syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com
+> Closes: https://syzkaller.appspot.com/bug?extid=3D8a192e8d090fa9a31135
+> Signed-off-by: Lizhi Xu <lizhi.xu@windriver.com>
+> ---
+>  fs/nilfs2/dir.c | 24 ++++++++++++++++--------
+>  1 file changed, 16 insertions(+), 8 deletions(-)
 
-Reported-by: syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=8a192e8d090fa9a31135
-Signed-off-by: Lizhi Xu <lizhi.xu@windriver.com>
----
- fs/nilfs2/dir.c | 24 ++++++++++++++++--------
- 1 file changed, 16 insertions(+), 8 deletions(-)
+Thank you for the patch.
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index fe5b1a30c509..0a89dda75414 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -32,6 +32,7 @@
- #include <linux/pagemap.h>
- #include "nilfs.h"
- #include "page.h"
-+#include <linux/ratelimit.h>
- 
- static inline unsigned int nilfs_rec_len_from_disk(__le16 dlen)
- {
-@@ -115,6 +116,7 @@ static bool nilfs_check_folio(struct folio *folio, char *kaddr)
- 	size_t limit = folio_size(folio);
- 	struct nilfs_dir_entry *p;
- 	char *error;
-+	static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL * 5, 1);
- 
- 	if (dir->i_size < folio_pos(folio) + limit) {
- 		limit = dir->i_size - folio_pos(folio);
-@@ -148,9 +150,11 @@ static bool nilfs_check_folio(struct folio *folio, char *kaddr)
- 	/* Too bad, we had an error */
- 
- Ebadsize:
--	nilfs_error(sb,
--		    "size of directory #%lu is not a multiple of chunk size",
--		    dir->i_ino);
-+	if (__ratelimit(&rs)) {
-+		nilfs_error(sb,
-+			    "size of directory #%lu is not a multiple of chunk size",
-+			    dir->i_ino);
-+	}
- 	goto fail;
- Eshort:
- 	error = "rec_len is smaller than minimal";
-@@ -167,18 +171,22 @@ static bool nilfs_check_folio(struct folio *folio, char *kaddr)
- Einumber:
- 	error = "disallowed inode number";
- bad_entry:
--	nilfs_error(sb,
-+	if (__ratelimit(&rs)) {
-+		nilfs_error(sb,
- 		    "bad entry in directory #%lu: %s - offset=%lu, inode=%lu, rec_len=%zd, name_len=%d",
- 		    dir->i_ino, error, (folio->index << PAGE_SHIFT) + offs,
- 		    (unsigned long)le64_to_cpu(p->inode),
- 		    rec_len, p->name_len);
-+	}
- 	goto fail;
- Eend:
- 	p = (struct nilfs_dir_entry *)(kaddr + offs);
--	nilfs_error(sb,
--		    "entry in directory #%lu spans the page boundary offset=%lu, inode=%lu",
--		    dir->i_ino, (folio->index << PAGE_SHIFT) + offs,
--		    (unsigned long)le64_to_cpu(p->inode));
-+	if (__ratelimit(&rs)) {
-+		nilfs_error(sb,
-+			    "entry in directory #%lu spans the page boundary offset=%lu, inode=%lu",
-+			    dir->i_ino, (folio->index << PAGE_SHIFT) + offs,
-+			    (unsigned long)le64_to_cpu(p->inode));
-+	}
- fail:
- 	return false;
- }
--- 
-2.43.0
+I could confirm that the problem is reproducible and that your patch
+prevents it, so I will treat this as a nilfs2 side issue.
 
+The patch seems somewhat straightforward, so let me review this a bit
+more.  I may ask you to make some changes.
+
+Thanks,
+Ryusuke Konishi
+
+>
+> diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+> index fe5b1a30c509..0a89dda75414 100644
+> --- a/fs/nilfs2/dir.c
+> +++ b/fs/nilfs2/dir.c
+> @@ -32,6 +32,7 @@
+>  #include <linux/pagemap.h>
+>  #include "nilfs.h"
+>  #include "page.h"
+> +#include <linux/ratelimit.h>
+>
+>  static inline unsigned int nilfs_rec_len_from_disk(__le16 dlen)
+>  {
+> @@ -115,6 +116,7 @@ static bool nilfs_check_folio(struct folio *folio, ch=
+ar *kaddr)
+>         size_t limit =3D folio_size(folio);
+>         struct nilfs_dir_entry *p;
+>         char *error;
+> +       static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL * 5,=
+ 1);
+>
+>         if (dir->i_size < folio_pos(folio) + limit) {
+>                 limit =3D dir->i_size - folio_pos(folio);
+> @@ -148,9 +150,11 @@ static bool nilfs_check_folio(struct folio *folio, c=
+har *kaddr)
+>         /* Too bad, we had an error */
+>
+>  Ebadsize:
+> -       nilfs_error(sb,
+> -                   "size of directory #%lu is not a multiple of chunk si=
+ze",
+> -                   dir->i_ino);
+> +       if (__ratelimit(&rs)) {
+> +               nilfs_error(sb,
+> +                           "size of directory #%lu is not a multiple of =
+chunk size",
+> +                           dir->i_ino);
+> +       }
+>         goto fail;
+>  Eshort:
+>         error =3D "rec_len is smaller than minimal";
+> @@ -167,18 +171,22 @@ static bool nilfs_check_folio(struct folio *folio, =
+char *kaddr)
+>  Einumber:
+>         error =3D "disallowed inode number";
+>  bad_entry:
+> -       nilfs_error(sb,
+> +       if (__ratelimit(&rs)) {
+> +               nilfs_error(sb,
+>                     "bad entry in directory #%lu: %s - offset=3D%lu, inod=
+e=3D%lu, rec_len=3D%zd, name_len=3D%d",
+>                     dir->i_ino, error, (folio->index << PAGE_SHIFT) + off=
+s,
+>                     (unsigned long)le64_to_cpu(p->inode),
+>                     rec_len, p->name_len);
+> +       }
+>         goto fail;
+>  Eend:
+>         p =3D (struct nilfs_dir_entry *)(kaddr + offs);
+> -       nilfs_error(sb,
+> -                   "entry in directory #%lu spans the page boundary offs=
+et=3D%lu, inode=3D%lu",
+> -                   dir->i_ino, (folio->index << PAGE_SHIFT) + offs,
+> -                   (unsigned long)le64_to_cpu(p->inode));
+> +       if (__ratelimit(&rs)) {
+> +               nilfs_error(sb,
+> +                           "entry in directory #%lu spans the page bound=
+ary offset=3D%lu, inode=3D%lu",
+> +                           dir->i_ino, (folio->index << PAGE_SHIFT) + of=
+fs,
+> +                           (unsigned long)le64_to_cpu(p->inode));
+> +       }
+>  fail:
+>         return false;
+>  }
+> --
+> 2.43.0
+>
