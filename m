@@ -1,176 +1,178 @@
-Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
+Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1825E16EBED;
-	Fri, 27 Sep 2024 18:18:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 326884A1B;
+	Sat, 28 Sep 2024 03:54:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727461137; cv=none; b=pgilg+L91lg7QEZIVX35pXPxuO/0wsdoJUNOhsWJ9OhfLG3hJxIO1YaN5KPmVuX03o9qqQyHzn1v7hwTNa7L79jQLN0Rfz2jAYLmdPmYEVW7k1DQlJ+eENKH4pK/mOSqLJSHqDM6N3izUk/ScJ3TzyK9eHKo5N/JPiZOTzoeyXw=
+	t=1727495651; cv=none; b=ly9S+R79W/jU84JHEKf/B8W2PuKNneMYVAlqk8v0RKm+m9t5MLpoH4ZFHSv6Lr9Mfxmm+LHTLSfoHPpAeK2Jb8uI4yPnVUVUy3QJhg8H447+jrDWCOS0jm0o5btR+PbXpewizVvq/QI5BID8YNybu93xxT/b8DYCmBRpff/qEFg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727461137; c=relaxed/simple;
-	bh=Cc5bpfgc2ebNZO49EDB8yezKrZ2PpSx1H7KVunV5si0=;
+	s=arc-20240116; t=1727495651; c=relaxed/simple;
+	bh=rj7UqAEj5nQUkjablc7CjxDbfFQSdJCh0F90jpjERnU=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=AbYXl+WzTzepgZQfA8NgDhE1JuXSboKvoEIoKKj1ob/QNNEaApg8bcy7k763K7sQzZA6J1jrzMld4gCTRFOWfBpFsNs4pTkvunqN014VVdzuC24owSIqTNN0/8UBkzChXHZ1E+Qo5kAalDsettlompFvjAOwlBuOBRppN8tyt+s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=O6nWKt3H; arc=none smtp.client-ip=209.85.167.44
+	 To:Cc:Content-Type; b=BaZPYs8XTmnUiV3dtksGl+mFPN3dWV3mxV16ch3ngy6ApqR9O3v/qUiceFZApIo2pRJYoabsVOAL7dC8kLXJWrdDBWQGqC2cLAPq7QVLTVD/MHP407cHYkrc5an+iOvHTQp8Ba+C/EFHRCVGzvzekXWHKh/UGpufAHJlR8B4h5c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Si+OyKUp; arc=none smtp.client-ip=209.85.167.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="O6nWKt3H"
-Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-5389fbb28f3so1261395e87.1;
-        Fri, 27 Sep 2024 11:18:54 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Si+OyKUp"
+Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-5398e7dda5fso30919e87.0;
+        Fri, 27 Sep 2024 20:54:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1727461133; x=1728065933; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1727495647; x=1728100447; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=e9PaMjUupnuNud0DUF/86pCwupCkYKS/FGdmFFBzQL0=;
-        b=O6nWKt3H52e1tO3xJLYzvHi+735fFF2lsDo9nKuo3eedsTHNtt5fe/q2IvTvvTyaOn
-         SHkOJgcaqNzjdaNEJ8wGsxIRM1RRM56srlo6Kjtx1/cukGKkbp2vEBsKQz46LtYuCY61
-         FD4BLC7zivRsYvDxID6OuIEvnt6Bce3Zlj8SKNI4Zia6OdQrg8NpsDKJMx6aMcoVeIcV
-         x3m7lzFx4eZe83fgjgMIRCZfFCwyN4pGzVXYRem0dy26fyFrgJn9MUyIhcoy6e4gVhf6
-         0TngXsxAqNvVZupYh6KlrZPTtdaTNGdiJ9MQXZgygCwYGYy6OZv5uGNcMTzia4F3qWvS
-         clWA==
+        bh=0qu2RbmNt8gPqRKvTmXGhJ0rCOvq4hj8MvwdpxuHcVg=;
+        b=Si+OyKUpv2NUa2yqHrr+NWh53JchCduj8/ko0MUU7AlniAHd4Gdh2iSv68VIv1QWPt
+         2JjkB9AHWMgrEXd5acgGbGNvhlbn9IhkCiyIlkIbpSXHApIoCxwbKjXfRPIPpFIsAMap
+         IhSFljxAvzTssZKuS2m0EDcGVRUfSN5tzx9jarruH66tpqKgAUnbDjxUOH/r3TqEiVDz
+         nA/jqXLNu5nCVdcr7Mpc0BkvEqkCSKLHGaRMRKOPlZmb2bGuQJKgGHP4ZGgwC6cC6LO8
+         AcAEIul1PpgBFWd6ePyA7rqdIYJEW7xJ/gOWdq5KRJUOOrGvxwa7Jf25Pl0gglYA8lFz
+         dqaA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727461133; x=1728065933;
+        d=1e100.net; s=20230601; t=1727495647; x=1728100447;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=e9PaMjUupnuNud0DUF/86pCwupCkYKS/FGdmFFBzQL0=;
-        b=JNw7YAR3QugkwsP79Sqbf29lwx6hQv74T6GKONxSEq2QaEwnaXVFcwAaYPxh8rj7w0
-         iNBRhdR3AL9T+rMtJ5663ZHtgVdaTCW5aTMOP2X9XwgwN4RfB0Ui1oEs9eMT8yUcSc+M
-         LDH3hhaKSkmoFbusB3zTPlAOETM3/kagZwNWxMvad/xvHIRSy9+yp+gclr7PyndGOcLk
-         6VuMa/CH1PHw9k2we0Uvs9T3lniYbfuQVY62w9DBG5k5g19g7/U/OlHLtcvDE9YBjy1V
-         n8D/NXnUXReVBBYpqCesVRsQgX3X+x6d+DT1rpRoWGXp26rHmk5gPwwh0AT0BL7iesK7
-         isvg==
-X-Forwarded-Encrypted: i=1; AJvYcCVGn0SvXTZa39AXUniwDFdoa94iXvYebFusIYravUsk6vaVp8zEhwDvcrvwC11fnR5X0Ff6BTYuDg4ySOk=@vger.kernel.org, AJvYcCVRe8Qoph0PFGFWutSrAW/GlwMcPweXUDapYbLEf4z9U1g4JxG6Klop3dGzN2Ci1nlNSVqiEEm9ikpM9Qo=@vger.kernel.org
-X-Gm-Message-State: AOJu0YxQqF7Zq5Fdzs01CrfNK8Fz820XjhnIjzPrqTrXjs5QahaKLBez
-	D8audVknnLbuIIEyN0zw7HXT+/GzfvpLjJNuFEMuQETlJ2ZBtxdIoXt8XG1djyKGsPyZlT4MFfF
-	eheIRp7eqIhjCKUa+do0P3eI/r8k=
-X-Google-Smtp-Source: AGHT+IFdO5S/Y8L92PGVYCZAgYyhjP2oGeM0AjzZypQ0eDHipMZjOizLQ0cgN+MFOVXRXbDityG0VwFKpcH8SUPhurs=
-X-Received: by 2002:a05:6512:12d2:b0:533:4784:6aec with SMTP id
- 2adb3069b0e04-5389ef21ed2mr1708061e87.27.1727461132851; Fri, 27 Sep 2024
- 11:18:52 -0700 (PDT)
+        bh=0qu2RbmNt8gPqRKvTmXGhJ0rCOvq4hj8MvwdpxuHcVg=;
+        b=WGD1guufRiQGfChw3xmNZivTaequKooDovaS9lYx8TXnOJy4gido0yvu5FFj2jYnpa
+         cDxDVWp4RjYu/phtLHsDBjt80a+8QKVQdEpYd0XGrKVKt5P859VwPqutjjcSnyNlIdyu
+         E3cru8mYyAr/uzYR/9ss5F6cItucyrID05B4G1alqec0fKwtgkD4mi3bYhcY0Ppv5JX2
+         WhT/sVQ1REMB/2e2Y7aiceHuN7gMiTSFqywaZqsN+wPfF1HODePSMuwhVXBwLoJy/XHu
+         Mjyye6vRCz98f3VvVTeQ1JLtLlq9+U+siTmKL8gmpE7L5f8S9VJq21M6OAApeR8p24j7
+         bVOQ==
+X-Forwarded-Encrypted: i=1; AJvYcCU3OozCbRthTnsg0fuU7J+wxU6yP//CxqXBnn5P40e6FsPqOo8x3P1jInQtEFiVE8x8W2vx7Y99n4pBmoIP@vger.kernel.org, AJvYcCUgJjKPXvwbdEs4XVkEG+kv+ws+etyrb2+lRNJc22NI3m36LOh8R0FHHmCniPb6or6bwWxP1yQdp+hixio=@vger.kernel.org, AJvYcCVZp0++iwV5cDdtPc8WJs+Xaq7JNjOxJzEf+2pi2LkaZIup0NIloz7hvXnQWj/II9zU/85wcG+qDjvsT6k=@vger.kernel.org
+X-Gm-Message-State: AOJu0YzP0X1rG57ovYhb3fq4NKv1OpOERvfS+tUAYXUlzhSBA+Balo6M
+	qwh+0BvWcGIs1wjPuknMGdttw9Wbuz+/5AeijBWJtGzZMl40n0g9EgW9jkkP8qYzWopYRuIi6E+
+	Zs6Omj4zU5LNfObjc5b1/J3oqFslonbrN
+X-Google-Smtp-Source: AGHT+IFhvJLe27KdjkZ3nhPAKadgpehDnrCg3V3j5B8FSZ2L9iBcuvKGAWVXeJV889MRUBeOohncNNrxFhp+wJnTDW0=
+X-Received: by 2002:a05:6512:1054:b0:52c:e05e:849b with SMTP id
+ 2adb3069b0e04-5389fc63377mr3217782e87.39.1727495646768; Fri, 27 Sep 2024
+ 20:54:06 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20240927134620.2081991-1-lizhi.xu@windriver.com> <20240927151900.2596508-1-lizhi.xu@windriver.com>
-In-Reply-To: <20240927151900.2596508-1-lizhi.xu@windriver.com>
+References: <66f59678.050a0220.46d20.0001.GAE@google.com>
+In-Reply-To: <66f59678.050a0220.46d20.0001.GAE@google.com>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 28 Sep 2024 03:18:36 +0900
-Message-ID: <CAKFNMok4U8OTVDV0YFDUGotsShSZKST532snzL3fQBVFcUL9TQ@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: add ratelimiting to nilfs2 message
-To: Lizhi Xu <lizhi.xu@windriver.com>
-Cc: syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com, 
-	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
-	syzkaller-bugs@googlegroups.com
+Date: Sat, 28 Sep 2024 12:53:50 +0900
+Message-ID: <CAKFNMo=mAYHtfq+QP2v4v9YL7RxEMu-m0BdM5VCW65boHDt34g@mail.gmail.com>
+Subject: Re: [syzbot] [serial?] INFO: task hung in vcs_open (8)
+To: syzbot <syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com>
+Cc: Lizhi Xu <lizhi.xu@windriver.com>, linux-nilfs <linux-nilfs@vger.kernel.org>, 
+	linux-kernel@vger.kernel.org, syzkaller-bugs@googlegroups.com, 
+	linux-serial@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, Sep 28, 2024 at 12:19=E2=80=AFAM Lizhi Xu wrote:
+On Fri, Sep 27, 2024 at 2:36=E2=80=AFAM syzbot
+<syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com> wrote:
 >
-> Syzbot report a task hung in vcs_open.
-> When rec_len too small in nilfs_check_folio, it can result in a huge floo=
-d
-> of messages being sent to the console. It eventually caused tty to hung w=
-hen
-> retrieving the console_lock().
+> Hello,
 >
+> syzbot found the following issue on:
+>
+> HEAD commit:    88264981f208 Merge tag 'sched_ext-for-6.12' of git://git.=
+k..
+> git tree:       upstream
+> console+strace: https://syzkaller.appspot.com/x/log.txt?x=3D1187c19f98000=
+0
+> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D74ffdb3b3fad1=
+a43
+> dashboard link: https://syzkaller.appspot.com/bug?extid=3D8a192e8d090fa9a=
+31135
+> compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Deb=
+ian) 2.40
+> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D16aa3ca9980=
+000
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D1587c19f98000=
+0
+>
+> Downloadable assets:
+> disk image: https://storage.googleapis.com/syzbot-assets/87eaf0ad6d60/dis=
+k-88264981.raw.xz
+> vmlinux: https://storage.googleapis.com/syzbot-assets/30c01cf8bc82/vmlinu=
+x-88264981.xz
+> kernel image: https://storage.googleapis.com/syzbot-assets/a1407424ea54/b=
+zImage-88264981.xz
+> mounted in repro: https://storage.googleapis.com/syzbot-assets/a8a56914d1=
+d8/mount_6.gz
+>
+> Bisection is inconclusive: the issue happens on the oldest tested release=
+.
+>
+> bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=3D16154c8058=
+0000
+> final oops:     https://syzkaller.appspot.com/x/report.txt?x=3D15154c8058=
+0000
+> console output: https://syzkaller.appspot.com/x/log.txt?x=3D11154c8058000=
+0
+>
+> IMPORTANT: if you fix the issue, please add the following tag to the comm=
+it:
 > Reported-by: syzbot+8a192e8d090fa9a31135@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=3D8a192e8d090fa9a31135
-> Signed-off-by: Lizhi Xu <lizhi.xu@windriver.com>
+>
+> INFO: task syz-executor199:5270 blocked for more than 147 seconds.
+>       Not tainted 6.11.0-syzkaller-08481-g88264981f208 #0
+> "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+> task:syz-executor199 state:D stack:27360 pid:5270  tgid:5255  ppid:5233  =
+ flags:0x00004006
+> Call Trace:
+>  <TASK>
+>  context_switch kernel/sched/core.c:5315 [inline]
+>  __schedule+0x1843/0x4ae0 kernel/sched/core.c:6674
+>  __schedule_loop kernel/sched/core.c:6751 [inline]
+>  schedule+0x14b/0x320 kernel/sched/core.c:6766
+>  schedule_timeout+0xb0/0x310 kernel/time/timer.c:2591
+>  ___down_common kernel/locking/semaphore.c:225 [inline]
+>  __down_common+0x346/0x7f0 kernel/locking/semaphore.c:246
+>  down+0x84/0xc0 kernel/locking/semaphore.c:63
+>  console_lock+0x145/0x1b0 kernel/printk/printk.c:2808
+>  vcs_open+0x5d/0xd0 drivers/tty/vt/vc_screen.c:763
+>  chrdev_open+0x521/0x600 fs/char_dev.c:414
+>  do_dentry_open+0x978/0x1460 fs/open.c:958
+>  vfs_open+0x3e/0x330 fs/open.c:1088
+>  do_open fs/namei.c:3774 [inline]
+>  path_openat+0x2c84/0x3590 fs/namei.c:3933
+>  do_filp_open+0x235/0x490 fs/namei.c:3960
+>
+>
 > ---
->  fs/nilfs2/dir.c | 24 ++++++++++++++++--------
->  1 file changed, 16 insertions(+), 8 deletions(-)
+> This report is generated by a bot. It may contain errors.
+> See https://goo.gl/tpsmEJ for more information about syzbot.
+> syzbot engineers can be reached at syzkaller@googlegroups.com.
+>
+> syzbot will keep track of this issue. See:
+> https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+> For information about bisection process see: https://goo.gl/tpsmEJ#bisect=
+ion
+>
+> If the report is already addressed, let syzbot know by replying with:
+> #syz fix: exact-commit-title
+>
+> If you want syzbot to run the reproducer, reply with:
+> #syz test: git://repo/address.git branch-or-commit-hash
+> If you attach or paste a git patch, syzbot will apply it before testing.
+>
+> If you want to overwrite report's subsystems, reply with:
+> #syz set subsystems: new-subsystem
+> (See the list of subsystem names on the web dashboard)
+>
+> If the report is a duplicate of another one, reply with:
+> #syz dup: exact-subject-of-another-report
+>
+> If you want to undo deduplication, reply with:
+> #syz undup
+>
 
-Thank you for the patch.
+The problem caused by this reproducer seems to be an issue on the
+nilfs side based on testing with Lizhi's patch (not all logs recorded
+are like that), so I will add a nilfs tag:
 
-I could confirm that the problem is reproducible and that your patch
-prevents it, so I will treat this as a nilfs2 side issue.
+#syz set subsystems: nilfs, serial
 
-The patch seems somewhat straightforward, so let me review this a bit
-more.  I may ask you to make some changes.
-
-Thanks,
 Ryusuke Konishi
-
->
-> diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-> index fe5b1a30c509..0a89dda75414 100644
-> --- a/fs/nilfs2/dir.c
-> +++ b/fs/nilfs2/dir.c
-> @@ -32,6 +32,7 @@
->  #include <linux/pagemap.h>
->  #include "nilfs.h"
->  #include "page.h"
-> +#include <linux/ratelimit.h>
->
->  static inline unsigned int nilfs_rec_len_from_disk(__le16 dlen)
->  {
-> @@ -115,6 +116,7 @@ static bool nilfs_check_folio(struct folio *folio, ch=
-ar *kaddr)
->         size_t limit =3D folio_size(folio);
->         struct nilfs_dir_entry *p;
->         char *error;
-> +       static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL * 5,=
- 1);
->
->         if (dir->i_size < folio_pos(folio) + limit) {
->                 limit =3D dir->i_size - folio_pos(folio);
-> @@ -148,9 +150,11 @@ static bool nilfs_check_folio(struct folio *folio, c=
-har *kaddr)
->         /* Too bad, we had an error */
->
->  Ebadsize:
-> -       nilfs_error(sb,
-> -                   "size of directory #%lu is not a multiple of chunk si=
-ze",
-> -                   dir->i_ino);
-> +       if (__ratelimit(&rs)) {
-> +               nilfs_error(sb,
-> +                           "size of directory #%lu is not a multiple of =
-chunk size",
-> +                           dir->i_ino);
-> +       }
->         goto fail;
->  Eshort:
->         error =3D "rec_len is smaller than minimal";
-> @@ -167,18 +171,22 @@ static bool nilfs_check_folio(struct folio *folio, =
-char *kaddr)
->  Einumber:
->         error =3D "disallowed inode number";
->  bad_entry:
-> -       nilfs_error(sb,
-> +       if (__ratelimit(&rs)) {
-> +               nilfs_error(sb,
->                     "bad entry in directory #%lu: %s - offset=3D%lu, inod=
-e=3D%lu, rec_len=3D%zd, name_len=3D%d",
->                     dir->i_ino, error, (folio->index << PAGE_SHIFT) + off=
-s,
->                     (unsigned long)le64_to_cpu(p->inode),
->                     rec_len, p->name_len);
-> +       }
->         goto fail;
->  Eend:
->         p =3D (struct nilfs_dir_entry *)(kaddr + offs);
-> -       nilfs_error(sb,
-> -                   "entry in directory #%lu spans the page boundary offs=
-et=3D%lu, inode=3D%lu",
-> -                   dir->i_ino, (folio->index << PAGE_SHIFT) + offs,
-> -                   (unsigned long)le64_to_cpu(p->inode));
-> +       if (__ratelimit(&rs)) {
-> +               nilfs_error(sb,
-> +                           "entry in directory #%lu spans the page bound=
-ary offset=3D%lu, inode=3D%lu",
-> +                           dir->i_ino, (folio->index << PAGE_SHIFT) + of=
-fs,
-> +                           (unsigned long)le64_to_cpu(p->inode));
-> +       }
->  fail:
->         return false;
->  }
-> --
-> 2.43.0
->
