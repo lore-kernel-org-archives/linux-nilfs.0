@@ -1,42 +1,45 @@
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC6531D094A;
-	Wed,  2 Oct 2024 15:00:47 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 045AD1D0DD0;
+	Wed,  2 Oct 2024 15:00:50 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727881249; cv=none; b=c6cGT6FYfcnp/BONUUcxj8xjuvKQirHOoLuQArAbvW2ERNwCgolkROtbqtN/WEdrJvbw2rHSa3KkUix+tD65WN48S2Syg0U61unQ9E0Q5IbPN5I+SFik4xpOejDUJTLljJyORL6XXKZqTqDBdC1Y31BgcJKtrbNr2Sd7I1R9Euk=
+	t=1727881255; cv=none; b=uzW3mK0eFMyjsp+wNYo4YsOU1MmH50wUSG91Xi3+ITQIwNx+V0PzUczKsw1mL8dbsqexm53SBY9yH4DNkQf4U3MqwrhYdIRt3ih3R644GcIX4mH8uFBw31FC124J4ySlZKBZtHwOKsWmyCscKkC10MgpBU2xrugbbJTEWrszhL8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727881249; c=relaxed/simple;
-	bh=LDV3VigSHBynG7uEy+OvZeIXQycKe5KCHz07IuxWk84=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Q3EFoQgzP80yLqzqlXogr4UEb56icOKzfocT4mKvGdwUPGgB7e+OCoya2mv1GM9WoJCDIfKVSm7fs6xQJ1mZWO9CEz/HgX+Rl9lOOQTvNiJTt7p3SdMeoZVTRcPgeRycs/Xx+5BwzLbAUgGID8Zi9dL8mHNSWxBekeJInJnVafQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Z4gqCLJJ; arc=none smtp.client-ip=90.155.50.34
+	s=arc-20240116; t=1727881255; c=relaxed/simple;
+	bh=JAR2O8Nw6RSpnDpnDzCBuC+IA99gjgpHcrFqm+KZUpQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=JReegRHRWUzbR5k7LO9SC7kL2FwTCTGoa/f8ZCepdiLQJHCVJWU2/3x/Ktjv0gFNFlmIDKhWVZGImMZSzxRzcmYxiFqOm6Jxb6ATmi6D2nNfU52mfuTI7iEo+pSajv/iYTs7dEs870/lp8CTEI/NY5ioM+0oezlAivacOQc0ZOQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=ZbvmhtxO; arc=none smtp.client-ip=90.155.50.34
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Z4gqCLJJ"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="ZbvmhtxO"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-	Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-	Content-Description:In-Reply-To:References;
-	bh=v+nJkZDnQI6D6sTJVUS6Ztu5YqdY9/Cc8KfKcpniAQY=; b=Z4gqCLJJAIvk6M+O/OT5kwhphH
-	/8hyhQxR7XO09f2G2pM1X+2f2ftIG+izWgO3OKWP8xDKUKsK+vwSs0TayLfYRTz75FCAGBys5yarY
-	9EQ22LccCXjro0ZmJUnQG3wqyMMloBDegMumMjqsdJoMD6t3zLwhM/OKl38V58x9SJhQdxuU9pnz6
-	oxSZyPMEdxrvRZjVrKklxjle+sfsVHmiwe+nS7wpN/f+fMc42+0MxoBnGjigFMv5xTB+r6pnlTTM5
-	A3CPVWSPMWTU4iLXTgDTjVxXn4eYjrov3jE6uhm2gqoDpBi3+Y5C0CtwT/7WSHO/E6oCsug/sRPXU
-	w2bLV0Tw==;
+	References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:
+	Content-Type:Content-ID:Content-Description;
+	bh=tLi2ExInWqFu7Rxgxh74FAPUwKB/d58VQE943Or3afI=; b=ZbvmhtxOrswcow64rYE31AlHZW
+	hMLLgntSPHGUy4ORZozihFa80cGIF0tCUub3j1xva0HgKj2xBzd7A/ppJahk0qzm4G1OLrcOkoE+/
+	lgWgoSMcNKHobixU4v+crUQagQk9klG8y0zltCZFcNg87BTQ7/IbWJOd/WG9ZhSlaXXmTOolBW9rO
+	JubkkJ8unvOVN7ry+LzsqNsxDXOs604fdSOYt43G5zlmP3YYm/tHuv04ZQgE0G8RPy9CHpHgz/Ywu
+	99FVzJe1yNdjQZBl7JLcPcDrXvzlD4OETMJeAmw8coHB845pxEg2jDBub1/xrXN7/zO65DC8K6tt7
+	d0CqwBXQ==;
 Received: from willy by casper.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
-	id 1sw0qD-00000005cSd-1OUA;
+	id 1sw0qD-00000005cSk-2M2J;
 	Wed, 02 Oct 2024 15:00:37 +0000
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>,
 	linux-fsdevel@vger.kernel.org,
 	linux-nilfs@vger.kernel.org
-Subject: [PATCH 0/4] nilfs2: Finish folio conversion
-Date: Wed,  2 Oct 2024 16:00:30 +0100
-Message-ID: <20241002150036.1339475-1-willy@infradead.org>
+Subject: [PATCH 2/4] nilfs2: Convert nilfs_page_count_clean_buffers() to take a folio
+Date: Wed,  2 Oct 2024 16:00:32 +0100
+Message-ID: <20241002150036.1339475-3-willy@infradead.org>
 X-Mailer: git-send-email 2.46.0
+In-Reply-To: <20241002150036.1339475-1-willy@infradead.org>
+References: <20241002150036.1339475-1-willy@infradead.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -45,24 +48,78 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-After "nilfs2: Convert nilfs_copy_buffer() to use folios", there are
-only a few remaining users of struct page in all of nilfs2, and they're
-straightforward to remove.  Build tested only.
+Both callers have a folio, so pass it in and use it directly.
 
-Matthew Wilcox (Oracle) (4):
-  nilfs2: Remove nilfs_writepage
-  nilfs2: Convert nilfs_page_count_clean_buffers() to take a folio
-  nilfs2: Convert nilfs_recovery_copy_block() to take a folio
-  nilfs2: Convert metadata aops from writepage to writepages
+Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+---
+ fs/nilfs2/dir.c   | 2 +-
+ fs/nilfs2/inode.c | 2 +-
+ fs/nilfs2/page.c  | 4 ++--
+ fs/nilfs2/page.h  | 4 ++--
+ 4 files changed, 6 insertions(+), 6 deletions(-)
 
- fs/nilfs2/dir.c      |  2 +-
- fs/nilfs2/inode.c    | 35 ++---------------------------------
- fs/nilfs2/mdt.c      | 19 +++++++++++++++----
- fs/nilfs2/page.c     |  4 ++--
- fs/nilfs2/page.h     |  4 ++--
- fs/nilfs2/recovery.c | 11 ++++-------
- 6 files changed, 26 insertions(+), 49 deletions(-)
-
+diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+index fe5b1a30c509..b1ad4062bbab 100644
+--- a/fs/nilfs2/dir.c
++++ b/fs/nilfs2/dir.c
+@@ -95,7 +95,7 @@ static void nilfs_commit_chunk(struct folio *folio,
+ 	unsigned int nr_dirty;
+ 	int err;
+ 
+-	nr_dirty = nilfs_page_count_clean_buffers(&folio->page, from, to);
++	nr_dirty = nilfs_page_count_clean_buffers(folio, from, to);
+ 	copied = block_write_end(NULL, mapping, pos, len, len, folio, NULL);
+ 	if (pos + copied > dir->i_size)
+ 		i_size_write(dir, pos + copied);
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index f1b47b655672..005dfd1f8fec 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -242,7 +242,7 @@ static int nilfs_write_end(struct file *file, struct address_space *mapping,
+ 	unsigned int nr_dirty;
+ 	int err;
+ 
+-	nr_dirty = nilfs_page_count_clean_buffers(&folio->page, start,
++	nr_dirty = nilfs_page_count_clean_buffers(folio, start,
+ 						  start + copied);
+ 	copied = generic_write_end(file, mapping, pos, len, copied, folio,
+ 				   fsdata);
+diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+index 16bb82cdbc07..ebd395dd131b 100644
+--- a/fs/nilfs2/page.c
++++ b/fs/nilfs2/page.c
+@@ -419,14 +419,14 @@ void nilfs_clear_folio_dirty(struct folio *folio)
+ 	__nilfs_clear_folio_dirty(folio);
+ }
+ 
+-unsigned int nilfs_page_count_clean_buffers(struct page *page,
++unsigned int nilfs_page_count_clean_buffers(struct folio *folio,
+ 					    unsigned int from, unsigned int to)
+ {
+ 	unsigned int block_start, block_end;
+ 	struct buffer_head *bh, *head;
+ 	unsigned int nc = 0;
+ 
+-	for (bh = head = page_buffers(page), block_start = 0;
++	for (bh = head = folio_buffers(folio), block_start = 0;
+ 	     bh != head || !block_start;
+ 	     block_start = block_end, bh = bh->b_this_page) {
+ 		block_end = block_start + bh->b_size;
+diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
+index 64521a03a19e..b6d9301f16ae 100644
+--- a/fs/nilfs2/page.h
++++ b/fs/nilfs2/page.h
+@@ -43,8 +43,8 @@ int nilfs_copy_dirty_pages(struct address_space *, struct address_space *);
+ void nilfs_copy_back_pages(struct address_space *, struct address_space *);
+ void nilfs_clear_folio_dirty(struct folio *folio);
+ void nilfs_clear_dirty_pages(struct address_space *mapping);
+-unsigned int nilfs_page_count_clean_buffers(struct page *, unsigned int,
+-					    unsigned int);
++unsigned int nilfs_page_count_clean_buffers(struct folio *,
++		unsigned int from, unsigned int to);
+ unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
+ 					    sector_t start_blk,
+ 					    sector_t *blkoff);
 -- 
 2.43.0
 
