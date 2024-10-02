@@ -1,42 +1,42 @@
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96B151A08A4;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96B781CF7D4;
 	Wed,  2 Oct 2024 15:00:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727881247; cv=none; b=cJ3q0gloi9i9ANBGzGdK/dQ3V5ZQt3VQymbkZiHdmLZpMgGqWpdH9dFbT+sBByw48B2rY1/zV8WP5bRF3+dwzxE7fkxUlhTsWeEyq7e5cVr2Bgm1+oQATg6xxs5KO+xRuVxuasNRzIEcSmIoajaO7/G3SxXpHlXtqfoXaRMAnJw=
+	t=1727881248; cv=none; b=u3hURom9ap04yFTrVGSLOIY0jqCUYaoWXpgoXFw7peS356pGR1HFmVJMqHUR2ulouwrClBmHqpCFi5Z+/W1jJjneCcO/hlWKdPy7kT6EuMJtN3OGjOmEkaAPqT+Hv1TQgq4t1ZITXVBofcu6zmW0DgjSI7WujpvfuBnvY94sE9Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727881247; c=relaxed/simple;
-	bh=hViMZ2sOCvgX1ZFhQXfQUllNq8y39vqkYezX2a9Oj04=;
+	s=arc-20240116; t=1727881248; c=relaxed/simple;
+	bh=7l5Go5t91dE8de6S1Lfp/42RC395bfstA28o3lJZg4Q=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=WlG6L4L2wv1OGNua8yFAVBCEEAaERlAp5crGt6jNOqOHNakBwOi+Vo7/BHahQRQmK+7vSull7kd5wffhMXR91JRgEcMkJRCMnSgb0FaFNoV9SzaxI28SwCKcSLk2ioNpLpQo7ERkDbjRZEjVP7eCJd/pAwZsOXHcaaQdXCQAhn8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=dZ0BvvvZ; arc=none smtp.client-ip=90.155.50.34
+	 MIME-Version; b=luBEkbDUWzT5yQ2tSnKINiO4eZEHWh7ubXyGT3hPnICt66lF+MWnGdd+LzOBKHpJar7lr7RApBWEb9y43WqA35RskOy5BaZzJKmfTrwAt6mab1AYXlWCstvJM/ZM1gCteovzXQwP4mnBxLtExgnKqnUQGosobzfWVHF/Sim7was=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=vEj4X5/E; arc=none smtp.client-ip=90.155.50.34
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="dZ0BvvvZ"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="vEj4X5/E"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
 	References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:
 	Content-Type:Content-ID:Content-Description;
-	bh=G4PuZiCscMW/fPgL88BSGegvJtIPL6ozJhgLT9WDKbI=; b=dZ0BvvvZzFu/fWo6XdZOtkp/ue
-	szguxemI+hkJJ8URxG5UJHQJEfFjHHtj7hVS7tBvSnrPIGNNZpqPZvWi3DWZH0Jq5zEGIv/NKyCXv
-	REN1j8Q2dVcxkkFig32yjf5dQm/1qPKn5paGmeyM+RX5+ICl3QfmHqHBzhOfj8caMNxOMQApUB7Rs
-	UHnlqyl/0CyRqxCAJo19NpQY1s23q7d7MouNepvmtKVShtdR35g5Ad3dSr0gtJWsUT6vyWEFHS2Ox
-	VAJmNLaht6bLIjbcfdDQFeqQcfL5a4ef8DRbVbnSeSAO6mb6ZtGFpFIkvIc79BN1aPQ4TEaHHOFHy
-	XxpDPPzQ==;
+	bh=ZCxIAb+8r7iTnxFMXmLz+YjJPFISQmqachGJWAZOJPM=; b=vEj4X5/EZJSE8K8Qvc6sjCSTgT
+	HpelyKkmzWbxfJZVZ0rHivBaURE8aaMlcin2IKKyoPuAL86Dm7iANTsn13BiKRAFPd4NpBfOdNRpb
+	P2Z8mJZ3BftEYXat4rkwfwkiD19KfH9ZV9HYDfXOtt+GIMPAMuR99DvSbVFK7sJraPZZqovSaE9Ry
+	zYpWwGhU+s/6ajSGc4Ty/kE1PNW2/hiYbCPeLB1Vmxh9EsyNOd3brKt0D0AWmWYD2dTX7pD4AbZ71
+	7N4heM3oeetJGLs+6FHEEzxErVyn5x7Q+NhZ0ZqHnIDdy2zmXb/CbwPvtGdZviS4yiCJ3Pr0nmF4A
+	Cw7uCkhg==;
 Received: from willy by casper.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
-	id 1sw0qD-00000005cSi-1y6g;
+	id 1sw0qD-00000005cSr-3Fn5;
 	Wed, 02 Oct 2024 15:00:37 +0000
 From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>,
 	linux-fsdevel@vger.kernel.org,
 	linux-nilfs@vger.kernel.org
-Subject: [PATCH 1/4] nilfs2: Remove nilfs_writepage
-Date: Wed,  2 Oct 2024 16:00:31 +0100
-Message-ID: <20241002150036.1339475-2-willy@infradead.org>
+Subject: [PATCH 4/4] nilfs2: Convert metadata aops from writepage to writepages
+Date: Wed,  2 Oct 2024 16:00:34 +0100
+Message-ID: <20241002150036.1339475-5-willy@infradead.org>
 X-Mailer: git-send-email 2.46.0
 In-Reply-To: <20241002150036.1339475-1-willy@infradead.org>
 References: <20241002150036.1339475-1-willy@infradead.org>
@@ -48,73 +48,57 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Since nilfs2 has a ->writepages operation already, ->writepage is only
-called by the migration code.  If we add a ->migrate_folio operation,
-it won't even be used for that and so it can be deleted.
+By implementing ->writepages instead of ->writepage, we remove a
+layer of indirect function calls from the writeback path and the
+last use of struct page in nilfs2.
 
 Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 ---
- fs/nilfs2/inode.c | 33 +--------------------------------
- 1 file changed, 1 insertion(+), 32 deletions(-)
+ fs/nilfs2/mdt.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index be6acf6e2bfc..f1b47b655672 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -170,37 +170,6 @@ static int nilfs_writepages(struct address_space *mapping,
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index ceb7dc0b5bad..4f4a935fcdc5 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -396,10 +396,9 @@ int nilfs_mdt_fetch_dirty(struct inode *inode)
+ 	return test_bit(NILFS_I_DIRTY, &ii->i_state);
+ }
+ 
+-static int
+-nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
++static int nilfs_mdt_write_folio(struct folio *folio,
++		struct writeback_control *wbc)
+ {
+-	struct folio *folio = page_folio(page);
+ 	struct inode *inode = folio->mapping->host;
+ 	struct super_block *sb;
+ 	int err = 0;
+@@ -432,11 +431,23 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
  	return err;
  }
  
--static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
--{
--	struct folio *folio = page_folio(page);
--	struct inode *inode = folio->mapping->host;
--	int err;
--
--	if (sb_rdonly(inode->i_sb)) {
--		/*
--		 * It means that filesystem was remounted in read-only
--		 * mode because of error or metadata corruption. But we
--		 * have dirty pages that try to be flushed in background.
--		 * So, here we simply discard this dirty page.
--		 */
--		nilfs_clear_folio_dirty(folio);
--		folio_unlock(folio);
--		return -EROFS;
--	}
--
--	folio_redirty_for_writepage(wbc, folio);
--	folio_unlock(folio);
--
--	if (wbc->sync_mode == WB_SYNC_ALL) {
--		err = nilfs_construct_segment(inode->i_sb);
--		if (unlikely(err))
--			return err;
--	} else if (wbc->for_reclaim)
--		nilfs_flush_segment(inode->i_sb, inode->i_ino);
--
--	return 0;
--}
--
- static bool nilfs_dirty_folio(struct address_space *mapping,
- 		struct folio *folio)
- {
-@@ -295,7 +264,6 @@ nilfs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
- }
++static int nilfs_mdt_writeback(struct address_space *mapping,
++		struct writeback_control *wbc)
++{
++	struct folio *folio = NULL;
++	int error;
++
++	while ((folio = writeback_iter(mapping, wbc, folio, &error)))
++		nilfs_mdt_write_folio(folio, wbc);
++
++	return error;
++}
  
- const struct address_space_operations nilfs_aops = {
--	.writepage		= nilfs_writepage,
- 	.read_folio		= nilfs_read_folio,
- 	.writepages		= nilfs_writepages,
- 	.dirty_folio		= nilfs_dirty_folio,
-@@ -304,6 +272,7 @@ const struct address_space_operations nilfs_aops = {
- 	.write_end		= nilfs_write_end,
+ static const struct address_space_operations def_mdt_aops = {
+ 	.dirty_folio		= block_dirty_folio,
  	.invalidate_folio	= block_invalidate_folio,
- 	.direct_IO		= nilfs_direct_IO,
+-	.writepage		= nilfs_mdt_write_page,
++	.writepages		= nilfs_mdt_writeback,
 +	.migrate_folio		= buffer_migrate_folio,
- 	.is_partially_uptodate  = block_is_partially_uptodate,
  };
  
+ static const struct inode_operations def_mdt_iops;
 -- 
 2.43.0
 
