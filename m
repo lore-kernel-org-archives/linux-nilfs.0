@@ -1,45 +1,67 @@
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qv1-f51.google.com (mail-qv1-f51.google.com [209.85.219.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84A36197A65;
-	Thu,  3 Oct 2024 14:19:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D1491A7263
+	for <linux-nilfs@vger.kernel.org>; Thu,  3 Oct 2024 17:09:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727965162; cv=none; b=IFzjYjQioZWU1srzKoY0AbkxfEsWtkbJT57smcR1JA9oxLzCEa2kruwDBuXcXlbgDBoIu8EOVTN5FNEUrH9EzLPHNXoXYHB7/YgxEjBgoFA5dKJOVUJhL/CGUFCCCOY7vRNAbaDEOC/DxDt46CyiEndXzd6H0rAdyHOaWsDofRY=
+	t=1727975364; cv=none; b=Bs/GSGUlllA3vbcq0YyeVOJviPsoPi8ddm0igZXMiDzxgHD6XT8gJf6ipSSlzWCt1dJX7hz2aHJWSi1RT41sXpXZ0TYAh38FKrp5280e59moIkQLaQm0sRMcD6dmzdiGH1z4m2OyVWTXHeygX56sJEBBz9rROsjCQKIFgSn0xcY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727965162; c=relaxed/simple;
-	bh=yvV/XCZSBeAgPdM0l8YoGpcgZKpyLl9J2RRsBcI7UM8=;
+	s=arc-20240116; t=1727975364; c=relaxed/simple;
+	bh=veZob2f6f+jF2aoHyYukXoVPX5HhWe0/4HygDAWChU4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=QJlmhRBHJdTouzK+CeMdNseXZvDqX/wmrymIYwDMWN2bIi+AFXJJnB+xV8XxDW/kgx6wNSsDCpwy4zc8CRxd9POwPL4t7rBYjhk8gMTU/YPmss0Kb/1YvG5ZFHCU/z900orJvFfB6BaltkjQpHPv7r2zZ1o4Gi5NF6nrb7EBUy8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=sQOQ31A8; arc=none smtp.client-ip=90.155.50.34
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	 Content-Type:Content-Disposition:In-Reply-To; b=fACPns2rLnShOYb8V1eGO188v63phUUU1vVoghpxUpv70q5f3HCokJI0+H8nOyEr1HwyDhRDSkATflmQTnigDYJ/khP5KZS9bMVCy/YXHvT31BI3znlWQTm9I+98K1IFT2uSGVofD2OlnD/EH57QfEAME16guaYyZPdv8HecUPQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toxicpanda.com; spf=none smtp.mailfrom=toxicpanda.com; dkim=pass (2048-bit key) header.d=toxicpanda-com.20230601.gappssmtp.com header.i=@toxicpanda-com.20230601.gappssmtp.com header.b=eQ0ANPeT; arc=none smtp.client-ip=209.85.219.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toxicpanda.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=toxicpanda.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="sQOQ31A8"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=zVgRWuybk2Cw8g/RlzCJeQTCunq05g5McEWnZP+Fqjg=; b=sQOQ31A87Eez7nqYo4z6bXXHcY
-	KMIfgDY9QdWpwKMwpj76N4pBHwBawzpnp65CuuYOcIQ74zYbQ579z1WO+BOiuQBGZAg1kX1ytavoO
-	tY+EP7PLiGFyVpjKYqnx1pFY8ZxazOj8/TqmZzblMbtTsvhSZMmwgiGgSAERI/oHV2Db/WoNnC5ns
-	de1+k6AfBrzZRxWuVh3zuRseJ0LJEzzcMpSsGja8d+hjOqjVuifwRHorRY+ZSPlLq7jDXVAQulbqB
-	QCDOf8gZ+r2tHssTkhiiTlK9ZGNf55QAxb48bAGwWiP4BBCNjHpXxgEa7P+qltoYx+hDZr7RfsrhW
-	O3Ov+DKQ==;
-Received: from willy by casper.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
-	id 1swMfm-000000080GV-3Jt3;
-	Thu, 03 Oct 2024 14:19:18 +0000
-Date: Thu, 3 Oct 2024 15:19:18 +0100
-From: Matthew Wilcox <willy@infradead.org>
-To: Jan Kara <jack@suse.cz>
+	dkim=pass (2048-bit key) header.d=toxicpanda-com.20230601.gappssmtp.com header.i=@toxicpanda-com.20230601.gappssmtp.com header.b="eQ0ANPeT"
+Received: by mail-qv1-f51.google.com with SMTP id 6a1803df08f44-6cb2aaf4a73so10687176d6.2
+        for <linux-nilfs@vger.kernel.org>; Thu, 03 Oct 2024 10:09:22 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=toxicpanda-com.20230601.gappssmtp.com; s=20230601; t=1727975362; x=1728580162; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=lv6+V5DD1q+EbvJERytZupM7GavIklndcKQm84ak25U=;
+        b=eQ0ANPeTYr8J7l35leuTWmevYYkn3K9uaDc2xiHwiHkiLe3SJ+5kibIXt7agq4PFDA
+         JQeUfRsW08ZF3ba3BvlcmILg9PRosdgOwcoWZ610B9g29P9PX8fWgVVh9fqSJrT88H/P
+         JqNHnzjsVMK8ESNdiSz1gSOgah2yixAcfEi5aXNaUFOBKEKyBJwaFtjtZCoSuHMHpLoY
+         dzU2ZZ0ItUGWtzbdHoDRBlvR8C0YHbuhPLB81Is+wNq9pgJ08W/T017eQLZ7VGm3fG8z
+         wuUzmqxV6scwPswbdeJUiaSFdUZYanVxkelJwG+RVL3CIF/01tKvZL0HKohFo0pr2syG
+         wg4Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1727975362; x=1728580162;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=lv6+V5DD1q+EbvJERytZupM7GavIklndcKQm84ak25U=;
+        b=JKo8j4pt1sVLifAWdbUH9OLfOrA1p9JGLZIb55CHkDNTq6nC8BSIItl+LDZ7Qa3aWj
+         FwPzyGOtCPXeGpcv+b7mG2JWM1flATodgnx5cXew/u9g2187wv96VZ6MEclogq1f9ixM
+         b4sEjXcEauaUej1fxLeW3PpoIc9nPlwN3PXyO7+vO7PpgL0vd+2TSgySzY4iaLR+oGTk
+         hYtcI0wkaPj1BR2U1kdl9s2ySn6BbgGlf8/osM70wgEKU6iH72jwt2qNE1AU0DZu/FPO
+         XmF2Ie1rSpHthTRi7aeuNqsUHKxsM/g+TlBy83BVOr4XQf5BTobLijY15OuJhYJRU98/
+         W8qA==
+X-Forwarded-Encrypted: i=1; AJvYcCVOFqJKLBeLjVg2kG8Z9Aer+dOvfeW15DX3jQXN6ymoUyvcKoLpM04pfrmiB4861BWyYIBILZBlnSkYvQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzhrRCmcWoq5JB+agFGLPtDg0iigzJhpi++vS7T76DF0pTBPWUF
+	nHxPR1Rg2p4pKPMRC4zROvaJuB4be18F3u/zha3JDP06spMvm9oolfiyLko7yNI=
+X-Google-Smtp-Source: AGHT+IEkPpCAXCAtA9gfAP3eyJpKVnJ4NiXCYXXWlVAcJ8PH9XCm1z/O2+YTyJX5Rf/ppniNPbZCyg==
+X-Received: by 2002:a05:6214:5547:b0:6cb:3d8c:994a with SMTP id 6a1803df08f44-6cb81a955femr111164996d6.32.1727975361783;
+        Thu, 03 Oct 2024 10:09:21 -0700 (PDT)
+Received: from localhost (syn-076-182-020-124.res.spectrum.com. [76.182.20.124])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-6cb937f478fsm8082636d6.121.2024.10.03.10.09.20
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 03 Oct 2024 10:09:20 -0700 (PDT)
+Date: Thu, 3 Oct 2024 13:09:19 -0400
+From: Josef Bacik <josef@toxicpanda.com>
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 Cc: Christian Brauner <brauner@kernel.org>, linux-fsdevel@vger.kernel.org,
 	ceph-devel@vger.kernel.org, linux-btrfs@vger.kernel.org,
 	linux-nilfs@vger.kernel.org, linux-mm@kvack.org
-Subject: Re: [PATCH 1/6] fs: Move clearing of mappedtodisk to buffer.c
-Message-ID: <Zv6n5oAy_2lZzrZ2@casper.infradead.org>
+Subject: Re: [PATCH 4/6] btrfs: Switch from using the private_2 flag to
+ owner_2
+Message-ID: <20241003170919.GA1652670@perftesting>
 References: <20241002040111.1023018-1-willy@infradead.org>
- <20241002040111.1023018-2-willy@infradead.org>
- <20241003121020.36i4ufbbuf4fbua7@quack3>
+ <20241002040111.1023018-5-willy@infradead.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -48,29 +70,17 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20241003121020.36i4ufbbuf4fbua7@quack3>
+In-Reply-To: <20241002040111.1023018-5-willy@infradead.org>
 
-On Thu, Oct 03, 2024 at 02:10:20PM +0200, Jan Kara wrote:
-> On Wed 02-10-24 05:01:03, Matthew Wilcox (Oracle) wrote:
-> > The mappedtodisk flag is only meaningful for buffer head based
-> > filesystems.  It should not be cleared for other filesystems.  This allows
-> > us to reuse the mappedtodisk flag to have other meanings in filesystems
-> > that do not use buffer heads.
-> > 
-> > Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+On Wed, Oct 02, 2024 at 05:01:06AM +0100, Matthew Wilcox (Oracle) wrote:
+> We are close to removing the private_2 flag, so switch btrfs to using
+> owner_2 for its ordered flag.  This is mostly used by buffer head
+> filesystems, so btrfs can use it because it doesn't use buffer heads.
 > 
-> The patch looks good. But I'm bit confused about the changelog. There's no
-> generic code checking for mappedtodisk. Only nilfs2 actually uses it for
-> anything, all other filesystems just never look at it as far as my grepping
-> shows. So speaking about "filesystems that do not use buffer heads" looks
-> somewhat broad to me. Anyway feel free to add:
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 
-Hmm.  f2fs also uses it in page_mkwrite().  But it looks odd to me.
-Perhaps we could get rid of mappedtodisk entirely ... I see ext4
-used to use it until someone removed it in 9ea7df534ed2 ;-)
+Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 
-Anyway, what the changelog is trying to say is that only
-buffer-head filesystems ever have the mappedtodisk flag set, eg by
-block_read_full_folio() or do_mpage_readpage().  So it doesn't make
-sense to clear it for non-buffer-head filesystems, and may inhibit their
-ability to use it for unrelated purposes.
+Thanks,
+
+Josef
