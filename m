@@ -1,167 +1,102 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+Received: from mail-lf1-f50.google.com (mail-lf1-f50.google.com [209.85.167.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74A3F16C6A7;
-	Thu,  3 Oct 2024 12:13:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36AFE145B24;
+	Thu,  3 Oct 2024 12:20:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727957593; cv=none; b=Y8En0Eqk8uA5FSo+o5ijPoctDhJAvEFkNHf9vX3z/HZ9oxaMPRDxO7OLL9zUXdqqhuMJJtvzvWGK8tWtLybk5sFSMlahCYrC4vrZxTXdkG5K79FLnbSPTCbqgkcAWcI0thyKdCTKxjvCBfMhr4DTT8M8LsvsiBySQEl9uqQFtk4=
+	t=1727958047; cv=none; b=q6xwhIlM+HCZUsdp8bIQ07s4/2UQuut9bDI9FZhUTqef9CE7KiJs+S6kSIBLNTu/EjRWWl5GX6CHpmIAL6P8qXAR4wVNFmsAXtwBUPq8sebYMfhuq8ukQ3Mw8oRoUBYuUg0veHibtuftDEKF7bS93IgWvBXSNtGKjPNFXm3sq5E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727957593; c=relaxed/simple;
-	bh=ZJIsPxUxCakaPDnQQGQAClJ/pXQL3cD6sbEbl4qM8L0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JU2ho9cr0Prgv13wlDUNTRkK+Zajnyt9iRHkEnQpRtiJ1zYLjbzP2G/riFeL/mDa4e6Uk4K/UIZ0U15qNBEMEvrGdjiNOpP5zXh9mc+j3tQ7HTFOpcU0LZexmRsc1RvOBqT/l9sCAKGVyXgVwBN+J4min5v1lcn/PHdXPVMRxtE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=XHlOASG1; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=FLB2yonR; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=XHlOASG1; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=FLB2yonR; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	s=arc-20240116; t=1727958047; c=relaxed/simple;
+	bh=EjjGeWOTxqh8kNyDOAtatpqOHWsE2KBHIRl2Cj4rDKg=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=FT4CITu+yw/6AFloThRkItLpTiaVqTHbH33dIU0/BurZMNiXWnDtroimxgmC8Idgaiu1/Qqe9kCYLXmsoKbszhmRpFgtxhUbIyEp/0I2PuSUoY9FWQ9Uqg62+0be01KVEdSdZjTkyIJnB6870GUGcTVd4Rfeh4/tuqu6Luyh5gs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HjcTko1y; arc=none smtp.client-ip=209.85.167.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="XHlOASG1";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="FLB2yonR";
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="XHlOASG1";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="FLB2yonR"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 65D3B21C03;
-	Thu,  3 Oct 2024 12:13:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1727957589; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YmDERVK5Bjc/XeyReSYqm539EjnZa14Ik4KdwHWDMhA=;
-	b=XHlOASG1XtOXjH9Ll6eRj7NR60sQUaktDbEdmUb2GBrh5e1Vn5NMKWXh3cG0Vb4LF+wa/W
-	v9+OIwmg3CDOKupnArecYb48DZMzNM6zXh6J2JPRNAdUaSSbiL+nHPnbEd5AlP8Yt7sGxX
-	+plBcN7tmjOB+qF2ThHL8loAeB0AH2I=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1727957589;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YmDERVK5Bjc/XeyReSYqm539EjnZa14Ik4KdwHWDMhA=;
-	b=FLB2yonRDGwAdDIY9qTyqPWbywTauirq+ZYTd+3+CEPo8E9U+ysqhRSFmBjHOVxENQq5aP
-	Mucg9UAU4w3mUrDw==
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b=XHlOASG1;
-	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b=FLB2yonR
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1727957589; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YmDERVK5Bjc/XeyReSYqm539EjnZa14Ik4KdwHWDMhA=;
-	b=XHlOASG1XtOXjH9Ll6eRj7NR60sQUaktDbEdmUb2GBrh5e1Vn5NMKWXh3cG0Vb4LF+wa/W
-	v9+OIwmg3CDOKupnArecYb48DZMzNM6zXh6J2JPRNAdUaSSbiL+nHPnbEd5AlP8Yt7sGxX
-	+plBcN7tmjOB+qF2ThHL8loAeB0AH2I=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1727957589;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YmDERVK5Bjc/XeyReSYqm539EjnZa14Ik4KdwHWDMhA=;
-	b=FLB2yonRDGwAdDIY9qTyqPWbywTauirq+ZYTd+3+CEPo8E9U+ysqhRSFmBjHOVxENQq5aP
-	Mucg9UAU4w3mUrDw==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 5905B13882;
-	Thu,  3 Oct 2024 12:13:09 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id HJi6FVWK/mbYIgAAD6G6ig
-	(envelope-from <jack@suse.cz>); Thu, 03 Oct 2024 12:13:09 +0000
-Received: by quack3.suse.cz (Postfix, from userid 1000)
-	id 0E9ECA086F; Thu,  3 Oct 2024 14:13:05 +0200 (CEST)
-Date: Thu, 3 Oct 2024 14:13:04 +0200
-From: Jan Kara <jack@suse.cz>
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: Christian Brauner <brauner@kernel.org>, linux-fsdevel@vger.kernel.org,
-	ceph-devel@vger.kernel.org, linux-btrfs@vger.kernel.org,
-	linux-nilfs@vger.kernel.org, linux-mm@kvack.org
-Subject: Re: [PATCH 6/6] migrate: Remove references to Private2
-Message-ID: <20241003121304.fhrjs5ocuzyqbemk@quack3>
-References: <20241002040111.1023018-1-willy@infradead.org>
- <20241002040111.1023018-7-willy@infradead.org>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HjcTko1y"
+Received: by mail-lf1-f50.google.com with SMTP id 2adb3069b0e04-5398996acbeso1040308e87.1;
+        Thu, 03 Oct 2024 05:20:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1727958044; x=1728562844; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=y6syHiaG5x1+UMsC6ZVAUhcpO9y9MsfbtvNnR05E9os=;
+        b=HjcTko1yYRBZRI3FwObz31/Z9psSUwT4LgNYY8/7dAcIOaa0C1ZrFVzJcRI9YdZY54
+         kDN/bflUy67rjk0mEAN2EpImcc5zokdc0j/k2HIx1p0cgvEfFbC7JAhx55hzN9HHnw3a
+         Pqqjs/umMqw2Ahz10jiQNi3wpcrjp1SlwvBAv0xd4qy5pW+8/V6gcllsyYGCCKijAMcL
+         p72l7fKrbLj9SbfexsBTD40yjJUfDZ0VrTC/9gyIqFtkeBmYP3bmFbO3klQmKiAqZH6a
+         J8OmKB+uYI6MfJWLM3UQO3Ix8TvBkRNgt6zxCRuw3X3cZvbO0jmRSxUOwFKap85PiI0p
+         dK8w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1727958044; x=1728562844;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=y6syHiaG5x1+UMsC6ZVAUhcpO9y9MsfbtvNnR05E9os=;
+        b=N8qRZKffud0B4TSGpTnocrFCuLnuybgayetD77FZV3/utKFGWQu22MBGQUkX1hXEq6
+         /xdnGl6M4TL0rATj0dPkZ2WLVfNgwDo5BtKmCN00BdbvQvSXVjBhnI0pVZx+W27XXWoQ
+         uSQTVeXMu2vtQmZsamfhm07DFWiwZHG7KW8POL6ycPo0rjhQmfs6BNPJeQ73pq/1/m5p
+         JSezIJMEBL6J6nXD1634EelqrO9LeRMPAK18LgsL9/ChbLDIqIcLW8TU0ZqF7W3TbIS8
+         JQgqoM1guTd8X1QwZA2SEWAQd55tYFObNpZfg7oWZ5z10CUutM6g5aByuT/r31BXkI0S
+         yW1w==
+X-Forwarded-Encrypted: i=1; AJvYcCXI98OK5I/1KjM0/sJUZdTn9+1uiUVF7XU+xAG2Yoto7MWKfezbYuQT3JIHw6n/uZyBq4C8nn8MSb466w==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwUYQXGVPr3rEPOa76d/VfWDyUJ2AZ4Sx2KIREkOAuEJe9PqvMi
+	QsE1CbTKZTbC3FHoKFbHekAVGnJ8t65QOWBlnZc5UrJEO6LxTkEjljzFKl5M1K++aQiDocHdrnl
+	0Q3OhIBauhdhUMIfrt/Wmtjml3BM=
+X-Google-Smtp-Source: AGHT+IHy4YyMW2KDNJdyaNBZYRhAEO8FSXEAc+n16sMGK61IqWRvUq0tucQlWmCJ8jiKmfp0kd8V0T2fljoeMCh978E=
+X-Received: by 2002:a05:6512:2804:b0:539:972a:2360 with SMTP id
+ 2adb3069b0e04-539a07a361emr3915111e87.55.1727958043951; Thu, 03 Oct 2024
+ 05:20:43 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20241002040111.1023018-7-willy@infradead.org>
-X-Rspamd-Queue-Id: 65D3B21C03
-X-Spam-Score: -4.01
-X-Rspamd-Action: no action
-X-Spamd-Result: default: False [-4.01 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	MID_RHS_NOT_FQDN(0.50)[];
-	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	MISSING_XM_UA(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[7];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.cz:email,suse.cz:dkim,suse.com:email,infradead.org:email];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_COUNT_THREE(0.00)[3];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	RCVD_TLS_LAST(0.00)[];
-	DKIM_TRACE(0.00)[suse.cz:+]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spam-Flag: NO
-X-Spam-Level: 
+References: <20241002150036.1339475-1-willy@infradead.org> <CAKFNMokwCtK2WjBPRqbO2_Me=x_RRH=htF=Tcz0t9g96--Wx0A@mail.gmail.com>
+In-Reply-To: <CAKFNMokwCtK2WjBPRqbO2_Me=x_RRH=htF=Tcz0t9g96--Wx0A@mail.gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Thu, 3 Oct 2024 21:20:27 +0900
+Message-ID: <CAKFNMomrF8k=Z4omLTVx2f_mhUjRxo8h-s=wXmoU6uoMYZ7v+Q@mail.gmail.com>
+Subject: Re: [PATCH 0/4] nilfs2: Finish folio conversion
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Wed 02-10-24 05:01:08, Matthew Wilcox (Oracle) wrote:
-> These comments are now stale; rewrite them.
-> 
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+On Thu, Oct 3, 2024 at 12:40=E2=80=AFAM Ryusuke Konishi wrote:
+>
+> On Thu, Oct 3, 2024 at 12:00=E2=80=AFAM Matthew Wilcox (Oracle) wrote:
+> >
+> > After "nilfs2: Convert nilfs_copy_buffer() to use folios", there are
+> > only a few remaining users of struct page in all of nilfs2, and they're
+> > straightforward to remove.  Build tested only.
+>
+> Thank you for your ongoing work on converting to folio-based.
+>
+> Page structure references still remain in other files, but I'm
+> preparing a patch set to convert them to be folio-based, so together
+> with that, I think we'll be able to remove most of the page references
+> in nilfs2 in the next cycle.
+>
+> I'll check out this patch set.
+>
+> Thanks,
+> Ryusuke Konishi
 
-Looks good. Feel free to add:
+I've added comments to each patch based on my review and testing.
 
-Reviewed-by: Jan Kara <jack@suse.cz>
+The biggest comment is about the kernel panic caused by patches 1/4
+and 4/4.  As I wrote in my reply to each of them, this can be fixed by
+replacing "buffer_migrate_folio" with "buffer_migrate_folio_norefs".
 
-								Honza
+If you are busy and don't mind, I can fix the points I commented on.
+If so, please let me know.
+Or if you send me the v2 patchset, I'll check it again and add it to
+the patches I'll send upstream for the next cycle.
 
-> ---
->  mm/migrate.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/mm/migrate.c b/mm/migrate.c
-> index df91248755e4..21264c24a404 100644
-> --- a/mm/migrate.c
-> +++ b/mm/migrate.c
-> @@ -472,7 +472,7 @@ static int folio_expected_refs(struct address_space *mapping,
->   * The number of remaining references must be:
->   * 1 for anonymous folios without a mapping
->   * 2 for folios with a mapping
-> - * 3 for folios with a mapping and PagePrivate/PagePrivate2 set.
-> + * 3 for folios with a mapping and the private flag set.
->   */
->  static int __folio_migrate_mapping(struct address_space *mapping,
->  		struct folio *newfolio, struct folio *folio, int expected_count)
-> @@ -786,7 +786,7 @@ static int __migrate_folio(struct address_space *mapping, struct folio *dst,
->   * @mode: How to migrate the page.
->   *
->   * Common logic to directly migrate a single LRU folio suitable for
-> - * folios that do not use PagePrivate/PagePrivate2.
-> + * folios that do not have private data.
->   *
->   * Folios are locked upon entry and exit.
->   */
-> -- 
-> 2.43.0
-> 
-> 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+Thanks,
+Ryusuke Konishi
