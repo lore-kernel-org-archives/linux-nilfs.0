@@ -1,133 +1,177 @@
-Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com [209.85.167.46])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 389BA153BE4;
-	Thu,  3 Oct 2024 11:54:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E031E161310;
+	Thu,  3 Oct 2024 12:10:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727956496; cv=none; b=K2xsWZn63i52V5Wi87XlATZGpyZAs9ezdf002PXTV5boLT/ufiJK9Dn5p82ePztfWEc0emGCcUfobol6ANgIxq4tOiw5NhyA2xXxtNjgy0xltVNz+GSpjskaAxnPzCb087FXSFCUfpCZ8UxzrI8EehrQpf7yUG04obGn3o9aLpY=
+	t=1727957433; cv=none; b=XDLOI4CmZzqn+eAvItLztEVEgS+qzMyc9F/Vwuj/7suDO8Hduq76R+ArEMzMc6bz0na/raESStJXmZUzMYjiZUvxh/98K9gtqtd7ld6AfRRTafg8IBhRMfpyHPHQ4mK+M4J7OHv8xAfLPqqH8hpmc8CwQN11zAqk5KgqBBW68Kw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727956496; c=relaxed/simple;
-	bh=P8eNBDWVtzOMU2dzORz7tnQpI5eec8Q+7oxATEblvAQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=boukKuL5ufoGk88iqg3qpvK0syyIHrcJwggFlzKF9q243cxjs3ML1BJ4YpozAwaRrgfOBnZ4i+mNGYQ/xVJubLhYbl4DCPb/ofdp1ver/SUAcnHrn7gttT8bZGdY0XGztwHvIFEoAi8PyhUuvM9cK2e9dlmBY/2gLWFiArWCHR4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ps3M+oYL; arc=none smtp.client-ip=209.85.167.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1727957433; c=relaxed/simple;
+	bh=KsTdweygGJKuMb0XZxfKSU4TCF0O8Pcac/cGNx/kNjc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=lvOPkcm8W2cYthzgWqkou30iu1JufW6zZeIG86bLg9JnewyAm5kve+4k0AYubZxO0dT9pZKYfJpMohPPtdDCDnfh3zQiNPwg4YHJCVvoADpFWhXz+YY/+sfyc3khEdpAr+6WavOzhJa1YjP5m7EIq9DyYXOpt4vD86alEESxb0g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=DX6Q+IcO; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=2/HesUIE; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=2RTKKfR9; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=OnCmJlo8; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ps3M+oYL"
-Received: by mail-lf1-f46.google.com with SMTP id 2adb3069b0e04-53994aadb66so820822e87.2;
-        Thu, 03 Oct 2024 04:54:54 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1727956493; x=1728561293; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Oxy0+phAIfClp/v+IJA18wQYVoxZOy+Eb6ccP7IJ4Tc=;
-        b=Ps3M+oYLVVEitH/7piLVW/jHJ5U6OXF1w7iqnbuct4yD0gvEu8JLo/a++1I+cK9t9u
-         XiDXGc3sfmppeAHH0s3UwEs6TngMMtHeSaYRzl92hKvj2xyNvfRCPYXIRpK3T/BvA+18
-         B8grt4WRxsJFFJMl6VIAjC+uu0IXHOG/C0eJua2FGOCmnLmkfQNdCDmit5QVM7DvsvZN
-         cUDC2g9xIeZbh//VfTCgeB+z2J6r7UJLdpf2ejDTUsnu93NKDgiiRmqqMvXYlgHVtrsx
-         v7C4wggZSnSElp0c+b9/8JWrxDHyaEfF5ItXRWA53pGJurA5RjRWEgZG4p7Amiwci5Yt
-         gC0g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727956493; x=1728561293;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=Oxy0+phAIfClp/v+IJA18wQYVoxZOy+Eb6ccP7IJ4Tc=;
-        b=uYBe0PmOBTkZHSBcZgHzxRCNY61UcYajfzEkc7BOXR8r9+hAs8mKpCF0pXa+VvZJ3L
-         2X8WI3BOhikfspsrPxHjDRXypzi2e/yeYVNvkfRQDuAGPNERHTB7sw0s8ltSaoAP0uof
-         Xdr+cczkUna+AtuMcIwjIs0WkgVMSByqQlLkTai9MpTjKX81Kkw1aj/CN0HGKAc/wAMO
-         nkxnqfzDSmeFwvYBvqZpOT2HgIDmWBZ1IgxVQ1363sRFgg+DCwV7P4UEFRHwl0d0J+7v
-         XqzjQ9lm2WDrztiFipmj1xwjUk8t84rI2rKfzE7l2e6ma4Y3iUmjZZoTmnFHEi0gtG2l
-         gerQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUfHg0jwAzLoGWaaVlWf5OEXQ3VZ7gcXlx2oUQlCB0eitwX00/xMaztFE+4KrrMcr19KhG7jEsviWWK3Q==@vger.kernel.org
-X-Gm-Message-State: AOJu0YyexDoJZGeikvj7c6MhbOYpAQ8iK/rZoAma2x6OmB0BleIPRhBm
-	BIUWBwzMLde2tBlpx2yWP1bTgKP4HRhZhnZQ0M7qe9k3LQQqbeuTCQs+dTxqr457w+SOa9S+qWW
-	8bcgfjAPZC0YkN9Z9ncn7mKTa368=
-X-Google-Smtp-Source: AGHT+IG6uqZJZUHD3+1xov5WaxdgGADThoaRSsOjeqB5KCIq0WCGL4WkZtMvonVRG7U3Ly71QQbsHD7vyV+vP5WqI78=
-X-Received: by 2002:a05:6512:158e:b0:539:8847:d7e9 with SMTP id
- 2adb3069b0e04-539a0683412mr3846830e87.35.1727956493063; Thu, 03 Oct 2024
- 04:54:53 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="DX6Q+IcO";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="2/HesUIE";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="2RTKKfR9";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="OnCmJlo8"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id DE1D921C03;
+	Thu,  3 Oct 2024 12:10:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1727957429; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=yG3NFZF51ik4yscefD7bkZR402j9YJxhaCsaR0zppt0=;
+	b=DX6Q+IcOKvn0idhPKrKqNBfY59zlsQI/8qqsUrs4LQrv/glwrwJGWwk1l6cv8OXMTcZOAK
+	KKhn5fygOM3RxqgXEIdjWFumDGDvNFPdQ7fmYYcJ/1cyZRA8oJgo5rMqyrglBlU91OuyHA
+	QQf9vmG22B6Ax6bElFk+FVMOe+UX7Bo=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1727957429;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=yG3NFZF51ik4yscefD7bkZR402j9YJxhaCsaR0zppt0=;
+	b=2/HesUIEssTze+NqyrHmAYMmi8MGHX1vMe1NOqatVdqXzkSsuWV0zP3kHJc9mtkFO8fqsA
+	m5iM2vQnNkMaXfCA==
+Authentication-Results: smtp-out1.suse.de;
+	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b=2RTKKfR9;
+	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b=OnCmJlo8
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1727957428; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=yG3NFZF51ik4yscefD7bkZR402j9YJxhaCsaR0zppt0=;
+	b=2RTKKfR9AB/92GFNRoE0nJ86pUWxvTougnYOGH7IVgarOqkCINZOCjyB1SUaurqq9NFOOn
+	MIuP4I4sdY7WoYee5gKe4kujQAAFQThXxMQkTx27rEPmS90WcPKyk3QCsVbxs31LINxdL1
+	HBj55Bsd0F2pLSR9/X0IC9K0fxT6acE=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1727957428;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=yG3NFZF51ik4yscefD7bkZR402j9YJxhaCsaR0zppt0=;
+	b=OnCmJlo8h9QOp897FRSqi0wLna1CSY6Btyz90g5l5u701jwVFEegyet3F4Q6xzZiI7qAdb
+	UFwzW7zhcEs7C5CQ==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id D323613882;
+	Thu,  3 Oct 2024 12:10:28 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id aWqFM7SJ/mYMIgAAD6G6ig
+	(envelope-from <jack@suse.cz>); Thu, 03 Oct 2024 12:10:28 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id 90EB7A086F; Thu,  3 Oct 2024 14:10:20 +0200 (CEST)
+Date: Thu, 3 Oct 2024 14:10:20 +0200
+From: Jan Kara <jack@suse.cz>
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: Christian Brauner <brauner@kernel.org>, linux-fsdevel@vger.kernel.org,
+	ceph-devel@vger.kernel.org, linux-btrfs@vger.kernel.org,
+	linux-nilfs@vger.kernel.org, linux-mm@kvack.org
+Subject: Re: [PATCH 1/6] fs: Move clearing of mappedtodisk to buffer.c
+Message-ID: <20241003121020.36i4ufbbuf4fbua7@quack3>
+References: <20241002040111.1023018-1-willy@infradead.org>
+ <20241002040111.1023018-2-willy@infradead.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20241002150036.1339475-1-willy@infradead.org> <20241002150036.1339475-4-willy@infradead.org>
-In-Reply-To: <20241002150036.1339475-4-willy@infradead.org>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 3 Oct 2024 20:54:36 +0900
-Message-ID: <CAKFNMokLUW16GJQNT3q9BPMUEbwPDvj6MKc=qCO4ZbUmGjo4Ww@mail.gmail.com>
-Subject: Re: [PATCH 3/4] nilfs2: Convert nilfs_recovery_copy_block() to take a folio
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20241002040111.1023018-2-willy@infradead.org>
+X-Rspamd-Queue-Id: DE1D921C03
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.01 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	MISSING_XM_UA(0.00)[];
+	RCPT_COUNT_SEVEN(0.00)[7];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[infradead.org:email,suse.com:email];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCVD_COUNT_THREE(0.00)[3];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	RCVD_TLS_LAST(0.00)[];
+	DKIM_TRACE(0.00)[suse.cz:+]
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Score: -4.01
+X-Spam-Flag: NO
 
-On Thu, Oct 3, 2024 at 12:00=E2=80=AFAM Matthew Wilcox (Oracle) wrote:
->
-> Use memcpy_to_folio() instead of open-coding it, and use offset_in_folio(=
-)
-> in case anybody wants to use nilfs2 on a device with large blocks.
->
+On Wed 02-10-24 05:01:03, Matthew Wilcox (Oracle) wrote:
+> The mappedtodisk flag is only meaningful for buffer head based
+> filesystems.  It should not be cleared for other filesystems.  This allows
+> us to reuse the mappedtodisk flag to have other meanings in filesystems
+> that do not use buffer heads.
+> 
 > Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+
+The patch looks good. But I'm bit confused about the changelog. There's no
+generic code checking for mappedtodisk. Only nilfs2 actually uses it for
+anything, all other filesystems just never look at it as far as my grepping
+shows. So speaking about "filesystems that do not use buffer heads" looks
+somewhat broad to me. Anyway feel free to add:
+
+Reviewed-by: Jan Kara <jack@suse.cz>
+
+								Honza
+
 > ---
->  fs/nilfs2/recovery.c | 11 ++++-------
->  1 file changed, 4 insertions(+), 7 deletions(-)
->
-> diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-> index 21d81097a89f..1c665a32f002 100644
-> --- a/fs/nilfs2/recovery.c
-> +++ b/fs/nilfs2/recovery.c
-> @@ -481,19 +481,16 @@ static int nilfs_prepare_segment_for_recovery(struc=
-t the_nilfs *nilfs,
->
->  static int nilfs_recovery_copy_block(struct the_nilfs *nilfs,
->                                      struct nilfs_recovery_block *rb,
-> -                                    loff_t pos, struct page *page)
-> +                                    loff_t pos, struct folio *folio)
->  {
->         struct buffer_head *bh_org;
-> -       size_t from =3D pos & ~PAGE_MASK;
-> -       void *kaddr;
-> +       size_t from =3D offset_in_folio(folio, pos);
->
->         bh_org =3D __bread(nilfs->ns_bdev, rb->blocknr, nilfs->ns_blocksi=
-ze);
->         if (unlikely(!bh_org))
->                 return -EIO;
->
-> -       kaddr =3D kmap_local_page(page);
-> -       memcpy(kaddr + from, bh_org->b_data, bh_org->b_size);
-> -       kunmap_local(kaddr);
-> +       memcpy_to_folio(folio, from, bh_org->b_data, bh_org->b_size);
->         brelse(bh_org);
->         return 0;
+>  fs/buffer.c   | 1 +
+>  mm/truncate.c | 1 -
+>  2 files changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/fs/buffer.c b/fs/buffer.c
+> index 1fc9a50def0b..35f9af799e0a 100644
+> --- a/fs/buffer.c
+> +++ b/fs/buffer.c
+> @@ -1649,6 +1649,7 @@ void block_invalidate_folio(struct folio *folio, size_t offset, size_t length)
+>  	if (length == folio_size(folio))
+>  		filemap_release_folio(folio, 0);
+>  out:
+> +	folio_clear_mappedtodisk(folio);
+>  	return;
 >  }
-> @@ -531,7 +528,7 @@ static int nilfs_recover_dsync_blocks(struct the_nilf=
-s *nilfs,
->                         goto failed_inode;
->                 }
->
-> -               err =3D nilfs_recovery_copy_block(nilfs, rb, pos, &folio-=
->page);
-> +               err =3D nilfs_recovery_copy_block(nilfs, rb, pos, folio);
->                 if (unlikely(err))
->                         goto failed_page;
->
-> --
+>  EXPORT_SYMBOL(block_invalidate_folio);
+> diff --git a/mm/truncate.c b/mm/truncate.c
+> index 0668cd340a46..870af79fb446 100644
+> --- a/mm/truncate.c
+> +++ b/mm/truncate.c
+> @@ -166,7 +166,6 @@ static void truncate_cleanup_folio(struct folio *folio)
+>  	 * Hence dirty accounting check is placed after invalidation.
+>  	 */
+>  	folio_cancel_dirty(folio);
+> -	folio_clear_mappedtodisk(folio);
+>  }
+>  
+>  int truncate_inode_folio(struct address_space *mapping, struct folio *folio)
+> -- 
 > 2.43.0
->
-
-This patch looks good to me.
-
-One small thing: with this conversion, there is no reference to the
-page structure in nilfs_recover_dsync_blocks, so how about changing
-the jump label "failed_page" to "failed_folio"?
-This will reduce noise when searching for "page" with grep.
-
-Thanks,
-Ryusuke Konishi
+> 
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
