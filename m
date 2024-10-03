@@ -1,67 +1,67 @@
-Received: from mail-lj1-f175.google.com (mail-lj1-f175.google.com [209.85.208.175])
+Received: from mail-lf1-f42.google.com (mail-lf1-f42.google.com [209.85.167.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2BA861D0B97;
-	Wed,  2 Oct 2024 15:40:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 308741487D5;
+	Thu,  3 Oct 2024 11:48:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1727883655; cv=none; b=tSrxWBAiiwl0HW6VhaK5Zgu1MRnfa1N3XCNS+gGkLnAs5Krvzq9CNGl4youYHLx30rnN8zqq5q5GTYmrO7P3QIhXs5y/e1qyPmo/Abx7DAAMXgXp07iq3Qw7xlWGJLJPgjab+SX/FavKn0A+9+a7IiaTiT+owRUQwqjKNbXSPEE=
+	t=1727956083; cv=none; b=BVIRBZRPTEOStQ3iNHDntY7rEndBmT9D0m2YHCdMitn+BRxd55jbJ/yO3zFYhx9BWl/i5z81AwH7f6pRaOIlmUyHllIPX34hRVx2SWKJ1NOydOj57eSZUrr+7xQQF3kcT6DIde9tfspUfveYatoIUlxTSosIyye3llXUgfJA8v4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1727883655; c=relaxed/simple;
-	bh=WIP2KkjUlSVjwcDNw4d3jTWw8EguXiw7+Opg9pqYWpw=;
+	s=arc-20240116; t=1727956083; c=relaxed/simple;
+	bh=679JULyQ0Lgk2IP/sOrpDLiKJg1kCsRdixf915ql8yE=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=O25n/v13Jk8vfL5bWUdFXeJN6UIcKft9arNQ9zv8qjqNc4A5btPsitPjOEs+6OTdKoMiAFH5NgQfP0qCPQ89XZxQt7hGvV0Im/JVHHHE4K1YoOEtVA3EF8zHlG5KCU6GzBXVxyATLfFFLIqrEGL+DhnFuFrLcZztQHuwtmkzGbM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MvN2Cys4; arc=none smtp.client-ip=209.85.208.175
+	 To:Cc:Content-Type; b=Z+0N4E7tILegFTLFLuJO7R029EZ3xOWFpePutfq39NgAREvF8HFYgftUZhWjbl0gCsObiqqBcr+5iu5Vw9IED60meSQwDXcJ5/w3nmcHk4u013UDI1MAnev8w4SpQxxa6kK2t8JNhvxLZLKqDbZ9wH3UMx41VGbUka3brGO/KHQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j9O8YLmC; arc=none smtp.client-ip=209.85.167.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MvN2Cys4"
-Received: by mail-lj1-f175.google.com with SMTP id 38308e7fff4ca-2fac47f0b1aso44998701fa.1;
-        Wed, 02 Oct 2024 08:40:53 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j9O8YLmC"
+Received: by mail-lf1-f42.google.com with SMTP id 2adb3069b0e04-5398ec2f3c3so1100833e87.1;
+        Thu, 03 Oct 2024 04:48:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1727883652; x=1728488452; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1727956079; x=1728560879; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=4BO7GvoEvRQo4g/wy/IaY0N6iqmmGOHEMQUrshuZ/AU=;
-        b=MvN2Cys4KDWHFH9mb4MoczJHGNJyH3MiXa6FWsO6J8qaP1coR6GANjoGNhpxlKCNq8
-         UNKP0pwM3ThK28T2Mj8tMTO5Gry+1AFo2xXObLhTHOO+SbM5QX4ycTVkXgIqzlBOIgsU
-         KKmhCHTlVwOSzi9HT5aT692ih6cg4ev5mkUEB+LgE7XZ6P7G6IoOnE7Xm7D47wGx8TMh
-         12qAOZVN0vYu1DlKynCY+dBesYH8yQdDR0PewTcBDfI9c7QZGCP62V+wbwLwD2jx0j8q
-         Ak/j6YuQ/W/1Rek8mACrClloBkHAjiuOsoUCosQhikT2yOJx0ZmiFnSHT3CBdbJE0GwV
-         E5Rg==
+        bh=cUC85ZpiQ8kiNmmBVcA942s4Vwz+b8UvBsX7XvYIGVc=;
+        b=j9O8YLmCQEZDMvRdrhHIFtiy01rqKbz0GnRfHOSC26aX78H7GYIBTXv9dOfLR+/qNd
+         fOYzqNzTa2TIi/z1CF4qn9G6WHpFKR7ACDyT/ggso2F0JJEaprQwG7rx7dT4mPiNAg//
+         vYZWz7p7FtUM/KHAMgvje2QNQNUNRmFNNy67n705ehCvQ6JV3RHEj7QgJ0VACctfT2Os
+         qvHk4+Y8MLZTJZfr6vKniC0p82NKJIgO1m7NUzpBwh7uEMR9R0Df80jKWH7mlQ5j37Ow
+         B31j/btZ2njT6lVOrdNMYmjLyFUtlgwnlHH6XuNd1QKdnbdAYVL6JhAMTYr4aUTe3gxB
+         p7hQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1727883652; x=1728488452;
+        d=1e100.net; s=20230601; t=1727956079; x=1728560879;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=4BO7GvoEvRQo4g/wy/IaY0N6iqmmGOHEMQUrshuZ/AU=;
-        b=RVUi8oVqVGLk358Dh30Ty6U7Rbp8TjCDpjKL//oO6xHdHtPRGlqQVvr/f/7ctAXIRr
-         9qrSZoh2Gk5qXwj0UFElkjH9irnechKtUrYjvLv3GVIwg1IC5VI+/3lYnPt5IIV86VqV
-         f4Shorw+op4pi64gkQxh+O+uNG0yf/SebLSej0HaUOavXDb855dFPW5kCZqO73C38IJK
-         17fLUQruWNzerUfLekJKfb+eUx3TZvuNQiwo2vBBas3r+9CQMc7IC8wHp6DG+YmyC8wQ
-         uFCmHMgRVRDNXpKNfV6y8ypPdZJF5Ff0jdUPAkErBB3m6xNG9IoN02UDSdNNe41tw86J
-         SHwQ==
-X-Forwarded-Encrypted: i=1; AJvYcCX+Ln0kClGeUxxtmvGcj51wtxTpQV2liTa+vtzvEGf11SCLFRde2xSWwmmX0TSylWij3X8qd6Jnq9Ocfw==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yyz5EItufwtWC1xOnP5YgDzpZZYwcHsnCxYQG2hKA5NLpjEha7b
-	+2lg5Zv65xPWgvcTweHK+WaE2KSOT+MiwEt3g25rUXpYowyvjN08OP0hSyR+XtnCJp7Lhuv7K9k
-	D78vHK8x3Ez82JoALRQpAM1Apwto=
-X-Google-Smtp-Source: AGHT+IFuXTdNAQnGRSwGmrKlUm8cdAE9HZOTGFJNei48st3ZVzmi325nJB/hpn0GE9NQdMu07nTMExp2YkaqeHUXfHQ=
-X-Received: by 2002:a05:6512:ea4:b0:536:55ae:7458 with SMTP id
- 2adb3069b0e04-539a0795bb2mr2354026e87.40.1727883651912; Wed, 02 Oct 2024
- 08:40:51 -0700 (PDT)
+        bh=cUC85ZpiQ8kiNmmBVcA942s4Vwz+b8UvBsX7XvYIGVc=;
+        b=rhCnmUVHRWksqTlvm8WLcgMbtza9qcjaMawB3t9frEzBJFF6MTtHZKTaieBGOaBbet
+         DJeUFd313k6betq7QiqJZc50flsNfd9ObEtTn+swSYqUPQ3tvBZCAellslHwnwuwJ/xz
+         o3JjR8qlsl5sf5vm0BLdzrAqK0rgW4kzlPCJEnfub5PpFRy36X3aNFn4WxTfU9nMXzEM
+         srMnE24r5VXK0T6CwG0jUB/NFzyp2d2ZsnAK2wzD2xVohU06NLTEbbzBW8gKCDENwdSj
+         R9MKM2XWrFh5VqhErj8qbWUTk3qqRHocYqg9Qm5E4d/Pi3RLXKF5b70bsJBlXEZsUF2D
+         ae8w==
+X-Forwarded-Encrypted: i=1; AJvYcCVTh2xS6jdSx1+zPCRHHvUDkdk7qrQA0zDjFDY2TkKe5qEoPBmK/9AD0cPcptTp3CeFvrAXYaXhItLCLw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzHQpU0/cSPmPVu1u1pTz73jHXXMxYj+PcbzD6jvI5SXkzfA0QF
+	ESfTtZ/gM4LZmnvOHv6+8hP07ST9aFOTugx2XLHBaFmvZhvH3YbjYca3QfAX7eT1SUtvOzaOPMx
+	pIFlGNWzeqFHYZjpoVTfbmfxb54Y=
+X-Google-Smtp-Source: AGHT+IElqELFO0VA7BIZxFa5YGNoDX7mRmi5A1CyRb8rWuHqNJrGzMnezbCPfoYfZ01B6tGXseDVH5GVVT/Ve9+UETQ=
+X-Received: by 2002:a05:6512:e8c:b0:52e:7448:e137 with SMTP id
+ 2adb3069b0e04-539a065d3bbmr3802054e87.6.1727956079122; Thu, 03 Oct 2024
+ 04:47:59 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20241002150036.1339475-1-willy@infradead.org>
-In-Reply-To: <20241002150036.1339475-1-willy@infradead.org>
+References: <20241002150036.1339475-1-willy@infradead.org> <20241002150036.1339475-2-willy@infradead.org>
+In-Reply-To: <20241002150036.1339475-2-willy@infradead.org>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 3 Oct 2024 00:40:35 +0900
-Message-ID: <CAKFNMokwCtK2WjBPRqbO2_Me=x_RRH=htF=Tcz0t9g96--Wx0A@mail.gmail.com>
-Subject: Re: [PATCH 0/4] nilfs2: Finish folio conversion
+Date: Thu, 3 Oct 2024 20:47:42 +0900
+Message-ID: <CAKFNMonzrHj=o2LfPfR00+fvyVLV_Tojq1nSqwKw0MRVw7PD5Q@mail.gmail.com>
+Subject: Re: [PATCH 1/4] nilfs2: Remove nilfs_writepage
 To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
 Cc: linux-fsdevel@vger.kernel.org, linux-nilfs@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
@@ -69,37 +69,93 @@ Content-Transfer-Encoding: quoted-printable
 
 On Thu, Oct 3, 2024 at 12:00=E2=80=AFAM Matthew Wilcox (Oracle) wrote:
 >
-> After "nilfs2: Convert nilfs_copy_buffer() to use folios", there are
-> only a few remaining users of struct page in all of nilfs2, and they're
-> straightforward to remove.  Build tested only.
+> Since nilfs2 has a ->writepages operation already, ->writepage is only
+> called by the migration code.  If we add a ->migrate_folio operation,
+> it won't even be used for that and so it can be deleted.
+>
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+> ---
+>  fs/nilfs2/inode.c | 33 +--------------------------------
+>  1 file changed, 1 insertion(+), 32 deletions(-)
+>
+> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+> index be6acf6e2bfc..f1b47b655672 100644
+> --- a/fs/nilfs2/inode.c
+> +++ b/fs/nilfs2/inode.c
+> @@ -170,37 +170,6 @@ static int nilfs_writepages(struct address_space *ma=
+pping,
+>         return err;
+>  }
+>
+> -static int nilfs_writepage(struct page *page, struct writeback_control *=
+wbc)
+> -{
+> -       struct folio *folio =3D page_folio(page);
+> -       struct inode *inode =3D folio->mapping->host;
+> -       int err;
+> -
+> -       if (sb_rdonly(inode->i_sb)) {
+> -               /*
+> -                * It means that filesystem was remounted in read-only
+> -                * mode because of error or metadata corruption. But we
+> -                * have dirty pages that try to be flushed in background.
+> -                * So, here we simply discard this dirty page.
+> -                */
+> -               nilfs_clear_folio_dirty(folio);
+> -               folio_unlock(folio);
+> -               return -EROFS;
+> -       }
+> -
+> -       folio_redirty_for_writepage(wbc, folio);
+> -       folio_unlock(folio);
+> -
+> -       if (wbc->sync_mode =3D=3D WB_SYNC_ALL) {
+> -               err =3D nilfs_construct_segment(inode->i_sb);
+> -               if (unlikely(err))
+> -                       return err;
+> -       } else if (wbc->for_reclaim)
+> -               nilfs_flush_segment(inode->i_sb, inode->i_ino);
+> -
+> -       return 0;
+> -}
+> -
+>  static bool nilfs_dirty_folio(struct address_space *mapping,
+>                 struct folio *folio)
+>  {
+> @@ -295,7 +264,6 @@ nilfs_direct_IO(struct kiocb *iocb, struct iov_iter *=
+iter)
+>  }
+>
+>  const struct address_space_operations nilfs_aops =3D {
+> -       .writepage              =3D nilfs_writepage,
+>         .read_folio             =3D nilfs_read_folio,
+>         .writepages             =3D nilfs_writepages,
+>         .dirty_folio            =3D nilfs_dirty_folio,
+> @@ -304,6 +272,7 @@ const struct address_space_operations nilfs_aops =3D =
+{
+>         .write_end              =3D nilfs_write_end,
+>         .invalidate_folio       =3D block_invalidate_folio,
+>         .direct_IO              =3D nilfs_direct_IO,
+> +       .migrate_folio          =3D buffer_migrate_folio,
+>         .is_partially_uptodate  =3D block_is_partially_uptodate,
+>  };
+>
 
-Thank you for your ongoing work on converting to folio-based.
+After applying this patch, fsstress started causing kernel panics.
 
-Page structure references still remain in other files, but I'm
-preparing a patch set to convert them to be folio-based, so together
-with that, I think we'll be able to remove most of the page references
-in nilfs2 in the next cycle.
+Looking at the patch, I realized that migrate_folio needs to use
+buffer_migrate_folio_norefs, which checks for buffer head references.
 
-I'll check out this patch set.
+I was able to eliminate the kernel panic by setting migrate_folio as follow=
+s:
+
++ .migrate_folio =3D buffer_migrate_folio_norefs,
+
+I would like to continue load testing to avoid side effects of reclaim
+by completely eliminating nilfs_writepage (calling
+nilfs_flush_segment). So far, no problems have occurred even in tests
+with different block sizes or architectures, as long as I make the
+above changes.
 
 Thanks,
 Ryusuke Konishi
-
->
-> Matthew Wilcox (Oracle) (4):
->   nilfs2: Remove nilfs_writepage
->   nilfs2: Convert nilfs_page_count_clean_buffers() to take a folio
->   nilfs2: Convert nilfs_recovery_copy_block() to take a folio
->   nilfs2: Convert metadata aops from writepage to writepages
->
->  fs/nilfs2/dir.c      |  2 +-
->  fs/nilfs2/inode.c    | 35 ++---------------------------------
->  fs/nilfs2/mdt.c      | 19 +++++++++++++++----
->  fs/nilfs2/page.c     |  4 ++--
->  fs/nilfs2/page.h     |  4 ++--
->  fs/nilfs2/recovery.c | 11 ++++-------
->  6 files changed, 26 insertions(+), 49 deletions(-)
->
-> --
-> 2.43.0
->
