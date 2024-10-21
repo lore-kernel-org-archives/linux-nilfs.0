@@ -1,132 +1,149 @@
-Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com [209.85.216.54])
+Received: from mail-il1-f197.google.com (mail-il1-f197.google.com [209.85.166.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 399B14C96;
-	Sun, 20 Oct 2024 04:59:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC76F1799F
+	for <linux-nilfs@vger.kernel.org>; Mon, 21 Oct 2024 09:48:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729400401; cv=none; b=BKMfDIU2JXgOITIdinqLz7Bj6LR61JN7D7RjHEBZf1JGg3aZecdlL2HMnfGkerhJZLeP/2+qkSW4SOCifKLKkVbQKKifuEK77bUViu7uXQMzWjXkyxVfHU+RFhxw1JqJrUtlIdIu7OuCn0r9xUhzH2V5uTIeP8w2bxk6gvjw/eE=
+	t=1729504119; cv=none; b=fb+kKbUN0yVccDSF2mDulH0G72uqaostXDaPnxSb3lpcKp0hiyei7sW5jZQIq+UdsGvpIHk2JyuWdRfSOSXuzZtiUpx07uIsclUdb3vz+8TNmdLWa0rPuFhlMASr9ih+B/3d8w0hzvu/IastnNvklG/er7TccK1dU0pw9+aQrlE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729400401; c=relaxed/simple;
-	bh=SCGAtJlNNJS48DESWrlcIoyC7LdwlBt0R4p7ke/8yVg=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=jHLcjolBHU1d308FTpUVrJKrXLpdtRKwIvhd+LsiUShrBjVWOAs1JWFyyg5cTE8Mgv5bzD6rFlOOoapbOGcPGG7F+NOsw8VtSUbJRdLwodLivlqA+78Nqk8dE5YqKMdZgUi2QUaRUjkCgCztYi/GgU6BL00rL6Mg7h0h7LGuczg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RBo4HKYP; arc=none smtp.client-ip=209.85.216.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RBo4HKYP"
-Received: by mail-pj1-f54.google.com with SMTP id 98e67ed59e1d1-2e2fb304e7dso2853907a91.1;
-        Sat, 19 Oct 2024 21:59:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729400398; x=1730005198; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=nUaXr9jyI82v7WCqHmTaJdfptWknWvRqcMeZwkWUzbY=;
-        b=RBo4HKYPweXgVDVrDGr4UIdoIVxeZ58mpmt1C2sY6UVQX5iw1jibc0eULwh6M0pG+D
-         O7IRPLBA0mPR/dhOYxdMTkksMV48upkDAYOOa/R0pLYlF1MypN7y7PymjnhiFLIIPGhQ
-         R4LohmQri2YKcwwWUemmyh2E6g67LS2gKRKWMH6GyXbz30RhkghAKzvpAbsvFnb+eu/c
-         dzMghIvY/nn+zv8QKJryXaawqam6Yy2yI8zc9aosA+9pfgdYd3nRjzFeAjRrTEPrutXb
-         B8Z0wDtFI72WVXKGHsCxvx1VdsOvW4Vk2ckeItLdtP7aixc1BQ/1Ao0X6w1pouqrsz32
-         h06g==
+	s=arc-20240116; t=1729504119; c=relaxed/simple;
+	bh=WlasfIzrdwdmRFmYoxAQnRMw44by65kcpFlvXFxQ6ZE=;
+	h=MIME-Version:Date:In-Reply-To:Message-ID:Subject:From:To:
+	 Content-Type; b=tOz0i61vVDW9C8Hwgnd8Qd4d2SLabLdzw+xIc58p4foI4uh9o6qLQBwUSyqsj0GcSYKvMylUCjj63E2+PfOT9nbFFrD+v7boy2bA83hBm4SdDocAKNHYMalo6zgIJSp/g3vXM18yhoy9Sa1imQyqmYcVUT3LbnQoS026WtDuqPY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f197.google.com with SMTP id e9e14a558f8ab-3a3bb31e3cfso36697845ab.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 21 Oct 2024 02:48:37 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729400398; x=1730005198;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=nUaXr9jyI82v7WCqHmTaJdfptWknWvRqcMeZwkWUzbY=;
-        b=gFhP4iTCEob/4R8hSm28HO4Dx839CMFEBk1lsRMpL4V0sv6lCSHFyYIvdy0m3G4gIc
-         S57pC7YkToh0SFk54R80uelx8akMZ62q1lfRoBsONLk8Ox5CGNzxr4VAgW4DEiZ/xBcR
-         KNfqVjDiij1+9MRB6FprNRS+StUWk0+5Wlv20S6lFglsGZQLR8a/OA8bLth8cSzr/98R
-         GglMmsWUmGbhSWOdqLHOl6Ua1ptEf4MLHcJv8y72agQObv7z2ViVBwRUFV8ulW2Y+8cY
-         JAre70teamM8EYqD/ZQBfQTwhnQ0JL7xfoysHEym3cjUqyOwU5vxA3sGd6RDTMRM8vqJ
-         uNZg==
-X-Forwarded-Encrypted: i=1; AJvYcCVr/BKw/ZhrblMaA1TVCVfxMV06Ko5W1Kd6NuFdTB4Abbwcpp6YwW8YOvemOuLPgdrPuUPnkcckMXVw+b0=@vger.kernel.org, AJvYcCXJ7PUoCE/3Tdmxxg2ZefcIs5z25nuVwoGOctTDdQ9mkxIxouYfnnII3L3LFViPNuFo+M8PeABGaV89KC0=@vger.kernel.org
-X-Gm-Message-State: AOJu0YxoiF03bufrahSz+/3Mk3woMlzohW53wEUrvDgycRRWEtwWXRyd
-	Yc4m5tRttvaTp85pyKPwMh67T4a2yb617Amu0G7U1jUY0MezDJKu
-X-Google-Smtp-Source: AGHT+IGmY2dOGaZZNT1ol5gR380oL0yb8gm+JrSmSBRI7ACJExC/AnPnv9kLcOLqtCEKaQsXVgMRMw==
-X-Received: by 2002:a17:90b:4b8c:b0:2e2:8995:dd10 with SMTP id 98e67ed59e1d1-2e5616dedabmr9199390a91.4.1729400398314;
-        Sat, 19 Oct 2024 21:59:58 -0700 (PDT)
-Received: from carrot.. (i118-19-49-33.s41.a014.ap.plala.or.jp. [118.19.49.33])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e5ad512a98sm688779a91.52.2024.10.19.21.59.56
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 19 Oct 2024 21:59:57 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: syzbot <syzbot+9ef37ac20608f4836256@syzkaller.appspotmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	syzkaller-bugs@googlegroups.com
-Subject: [PATCH] nilfs2: fix potential deadlock with newly created symlinks
-Date: Sun, 20 Oct 2024 13:51:28 +0900
-Message-ID: <20241020050003.4308-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <67134033.050a0220.1e4b4d.001f.GAE@google.com>
-References: <67134033.050a0220.1e4b4d.001f.GAE@google.com>
+        d=1e100.net; s=20230601; t=1729504117; x=1730108917;
+        h=to:from:subject:message-id:in-reply-to:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=gAk+FBZSQ2Rj8j6YsolBZryf7ITZaXmHRRT4gy57V5U=;
+        b=sjfcRmdaO34Ue1DCzy8I+Xgaj4ZIcbvd6anFDyRdFmVv1T4cCZSLa21QNhc3brzDSn
+         Iv9lGYltnauIlnEbWPjzitMNIr2tWAXqVtvTFT1Ja2e6OwkGIu9EOoIlLH+54Vkk7Vv/
+         g7snP/V6S9D7qSO86G8tGO14I0JE0lQ8HDGbMcbUZuMOicBwxXR/gFYe5bYrc1NnHWTv
+         ov4k4tUQ/es+9o91iBvW7YyBTdb84DBoaADogeXN6GKIIN7eB0OI7rAmCZMQLGt9pBPS
+         gKRd9263Hob9dDAF+ztqpda3OBV3fh5AfYJydNqw0n3tv715nHJzK0O9WimzwwzMIvSd
+         T5Vw==
+X-Forwarded-Encrypted: i=1; AJvYcCXrKGECiACUXSU9sG4wW0UPgTRVz3zFjmEY9VYWUZ5PJugBTecWia5uR8Ti68zqCGBBboJ098hFtUIJNA==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yx0s9BHSMG4R40GNHETwGJ3c1Pdst66x4Pe610HQXKdJGUSBG1y
+	areX1ueVRb+8yT4EwqTNhlVfUbZ7VHpOICvYH6wXm15ypQfsJ7hKPA115qhgnk8IjAM7/3XJh01
+	1iBCspDsSteodNhsZ5M1p8D2Ud6lppFAHk0hTw33uOu/BzwQ1FR14vNE=
+X-Google-Smtp-Source: AGHT+IFzCM9KL02rlmENjVVm2HUojSpl5z+P36lytHeYZcOw89y6u2Z7kyknTj8HSSIKxyanTJnTGzv4fkBxoLmx/hLfGAM4JuE6
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6e02:18c9:b0:3a1:f549:7272 with SMTP id
+ e9e14a558f8ab-3a3f40b7159mr76977225ab.23.1729504116703; Mon, 21 Oct 2024
+ 02:48:36 -0700 (PDT)
+Date: Mon, 21 Oct 2024 02:48:36 -0700
+In-Reply-To: <670cb3f6.050a0220.3e960.0052.GAE@google.com>
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <67162374.050a0220.10f4f4.0045.GAE@google.com>
+Subject: Re: [syzbot] [nilfs] [fs] kernel BUG in submit_bh_wbc (3)
+From: syzbot <syzbot+985ada84bf055a575c07@syzkaller.appspotmail.com>
+To: akpm@linux-foundation.org, brauner@kernel.org, konishi.ryusuke@gmail.com, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Syzbot reported that page_symlink(), called by nilfs_symlink(),
-triggers memory reclamation involving the filesystem layer, which can
-result in circular lock dependencies among the reader/writer semaphore
-nilfs->ns_segctor_sem, s_writers percpu_rwsem (intwrite) and the
-fs_reclaim pseudo lock.
+syzbot has found a reproducer for the following issue on:
 
-This is because after commit 21fc61c73c39 ("don't put symlink bodies in
-pagecache into highmem"), the gfp flags of the page cache for symbolic
-links are overwritten to GFP_KERNEL via inode_nohighmem().
+HEAD commit:    42f7652d3eb5 Linux 6.12-rc4
+git tree:       upstream
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=10c66a40580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=41330fd2db03893d
+dashboard link: https://syzkaller.appspot.com/bug?extid=985ada84bf055a575c07
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1541e430580000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1181e0a7980000
 
-This is not a problem for symlinks read from the backing device,
-because the __GFP_FS flag is dropped after inode_nohighmem() is called.
-However, when a new symlink is created with nilfs_symlink(), the gfp
-flags remain overwritten to GFP_KERNEL.  Then, memory allocation called
-from page_symlink() etc. triggers memory reclamation including the FS
-layer, which may call nilfs_evict_inode() or nilfs_dirty_inode().  And
-these can cause a deadlock if they are called while
-nilfs->ns_segctor_sem is held:
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/21f56ec05989/disk-42f7652d.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/d295ea00e68a/vmlinux-42f7652d.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/6c4b95c7f67f/bzImage-42f7652d.xz
+mounted in repro #1: https://storage.googleapis.com/syzbot-assets/709e6e32762f/mount_0.gz
+mounted in repro #2: https://storage.googleapis.com/syzbot-assets/6576d8861c23/mount_7.gz
 
-Fix this issue by dropping the __GFP_FS flag from the page cache GFP
-flags of newly created symlinks in the same way that nilfs_new_inode()
-and __nilfs_read_inode() do, as a workaround until we adopt nofs
-allocation scope consistently or improve the locking constraints.
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+985ada84bf055a575c07@syzkaller.appspotmail.com
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Reported-by: syzbot+9ef37ac20608f4836256@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=9ef37ac20608f4836256
-Fixes: 21fc61c73c39 ("don't put symlink bodies in pagecache into highmem")
-Tested-by: syzbot+9ef37ac20608f4836256@syzkaller.appspotmail.com
-Cc: stable@vger.kernel.org
+------------[ cut here ]------------
+kernel BUG at fs/buffer.c:2785!
+Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN PTI
+CPU: 0 UID: 0 PID: 5235 Comm: syz-executor372 Not tainted 6.12.0-rc4-syzkaller #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+RIP: 0010:submit_bh_wbc+0x556/0x560 fs/buffer.c:2785
+Code: 89 fa e8 dd 76 cc 02 e9 95 fe ff ff e8 73 85 74 ff 90 0f 0b e8 6b 85 74 ff 90 0f 0b e8 63 85 74 ff 90 0f 0b e8 5b 85 74 ff 90 <0f> 0b e8 53 85 74 ff 90 0f 0b 90 90 90 90 90 90 90 90 90 90 90 90
+RSP: 0018:ffffc90003b6f0d8 EFLAGS: 00010293
+RAX: ffffffff82206235 RBX: 0000000000000154 RCX: ffff88802d490000
+RDX: 0000000000000000 RSI: 0000000000000100 RDI: 0000000000000000
+RBP: 0000000000000100 R08: ffffffff82205df9 R09: 1ffff1100ef571d0
+R10: dffffc0000000000 R11: ffffed100ef571d1 R12: 0000000000000000
+R13: ffff888077ab8e80 R14: 0000000000000000 R15: 1ffff1100ef571d0
+FS:  0000555573f7e380(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fbda422e00a CR3: 000000002fc1e000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ submit_bh fs/buffer.c:2824 [inline]
+ block_read_full_folio+0x93b/0xcd0 fs/buffer.c:2451
+ do_mpage_readpage+0x1a73/0x1c80 fs/mpage.c:317
+ mpage_read_folio+0x108/0x1e0 fs/mpage.c:392
+ filemap_read_folio+0x14b/0x630 mm/filemap.c:2367
+ do_read_cache_folio+0x3f5/0x850 mm/filemap.c:3825
+ read_mapping_folio include/linux/pagemap.h:1011 [inline]
+ nilfs_get_folio+0x4b/0x240 fs/nilfs2/dir.c:190
+ nilfs_find_entry+0x13d/0x660 fs/nilfs2/dir.c:313
+ nilfs_inode_by_name+0xad/0x240 fs/nilfs2/dir.c:394
+ nilfs_lookup+0xed/0x210 fs/nilfs2/namei.c:63
+ lookup_open fs/namei.c:3573 [inline]
+ open_last_lookups fs/namei.c:3694 [inline]
+ path_openat+0x11a7/0x3590 fs/namei.c:3930
+ do_filp_open+0x235/0x490 fs/namei.c:3960
+ do_sys_openat2+0x13e/0x1d0 fs/open.c:1415
+ do_sys_open fs/open.c:1430 [inline]
+ __do_sys_openat fs/open.c:1446 [inline]
+ __se_sys_openat fs/open.c:1441 [inline]
+ __x64_sys_openat+0x247/0x2a0 fs/open.c:1441
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fbda41e54a9
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 21 18 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007ffe5e610168 EFLAGS: 00000246 ORIG_RAX: 0000000000000101
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 00007fbda41e54a9
+RDX: 000000000000275a RSI: 0000000020000180 RDI: 00000000ffffff9c
+RBP: 0000000000000000 R08: 00000000000051a5 R09: 000000002000a440
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007ffe5e61019c
+R13: 0000000000000007 R14: 431bde82d7b634db R15: 00007ffe5e6101d0
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:submit_bh_wbc+0x556/0x560 fs/buffer.c:2785
+Code: 89 fa e8 dd 76 cc 02 e9 95 fe ff ff e8 73 85 74 ff 90 0f 0b e8 6b 85 74 ff 90 0f 0b e8 63 85 74 ff 90 0f 0b e8 5b 85 74 ff 90 <0f> 0b e8 53 85 74 ff 90 0f 0b 90 90 90 90 90 90 90 90 90 90 90 90
+RSP: 0018:ffffc90003b6f0d8 EFLAGS: 00010293
+RAX: ffffffff82206235 RBX: 0000000000000154 RCX: ffff88802d490000
+RDX: 0000000000000000 RSI: 0000000000000100 RDI: 0000000000000000
+RBP: 0000000000000100 R08: ffffffff82205df9 R09: 1ffff1100ef571d0
+R10: dffffc0000000000 R11: ffffed100ef571d1 R12: 0000000000000000
+R13: ffff888077ab8e80 R14: 0000000000000000 R15: 1ffff1100ef571d0
+FS:  0000555573f7e380(0000) GS:ffff8880b8700000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fbd9cbff000 CR3: 000000002fc1e000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+
+
 ---
-Part of the syzbot address was missing in the recipient's addresses,
-so I'll resend this to syzbot.
-
-Please be careful when replying to the previous patch submission.
-
-Ryusuke Konishi
-
- fs/nilfs2/namei.c | 3 +++
- 1 file changed, 3 insertions(+)
-
-diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index 4905063790c5..9b108052d9f7 100644
---- a/fs/nilfs2/namei.c
-+++ b/fs/nilfs2/namei.c
-@@ -157,6 +157,9 @@ static int nilfs_symlink(struct mnt_idmap *idmap, struct inode *dir,
- 	/* slow symlink */
- 	inode->i_op = &nilfs_symlink_inode_operations;
- 	inode_nohighmem(inode);
-+	mapping_set_gfp_mask(inode->i_mapping,
-+			     mapping_gfp_constraint(inode->i_mapping,
-+						    ~__GFP_FS));
- 	inode->i_mapping->a_ops = &nilfs_aops;
- 	err = page_symlink(inode, symname, l);
- 	if (err)
--- 
-2.43.0
-
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
