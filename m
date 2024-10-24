@@ -1,112 +1,129 @@
-Received: from mail-yw1-f175.google.com (mail-yw1-f175.google.com [209.85.128.175])
+Received: from mail-pf1-f172.google.com (mail-pf1-f172.google.com [209.85.210.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 184261E1A3B
-	for <linux-nilfs@vger.kernel.org>; Mon, 21 Oct 2024 11:54:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FA3018B488;
+	Thu, 24 Oct 2024 09:26:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729511650; cv=none; b=UcZmPk3yFHTJbLlB83vnO/isqRQvNovESBOMdACXkJ83IOZdQMWre338A7tp1VD4zub8VQGtscgX6XzlFT3bpNd+++h8uIfyxQezDNNrFkTmieqUIUS2GhqdtfwDDQrvZJk2n34bl+qF2QBO93fOEcONV31ovqODTf7Z8GmbBe8=
+	t=1729761970; cv=none; b=ezpes/Skl6ASZoJXSapd5+cgfcghi5bE8pmIBg3T5kkvmCE2TdlV21fom0ett8wCQ3xusiGpzSAcTF1g+WtJXUYjFVb66DoL8SQ7E/TZNacTYDIO3YqOu+9GDeNxrPKzLnkhDAnIivAzY8KLy4RXHa310Ndbf9U/czv90Zypws4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729511650; c=relaxed/simple;
-	bh=YlLyiQ0IyoSrf4p2b4R1meDiOh/k2SlLbx+vvxOCYjE=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=NlV64X3LpBCB2QD773dv0kS8v3/BTCNmMG5GAdsThPPoxmFL03VedfermHIHzxs3xq2I5RsZSBqpspzlYMEmIdKDZ7BQwCzoGKlVlkFwpD510Xb3wJOJ5quW6p/53gQ2dgk5U0iskqs/1m9DgAjVqb841q7cXwaksqS4hsragmg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ivUqOcil; arc=none smtp.client-ip=209.85.128.175
+	s=arc-20240116; t=1729761970; c=relaxed/simple;
+	bh=vBHlee0LROU624Z/HgMJod1wQjJ2rFq5nyQvfqIhDz4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ohCQFwnTU1ErYWX9lK7qMFQLgVFyO0ezyTZ2leZnMy5RJi2rL1KNqSbQYh6115bWjB4uAEeSHMZ8wKQH94U870Rr00d4QJkL44WC9SJx0+EmLaQdG04rQTd2rxMDjqwDZ+AB5yChEIqYdGoDTwgiZ9hTEahB7UBpyW0p4KBr2C4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LnXnblp+; arc=none smtp.client-ip=209.85.210.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ivUqOcil"
-Received: by mail-yw1-f175.google.com with SMTP id 00721157ae682-6e5cec98cceso20969767b3.2
-        for <linux-nilfs@vger.kernel.org>; Mon, 21 Oct 2024 04:54:08 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LnXnblp+"
+Received: by mail-pf1-f172.google.com with SMTP id d2e1a72fcca58-71e5ae69880so473216b3a.2;
+        Thu, 24 Oct 2024 02:26:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729511648; x=1730116448; darn=vger.kernel.org;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=smZCTPgoDncyQJmz82P4k8sCJXzMcfgxSbXRpQ6JE9g=;
-        b=ivUqOcilC7Q9B7YMX77IDix3M1QqYTCqWLSs9FD2O9LMbWYIX7i0mS7AEtOVR3kDcG
-         OmvcLGomyigLv8NknqcWNBwtHHw6FabfZLe+pk0jRweBEhRLG2R3fhYHcUmYZA6Y5+Hj
-         EKLt6/vDEQfFwNezRhCqpO6D6z66gtYnbC0zQYjri9YcD6uG+mfgevgTWlh2dHA3i7eM
-         mTKrHI3mxrYESYQpIdPhTKyI38msg+2uMzlNjOFQgYl7mWn003qyQZzxlos1kT91eOmN
-         02f0maWq8HbzmqJxVQvxaqBrAGdlL3VCYKOLQr0PrbOFN5Vil85C2/SpJtBCoZATEGc5
-         wYfA==
+        d=gmail.com; s=20230601; t=1729761968; x=1730366768; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=pGF6TyANvflPh6CZa162RB2n0/RNch+lIADjec8h/Og=;
+        b=LnXnblp+OUZrJU7+vOTj35fexzpSJhvUYAvqxA8U5zpCjOLNhYINf7Gvzl1Joy1Jls
+         40zhX2yaMY52hjltLUY+HD7/aX5ym5SDaL4lTPe1h3nXHUxmXmLPedT79lQF4CEMT48B
+         S+qdo5AQGCyNYXkx5fAS3wDwmK5txzyRPjNtYw5LXkYhIOzO9sSJyA1dd83ILyyEaDLy
+         PauywOgDC90h44AG0geapZZhqESyTWa8URDGUKkKqye9xR+WaSxoS5TCIJolUsrT+C5w
+         JEQD2N3fKrE9YnfrNoBPU+xGR2xGBloYa8tJl0VRv3jsAV3rJMv6V+Z8dFgmzsWwEfJ8
+         sc2A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729511648; x=1730116448;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=smZCTPgoDncyQJmz82P4k8sCJXzMcfgxSbXRpQ6JE9g=;
-        b=r6i6xcofXXtSWPJAgMJlERDt5K6ZS1Bftgx4e6v27IJMj/fo1fXx8KnC9yPtjA5Lud
-         sKJMmszQKWeLUzzcqWVIfJrVPQghwQiI5Sxjo2poXvpAZTqr6gbqJNBIGAgivtSKiCXe
-         5QAzHV3bvLTV4MR1axDI0iZ/ywN32y22RbjJAO3xB9iH+EPh2tCMSXg4e7s5mGRe1dgK
-         jHkV4WLBwgC8WwJltsKqlsRi8xoCEmHzj69bOpx5Yqeu5ZekstDNGhKpTsjoYM9YwzuE
-         5+aC2fSdCa4hEAZaEFkwL+FTE3c3Nsct8KXRCpDChq3mOuUF1vJm6RYZ8t+BPeXcruGE
-         STrg==
-X-Gm-Message-State: AOJu0YwsRCKVRIfGDJxu4iKEG2Vt9dX1jX/bWbx8ZWaFQwT5T/ZysyPH
-	3r3HxZQJ2CwHll5fbBgG+ljE58b8Jn0Ty45UqF5ve4y+vrtGe7GK/UGe3/PLo2PHTa+adpUshdz
-	OvoCJfqG5esyaAtxmu27myby64oDlkgoD
-X-Google-Smtp-Source: AGHT+IFYYDMi8WFvXvGAspmWQrAvKSiUITUx3O4xELZscXy6p9w/qR8/mMnkJHm/KI4Mco4FhD2/GcJGuk37Oy64t5E=
-X-Received: by 2002:a05:690c:fc4:b0:6e2:4c7b:e379 with SMTP id
- 00721157ae682-6e5bf9e62ccmr111943977b3.19.1729511647996; Mon, 21 Oct 2024
- 04:54:07 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1729761968; x=1730366768;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=pGF6TyANvflPh6CZa162RB2n0/RNch+lIADjec8h/Og=;
+        b=FjBHPHh7yWX+qUicEy2uGjwU4lSMoM5Qgcm23y1rT9WsoHnjhh2NHeg+3BFD9Il2Dc
+         eNDnS949rzpTphGvTf4/4v05bwRkycye3i6x3syVUfgXhwRLkzUykjiuPp7R0+XGwQBf
+         7kBINF/ypqj7/TkjjcoAreFTpWaAGZpj/dRHRykWFaok7Pcfg0/mX1vHYQX0Il8NCStN
+         NYgR0omhZl6WcQ+BerPQ1S5i5Xv8jbaXGhyR+Iqi9+XmrARTVh0is10DjEWm3MFF9/h2
+         8sJYo1KqFuNd+oe5K9jfSx98fn9mbedNseqfjv0Bh/zY8LGPQjJs+ShxXi7x2RkoRpFa
+         3MIg==
+X-Forwarded-Encrypted: i=1; AJvYcCUsalmgvMVqUh3jZKwMuCbd0Jm510nA2hySIMSXipQOPxCjBN6Dpl9wNtgFtqe7xPgbEHtPHW7GEbaA3c7A@vger.kernel.org, AJvYcCWEY7vr+UwoAKWLyA7hCEK1O93osjfkVQAxpYbGLX+mHZ0VH9Jk8ao1naIKRCdKH6+cbuXiZhxHIbWkW/ms@vger.kernel.org, AJvYcCWK5FGJKrCtif6JSWyliw0AOvoIBfIcGSZgVdRYGZnZ/VkM7OljjDN9Sw+uUV87eFRft7AOnhVH4dZgNA4=@vger.kernel.org
+X-Gm-Message-State: AOJu0YzVS2D9MsRc1pr1j9P2Lsj+czVYEQOiPPhemJihiLNp1JRyYtsx
+	k3dsaNftcFYDt0tnEOCWKjZIxqTs4xX1vdFEqvbIfTbRVR4IWqJ4
+X-Google-Smtp-Source: AGHT+IE15ZjMMvQ1vh5h3TPi2AHeW+S1IN5rkOGZCLQWaXRqL873ZenE+fejwaqXp2y8xmIXILujUw==
+X-Received: by 2002:a05:6a00:4f89:b0:71e:795f:92f0 with SMTP id d2e1a72fcca58-72030a51dc1mr7292597b3a.3.1729761967528;
+        Thu, 24 Oct 2024 02:26:07 -0700 (PDT)
+Received: from carrot.. (i118-19-49-33.s41.a014.ap.plala.or.jp. [118.19.49.33])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-71ec13d774fsm7608906b3a.106.2024.10.24.02.26.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 24 Oct 2024 02:26:06 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Matthew Wilcox <willy@infradead.org>,
+	linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org
+Subject: [PATCH 00/12] nilfs2: Finish folio conversion
+Date: Thu, 24 Oct 2024 18:25:34 +0900
+Message-ID: <20241024092602.13395-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-From: dexen deVries <dexen.devries@gmail.com>
-Date: Mon, 21 Oct 2024 13:53:57 +0200
-Message-ID: <CAJUT6o4xwggZDcyHq2yYiRRLgqkho5oQSsqW0g4ZCWR6R0w-MA@mail.gmail.com>
-Subject: lscp and number of used or appended blocks
-To: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Hello list,
+Andrew, please queue this series for the next cycle.
 
-lscp's "-g, --show-increment" option seems to give misleading number
-of appended blocks, significantly under-counting disk usage. i
-expected the sum total of increments, plus the full size of the first
-checkpoint, multiplied by block size (4096 in my case) to be equal to
-total used disk space (or slightly below it, due to partly used
-segments). and while the size of each checkpoint is indeed roughly
-equal to disk use by that checkpoint, the sum of increments
-significantly undercounts disk space usage.
+This series converts all remaining page structure references in nilfs2
+to folio-based, except for nilfs_copy_buffer function, which was
+converted to use folios in advance for cross-fs page flags cleanup.
 
-am i using it wrong, or is it bugged?
-using latest kernel and long-running filesystems
+This prioritizes folio conversion, and does not include buffer head
+reference reduction, nor does it support for block sizes larger than
+the system page size.
 
-example from one of my computers: 170GB calculated vs 356GB actual use
-Nr checkpoints: 49477
-Oldest checkpoint used space [MB]:          141903
-Computed sum increments used space [MB]:     28777
-Computed sum total used space [MB]:         170680
-Actual used space reported by df -m [MB]:   354072
+The first eight patches in this series mainly convert each of the
+nilfs2-specific metadata implementations to use folios.  The last four
+patches, by Matthew Wilcox, eliminate aops writepage callbacks and
+convert the remaining page structure references to folio-based.  This
+part reflects some corrections to the patch series posted by Matthew.
+
+It has passed operation checks and load tests with different block
+sizes on multiple environments, including 32-bit kernel, and is
+sufficiently stable.
+
+Thanks,
+Ryusuke Konishi
 
 
-example from another of my computers: 34GB calculated vs 119GB actual use
-Nr checkpoints: 2368
-Oldest checkpoint used space [MB]:           27520
-Computed sum increments used space [MB]:      6813
-Computed sum total used space [MB]:          34334
-Actual used space reported by df -m [MB]:   119040
+Matthew Wilcox (Oracle) (4):
+  nilfs2: Remove nilfs_writepage
+  nilfs2: Convert nilfs_page_count_clean_buffers() to take a folio
+  nilfs2: Convert nilfs_recovery_copy_block() to take a folio
+  nilfs2: Convert metadata aops from writepage to writepages
 
-repro script:
-#!/bin/sh
+Ryusuke Konishi (8):
+  nilfs2: convert segment buffer to be folio-based
+  nilfs2: convert common metadata file code to be folio-based
+  nilfs2: convert segment usage file to be folio-based
+  nilfs2: convert persistent object allocator to be folio-based
+  nilfs2: convert inode file to be folio-based
+  nilfs2: convert DAT file to be folio-based
+  nilfs2: remove nilfs_palloc_block_get_entry()
+  nilfs2: convert checkpoint file to be folio-based
 
-fs=`df . | awk 'NR==2 {print $1}'`
-lscp $fs | awk 'END {print "Nr checkpoints: " NR-1}'
-lscp --all $fs | awk 'NR==2 {print $6}' | awk '{printf("Oldest
-checkpoint used space [MB]: %15d\n", ($1*4096)/1024/1024)}'
-lscp --all --show-increment $fs | head -n-1 | awk 'NR>2 {sum=sum+$6}
-END {print sum}' | awk '{printf("Computed sum increments used space
-[MB]: %9d\n", ($1*4096)/1024/1024)}'
-{
-lscp --all $fs | awk 'NR==2 {print $6}'
-lscp --all --show-increment $fs | head -n-1 | awk 'NR>2 {print $6}'
-} | awk '{sum=sum+$1} END { printf("Computed sum total used space
-[MB]: %14d\n", (sum*4096)/1024/1024)}'
-df -m $fs | awk 'NR==2 {printf("Actual used space reported by df -m
-[MB]: %8d\n", $3)}'
+ fs/nilfs2/alloc.c    | 148 +++++++++--------
+ fs/nilfs2/alloc.h    |   4 +-
+ fs/nilfs2/cpfile.c   | 383 +++++++++++++++++++++++--------------------
+ fs/nilfs2/dat.c      |  98 +++++------
+ fs/nilfs2/dir.c      |   2 +-
+ fs/nilfs2/ifile.c    |  10 +-
+ fs/nilfs2/ifile.h    |   4 +-
+ fs/nilfs2/inode.c    |  35 +---
+ fs/nilfs2/mdt.c      |  40 +++--
+ fs/nilfs2/page.c     |   4 +-
+ fs/nilfs2/page.h     |   4 +-
+ fs/nilfs2/recovery.c |  17 +-
+ fs/nilfs2/segbuf.c   |  17 +-
+ fs/nilfs2/sufile.c   | 160 +++++++++---------
+ 14 files changed, 485 insertions(+), 441 deletions(-)
 
+-- 
+2.43.0
 
-cheers,
---
-dexen
