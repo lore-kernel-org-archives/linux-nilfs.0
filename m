@@ -1,151 +1,187 @@
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
+Received: from mail-il1-f199.google.com (mail-il1-f199.google.com [209.85.166.199])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D731312B64
-	for <linux-nilfs@vger.kernel.org>; Fri, 25 Oct 2024 16:04:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6179A33E7
+	for <linux-nilfs@vger.kernel.org>; Wed, 30 Oct 2024 17:45:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.199
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729872264; cv=none; b=frGNoSTlszZ4g97lijOoit8qxFEa7Rxx8EpZEsjjVCpIrY9GaKxXZPCi5cDDKNbaHlnr44laoIIUNHGamPF8vZebudbKv3c/kTaAUUuscOnFutTJGFe0qpJd9gg6iRBTJlveytVRvcpfvcOjAlNfb3gSSDvAZEFXX/blbxI9LOc=
+	t=1730310328; cv=none; b=oULeuL+PCVPC7f8wPsixEA5b05vuScVgPU724A/Cdrz7q7MUWP6Ytx92LH1jzccciIvWlIziE07ZKvwR1Yr5wa8S4Wkt1JqCrd7eWSBTQrbN4h+PZbJRwxtzxmDnUATqodYnLSjuPOyu+5HbdyRPbKb0+5vc7JTVfuW/5yjfmcA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729872264; c=relaxed/simple;
-	bh=Ej/Yy98rd00SIeaxUgnrsX9ZsylfqkUI8CaKMXJ5MdE=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=jYY0AxBDLQL1zvOKgVPoKasM/cgxaCJTXtxcCb75khYfGso/jZ0iUsWrwnve+wNBGFWIbfxKqV83NkoW3lO/Ezb78Qr6hGlbiLztUZE44IsB/u8QgjJrPEid8DyXa8MfdqNmZ44FGZaCQl5rh3RcTF90pWHcmR8Dxn+U/9DGloU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=e6YhW9Oa; arc=none smtp.client-ip=209.85.167.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="e6YhW9Oa"
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-539f84907caso2483959e87.3
-        for <linux-nilfs@vger.kernel.org>; Fri, 25 Oct 2024 09:04:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1729872259; x=1730477059; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=1vs2rzGI5nJjLqG/9FK5S4WwnZTwsq965cNIYQfMP0A=;
-        b=e6YhW9OaY59ZJPwZxGgaS1BOn8E2jywKYA+hPw7cjjgVdd78Zn6ghHgvuDM5tkT1fR
-         e5C8qXbmmx4TeYlPCmcfrzYE+JKZIYDQIvGV4KvLmVohHpqPG3l10MNVktgDFUt1gPmH
-         0rWxLrlRPXBPZ3CXoDAc7SG5BWQ8uAo062bYQZUrkmVDE2J5lVPAmC+O6uZ3va6WEC9t
-         OehEqC3j6Eqc6XIFy3995hap9trZnPfRAHGNXMTi/EsSXggnCWKHw2ZdC4Dt32er2gwn
-         PQaYSnwy+tCGul5EU7ltFHYRK956J4FwlolJQ0id6I1/Y4Rh949TFl26915MKqvHF632
-         KGIg==
+	s=arc-20240116; t=1730310328; c=relaxed/simple;
+	bh=Zq/og7AFoo14KZf3UG5QWOaDH7TQMemEI6G2OS0FsyU=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=l2KwGno4TmWYyk69BWvOz2P1oOkaLoP4nBdaoTaW8h3yqFlNzFeulH/IYMyxc7GYCeJC7CYDOe686W1EAqr8QNjfXY3S2tu+Q2XezQawXQrzlsK1NND259wDVqpW8S/zF6+99kw8IuKoD2QsqZRUKbl2uUPYjbclNUbczCYzkHs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.199
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f199.google.com with SMTP id e9e14a558f8ab-3a3ba4fcf24so1490505ab.0
+        for <linux-nilfs@vger.kernel.org>; Wed, 30 Oct 2024 10:45:26 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1729872259; x=1730477059;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=1vs2rzGI5nJjLqG/9FK5S4WwnZTwsq965cNIYQfMP0A=;
-        b=U++BBz7aT8cw3Sugwhui2BVzkh+S23WcPoYnE6ox1YwarXsRaeJMJGRQgLeZBQSm2f
-         5FOtoyuZ9SQXiWOlJXDSWJeYcOf/TxcSb06pGoXDApr5P7nCRHJvu3uV9WUbhtvARfhs
-         4x3WOnqQVQwR/ovz9DRkWIEQUsOO73F0Em6zqgECEQ7AkhTVYvXbaNPqUEkEahwSFu8R
-         Bxv9/LV53KLCNOzthOUXe0gu3+CfAC2+Xrpq/1ErYl3JnytlCEqQmWXJVMoR6X1K3OQ/
-         JUCD3//JwoZmflGh6RjqfWLwSY4IWKnj8QR0wE/ZT5jfjKVFekObdPLH2ahSg811sJ3o
-         rqvg==
-X-Gm-Message-State: AOJu0YwmXuezyUdosyGhk3rF0h3euQN/8i8u1d4SzGznrCiLUETop6N1
-	0RWZ9iXPQBZIyyHV/41a0hN7R7o/OUyjPUIpC7fiD0GvrB5YZtGzBHIwhpYVfbmQOzvXBwMOBKs
-	T4t7/KJKVVv/ARLbbmCAj4//3i+yGSoOx
-X-Google-Smtp-Source: AGHT+IG+aaJucXTR2R3Aai4bZ9+2+BT/exBbtnh/dxwBVJPIXs0U0k3XGY4i2ZAkcQZqQ2I18caOEqHODogDI++DpBw=
-X-Received: by 2002:a05:6512:3e0f:b0:536:54df:bffa with SMTP id
- 2adb3069b0e04-53b23e8510amr3810562e87.45.1729872258502; Fri, 25 Oct 2024
- 09:04:18 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1730310325; x=1730915125;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=za1ciVBGbO8OmadBn8zcwu8ODHnRS81vIUIVlw5CgJQ=;
+        b=HHXWdxEjTkNVLoTfdRE4yImeAQQYEAqUoAL+6QqWUBZ6KHmMY4gtVVSt5ALV6PWaM/
+         SLOFnSgJLDCKyjeCI+3M3JgK4efGltQmN4MrLiMYaIHt5/86RJzgqcvf5zAjYSVF+R7s
+         Q62jJD/o6Q1zKUJ460atJI8nHWA83ZrAgxQK6rf44s7Z8ay9gKpUkXv31khcPjC/8VMM
+         1tumMjGObKuNmPtSGUJhxWU15DLpVeuHOWQ55aKYUi36k+mrcEwp/GeoSDVSuDUtpnT9
+         uYA9jCxSM+WbxuKfBS61rDaG+iEz6mK8jEugL/y34dUs19CITOyBZt3/WytFMNBr1yqu
+         3XJg==
+X-Forwarded-Encrypted: i=1; AJvYcCWNxMaYvRjEmByjh6VGkQqGHsxHJuwMg3tPffaUqSyKQ2ktlDA5Tew9Iziem5sEEt2eUea0caPdWME/tg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwdMTtH7sP2/EuRqCNDiPC8eFvBXtVG2hYBcnlR2ymaA5fDct17
+	YG2SxmKU+1aclJCHIdtd2rqnWOXaE8GCp7WIe/NHHStRkr38WGWiIu1iDXUZIma9v5s/sLke2l+
+	/xzXfNAq5CuqPqn17n7oFvahLXQFeyEN47JDZ9ijk6cjYHL0emzzzuuQ=
+X-Google-Smtp-Source: AGHT+IGEahBYQ7BzD3UISV4ElGJszR1pZkIWegWM3huF35bJRhUgilgud/4NlvH8ey6+BAl9dknOWuaq+EJWn8HhTeRI3D1ZI3nu
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CAJUT6o4xwggZDcyHq2yYiRRLgqkho5oQSsqW0g4ZCWR6R0w-MA@mail.gmail.com>
-In-Reply-To: <CAJUT6o4xwggZDcyHq2yYiRRLgqkho5oQSsqW0g4ZCWR6R0w-MA@mail.gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 26 Oct 2024 01:04:01 +0900
-Message-ID: <CAKFNMon4CzpXcDoXUrZ2gww3rQfqkpwdNfh2e06hupgC8xOJDA@mail.gmail.com>
-Subject: Re: lscp and number of used or appended blocks
-To: dexen deVries <dexen.devries@gmail.com>
-Cc: linux-nilfs@vger.kernel.org
+X-Received: by 2002:a05:6e02:174e:b0:3a3:40f0:cb8c with SMTP id
+ e9e14a558f8ab-3a61752b08cmr6920635ab.17.1730310325436; Wed, 30 Oct 2024
+ 10:45:25 -0700 (PDT)
+Date: Wed, 30 Oct 2024 10:45:25 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <672270b5.050a0220.3c8d68.052a.GAE@google.com>
+Subject: [syzbot] [nilfs?] general protection fault in touch_buffer
+From: syzbot <syzbot+9982fb8d18eba905abe2@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Mon, Oct 21, 2024 at 8:54=E2=80=AFPM dexen deVries wrote:
->
-> Hello list,
->
-> lscp's "-g, --show-increment" option seems to give misleading number
-> of appended blocks, significantly under-counting disk usage. i
-> expected the sum total of increments, plus the full size of the first
-> checkpoint, multiplied by block size (4096 in my case) to be equal to
-> total used disk space (or slightly below it, due to partly used
-> segments). and while the size of each checkpoint is indeed roughly
-> equal to disk use by that checkpoint, the sum of increments
-> significantly undercounts disk space usage.
->
-> am i using it wrong, or is it bugged?
-> using latest kernel and long-running filesystems
->
-> example from one of my computers: 170GB calculated vs 356GB actual use
-> Nr checkpoints: 49477
-> Oldest checkpoint used space [MB]:          141903
-> Computed sum increments used space [MB]:     28777
-> Computed sum total used space [MB]:         170680
-> Actual used space reported by df -m [MB]:   354072
->
->
-> example from another of my computers: 34GB calculated vs 119GB actual use
-> Nr checkpoints: 2368
-> Oldest checkpoint used space [MB]:           27520
-> Computed sum increments used space [MB]:      6813
-> Computed sum total used space [MB]:          34334
-> Actual used space reported by df -m [MB]:   119040
->
-> repro script:
-> #!/bin/sh
->
-> fs=3D`df . | awk 'NR=3D=3D2 {print $1}'`
-> lscp $fs | awk 'END {print "Nr checkpoints: " NR-1}'
-> lscp --all $fs | awk 'NR=3D=3D2 {print $6}' | awk '{printf("Oldest
-> checkpoint used space [MB]: %15d\n", ($1*4096)/1024/1024)}'
-> lscp --all --show-increment $fs | head -n-1 | awk 'NR>2 {sum=3Dsum+$6}
-> END {print sum}' | awk '{printf("Computed sum increments used space
-> [MB]: %9d\n", ($1*4096)/1024/1024)}'
-> {
-> lscp --all $fs | awk 'NR=3D=3D2 {print $6}'
-> lscp --all --show-increment $fs | head -n-1 | awk 'NR>2 {print $6}'
-> } | awk '{sum=3Dsum+$1} END { printf("Computed sum total used space
-> [MB]: %14d\n", (sum*4096)/1024/1024)}'
-> df -m $fs | awk 'NR=3D=3D2 {printf("Actual used space reported by df -m
-> [MB]: %8d\n", $3)}'
->
->
-> cheers,
-> --
-> dexen
+Hello,
 
-Dear dexen,
+syzbot found the following issue on:
 
-I've been busy this week, sorry for the late reply.
+HEAD commit:    c1e939a21eb1 Merge tag 'cgroup-for-6.12-rc5-fixes' of git:..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=15bd4e87980000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=4aec7739e14231a7
+dashboard link: https://syzkaller.appspot.com/bug?extid=9982fb8d18eba905abe2
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=17e24630580000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1427255f980000
 
-The number displayed by the "-g, --show-increment" option of lscp is
-the incremental block count measured when writing logs recorded in the
-checkpoint metadata, but I'm going to check the implementation to see
-if it's what we intended.
-Please give me a little time.
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-c1e939a2.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/79a07b922222/vmlinux-c1e939a2.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/0a5d98e2bb0d/bzImage-c1e939a2.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/e4ead0d018d8/mount_0.gz
 
-However, please do not use this number in general.
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+9982fb8d18eba905abe2@syzkaller.appspotmail.com
 
-Checkpoints are deleted by GC, and the differential block count also
-becomes inaccurate due to GC.
-Therefore, this value of the block count is meaningless in practice.
-(And that is why it's hidden and not the default.)
+loop0: detected capacity change from 0 to 2048
+Oops: general protection fault, probably for non-canonical address 0xdffffc0000000006: 0000 [#1] PREEMPT SMP KASAN NOPTI
+KASAN: null-ptr-deref in range [0x0000000000000030-0x0000000000000037]
+CPU: 0 UID: 0 PID: 5503 Comm: syz-executor197 Not tainted 6.12.0-rc5-syzkaller-00044-gc1e939a21eb1 #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
+RIP: 0010:perf_trace_block_buffer+0x293/0x490 include/trace/events/block.h:24
+Code: 24 18 48 8d 58 30 48 89 d8 48 c1 e8 03 42 80 3c 28 00 74 08 48 89 df e8 2b 82 62 fd 4c 8b 3b 49 83 c7 34 4c 89 f8 48 c1 e8 03 <42> 0f b6 04 28 84 c0 0f 85 6c 01 00 00 45 8b 3f 49 8d 5c 24 08 48
+RSP: 0018:ffffc9000d4ef420 EFLAGS: 00010207
+RAX: 0000000000000006 RBX: ffff888049091030 RCX: ffff88801f02c880
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff88801fc37928
+RBP: ffffc9000d4ef518 R08: ffffffff819e732b R09: 1ffffffff203a095
+R10: dffffc0000000000 R11: fffffbfff203a096 R12: ffffe8ffffc33cd0
+R13: dffffc0000000000 R14: ffff88801fc378a0 R15: 0000000000000034
+FS:  00007f230dad76c0(0000) GS:ffff88801fc00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ffebac93808 CR3: 0000000043d34000 CR4: 0000000000352ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ trace_block_touch_buffer include/trace/events/block.h:54 [inline]
+ touch_buffer+0x1d5/0x240 fs/buffer.c:64
+ __nilfs_get_folio_block fs/nilfs2/page.c:42 [inline]
+ nilfs_grab_buffer+0x321/0x440 fs/nilfs2/page.c:61
+ nilfs_mdt_submit_block+0xdc/0x890 fs/nilfs2/mdt.c:121
+ nilfs_mdt_read_block+0xeb/0x430 fs/nilfs2/mdt.c:176
+ nilfs_mdt_get_block+0x127/0xb70 fs/nilfs2/mdt.c:251
+ nilfs_palloc_get_block+0x181/0x2a0 fs/nilfs2/alloc.c:217
+ nilfs_palloc_get_entry_block+0x8e/0xb0 fs/nilfs2/alloc.c:319
+ nilfs_ifile_get_inode_block+0xed/0x180 fs/nilfs2/ifile.c:141
+ __nilfs_read_inode fs/nilfs2/inode.c:476 [inline]
+ nilfs_iget+0x240/0x810 fs/nilfs2/inode.c:581
+ nilfs_get_root_dentry+0x28/0x230 fs/nilfs2/super.c:909
+ nilfs_fill_super+0x50b/0x720 fs/nilfs2/super.c:1090
+ nilfs_get_tree+0x4f9/0x920 fs/nilfs2/super.c:1220
+ vfs_get_tree+0x90/0x2b0 fs/super.c:1800
+ do_new_mount+0x2be/0xb40 fs/namespace.c:3507
+ do_mount fs/namespace.c:3847 [inline]
+ __do_sys_mount fs/namespace.c:4057 [inline]
+ __se_sys_mount+0x2d6/0x3c0 fs/namespace.c:4034
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f230db220da
+Code: d8 64 89 02 48 c7 c0 ff ff ff ff eb a6 e8 5e 04 00 00 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 49 89 ca b8 a5 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b0 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f230dad7088 EFLAGS: 00000286 ORIG_RAX: 00000000000000a5
+RAX: ffffffffffffffda RBX: 00007f230dad70a0 RCX: 00007f230db220da
+RDX: 0000000020000000 RSI: 0000000020000040 RDI: 00007f230dad70a0
+RBP: 0000000000000004 R08: 00007f230dad70e0 R09: 0000000000000aa1
+R10: 0000000003200c00 R11: 0000000000000286 R12: 00007f230dad70e0
+R13: 0000000003200c00 R14: 0000000000000003 R15: 0000000000100000
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:perf_trace_block_buffer+0x293/0x490 include/trace/events/block.h:24
+Code: 24 18 48 8d 58 30 48 89 d8 48 c1 e8 03 42 80 3c 28 00 74 08 48 89 df e8 2b 82 62 fd 4c 8b 3b 49 83 c7 34 4c 89 f8 48 c1 e8 03 <42> 0f b6 04 28 84 c0 0f 85 6c 01 00 00 45 8b 3f 49 8d 5c 24 08 48
+RSP: 0018:ffffc9000d4ef420 EFLAGS: 00010207
+RAX: 0000000000000006 RBX: ffff888049091030 RCX: ffff88801f02c880
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff88801fc37928
+RBP: ffffc9000d4ef518 R08: ffffffff819e732b R09: 1ffffffff203a095
+R10: dffffc0000000000 R11: fffffbfff203a096 R12: ffffe8ffffc33cd0
+R13: dffffc0000000000 R14: ffff88801fc378a0 R15: 0000000000000034
+FS:  00007f230dad76c0(0000) GS:ffff88801fc00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ffebac93808 CR3: 0000000043d34000 CR4: 0000000000352ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+----------------
+Code disassembly (best guess):
+   0:	24 18                	and    $0x18,%al
+   2:	48 8d 58 30          	lea    0x30(%rax),%rbx
+   6:	48 89 d8             	mov    %rbx,%rax
+   9:	48 c1 e8 03          	shr    $0x3,%rax
+   d:	42 80 3c 28 00       	cmpb   $0x0,(%rax,%r13,1)
+  12:	74 08                	je     0x1c
+  14:	48 89 df             	mov    %rbx,%rdi
+  17:	e8 2b 82 62 fd       	call   0xfd628247
+  1c:	4c 8b 3b             	mov    (%rbx),%r15
+  1f:	49 83 c7 34          	add    $0x34,%r15
+  23:	4c 89 f8             	mov    %r15,%rax
+  26:	48 c1 e8 03          	shr    $0x3,%rax
+* 2a:	42 0f b6 04 28       	movzbl (%rax,%r13,1),%eax <-- trapping instruction
+  2f:	84 c0                	test   %al,%al
+  31:	0f 85 6c 01 00 00    	jne    0x1a3
+  37:	45 8b 3f             	mov    (%r15),%r15d
+  3a:	49 8d 5c 24 08       	lea    0x8(%r12),%rbx
+  3f:	48                   	rex.W
 
-Use only the absolute block count displayed by default, and if
-necessary, calculate the difference with the absolute value of the
-previous remaining checkpoint.
 
-If it's really necessary, it might be useful to add a block count
-difference display function to the lscp command that performs such
-searches and calculations internally.   It's clear what needs to be
-implemented, but I'm currently busy dealing with the constant reports
-of issues in the kernel, so I can't say anything promising.
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-Regards,
-Ryusuke Konishi
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
