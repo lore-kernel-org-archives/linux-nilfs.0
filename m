@@ -1,30 +1,30 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97E691CF2A5;
-	Wed,  6 Nov 2024 02:09:48 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E36211DBB2C;
+	Wed,  6 Nov 2024 02:10:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730858988; cv=none; b=K3o/gfvNEeDGsjemPQr1vgwWUnKLLcS8kPlp2SX2wnv6a8iFmy+8BgqslQLLVLzGc/0hcLjBe+KU+62VCW6fmk2hvTOcTKThFmrrZMD47/Ghw/whmqDVteJV5fSoeXnLl/iK9W9K1/0rA7L9r2s/+cnMcE7xx4HXdX2fRDr3AjY=
+	t=1730859059; cv=none; b=WLHVK2RWmkQv3GMzOO0zi9B1yBYiW8MuxdWMGfHzboKLH9CcpqeMSBi/Be/uFos975vmDdUTZI76FarLfueXlsQeKELGIQFqLjhBOUqXvI0tX2uaqszxSQDB+8+wPgKyhn/wycYbk1MO5PJnMBy7VEI+66hPql8i0tEjYI7Z39E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730858988; c=relaxed/simple;
-	bh=Ze3uZ+nIk5OMTMG/Q231NOFs4pQu+2SRKm8T9nCRF80=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=syPmlZbJG3jlQdOXFkGhGEfoC+j+1W+7gyoYqpJ4IyBY59riiBjceQMFOe5TXn97khNbQ4jedtu6NLr+EVFj6Rv/t8uZNOuORH1hVt7iW+2sBA9q2d/xy2kCFzK5a524JrxGooe31ibCy2jEwfW2J6MZBxlIcRSSxay6vpA7OLI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=qm+otMio; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1730859059; c=relaxed/simple;
+	bh=YOmbBYYcUiTkw6zfvx9dq7CjIfavSKjjHtkGTjxffMw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=bC9lBGc8IkgsgHRT80u89OY64IdAj6Xz73GfCWpCPP1czDIpSBY3OZYi/9lMj01remhPnOV3tXvXTxLFBf2XItLAMfZ83r5Q9NZsQQSjJNv+/7OQoExvHV68fE3iCB+Y+s+ASqcwlKCU579HiYOCKAeZAHbPehNaS5l5xNSzEMs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=U23z9XtD; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="qm+otMio"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8A0E5C4CECF;
-	Wed,  6 Nov 2024 02:09:47 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="U23z9XtD"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C04E1C4CECF;
+	Wed,  6 Nov 2024 02:10:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1730858988;
-	bh=Ze3uZ+nIk5OMTMG/Q231NOFs4pQu+2SRKm8T9nCRF80=;
+	s=k20201202; t=1730859058;
+	bh=YOmbBYYcUiTkw6zfvx9dq7CjIfavSKjjHtkGTjxffMw=;
 	h=From:To:Cc:Subject:Date:From;
-	b=qm+otMioORvglZyvfAM7xxEejLhB09+arBTcHgKv6tcPZI1dX6p70N17dZcaAZTgR
-	 p8J3Y6rBAw4hfO77P5OTobKXdDDvQK2mlUw0TQgeesTSY59li0zDWEeQf7hNYJgADA
-	 jpn8Zjhusl+5iWSWDqAR1J3LLPkRtGWWtGHXoidQ/f2Jpvcgwti+dLMcsxXaAVEJtX
-	 yIuCIYoE0rDXtyqJrnYKD43E6wkzaIFM2UjQM0g19iWjTO+m7t9xZ3z7MpHpHRVZTc
-	 onyYHLUOsg3p7p5NFj2DS6fqgTGtvXy6OzSWsbLoj9umIrQCNtMB6Sw4Y99I99yOb8
-	 Hv7ouYnGbQYpA==
+	b=U23z9XtDrjy4igsXH/CODbTG7gxzbSGI+LPVwRMuumWo3GK6RiClGU9uEfaWNbb3C
+	 DUe6OeZ+BQNbo11ZFjcmS8wtPCjscTJdNccWMHf+t/jqO8LS10geULLK6T0jJkVoS5
+	 ags3H65X+ZsJEuq+grxpS89wJ+M7JJgAqkNIocgrKvhPg6gKEtpAnLhUXTHASZjbNO
+	 AjnM4R/CwXR4C4QuOQ7yZCwMhMUPAtlhAPG07tr6jjEn1DeAYGBov7K3JAYF9NA+y0
+	 tynHsh5o8LCczw4uHYIgLXHWvqm8vXUMMyywmM/Zgnld4lEi02FdNAO2Ie6Xb1mSD3
+	 M2H2k8x3WhbzQ==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
 	konishi.ryusuke@gmail.com
@@ -32,9 +32,9 @@ Cc: syzbot+d6ca2daf692c7a82f959@syzkaller.appspotmail.com,
 	Andrew Morton <akpm@linux-foundation.org>,
 	linux-nilfs@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: FAILED: Patch "nilfs2: fix kernel bug due to missing clearing of checked flag" failed to apply to v6.6-stable tree
-Date: Tue,  5 Nov 2024 21:09:45 -0500
-Message-ID: <20241106020945.172057-1-sashal@kernel.org>
+Subject: FAILED: Patch "nilfs2: fix kernel bug due to missing clearing of checked flag" failed to apply to v6.1-stable tree
+Date: Tue,  5 Nov 2024 21:10:56 -0500
+Message-ID: <20241106021056.181894-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
@@ -46,7 +46,7 @@ X-Patchwork-Hint: ignore
 X-stable: review
 Content-Transfer-Encoding: 8bit
 
-The patch below does not apply to the v6.6-stable tree.
+The patch below does not apply to the v6.1-stable tree.
 If someone wants it applied there, or to any other stable or longterm
 tree, then please email the backport, including the original git commit
 id to <stable@vger.kernel.org>.
