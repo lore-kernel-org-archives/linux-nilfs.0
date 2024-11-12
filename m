@@ -1,95 +1,91 @@
-Received: from out203-205-221-153.mail.qq.com (out203-205-221-153.mail.qq.com [203.205.221.153])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com [209.85.214.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0D121F77A7;
-	Tue, 12 Nov 2024 11:01:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.205.221.153
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C5AB15B96E;
+	Tue, 12 Nov 2024 14:12:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731409267; cv=none; b=LX1E30uA/CnbjdJD/O9l1C9c6bj5R6Oip4Db2QG9PPemCNYaS11PihZHUZbv3Wriz3UPITmgKxdaB0qaLTXHXq7b5ppRRRMqDtC5OBjsYl+YDYMKGIxAC3/prCk48BNZgj24qtBp3MLsHX7JCid+JvlBwNHwZ1MGCSfsTjDEvrk=
+	t=1731420742; cv=none; b=F5B7PrYotRYJz08iIpji4YjH8NcrJKQl35/PPJbSsNirzlbdj/tcTihh266fJoA72y29w+/Rt1pg4jM3USTV15Nu+FO16XgM509qE8liwcTyzo2wNG3uaqKBU3cVWjzCpdy571Zcnph0NPnkmiv0zMlawjOmmu+c798dSiRQ5yw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731409267; c=relaxed/simple;
-	bh=HD8whapfYmvcrd+Tc4Wd0RY3N9kWe8uq7YUypxnRdms=;
-	h=Message-ID:From:To:Cc:Subject:Date:In-Reply-To:References:
-	 MIME-Version; b=A9aWPhpGng8IdU1BEH1LWDux1boauHL9e8TJXytH7IDzGJHNOIGnAxZlPddPGp8t1Cjyu/e2X8Znw7keptYuIQIQZTOpKrmUmSvc510T4QWKqm23ra3zSwzrkTGHTPirGcEKmUbUVnXaOAoep42rjDvFRpnZqYXRhUw2djOkRv8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=lasDZ6YS; arc=none smtp.client-ip=203.205.221.153
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+	s=arc-20240116; t=1731420742; c=relaxed/simple;
+	bh=ou7ezqA0TNWzMyr0HmClASWLboIsghAng99ctQDbhl8=;
+	h=Date:Message-Id:To:Cc:Subject:From:In-Reply-To:References:
+	 Mime-Version:Content-Type; b=H3+KA2QjkSHF0o4HnYXEJg+vpE5C4KZ8VvqEXFCYyWhBlyrJ3xywz7QmAP6r/9zs5Z6dyGEhEEfd6dBS9mt+Ei67DgghxY/MDE8EDU/lksCnYxTj6xzjg2Pp379N2+LPaHDhsuNrxnLKxYcJs+Na+3VqC5vWhOCGmICSXWmFrU8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=amuLbjfy; arc=none smtp.client-ip=209.85.214.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="lasDZ6YS"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
-	t=1731408960; bh=+iVYn7cc4Y6tKTf487xZKVqWUWZ+Myao9FCG5NP3SnU=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=lasDZ6YSFePT81npXe5G42TbgfppoDdRCZAHLGJaMXPcK0tPbgejUaAe4PyahzaVY
-	 gNuTOFOl9zhFsxlnWx9YTXBQQ+nmC6w+/VdeVzXGBNfMl5JO6pUc/Rxf6H3z/6Cptp
-	 z4SMt8UecDF4cKOBC3U5BJYmEK1sujLdoZnsMnco=
-Received: from pek-lxu-l1.wrs.com ([111.198.227.254])
-	by newxmesmtplogicsvrszc16-0.qq.com (NewEsmtp) with SMTP
-	id DF9B0A22; Tue, 12 Nov 2024 18:55:57 +0800
-X-QQ-mid: xmsmtpt1731408957tybknkk7v
-Message-ID: <tencent_4A46BB45335A9E721B634B011B242548BA08@qq.com>
-X-QQ-XMAILINFO: Mm/8i8/T4yneg6U2Wcsf3c0uojxQ+XdWGVj7jiquTd91Y06lx8DKpnTuygm/UX
-	 4fI4WkRLA/O5CtDySh8fPxzBVp1VpI90ZsWl+k4jOen54P3egk8eqNCFFMhStiaz50ZmKpyvrjhN
-	 xdXIJYjx3qUteJiwi8t1LLdostsFPIGtKEjnoIdVg0ORjzZiGhz/2z3lDRpbMsiZ8zHlM3o0Gv7Q
-	 yL+CmGJ/AvJciOrknBwm0A+F7madsUDMBNEChBsR9x3VN/XJLyNllnvSuWfX3byTb8GsPeYUO9HT
-	 J+LLayX17Xn77kGLCAIcoaqvkhSJOcauKAkFypH1Xq3QhTbKAxXRjIw7oH81RGnFdYIgsbbJsmPo
-	 NrBZMZhUlkZP4BQbxk9mbTli8kk7my6gqL9cDCQbvXntSsL2eUlUNu0osF9wm72kg9fG39fovvGO
-	 TnvTNppkUvvCzvox5iIhL+HoTUtT2XXjHV0uV+DxCciZuZkYXu5PlxulH8pP/YrrzAcMD/gkfHFj
-	 1HlT62zxiy59paNbkIRILkBpHScCu0+qK0gcncVk+V0NoAMYvvZc7j6+xzbZnb8wYLI0qO5mvar3
-	 MVNwh3ezHu8JcuCfY6soThE0bur+JcW/t2Xp+Q/yn97zbys+sPliYxg6PDaClxolB9/kUrOMAzhQ
-	 DaoK9Xtc2O/Ol57GZBIwM2LdtbPn09w6itUf1NYScOiD1L5d3Gur0qcaiM82QmmcXv1VvOfzpb92
-	 lOMSJofmUiRQKcendc6Swe130lC5Jav0g/M4S1BX37aMU+vSFcaudF62fqQbiXfp9L7NQlpRvLB9
-	 ATyF4sjZ8vEGenXjl+j1K3fuHzOW7liWvw/CcKYYZxsLMXrjys6gsD8h7PkrMMn+Fl/xdIK5zKQg
-	 dyr/jKWMeQPaljLFrfKnEqOFe7YqxHhIkQNynx/5/HYDJ8NyHuQGunwRMzGcycikYtA0+XdJeH
-X-QQ-XMRINFO: MPJ6Tf5t3I/ycC2BItcBVIA=
-From: Edward Adam Davis <eadavis@qq.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="amuLbjfy"
+Received: by mail-pl1-f175.google.com with SMTP id d9443c01a7336-20c8b557f91so61407785ad.2;
+        Tue, 12 Nov 2024 06:12:21 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1731420741; x=1732025541; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to:from
+         :subject:cc:to:message-id:date:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=9u5pQpmGFQwkUqBga6uY57rzoIEg00Rx4MhRYBHm4dY=;
+        b=amuLbjfyKo7nPqk53jD7dMRnBvTI9hlFw9PfT8bw8dKFyIalpB1Cq4RLZi66f1z9CT
+         BNFJ7iuI7RKgyagies/ZqHICg7vDEK7t6zXTZOeTmg1l8UgWajas8/jLh+TR7A4Cq87u
+         iL8Mpjk7FRbSpdBVxh+8Bnu2CxOfQIfbYtcaX4D/Lhiy9ruPaJTTppgkF39ZUlBHGlz1
+         m+2U/ntsz3DCMdgtESElU/8Ia4++1klhGNF83pKuWjlM16mNwnNV+i/KxXH9r5/GG8Iv
+         mKGFQF2Rv1V6UnjXMwlelllMyO9KE7KyawTbrxqrceVfg/cl48CCOdKtSjTvpdD/NrqF
+         uCkQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731420741; x=1732025541;
+        h=content-transfer-encoding:mime-version:references:in-reply-to:from
+         :subject:cc:to:message-id:date:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=9u5pQpmGFQwkUqBga6uY57rzoIEg00Rx4MhRYBHm4dY=;
+        b=Ai8phwo9n35NE59em13g9lzNzt30w9MfeCOWLHiDFAaxic80m9EWLZ12g0xiZYOEEZ
+         Jeaoeyj4dxqTRknmgNMueHNyAUjGWhrgC7hKr7B1bXUULQg/BduyTpSGRD0HbGx81WqX
+         k8qL9f2+77uDECuNb29lxwqk9zyGVVcg+a1vz3/eBv6eNOXf/3bphoWv45WmVXGuA9tq
+         EwkY1OJQhz5cv601mWSrWy/Sn4MvkTmR7c2b81KNet2GIJX8RXiEslkcbrJUI0xvQGcO
+         8r5LvoHXsoyA+v7B+vhi+LwvV6+7wTYUWFqM5fxhdEP7TUjQCawNkVnGCatm7jB0mIhn
+         4CXA==
+X-Forwarded-Encrypted: i=1; AJvYcCWUIh8x7RWxKCgEZRy13B8Xuoh5V2mvIhGC4TT1f3Yo3K9lY1BU5Mmxp6UBkIi64V3xmweU8VjnNhtzEw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyMrB+NTXEcAQBj+8to3G1vaakXnZspOrN0UXguBnBR1qFT5iSw
+	LTXdZXXk33jUO69u1yxUtFjt+MWHECzFPV2HQ+uPZRVhJcFja5m/
+X-Google-Smtp-Source: AGHT+IHEzA6o35XgcasNkDEdzNuBi9P0oEDGl/qk+75rz24Wf9Z51pxnDhwa75dGBCvPw2TWKZlWPw==
+X-Received: by 2002:a17:90b:1344:b0:2e9:20d8:4147 with SMTP id 98e67ed59e1d1-2e9b178fdb7mr22211558a91.33.1731420740686;
+        Tue, 12 Nov 2024 06:12:20 -0800 (PST)
+Received: from localhost (i223-218-156-103.s42.a014.ap.plala.or.jp. [223.218.156.103])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e9a5f5e513sm10661966a91.12.2024.11.12.06.12.18
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 12 Nov 2024 06:12:19 -0800 (PST)
+Date: Tue, 12 Nov 2024 23:12:15 +0900 (JST)
+Message-Id: <20241112.231215.1262254749077533950.konishi.ryusuke@gmail.com>
 To: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
-Cc: konishi.ryusuke@gmail.com,
-	linux-kernel@vger.kernel.org,
-	linux-nilfs@vger.kernel.org,
-	syzkaller-bugs@googlegroups.com
-Subject: [PATCH] nilfs2: fix a uaf in nilfs_find_entry
-Date: Tue, 12 Nov 2024 18:55:58 +0800
-X-OQ-MSGID: <20241112105557.1541067-2-eadavis@qq.com>
-X-Mailer: git-send-email 2.47.0
+Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org,
+ syzkaller-bugs@googlegroups.com
+Subject: Re: [syzbot] [nilfs?] KASAN: use-after-free Read in
+ nilfs_find_entry
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 In-Reply-To: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
 References: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
+X-Mailer: Mew version 6.8 on Emacs 29.3
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-The i_size value of the directory "cgroup.controllers" opened by openat is 0,
-which causes 0 to be returned when calculating the last valid byte in
-nilfs_last_byte(), which ultimately causes kaddr to move forward by reclen
-(its value is 32 in this case), which ultimately triggers the uaf when
-accessing de->rec_len in nilfs_find_entry().
+Test fix for local variable type in nilfs_last_byte()
 
-To avoid this issue, add a check for i_size in nilfs_lookup().
+#syz test
 
-Reported-by: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=96d5d14c47d97015c624
-Signed-off-by: Edward Adam Davis <eadavis@qq.com>
----
- fs/nilfs2/namei.c | 3 +++
- 1 file changed, 3 insertions(+)
-
-diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index 9b108052d9f7..0b57bcd9c2c5 100644
---- a/fs/nilfs2/namei.c
-+++ b/fs/nilfs2/namei.c
-@@ -60,6 +60,9 @@ nilfs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
- 	if (dentry->d_name.len > NILFS_NAME_LEN)
- 		return ERR_PTR(-ENAMETOOLONG);
+diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
+index a8602729586a..6bc8f474a3e5 100644
+--- a/fs/nilfs2/dir.c
++++ b/fs/nilfs2/dir.c
+@@ -70,7 +70,7 @@ static inline unsigned int nilfs_chunk_size(struct inode *inode)
+  */
+ static unsigned int nilfs_last_byte(struct inode *inode, unsigned long page_nr)
+ {
+-	unsigned int last_byte = inode->i_size;
++	loff_t last_byte = inode->i_size;
  
-+	if (!dir->i_size)
-+		return ERR_PTR(-EINVAL);
-+
- 	res = nilfs_inode_by_name(dir, &dentry->d_name, &ino);
- 	if (res) {
- 		if (res != -ENOENT)
--- 
-2.43.0
-
+ 	last_byte -= page_nr << PAGE_SHIFT;
+ 	if (last_byte > PAGE_SIZE)
