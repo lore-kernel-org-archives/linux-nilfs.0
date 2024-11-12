@@ -1,197 +1,95 @@
-Received: from mail-il1-f200.google.com (mail-il1-f200.google.com [209.85.166.200])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out203-205-221-153.mail.qq.com (out203-205-221-153.mail.qq.com [203.205.221.153])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D13D4208208
-	for <linux-nilfs@vger.kernel.org>; Tue, 12 Nov 2024 05:04:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.200
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0D121F77A7;
+	Tue, 12 Nov 2024 11:01:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.205.221.153
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731387867; cv=none; b=shwhbMomQf0yCoKdXcFJFbJmsVQ6xWp7wPJPDdd7eAI5dieXFZ3smuf9OjrcpaPs0IO4VDvl5mcGtF9jQpoSZv1G1MygPKUOKc7cf7aD2joqW4mV3i/5IJQUuSdIwYtJPAh42JIqnFP75bczdd4/H46TJCP7pqfXialyLIdG3Lg=
+	t=1731409267; cv=none; b=LX1E30uA/CnbjdJD/O9l1C9c6bj5R6Oip4Db2QG9PPemCNYaS11PihZHUZbv3Wriz3UPITmgKxdaB0qaLTXHXq7b5ppRRRMqDtC5OBjsYl+YDYMKGIxAC3/prCk48BNZgj24qtBp3MLsHX7JCid+JvlBwNHwZ1MGCSfsTjDEvrk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731387867; c=relaxed/simple;
-	bh=W0dj287dzjIJjdbZaulXMh+X213+2qosiWy2Vk8RocA=;
-	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=a5cs5Y6sk4471EKzgSK8lVI5hiIX0vpeE4VA/JGifhEBsVhKXIVde6qUVgybM3I6bVhKvaf8c7VlI5Pz/DQyakkqSlfyIOI+Bai30tq2JtpQ7dwLe+SaBWiBHVVMpw2ANHXpZ36PTffr/yVh60d8nasT8dSveh3J5OKQcLNR/Co=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.200
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-il1-f200.google.com with SMTP id e9e14a558f8ab-3a6bce8a678so61373185ab.1
-        for <linux-nilfs@vger.kernel.org>; Mon, 11 Nov 2024 21:04:25 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731387865; x=1731992665;
-        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=YB3Ah0RGLaYdvbFDPZ8cvoDOA7IY60wa7/IUSI9QoEk=;
-        b=N695R12Dssyhgodw+2FLhdSB+qHzgvwNwu7qLbpJw+4LfQFA/2BT6aRsyp+GY8lJUF
-         1PdoM5b9ICZUSxx7HKCrX9557pfREATcBkjA48yYF0JDEaTygcYdcF/9Okzci5fquM8N
-         IDNnXEEKsYq9Iv99pGywLLq+cTFbi/kH2yZvC3r++IciB/rmR828JGpI7PssMAzLtFWu
-         slZ4JdKC/ARbrzDf0gXjjm7oa/QIigLTqO1/YCrcRlHe9r65PNcnHTGNcqhYAOCaV8Jo
-         9xeqNrqmllOiMxZJPT0Zn1UC3cAGSngsJH8AvW3OjDit/B5TjjzEXcF1NREqVERz6UNL
-         YgUw==
-X-Forwarded-Encrypted: i=1; AJvYcCW1Mw+jMyAy4R9l4WmLy7Br+5i37b1jWVs9h0OEA8FnuRyj+y57epczZ9FYoiINkJpdaTySCQJu1p7ORg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxCrAaqI5ZQQeTIIRfiKkLpxKAEMxj7B6BlTt6ax+r/K7R5DiYg
-	c/HtdUsb9bGjyQc9qxTHTq1u7oL71PBAE3YjmNwE7vvBDnz/PuSBOC1VR2SX/xUqJ/dTgk+BtSM
-	pkRQ7x0dhF7YmULnFRM+t6JLlCsbLZvKemC3mGqUJldL/4L0MZY094Oo=
-X-Google-Smtp-Source: AGHT+IFImIOExvTVlu8RRxhUWLiI1/7SG7AeXvSmrGeKoAbLhlp+fCECzbixJLdZEnFYA/zhjiwRxP4bhsBcbktqJGjpnFm6+cuQ
+	s=arc-20240116; t=1731409267; c=relaxed/simple;
+	bh=HD8whapfYmvcrd+Tc4Wd0RY3N9kWe8uq7YUypxnRdms=;
+	h=Message-ID:From:To:Cc:Subject:Date:In-Reply-To:References:
+	 MIME-Version; b=A9aWPhpGng8IdU1BEH1LWDux1boauHL9e8TJXytH7IDzGJHNOIGnAxZlPddPGp8t1Cjyu/e2X8Znw7keptYuIQIQZTOpKrmUmSvc510T4QWKqm23ra3zSwzrkTGHTPirGcEKmUbUVnXaOAoep42rjDvFRpnZqYXRhUw2djOkRv8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=lasDZ6YS; arc=none smtp.client-ip=203.205.221.153
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="lasDZ6YS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1731408960; bh=+iVYn7cc4Y6tKTf487xZKVqWUWZ+Myao9FCG5NP3SnU=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=lasDZ6YSFePT81npXe5G42TbgfppoDdRCZAHLGJaMXPcK0tPbgejUaAe4PyahzaVY
+	 gNuTOFOl9zhFsxlnWx9YTXBQQ+nmC6w+/VdeVzXGBNfMl5JO6pUc/Rxf6H3z/6Cptp
+	 z4SMt8UecDF4cKOBC3U5BJYmEK1sujLdoZnsMnco=
+Received: from pek-lxu-l1.wrs.com ([111.198.227.254])
+	by newxmesmtplogicsvrszc16-0.qq.com (NewEsmtp) with SMTP
+	id DF9B0A22; Tue, 12 Nov 2024 18:55:57 +0800
+X-QQ-mid: xmsmtpt1731408957tybknkk7v
+Message-ID: <tencent_4A46BB45335A9E721B634B011B242548BA08@qq.com>
+X-QQ-XMAILINFO: Mm/8i8/T4yneg6U2Wcsf3c0uojxQ+XdWGVj7jiquTd91Y06lx8DKpnTuygm/UX
+	 4fI4WkRLA/O5CtDySh8fPxzBVp1VpI90ZsWl+k4jOen54P3egk8eqNCFFMhStiaz50ZmKpyvrjhN
+	 xdXIJYjx3qUteJiwi8t1LLdostsFPIGtKEjnoIdVg0ORjzZiGhz/2z3lDRpbMsiZ8zHlM3o0Gv7Q
+	 yL+CmGJ/AvJciOrknBwm0A+F7madsUDMBNEChBsR9x3VN/XJLyNllnvSuWfX3byTb8GsPeYUO9HT
+	 J+LLayX17Xn77kGLCAIcoaqvkhSJOcauKAkFypH1Xq3QhTbKAxXRjIw7oH81RGnFdYIgsbbJsmPo
+	 NrBZMZhUlkZP4BQbxk9mbTli8kk7my6gqL9cDCQbvXntSsL2eUlUNu0osF9wm72kg9fG39fovvGO
+	 TnvTNppkUvvCzvox5iIhL+HoTUtT2XXjHV0uV+DxCciZuZkYXu5PlxulH8pP/YrrzAcMD/gkfHFj
+	 1HlT62zxiy59paNbkIRILkBpHScCu0+qK0gcncVk+V0NoAMYvvZc7j6+xzbZnb8wYLI0qO5mvar3
+	 MVNwh3ezHu8JcuCfY6soThE0bur+JcW/t2Xp+Q/yn97zbys+sPliYxg6PDaClxolB9/kUrOMAzhQ
+	 DaoK9Xtc2O/Ol57GZBIwM2LdtbPn09w6itUf1NYScOiD1L5d3Gur0qcaiM82QmmcXv1VvOfzpb92
+	 lOMSJofmUiRQKcendc6Swe130lC5Jav0g/M4S1BX37aMU+vSFcaudF62fqQbiXfp9L7NQlpRvLB9
+	 ATyF4sjZ8vEGenXjl+j1K3fuHzOW7liWvw/CcKYYZxsLMXrjys6gsD8h7PkrMMn+Fl/xdIK5zKQg
+	 dyr/jKWMeQPaljLFrfKnEqOFe7YqxHhIkQNynx/5/HYDJ8NyHuQGunwRMzGcycikYtA0+XdJeH
+X-QQ-XMRINFO: MPJ6Tf5t3I/ycC2BItcBVIA=
+From: Edward Adam Davis <eadavis@qq.com>
+To: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
+Cc: konishi.ryusuke@gmail.com,
+	linux-kernel@vger.kernel.org,
+	linux-nilfs@vger.kernel.org,
+	syzkaller-bugs@googlegroups.com
+Subject: [PATCH] nilfs2: fix a uaf in nilfs_find_entry
+Date: Tue, 12 Nov 2024 18:55:58 +0800
+X-OQ-MSGID: <20241112105557.1541067-2-eadavis@qq.com>
+X-Mailer: git-send-email 2.47.0
+In-Reply-To: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
+References: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6e02:1fe3:b0:3a6:c976:ed6 with SMTP id
- e9e14a558f8ab-3a6f199fbf3mr148704705ab.4.1731387864947; Mon, 11 Nov 2024
- 21:04:24 -0800 (PST)
-Date: Mon, 11 Nov 2024 21:04:24 -0800
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
-Subject: [syzbot] [nilfs?] KASAN: use-after-free Read in nilfs_find_entry
-From: syzbot <syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com>
-To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Hello,
+The i_size value of the directory "cgroup.controllers" opened by openat is 0,
+which causes 0 to be returned when calculating the last valid byte in
+nilfs_last_byte(), which ultimately causes kaddr to move forward by reclen
+(its value is 32 in this case), which ultimately triggers the uaf when
+accessing de->rec_len in nilfs_find_entry().
 
-syzbot found the following issue on:
+To avoid this issue, add a check for i_size in nilfs_lookup().
 
-HEAD commit:    906bd684e4b1 Merge tag 'spi-fix-v6.12-rc6' of git://git.ke..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=1418ee30580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=64aa0d9945bd5c1
-dashboard link: https://syzkaller.appspot.com/bug?extid=96d5d14c47d97015c624
-compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1218ee30580000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=13647f40580000
-
-Downloadable assets:
-disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-906bd684.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/88c5c4ba7e33/vmlinux-906bd684.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/07094e69f47b/bzImage-906bd684.xz
-mounted in repro: https://storage.googleapis.com/syzbot-assets/b427c083d0d8/mount_0.gz
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
 Reported-by: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
-
-=======================================================
-==================================================================
-BUG: KASAN: use-after-free in nilfs_find_entry+0x29c/0x660 fs/nilfs2/dir.c:321
-Read of size 2 at addr ffff888048f39008 by task syz-executor334/5310
-
-CPU: 0 UID: 0 PID: 5310 Comm: syz-executor334 Not tainted 6.12.0-rc6-syzkaller-00169-g906bd684e4b1 #0
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
-Call Trace:
- <TASK>
- __dump_stack lib/dump_stack.c:94 [inline]
- dump_stack_lvl+0x241/0x360 lib/dump_stack.c:120
- print_address_description mm/kasan/report.c:377 [inline]
- print_report+0x169/0x550 mm/kasan/report.c:488
- kasan_report+0x143/0x180 mm/kasan/report.c:601
- nilfs_find_entry+0x29c/0x660 fs/nilfs2/dir.c:321
- nilfs_inode_by_name+0xad/0x240 fs/nilfs2/dir.c:394
- nilfs_lookup+0xed/0x210 fs/nilfs2/namei.c:63
- lookup_open fs/namei.c:3573 [inline]
- open_last_lookups fs/namei.c:3694 [inline]
- path_openat+0x11a7/0x3590 fs/namei.c:3930
- do_filp_open+0x235/0x490 fs/namei.c:3960
- do_sys_openat2+0x13e/0x1d0 fs/open.c:1415
- do_sys_open fs/open.c:1430 [inline]
- __do_sys_openat fs/open.c:1446 [inline]
- __se_sys_openat fs/open.c:1441 [inline]
- __x64_sys_openat+0x247/0x2a0 fs/open.c:1441
- do_syscall_x64 arch/x86/entry/common.c:52 [inline]
- do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-RIP: 0033:0x7fd472823b99
-Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 f1 17 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007fff91507d48 EFLAGS: 00000246 ORIG_RAX: 0000000000000101
-RAX: ffffffffffffffda RBX: 6569727261626f6e RCX: 00007fd472823b99
-RDX: 000000000000275a RSI: 0000000020000080 RDI: 00000000ffffff9c
-RBP: 00007fd4728975f0 R08: 0000000000000ee3 R09: 00005555568904c0
-R10: 0000000000000000 R11: 0000000000000246 R12: 00007fff91507d70
-R13: 00007fff91507f98 R14: 431bde82d7b634db R15: 00007fd47286c03b
- </TASK>
-
-The buggy address belongs to the physical page:
-page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x7f0a3df02 pfn:0x48f39
-flags: 0x4fff00000000000(node=1|zone=1|lastcpupid=0x7ff)
-raw: 04fff00000000000 ffffea000123ce88 ffff88801fc44cb0 0000000000000000
-raw: 00000007f0a3df02 0000000000000000 00000000ffffffff 0000000000000000
-page dumped because: kasan: bad access detected
-page_owner tracks the page as freed
-page last allocated via order 0, migratetype Movable, gfp_mask 0x140dca(GFP_HIGHUSER_MOVABLE|__GFP_COMP|__GFP_ZERO), pid 5300, tgid 5300 (sshd), ts 68164329439, free_ts 68237870503
- set_page_owner include/linux/page_owner.h:32 [inline]
- post_alloc_hook+0x1f3/0x230 mm/page_alloc.c:1537
- prep_new_page mm/page_alloc.c:1545 [inline]
- get_page_from_freelist+0x303f/0x3190 mm/page_alloc.c:3457
- __alloc_pages_noprof+0x292/0x710 mm/page_alloc.c:4733
- alloc_pages_mpol_noprof+0x3e8/0x680 mm/mempolicy.c:2265
- folio_alloc_mpol_noprof mm/mempolicy.c:2283 [inline]
- vma_alloc_folio_noprof+0x12e/0x230 mm/mempolicy.c:2314
- folio_prealloc+0x31/0x170
- alloc_anon_folio mm/memory.c:4727 [inline]
- do_anonymous_page mm/memory.c:4784 [inline]
- do_pte_missing mm/memory.c:3963 [inline]
- handle_pte_fault+0x24dd/0x6820 mm/memory.c:5766
- __handle_mm_fault mm/memory.c:5909 [inline]
- handle_mm_fault+0x1106/0x1bb0 mm/memory.c:6077
- do_user_addr_fault arch/x86/mm/fault.c:1338 [inline]
- handle_page_fault arch/x86/mm/fault.c:1481 [inline]
- exc_page_fault+0x459/0x8c0 arch/x86/mm/fault.c:1539
- asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:623
-page last free pid 5300 tgid 5300 stack trace:
- reset_page_owner include/linux/page_owner.h:25 [inline]
- free_pages_prepare mm/page_alloc.c:1108 [inline]
- free_unref_folios+0xf12/0x18d0 mm/page_alloc.c:2686
- folios_put_refs+0x76c/0x860 mm/swap.c:1007
- free_pages_and_swap_cache+0x2ea/0x690 mm/swap_state.c:332
- __tlb_batch_free_encoded_pages mm/mmu_gather.c:136 [inline]
- tlb_batch_pages_flush mm/mmu_gather.c:149 [inline]
- tlb_flush_mmu_free mm/mmu_gather.c:366 [inline]
- tlb_flush_mmu+0x3a3/0x680 mm/mmu_gather.c:373
- tlb_finish_mmu+0xd4/0x200 mm/mmu_gather.c:465
- vms_clear_ptes+0x437/0x530 mm/vma.c:1103
- vms_complete_munmap_vmas+0x208/0x910 mm/vma.c:1147
- do_vmi_align_munmap+0x613/0x730 mm/vma.c:1356
- do_vmi_munmap+0x24e/0x2d0 mm/vma.c:1404
- __vm_munmap+0x24c/0x480 mm/mmap.c:1613
- __do_sys_munmap mm/mmap.c:1630 [inline]
- __se_sys_munmap mm/mmap.c:1627 [inline]
- __x64_sys_munmap+0x60/0x70 mm/mmap.c:1627
- do_syscall_x64 arch/x86/entry/common.c:52 [inline]
- do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-
-Memory state around the buggy address:
- ffff888048f38f00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
- ffff888048f38f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
->ffff888048f39000: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
-                      ^
- ffff888048f39080: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
- ffff888048f39100: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
-==================================================================
-
-
+Closes: https://syzkaller.appspot.com/bug?extid=96d5d14c47d97015c624
+Signed-off-by: Edward Adam Davis <eadavis@qq.com>
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+ fs/nilfs2/namei.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
+index 9b108052d9f7..0b57bcd9c2c5 100644
+--- a/fs/nilfs2/namei.c
++++ b/fs/nilfs2/namei.c
+@@ -60,6 +60,9 @@ nilfs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
+ 	if (dentry->d_name.len > NILFS_NAME_LEN)
+ 		return ERR_PTR(-ENAMETOOLONG);
+ 
++	if (!dir->i_size)
++		return ERR_PTR(-EINVAL);
++
+ 	res = nilfs_inode_by_name(dir, &dentry->d_name, &ino);
+ 	if (res) {
+ 		if (res != -ENOENT)
+-- 
+2.43.0
 
-If the report is already addressed, let syzbot know by replying with:
-#syz fix: exact-commit-title
-
-If you want syzbot to run the reproducer, reply with:
-#syz test: git://repo/address.git branch-or-commit-hash
-If you attach or paste a git patch, syzbot will apply it before testing.
-
-If you want to overwrite report's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
-
-If the report is a duplicate of another one, reply with:
-#syz dup: exact-subject-of-another-report
-
-If you want to undo deduplication, reply with:
-#syz undup
