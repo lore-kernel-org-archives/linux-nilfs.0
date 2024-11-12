@@ -1,173 +1,197 @@
-Received: from mail-pj1-f46.google.com (mail-pj1-f46.google.com [209.85.216.46])
+Received: from mail-il1-f200.google.com (mail-il1-f200.google.com [209.85.166.200])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 083BE206519;
-	Wed,  6 Nov 2024 16:08:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D13D4208208
+	for <linux-nilfs@vger.kernel.org>; Tue, 12 Nov 2024 05:04:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.200
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730909303; cv=none; b=F/jrFemh+YuMoVoV2GtUoCL/rYZm53YomCDcZhaFYEPPuF/4xdrUlXSh4gI+q4jzZJmj1MjadLnNq4jiI61sDskcK2IC6D4+B3XfHPgOzwL8xfl6flMQ6nIpUQlc67eCST8qBtWB4pO7aBDEaVaU9vCnzBOaw+cWRSDAS8l+oIY=
+	t=1731387867; cv=none; b=shwhbMomQf0yCoKdXcFJFbJmsVQ6xWp7wPJPDdd7eAI5dieXFZ3smuf9OjrcpaPs0IO4VDvl5mcGtF9jQpoSZv1G1MygPKUOKc7cf7aD2joqW4mV3i/5IJQUuSdIwYtJPAh42JIqnFP75bczdd4/H46TJCP7pqfXialyLIdG3Lg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730909303; c=relaxed/simple;
-	bh=d90JWD+BjriEsR681CJYMlvnTCcOpqSFEH3lU2GifNg=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=CiqH7RhDVCntBJYhfs4PG5d+cBoklr1aI4to19UHVoI+96ymMBA+6P5sb2Is/YvTwrxQm+yCRQ+OWjDW8nJ6n6q+FkjNxw3MmdXKbY2UwpDUqtjcTUz15u1eEFKmTo61OLTULi1eMI/CLB1u9vX6k57rMo7tVlY7aj/AOGXyLjk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=B+q0HOD3; arc=none smtp.client-ip=209.85.216.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="B+q0HOD3"
-Received: by mail-pj1-f46.google.com with SMTP id 98e67ed59e1d1-2e2b549799eso5272379a91.3;
-        Wed, 06 Nov 2024 08:08:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1730909301; x=1731514101; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=jIOvivKbpD/NBWmyfn4+HdgmciRDbmMlOB0Yv5CEaO8=;
-        b=B+q0HOD38Xq0dHUMng0xKkWJkrCGdQICF6BM1XTPcM59VkZwP8cg9PNDJocKhgN7DA
-         IskqlutS+DtgUh2BbOccLMPiqVEAnJb+GsULCC2znpr6fGr1HLcLiefv7Qy7FQ08Yf3a
-         hF07xqt6VFdO8mRRyHlLbOOlFK0BbuDI/dS0EkJ6c/oVmIPlHBKGYVkDKWhrXP1kzRPb
-         mr4uiLwVe+2X7eKfvb7jU8M/4vn3BaUQcGJt2tMKFlGBo2VdDQBH4y3va4OlHGvSfnZx
-         qOH2GOPlROTWiOtx4x2xJoRkTU7afQU1je3/KtbD7YLLugN1n93sLqezlt1MmGU0U4NQ
-         InLA==
+	s=arc-20240116; t=1731387867; c=relaxed/simple;
+	bh=W0dj287dzjIJjdbZaulXMh+X213+2qosiWy2Vk8RocA=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=a5cs5Y6sk4471EKzgSK8lVI5hiIX0vpeE4VA/JGifhEBsVhKXIVde6qUVgybM3I6bVhKvaf8c7VlI5Pz/DQyakkqSlfyIOI+Bai30tq2JtpQ7dwLe+SaBWiBHVVMpw2ANHXpZ36PTffr/yVh60d8nasT8dSveh3J5OKQcLNR/Co=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.200
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f200.google.com with SMTP id e9e14a558f8ab-3a6bce8a678so61373185ab.1
+        for <linux-nilfs@vger.kernel.org>; Mon, 11 Nov 2024 21:04:25 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1730909301; x=1731514101;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=jIOvivKbpD/NBWmyfn4+HdgmciRDbmMlOB0Yv5CEaO8=;
-        b=i2JCUV/DQ0TfOWPQmtlmlcuHvJE9MSDuylkplOdl72mHQ6b7U05md8Y8sXQydziBaG
-         W/23NswZD/aHSONHZTATebuP4jecKWaNVpf1UwGIGSbG2+LUNTwaumbIKe4jSz520oFi
-         zA6efZlc4oksL9KB9gigPN2UOv/vYnwp71PpGDKLXIZsqkA9mhnZUEkJ0PKsD5csfhR0
-         rcjnARoYDt7rMBYzfLa88Rg/SDM27pwcungu6xfqdtKX9J3yMKSpgP4LgDmTcNAJFD+W
-         j6Bx0V4bulUtcJyKu8OGjfiR8t9KyEn8R5HOkBagOCRPJtDRus/49bxnHcW2g1d3laV4
-         sYww==
-X-Forwarded-Encrypted: i=1; AJvYcCWxW159i4wf8EW2TiyXGew7NabC8ruIQAPbW8iDAZ9QpwRenroIvc+Kq9dTjip0wovWxJ5HdGAqgQi3ehY=@vger.kernel.org
-X-Gm-Message-State: AOJu0YxHekHrQpEXR79pNv0u2hto+yr8StvPpRZb2sVoTXwPf/jyBF7b
-	IHtNR7Q9+gBZlqFIdRNxIVqywadvQWhC2S9YgJAzLOgRtw6ZRoB8
-X-Google-Smtp-Source: AGHT+IEpx8rXn18Ic91SBoJyuECHjf9HfGge35E+ERTSWaNN+0yVtsCK2ywFGR/PkRUwYPUfATkGNw==
-X-Received: by 2002:a17:90b:53c5:b0:2e2:9077:a3b4 with SMTP id 98e67ed59e1d1-2e94c29d0f2mr27791267a91.7.1730909301462;
-        Wed, 06 Nov 2024 08:08:21 -0800 (PST)
-Received: from carrot.. (i114-180-55-233.s42.a014.ap.plala.or.jp. [114.180.55.233])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e99a4f9ef0sm1715476a91.3.2024.11.06.08.08.19
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 06 Nov 2024 08:08:20 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	syzbot <syzbot+9982fb8d18eba905abe2@syzkaller.appspotmail.com>,
-	syzkaller-bugs@googlegroups.com,
-	bugreport@valiantsec.com
-Subject: [PATCH 2/2] nilfs2: fix null-ptr-deref in block_dirty_buffer tracepoint
-Date: Thu,  7 Nov 2024 01:07:33 +0900
-Message-ID: <20241106160811.3316-3-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20241106160811.3316-1-konishi.ryusuke@gmail.com>
-References: <672270b5.050a0220.3c8d68.052a.GAE@google.com>
- <20241106160811.3316-1-konishi.ryusuke@gmail.com>
+        d=1e100.net; s=20230601; t=1731387865; x=1731992665;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=YB3Ah0RGLaYdvbFDPZ8cvoDOA7IY60wa7/IUSI9QoEk=;
+        b=N695R12Dssyhgodw+2FLhdSB+qHzgvwNwu7qLbpJw+4LfQFA/2BT6aRsyp+GY8lJUF
+         1PdoM5b9ICZUSxx7HKCrX9557pfREATcBkjA48yYF0JDEaTygcYdcF/9Okzci5fquM8N
+         IDNnXEEKsYq9Iv99pGywLLq+cTFbi/kH2yZvC3r++IciB/rmR828JGpI7PssMAzLtFWu
+         slZ4JdKC/ARbrzDf0gXjjm7oa/QIigLTqO1/YCrcRlHe9r65PNcnHTGNcqhYAOCaV8Jo
+         9xeqNrqmllOiMxZJPT0Zn1UC3cAGSngsJH8AvW3OjDit/B5TjjzEXcF1NREqVERz6UNL
+         YgUw==
+X-Forwarded-Encrypted: i=1; AJvYcCW1Mw+jMyAy4R9l4WmLy7Br+5i37b1jWVs9h0OEA8FnuRyj+y57epczZ9FYoiINkJpdaTySCQJu1p7ORg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxCrAaqI5ZQQeTIIRfiKkLpxKAEMxj7B6BlTt6ax+r/K7R5DiYg
+	c/HtdUsb9bGjyQc9qxTHTq1u7oL71PBAE3YjmNwE7vvBDnz/PuSBOC1VR2SX/xUqJ/dTgk+BtSM
+	pkRQ7x0dhF7YmULnFRM+t6JLlCsbLZvKemC3mGqUJldL/4L0MZY094Oo=
+X-Google-Smtp-Source: AGHT+IFImIOExvTVlu8RRxhUWLiI1/7SG7AeXvSmrGeKoAbLhlp+fCECzbixJLdZEnFYA/zhjiwRxP4bhsBcbktqJGjpnFm6+cuQ
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6e02:1fe3:b0:3a6:c976:ed6 with SMTP id
+ e9e14a558f8ab-3a6f199fbf3mr148704705ab.4.1731387864947; Mon, 11 Nov 2024
+ 21:04:24 -0800 (PST)
+Date: Mon, 11 Nov 2024 21:04:24 -0800
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
+Subject: [syzbot] [nilfs?] KASAN: use-after-free Read in nilfs_find_entry
+From: syzbot <syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-When using the "block:block_dirty_buffer" tracepoint,
-mark_buffer_dirty() may cause a NULL pointer dereference, or a general
-protection fault when KASAN is enabled.
+Hello,
 
-This happens because, since the tracepoint was added in
-mark_buffer_dirty(), it references the dev_t member bh->b_bdev->bd_dev
-regardless of whether the buffer head has a pointer to a block_device
-structure.
+syzbot found the following issue on:
 
-In the current implementation, nilfs_grab_buffer(), which grabs a buffer
-to read (or create) a block of metadata, including b-tree node blocks,
-does not set the block device, but instead does so only if the buffer is
-not in the "uptodate" state for each of its caller block reading
-functions.  However, if the uptodate flag is set on a folio/page, and
-the buffer heads are detached from it by try_to_free_buffers(), and new
-buffer heads are then attached by create_empty_buffers(), the uptodate
-flag may be restored to each buffer without the block device being set
-to bh->b_bdev, and mark_buffer_dirty() may be called later in that
-state, resulting in the bug mentioned above.
+HEAD commit:    906bd684e4b1 Merge tag 'spi-fix-v6.12-rc6' of git://git.ke..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=1418ee30580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=64aa0d9945bd5c1
+dashboard link: https://syzkaller.appspot.com/bug?extid=96d5d14c47d97015c624
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1218ee30580000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=13647f40580000
 
-Fix this issue by making nilfs_grab_buffer() always set the block device
-of the super block structure to the buffer head, regardless of the state
-of the buffer's uptodate flag.
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-906bd684.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/88c5c4ba7e33/vmlinux-906bd684.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/07094e69f47b/bzImage-906bd684.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/b427c083d0d8/mount_0.gz
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Fixes: 5305cb830834 ("block: add block_{touch|dirty}_buffer tracepoint")
-Cc: stable@vger.kernel.org
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
+
+=======================================================
+==================================================================
+BUG: KASAN: use-after-free in nilfs_find_entry+0x29c/0x660 fs/nilfs2/dir.c:321
+Read of size 2 at addr ffff888048f39008 by task syz-executor334/5310
+
+CPU: 0 UID: 0 PID: 5310 Comm: syz-executor334 Not tainted 6.12.0-rc6-syzkaller-00169-g906bd684e4b1 #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:94 [inline]
+ dump_stack_lvl+0x241/0x360 lib/dump_stack.c:120
+ print_address_description mm/kasan/report.c:377 [inline]
+ print_report+0x169/0x550 mm/kasan/report.c:488
+ kasan_report+0x143/0x180 mm/kasan/report.c:601
+ nilfs_find_entry+0x29c/0x660 fs/nilfs2/dir.c:321
+ nilfs_inode_by_name+0xad/0x240 fs/nilfs2/dir.c:394
+ nilfs_lookup+0xed/0x210 fs/nilfs2/namei.c:63
+ lookup_open fs/namei.c:3573 [inline]
+ open_last_lookups fs/namei.c:3694 [inline]
+ path_openat+0x11a7/0x3590 fs/namei.c:3930
+ do_filp_open+0x235/0x490 fs/namei.c:3960
+ do_sys_openat2+0x13e/0x1d0 fs/open.c:1415
+ do_sys_open fs/open.c:1430 [inline]
+ __do_sys_openat fs/open.c:1446 [inline]
+ __se_sys_openat fs/open.c:1441 [inline]
+ __x64_sys_openat+0x247/0x2a0 fs/open.c:1441
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7fd472823b99
+Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 f1 17 00 00 90 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007fff91507d48 EFLAGS: 00000246 ORIG_RAX: 0000000000000101
+RAX: ffffffffffffffda RBX: 6569727261626f6e RCX: 00007fd472823b99
+RDX: 000000000000275a RSI: 0000000020000080 RDI: 00000000ffffff9c
+RBP: 00007fd4728975f0 R08: 0000000000000ee3 R09: 00005555568904c0
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007fff91507d70
+R13: 00007fff91507f98 R14: 431bde82d7b634db R15: 00007fd47286c03b
+ </TASK>
+
+The buggy address belongs to the physical page:
+page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x7f0a3df02 pfn:0x48f39
+flags: 0x4fff00000000000(node=1|zone=1|lastcpupid=0x7ff)
+raw: 04fff00000000000 ffffea000123ce88 ffff88801fc44cb0 0000000000000000
+raw: 00000007f0a3df02 0000000000000000 00000000ffffffff 0000000000000000
+page dumped because: kasan: bad access detected
+page_owner tracks the page as freed
+page last allocated via order 0, migratetype Movable, gfp_mask 0x140dca(GFP_HIGHUSER_MOVABLE|__GFP_COMP|__GFP_ZERO), pid 5300, tgid 5300 (sshd), ts 68164329439, free_ts 68237870503
+ set_page_owner include/linux/page_owner.h:32 [inline]
+ post_alloc_hook+0x1f3/0x230 mm/page_alloc.c:1537
+ prep_new_page mm/page_alloc.c:1545 [inline]
+ get_page_from_freelist+0x303f/0x3190 mm/page_alloc.c:3457
+ __alloc_pages_noprof+0x292/0x710 mm/page_alloc.c:4733
+ alloc_pages_mpol_noprof+0x3e8/0x680 mm/mempolicy.c:2265
+ folio_alloc_mpol_noprof mm/mempolicy.c:2283 [inline]
+ vma_alloc_folio_noprof+0x12e/0x230 mm/mempolicy.c:2314
+ folio_prealloc+0x31/0x170
+ alloc_anon_folio mm/memory.c:4727 [inline]
+ do_anonymous_page mm/memory.c:4784 [inline]
+ do_pte_missing mm/memory.c:3963 [inline]
+ handle_pte_fault+0x24dd/0x6820 mm/memory.c:5766
+ __handle_mm_fault mm/memory.c:5909 [inline]
+ handle_mm_fault+0x1106/0x1bb0 mm/memory.c:6077
+ do_user_addr_fault arch/x86/mm/fault.c:1338 [inline]
+ handle_page_fault arch/x86/mm/fault.c:1481 [inline]
+ exc_page_fault+0x459/0x8c0 arch/x86/mm/fault.c:1539
+ asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:623
+page last free pid 5300 tgid 5300 stack trace:
+ reset_page_owner include/linux/page_owner.h:25 [inline]
+ free_pages_prepare mm/page_alloc.c:1108 [inline]
+ free_unref_folios+0xf12/0x18d0 mm/page_alloc.c:2686
+ folios_put_refs+0x76c/0x860 mm/swap.c:1007
+ free_pages_and_swap_cache+0x2ea/0x690 mm/swap_state.c:332
+ __tlb_batch_free_encoded_pages mm/mmu_gather.c:136 [inline]
+ tlb_batch_pages_flush mm/mmu_gather.c:149 [inline]
+ tlb_flush_mmu_free mm/mmu_gather.c:366 [inline]
+ tlb_flush_mmu+0x3a3/0x680 mm/mmu_gather.c:373
+ tlb_finish_mmu+0xd4/0x200 mm/mmu_gather.c:465
+ vms_clear_ptes+0x437/0x530 mm/vma.c:1103
+ vms_complete_munmap_vmas+0x208/0x910 mm/vma.c:1147
+ do_vmi_align_munmap+0x613/0x730 mm/vma.c:1356
+ do_vmi_munmap+0x24e/0x2d0 mm/vma.c:1404
+ __vm_munmap+0x24c/0x480 mm/mmap.c:1613
+ __do_sys_munmap mm/mmap.c:1630 [inline]
+ __se_sys_munmap mm/mmap.c:1627 [inline]
+ __x64_sys_munmap+0x60/0x70 mm/mmap.c:1627
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+Memory state around the buggy address:
+ ffff888048f38f00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ ffff888048f38f80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+>ffff888048f39000: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+                      ^
+ ffff888048f39080: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+ ffff888048f39100: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+==================================================================
+
+
 ---
- fs/nilfs2/btnode.c  | 2 --
- fs/nilfs2/gcinode.c | 4 +---
- fs/nilfs2/mdt.c     | 1 -
- fs/nilfs2/page.c    | 1 +
- 4 files changed, 2 insertions(+), 6 deletions(-)
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 57b4af5ad646..501ad7be5174 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -68,7 +68,6 @@ nilfs_btnode_create_block(struct address_space *btnc, __u64 blocknr)
- 		goto failed;
- 	}
- 	memset(bh->b_data, 0, i_blocksize(inode));
--	bh->b_bdev = inode->i_sb->s_bdev;
- 	bh->b_blocknr = blocknr;
- 	set_buffer_mapped(bh);
- 	set_buffer_uptodate(bh);
-@@ -133,7 +132,6 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
- 		goto found;
- 	}
- 	set_buffer_mapped(bh);
--	bh->b_bdev = inode->i_sb->s_bdev;
- 	bh->b_blocknr = pblocknr; /* set block address for read */
- 	bh->b_end_io = end_buffer_read_sync;
- 	get_bh(bh);
-diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
-index 1c9ae36a03ab..ace22253fed0 100644
---- a/fs/nilfs2/gcinode.c
-+++ b/fs/nilfs2/gcinode.c
-@@ -83,10 +83,8 @@ int nilfs_gccache_submit_read_data(struct inode *inode, sector_t blkoff,
- 		goto out;
- 	}
- 
--	if (!buffer_mapped(bh)) {
--		bh->b_bdev = inode->i_sb->s_bdev;
-+	if (!buffer_mapped(bh))
- 		set_buffer_mapped(bh);
--	}
- 	bh->b_blocknr = pbn;
- 	bh->b_end_io = end_buffer_read_sync;
- 	get_bh(bh);
-diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-index 432181cfb0b5..965b5ad1c0df 100644
---- a/fs/nilfs2/mdt.c
-+++ b/fs/nilfs2/mdt.c
-@@ -92,7 +92,6 @@ static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
- 	if (buffer_uptodate(bh))
- 		goto failed_bh;
- 
--	bh->b_bdev = sb->s_bdev;
- 	err = nilfs_mdt_insert_new_block(inode, block, bh, init_block);
- 	if (likely(!err)) {
- 		get_bh(bh);
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index bdc4b152f6e9..bd86447d2edf 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -63,6 +63,7 @@ struct buffer_head *nilfs_grab_buffer(struct inode *inode,
- 		folio_put(folio);
- 		return NULL;
- 	}
-+	bh->b_bdev = inode->i_sb->s_bdev;
- 	return bh;
- }
- 
--- 
-2.43.0
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
