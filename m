@@ -1,91 +1,72 @@
-Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com [209.85.214.175])
+Received: from mail-il1-f197.google.com (mail-il1-f197.google.com [209.85.166.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C5AB15B96E;
-	Tue, 12 Nov 2024 14:12:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 005A21FEFC7
+	for <linux-nilfs@vger.kernel.org>; Tue, 12 Nov 2024 14:32:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731420742; cv=none; b=F5B7PrYotRYJz08iIpji4YjH8NcrJKQl35/PPJbSsNirzlbdj/tcTihh266fJoA72y29w+/Rt1pg4jM3USTV15Nu+FO16XgM509qE8liwcTyzo2wNG3uaqKBU3cVWjzCpdy571Zcnph0NPnkmiv0zMlawjOmmu+c798dSiRQ5yw=
+	t=1731421928; cv=none; b=GGjKggH9+AB24JP5HifS0I59EzrKzCVyWxWVPzrbZdjnENiXQYLEiqs9eSWGym5NW1kBlsd6/y/19hd/mY7tCZC3Our0JG0FPlrFt/QVSBRqPPEt9pvAOEBwJ2NHxx8SS38R+f7wPZFWbUQ7cIsdOcZmmD53ukOirJxWZ8Vb4UE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731420742; c=relaxed/simple;
-	bh=ou7ezqA0TNWzMyr0HmClASWLboIsghAng99ctQDbhl8=;
-	h=Date:Message-Id:To:Cc:Subject:From:In-Reply-To:References:
-	 Mime-Version:Content-Type; b=H3+KA2QjkSHF0o4HnYXEJg+vpE5C4KZ8VvqEXFCYyWhBlyrJ3xywz7QmAP6r/9zs5Z6dyGEhEEfd6dBS9mt+Ei67DgghxY/MDE8EDU/lksCnYxTj6xzjg2Pp379N2+LPaHDhsuNrxnLKxYcJs+Na+3VqC5vWhOCGmICSXWmFrU8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=amuLbjfy; arc=none smtp.client-ip=209.85.214.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="amuLbjfy"
-Received: by mail-pl1-f175.google.com with SMTP id d9443c01a7336-20c8b557f91so61407785ad.2;
-        Tue, 12 Nov 2024 06:12:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1731420741; x=1732025541; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to:from
-         :subject:cc:to:message-id:date:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=9u5pQpmGFQwkUqBga6uY57rzoIEg00Rx4MhRYBHm4dY=;
-        b=amuLbjfyKo7nPqk53jD7dMRnBvTI9hlFw9PfT8bw8dKFyIalpB1Cq4RLZi66f1z9CT
-         BNFJ7iuI7RKgyagies/ZqHICg7vDEK7t6zXTZOeTmg1l8UgWajas8/jLh+TR7A4Cq87u
-         iL8Mpjk7FRbSpdBVxh+8Bnu2CxOfQIfbYtcaX4D/Lhiy9ruPaJTTppgkF39ZUlBHGlz1
-         m+2U/ntsz3DCMdgtESElU/8Ia4++1klhGNF83pKuWjlM16mNwnNV+i/KxXH9r5/GG8Iv
-         mKGFQF2Rv1V6UnjXMwlelllMyO9KE7KyawTbrxqrceVfg/cl48CCOdKtSjTvpdD/NrqF
-         uCkQ==
+	s=arc-20240116; t=1731421928; c=relaxed/simple;
+	bh=fAR7NsHOFHIqrJXvbMl4qc0UVdjQmpaMiqyavC+tHJ4=;
+	h=MIME-Version:Date:In-Reply-To:Message-ID:Subject:From:To:
+	 Content-Type; b=MwTEt8bzxzachfbn3TPblv6v2YSG3eVf5NzgHl58ZsGTvSvBbm39h32bzqnDdJlOESopah0ScCrHnsME/P8cxH7uiRMVHDtXPiXtjLPrnQ4+O5X123Mt3eWlppKQ8rLdECuu5oqjeuT/3aMBiDMlT8/kxBIQ5mRGCu3LMd162GU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f197.google.com with SMTP id e9e14a558f8ab-3a5b2ec15a9so62055465ab.3
+        for <linux-nilfs@vger.kernel.org>; Tue, 12 Nov 2024 06:32:06 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1731420741; x=1732025541;
-        h=content-transfer-encoding:mime-version:references:in-reply-to:from
-         :subject:cc:to:message-id:date:x-gm-message-state:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=9u5pQpmGFQwkUqBga6uY57rzoIEg00Rx4MhRYBHm4dY=;
-        b=Ai8phwo9n35NE59em13g9lzNzt30w9MfeCOWLHiDFAaxic80m9EWLZ12g0xiZYOEEZ
-         Jeaoeyj4dxqTRknmgNMueHNyAUjGWhrgC7hKr7B1bXUULQg/BduyTpSGRD0HbGx81WqX
-         k8qL9f2+77uDECuNb29lxwqk9zyGVVcg+a1vz3/eBv6eNOXf/3bphoWv45WmVXGuA9tq
-         EwkY1OJQhz5cv601mWSrWy/Sn4MvkTmR7c2b81KNet2GIJX8RXiEslkcbrJUI0xvQGcO
-         8r5LvoHXsoyA+v7B+vhi+LwvV6+7wTYUWFqM5fxhdEP7TUjQCawNkVnGCatm7jB0mIhn
-         4CXA==
-X-Forwarded-Encrypted: i=1; AJvYcCWUIh8x7RWxKCgEZRy13B8Xuoh5V2mvIhGC4TT1f3Yo3K9lY1BU5Mmxp6UBkIi64V3xmweU8VjnNhtzEw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YyMrB+NTXEcAQBj+8to3G1vaakXnZspOrN0UXguBnBR1qFT5iSw
-	LTXdZXXk33jUO69u1yxUtFjt+MWHECzFPV2HQ+uPZRVhJcFja5m/
-X-Google-Smtp-Source: AGHT+IHEzA6o35XgcasNkDEdzNuBi9P0oEDGl/qk+75rz24Wf9Z51pxnDhwa75dGBCvPw2TWKZlWPw==
-X-Received: by 2002:a17:90b:1344:b0:2e9:20d8:4147 with SMTP id 98e67ed59e1d1-2e9b178fdb7mr22211558a91.33.1731420740686;
-        Tue, 12 Nov 2024 06:12:20 -0800 (PST)
-Received: from localhost (i223-218-156-103.s42.a014.ap.plala.or.jp. [223.218.156.103])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2e9a5f5e513sm10661966a91.12.2024.11.12.06.12.18
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 12 Nov 2024 06:12:19 -0800 (PST)
-Date: Tue, 12 Nov 2024 23:12:15 +0900 (JST)
-Message-Id: <20241112.231215.1262254749077533950.konishi.ryusuke@gmail.com>
-To: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
-Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org,
- syzkaller-bugs@googlegroups.com
-Subject: Re: [syzbot] [nilfs?] KASAN: use-after-free Read in
- nilfs_find_entry
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-In-Reply-To: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
-References: <6732e1d8.050a0220.138bd5.00d3.GAE@google.com>
-X-Mailer: Mew version 6.8 on Emacs 29.3
+        d=1e100.net; s=20230601; t=1731421926; x=1732026726;
+        h=to:from:subject:message-id:in-reply-to:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=nBWs2Zd4T8e9v0oYYaH0pBxxLwc7TOyhEeIoWtbFK8Q=;
+        b=veYhJBi4WirLbFM6YzLyVpHr/CPtswwQznuTI7dPMVqIHKeMLZX36s2PCcvyw/c6RI
+         ovLlQtpzreJ+xfBQOPBzzQ+5YgkYTwJGHsOhGt1XgYgyAzrNmBDeNNW3JMySI56r2fIC
+         QgglTrW0AlcWc0ra5yd+gwe2cULxMWFUuWe9O2MtN64MlPB6sOZ7UedzZzI3zmgyYDhV
+         s1gprDRf0FJW+u4Q9JRu6FGynqSZMofcVJZU9VrFIPsRvfk+7Hhwdc87+orVfq8Yx9g2
+         PIwFKjgBbUkUR53QtawmMkTNhZaReFHa4MWGzGAifsSpPCYzEV/OdKcpM0fVkW3XW+1b
+         FyIA==
+X-Forwarded-Encrypted: i=1; AJvYcCVGv59V+Nrn/DK634OXEAdkf3RlBpkEGBqF2K7KY2vStUA96wUegGSGGH0m+dyc8y73odheExB4ISiotQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyEQA/LIfCvtSusSq0GoxHc1e/btojsYd8A4ZgDuQIR4sBKsEp+
+	cdcC1//K+r+vCaXPihdfIqioDOlko2ybdvYIo8sYi9CyRO2TaNtUUeaiavWGeC5QXdwR8NY6tEH
+	56ui8VF4qtvEj3+s1Df1cNrdS1tXQ9QTrR8DsoPjkPpxUmDdYqmY6RCs=
+X-Google-Smtp-Source: AGHT+IH+odsalTFOJKKKW5uexg6WaA9g4d0Qrx20qSXJsuWc8jFUFFgObR0N2apLEnR9cuwGy55QGSNpcSZOkcSZ/64ixYTgB++E
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+X-Received: by 2002:a05:6e02:3a87:b0:3a4:e8cc:2aaa with SMTP id
+ e9e14a558f8ab-3a6f1a07897mr183506185ab.10.1731421925894; Tue, 12 Nov 2024
+ 06:32:05 -0800 (PST)
+Date: Tue, 12 Nov 2024 06:32:05 -0800
+In-Reply-To: <20241112.231215.1262254749077533950.konishi.ryusuke@gmail.com>
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <673366e5.050a0220.5d845.0005.GAE@google.com>
+Subject: Re: [syzbot] [nilfs?] KASAN: use-after-free Read in nilfs_find_entry
+From: syzbot <syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Test fix for local variable type in nilfs_last_byte()
+Hello,
 
-#syz test
+syzbot has tested the proposed patch and the reproducer did not trigger any issue:
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index a8602729586a..6bc8f474a3e5 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -70,7 +70,7 @@ static inline unsigned int nilfs_chunk_size(struct inode *inode)
-  */
- static unsigned int nilfs_last_byte(struct inode *inode, unsigned long page_nr)
- {
--	unsigned int last_byte = inode->i_size;
-+	loff_t last_byte = inode->i_size;
- 
- 	last_byte -= page_nr << PAGE_SHIFT;
- 	if (last_byte > PAGE_SIZE)
+Reported-by: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
+Tested-by: syzbot+96d5d14c47d97015c624@syzkaller.appspotmail.com
+
+Tested on:
+
+commit:         2d5404ca Linux 6.12-rc7
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=13600130580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=d2aeec8c0b2e420c
+dashboard link: https://syzkaller.appspot.com/bug?extid=96d5d14c47d97015c624
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+patch:          https://syzkaller.appspot.com/x/patch.diff?x=16d201a7980000
+
+Note: testing is done by a robot and is best-effort only.
