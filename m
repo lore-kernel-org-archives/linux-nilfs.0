@@ -1,180 +1,138 @@
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com [209.85.216.47])
+Received: from mail-il1-f208.google.com (mail-il1-f208.google.com [209.85.166.208])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8910B23695A;
-	Thu, 12 Dec 2024 16:46:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ABEEF38C
+	for <linux-nilfs@vger.kernel.org>; Mon, 23 Dec 2024 00:39:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.208
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734021964; cv=none; b=SxOwduQe7U3gTiijInju0PjntYkEh5ins9lwX8E852wvlTZyuTHXCMHV71xyGNpYJeZt5dnxl4rBHYAGKOj4etzV8FvajFiX2tASx9dmuQrE7srAMrGcWXATWxfgBlyCdVBbL3lfAPItqsVj/vbtVsEDbhYdBrDarVPhK+ipAl8=
+	t=1734914369; cv=none; b=B+64JcuAATQwYUslexPhUL+GjVedigDbTbzVQ3xlll2UBnnCFea7KeB4JoGOQehhL6Wt1IguSoXZXMbZMvTZUb8sU8EplNIT4pOVsBOtBPrj23sI+7hFf9aoXMlIa6ffaNKX8Yqdy+zI9ez8Et3hjSqNVOKOOO7nZ8n8pw2PYbo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734021964; c=relaxed/simple;
-	bh=HlADCKvaOAXcxb8w0ypEdR1v7JeaSkex81KKxMkz1MA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=tNZAT/SSOac4f9iPpHjccn0dFl3EC0K+HH5cvTp5+dHbWgFDNP6PVTLpGM/RfwJNLCYji7SWGqn6fgOGQJhZUxC7yPZEy9S2v0jrEv9YCag6hPvkyh4+FCRe4sfrw8xVYKa95mbk0Gpdl1W/yPBXbLcopqWT9M+8rXUBuqWPbTE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VagGSOPS; arc=none smtp.client-ip=209.85.216.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VagGSOPS"
-Received: by mail-pj1-f47.google.com with SMTP id 98e67ed59e1d1-2ef6c56032eso543054a91.2;
-        Thu, 12 Dec 2024 08:46:02 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1734021962; x=1734626762; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=+SQ7TaX7WZ+52UKYXtXpaGJPN7h5YcD1VfWnOtMP8Zo=;
-        b=VagGSOPS8W0MauAQHeeIh0ItFbQ1QPSNnKlrKICRJsh+AH8JCVvITLibAWMXkOpu2B
-         xatY99+NMYKskANsoCNFCJsFrnuhxG7hSToze26GGDZI7z0JV0lGBPBX9lhPhd3kg9qZ
-         YnFz0GXbaakrg7XPsQ9f2eR0SNvQDalEJUZ45+3YCO8uJbMrJoXIKNBi/+YdSTunTf8b
-         iD30dXzg4Ec+sE6NrsSu7Nbxdogm5zSiZHXaT5Osz8B0rygwyHsED1HN0roylu137ECN
-         4+nVpG0CrUXwOqZdxmLCKEftTrp7p2wsKYShInFKWaG4KOVJ6qeJ9RXiCK9uAbffXT/m
-         T2mg==
+	s=arc-20240116; t=1734914369; c=relaxed/simple;
+	bh=t41O1ldqcn9OzEeJBDflaYI4TiakTD0vsGvsG/R+s5E=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=BpOdtMoz9+IxMGT5bFyy9kKvw45BEFoYfoiKvn2H5KBo91GV7gtUAwjOm9Vfkp12cIBzeSOjcQMrUn4l/iCMrnjJFCrAjM/zJI1BeCym1ojb+hJ/kpzxp+HEBi1sCuDkngMY4pB031dMbLqLPBksviVWL8yv3Y0BxPvRZ46Q7Ds=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.208
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f208.google.com with SMTP id e9e14a558f8ab-3a7e0d7b804so30836305ab.0
+        for <linux-nilfs@vger.kernel.org>; Sun, 22 Dec 2024 16:39:26 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1734021962; x=1734626762;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=+SQ7TaX7WZ+52UKYXtXpaGJPN7h5YcD1VfWnOtMP8Zo=;
-        b=uRI/PokoHkvWqGLZt0syElNlLPC+zinv9Mzj6pkDb/9zTAk/tEMfn0vsdHm1ARPZIm
-         i0EZEy7R3VsofxRTxfsgP9xbJfZRstWiVa5OYhjY5izpURaylLuZ2qCdAlUXmvkpX9CT
-         k6Uo0gl8mM8x8h585Wrl1M3ULabCh9aCtSTQPunyJOIrnYVyh2n8CLGgoPgPWB+T9w7h
-         ymRPsRugpeckMHg27bER0LIJSTTLKf/WpMn5ifI11s9Nv0DmMXrs7HOwtUFE71vhSrm3
-         Xd5aA5+BRz0xR0/ZCv/NM6J/OKrQDcm0r1XmmSkrlD5QxJX1fB0H4/b9hPrBxDq4TfyQ
-         +h6g==
-X-Forwarded-Encrypted: i=1; AJvYcCVisIC+Ur58chMLFtz2IGYlxDLefZAIuSC19ph0CIud7OhtuqjqupkHUjoLXr8yk3yMoySg75xEKXCvsMRg@vger.kernel.org, AJvYcCWdbNzSlitDq9V4h9E+tlfcM7OdqiIydxoyhyUyUkg/lpiIh0mwjDBigvw0TxeEbrMsist9nvMPPZ0xKJFF@vger.kernel.org
-X-Gm-Message-State: AOJu0YwSULPNXUf4k5vgEDhKAiq6FOeJ4NqkdRe27MeLkh3PvbZsQjJN
-	5jPd9zefRW6Ka2BCC+XTDM4kyl38JTUh6SSl4bT3DaqRnHfxkzmnrZHQNQ==
-X-Gm-Gg: ASbGncuclxMDhrV3ufAlbU42OPqPlDqFHRSn40Aj3yhTtyZWHVixCPROXq5uPkXCjvh
-	VpkT+vxw/AsXf/6TZaXB6snA8rwJGNhdq/tUpALokluJrsjIsWELXEOaLbT3trbO7G7B5TS7baT
-	3H6wsVPyzfk+V5ODdPFFVLs3aM5anmfT78wL58jEuZpt5sQBsvyYAHTJEYRWKEH1veTwmQhiT8q
-	Mbed34hC8KR/Z/w5DsNnjFAg+aOPcWdN1nq7jHk0yEek/V+nx76Z+Sgp9VQ/EEVT8Hr1eQ0iGUR
-	QJGVaQ+bmrCmCnCTPOJIfTGkKcz1c/E=
-X-Google-Smtp-Source: AGHT+IHun+rE/vu4gLOWafc+nPtZg39cy9jheqPZvW3TNo8G/wyamWMCBu8H6NUTUxBjpYJXQtvXFQ==
-X-Received: by 2002:a17:90b:4c43:b0:2ee:d7d3:3019 with SMTP id 98e67ed59e1d1-2f1392940e9mr8435801a91.12.1734021961529;
-        Thu, 12 Dec 2024 08:46:01 -0800 (PST)
-Received: from carrot.. (i114-186-166-114.s41.a014.ap.plala.or.jp. [114.186.166.114])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-2f142de78d7sm1488917a91.31.2024.12.12.08.45.59
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 12 Dec 2024 08:46:00 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org
-Subject: [PATCH] nilfs2: fix buffer head leaks in calls to truncate_inode_pages()
-Date: Fri, 13 Dec 2024 01:43:28 +0900
-Message-ID: <20241212164556.21338-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.43.0
+        d=1e100.net; s=20230601; t=1734914366; x=1735519166;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=RERxOP3kkFVKOFbl0Zn5ScJiEU16CVZNCLTNI9N8F70=;
+        b=JZMo9BMEjsk+ovpE7GZIeJozDL6GPfZx82NmixGwzHyawo7EaAIrt6vY0wn8XzNwRR
+         8WRYBw0vv9Wxc9pHjQwsB9B7O6yjnv7QADmBGVMiZ6RfyVHLOXAdXyG7QO0XCDLTilYy
+         i0QrAukuVC4V+O9wsca3coWBLFKDyssbhPVRZXe1WOSVKAs4CZ0WXxGfJi7FValoh1no
+         4yvXZqAFoGFwa9SuoqB3OyIto4LCk+VrXuUBRNckcHHmSexjDovt6mXDP9riszXoYhrl
+         YeyCs2vGjaWBRINZTMUxXWQDRJpjP7VY9FQYFPJSsQsiN48ptnRxaGLzzL2YiL7fVDiW
+         3zQg==
+X-Forwarded-Encrypted: i=1; AJvYcCWHlQ3fLP6uJagm106ECfFKxrO0HkfnqlL3Kt/1/6EO7ZG03r1yyRv0iaW5txSFw6ro2Ttz9ZcrHFFqWQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwMHi0SlN4DuRv9pLnv6f9zRlEe2jMCOekQPzp7Cyv13zy8W3Z8
+	Ty0trha7CnCaMJjhNTP03uOybBV8YH0hoNQXcc1hr9GwiXkQIa/hg41ISDsQTMq9PK2VZKYWkXR
+	R7oI1EtNBCTZ+IyrjZmPPiLGRE2sUB07LFYUb9jkSOH+1IHtK8cv55q4=
+X-Google-Smtp-Source: AGHT+IHvKn5Wo8IHcOINT/HUYbKgtx8xm+WRKY9mKMVFlmYH8tgoip7UCpXdCzaK6nIc8p6+q6eppGDGt9RHX+eDJtIbBYYylhCP
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6e02:1546:b0:3a7:708b:da28 with SMTP id
+ e9e14a558f8ab-3c2d5919bcfmr84937415ab.21.1734914365697; Sun, 22 Dec 2024
+ 16:39:25 -0800 (PST)
+Date: Sun, 22 Dec 2024 16:39:25 -0800
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6768b13d.050a0220.3a8527.0001.GAE@google.com>
+Subject: [syzbot] [nilfs?] WARNING in nilfs_rename
+From: syzbot <syzbot+de6c4b3beb823e112ead@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-When block_invalidatepage was converted to block_invalidate_folio,
-the fallback to block_invalidatepage in folio_invalidate() if the
-address_space_operations method invalidatepage (currently
-invalidate_folio) was not set, was removed.
+Hello,
 
-Unfortunately, some pseudo-inodes in nilfs2 use empty_aops set by
-inode_init_always_gfp() as is, or explicitly set it to
-address_space_operations.  Therefore, with this change,
-block_invalidatepage() is no longer called from folio_invalidate(), and
-as a result, the buffer_head structures attached to these pages/folios
-are no longer freed via try_to_free_buffers().
+syzbot found the following issue on:
 
-Thus, these buffer heads are now leaked by truncate_inode_pages(), which
-cleans up the page cache from inode evict(), etc.
+HEAD commit:    aef25be35d23 hexagon: Disable constant extender optimizati..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=11cab7e8580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=6a2b862bf4a5409f
+dashboard link: https://syzkaller.appspot.com/bug?extid=de6c4b3beb823e112ead
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
 
-Three types of caches use empty_aops: gc inode caches and the DAT shadow
-inode used by GC, and b-tree node caches.  Of these, b-tree node caches
-explicitly call invalidate_mapping_pages() during cleanup, which involves
-calling try_to_free_buffers(), so the leak was not visible during normal
-operation but worsened when GC was performed.
+Unfortunately, I don't have any reproducer for this issue yet.
 
-Fix this issue by using address_space_operations with invalidate_folio
-set to block_invalidate_folio instead of empty_aops, which will ensure
-the same behavior as before.
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-aef25be3.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/b51d6862d2de/vmlinux-aef25be3.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/cdb968bd31a4/bzImage-aef25be3.xz
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Fixes: 7ba13abbd31e ("fs: Turn block_invalidatepage into block_invalidate_folio")
-Cc: stable@vger.kernel.org # v5.18+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+de6c4b3beb823e112ead@syzkaller.appspotmail.com
+
+loop0: detected capacity change from 0 to 4096
+NILFS (loop0): invalid segment: Checksum error in segment payload
+NILFS (loop0): trying rollback from an earlier position
+NILFS (loop0): recovery complete
+loop0: detected capacity change from 4096 to 64
+------------[ cut here ]------------
+WARNING: CPU: 0 PID: 5319 at fs/inode.c:407 drop_nlink+0xc4/0x110 fs/inode.c:407
+Modules linked in:
+CPU: 0 UID: 0 PID: 5319 Comm: syz.0.0 Not tainted 6.13.0-rc3-syzkaller-00044-gaef25be35d23 #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
+RIP: 0010:drop_nlink+0xc4/0x110 fs/inode.c:407
+Code: bb 70 07 00 00 be 08 00 00 00 e8 c7 37 e7 ff 3e 48 ff 83 70 07 00 00 5b 41 5c 41 5e 41 5f 5d c3 cc cc cc cc e8 5d cc 80 ff 90 <0f> 0b 90 eb 83 44 89 e1 80 e1 07 80 c1 03 38 c1 0f 8c 5c ff ff ff
+RSP: 0018:ffffc9000d21f8f0 EFLAGS: 00010283
+RAX: ffffffff821ea793 RBX: 1ffff1100a603834 RCX: 0000000000100000
+RDX: ffffc9000e60a000 RSI: 0000000000000c56 RDI: 0000000000000c57
+RBP: 0000000000000000 R08: ffffffff821ea713 R09: 1ffffffff2032f46
+R10: dffffc0000000000 R11: fffffbfff2032f47 R12: ffff88805301c1a0
+R13: ffff88804ced1050 R14: ffff88805301c158 R15: dffffc0000000000
+FS:  00007f8bc463e6c0(0000) GS:ffff88801fc00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f8bc396c4c8 CR3: 00000000438e4000 CR4: 0000000000352ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ nilfs_rename+0x7b0/0xb60 fs/nilfs2/namei.c:410
+ vfs_rename+0xbdb/0xf00 fs/namei.c:5067
+ do_renameat2+0xd94/0x13f0 fs/namei.c:5224
+ __do_sys_rename fs/namei.c:5271 [inline]
+ __se_sys_rename fs/namei.c:5269 [inline]
+ __x64_sys_rename+0x82/0x90 fs/namei.c:5269
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f8bc3785d29
+Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f8bc463e038 EFLAGS: 00000246 ORIG_RAX: 0000000000000052
+RAX: ffffffffffffffda RBX: 00007f8bc3975fa0 RCX: 00007f8bc3785d29
+RDX: 0000000000000000 RSI: 0000000020000b80 RDI: 0000000020001640
+RBP: 00007f8bc3801a20 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 0000000000000000 R14: 00007f8bc3975fa0 R15: 00007ffe7b8ea018
+ </TASK>
+
+
 ---
-Hi Andrew, please apply this as a bug fix.
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-This fixes buffer head memory leaks (seen by slabinfo and runtime
-function call checks) that gets worse during GC.
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
-Thanks,
-Ryusuke Konishi
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
 
- fs/nilfs2/btnode.c  | 1 +
- fs/nilfs2/gcinode.c | 2 +-
- fs/nilfs2/inode.c   | 5 +++++
- fs/nilfs2/nilfs.h   | 1 +
- 4 files changed, 8 insertions(+), 1 deletion(-)
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 501ad7be5174..54a3fa0cf67e 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -35,6 +35,7 @@ void nilfs_init_btnc_inode(struct inode *btnc_inode)
- 	ii->i_flags = 0;
- 	memset(&ii->i_bmap_data, 0, sizeof(struct nilfs_bmap));
- 	mapping_set_gfp_mask(btnc_inode->i_mapping, GFP_NOFS);
-+	btnc_inode->i_mapping->a_ops = &nilfs_buffer_cache_aops;
- }
- 
- void nilfs_btnode_cache_clear(struct address_space *btnc)
-diff --git a/fs/nilfs2/gcinode.c b/fs/nilfs2/gcinode.c
-index ace22253fed0..2dbb15767df1 100644
---- a/fs/nilfs2/gcinode.c
-+++ b/fs/nilfs2/gcinode.c
-@@ -163,7 +163,7 @@ int nilfs_init_gcinode(struct inode *inode)
- 
- 	inode->i_mode = S_IFREG;
- 	mapping_set_gfp_mask(inode->i_mapping, GFP_NOFS);
--	inode->i_mapping->a_ops = &empty_aops;
-+	inode->i_mapping->a_ops = &nilfs_buffer_cache_aops;
- 
- 	ii->i_flags = 0;
- 	nilfs_bmap_init_gc(ii->i_bmap);
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index b7d4105f37bf..23f3a75edd50 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -276,6 +276,10 @@ const struct address_space_operations nilfs_aops = {
- 	.is_partially_uptodate  = block_is_partially_uptodate,
- };
- 
-+const struct address_space_operations nilfs_buffer_cache_aops = {
-+	.invalidate_folio	= block_invalidate_folio,
-+};
-+
- static int nilfs_insert_inode_locked(struct inode *inode,
- 				     struct nilfs_root *root,
- 				     unsigned long ino)
-@@ -681,6 +685,7 @@ struct inode *nilfs_iget_for_shadow(struct inode *inode)
- 	NILFS_I(s_inode)->i_flags = 0;
- 	memset(NILFS_I(s_inode)->i_bmap, 0, sizeof(struct nilfs_bmap));
- 	mapping_set_gfp_mask(s_inode->i_mapping, GFP_NOFS);
-+	s_inode->i_mapping->a_ops = &nilfs_buffer_cache_aops;
- 
- 	err = nilfs_attach_btree_node_cache(s_inode);
- 	if (unlikely(err)) {
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 45d03826eaf1..dff241c53fc5 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -401,6 +401,7 @@ extern const struct file_operations nilfs_dir_operations;
- extern const struct inode_operations nilfs_file_inode_operations;
- extern const struct file_operations nilfs_file_operations;
- extern const struct address_space_operations nilfs_aops;
-+extern const struct address_space_operations nilfs_buffer_cache_aops;
- extern const struct inode_operations nilfs_dir_inode_operations;
- extern const struct inode_operations nilfs_special_inode_operations;
- extern const struct inode_operations nilfs_symlink_inode_operations;
--- 
-2.43.0
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
 
+If you want to undo deduplication, reply with:
+#syz undup
