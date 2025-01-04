@@ -1,83 +1,55 @@
-Received: from mail-il1-f199.google.com (mail-il1-f199.google.com [209.85.166.199])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 989F525948D
-	for <linux-nilfs@vger.kernel.org>; Mon, 30 Dec 2024 01:15:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.199
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9EC7A149C7B;
+	Sat,  4 Jan 2025 09:11:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735521324; cv=none; b=ZU72bT0uKrkCg0KctzHWpoRm82/g12iSaKg+vjLeVReq3s65L7C7ybBG7WxxOuwk2D9PqIEv+lLZQctYSRFR/LmcmxTx7pl+JH73M5GRK2rnloUq2D3Rcmc68OIdDyrgiBzLn/dVpE9f5Nd9GRv/exWkPJXsUbG+cqqzR7AoNgk=
+	t=1735981884; cv=none; b=qdLqtDxnTpPLfMFce9LfsLxmziiFbmz5bfnlfyXGrtTtxsMlcyp0iL9s6xE5O7YbisX+zNGWoROkOtGyl7n+PgQLQTmPIc8DBOPNo/EByG6Ux42Wkp/ITAfczO5TEW+JxuvFM9nDl/mrXZGNLD3xthseM0oQL4CjY1lBp8ycY6o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735521324; c=relaxed/simple;
-	bh=2qsrPxQ4/TnljPhC3e9T7HL5yyS6M7NdyL7bkLjK3N8=;
-	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=Hvo6c1cbXi1ZzJhsW2YdMWQVgIg0+qijzeXnFZ3tfmzzpcMisGIhXukbyvI0nRPebMHPOvkCjm+6exICfSKwssyhDmjETAUZ/JjSfccvrkidNy6epNAWb++7drhBe7mnU4E39kdYZiJ/Xm1lol0G4PFlvq9Ow+pLSRy8Kayp84k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.199
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-il1-f199.google.com with SMTP id e9e14a558f8ab-3a9cd0b54c1so74639185ab.0
-        for <linux-nilfs@vger.kernel.org>; Sun, 29 Dec 2024 17:15:22 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1735521322; x=1736126122;
-        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=4Q7Yx1ykdPNr/zNJ+aeqsvOslVv39BiAHooNuKhschA=;
-        b=edwoP2pLV1TlpbzWtfDFTFWKpPXhLesnsEso5UJkSCrjLjP/UzoCmd66lYPQnD1F2P
-         XEV44WTcbEytOIEFcUIt0UYClAUST1yVUkJexhle9Cw9hLVKvg3MStuRF1H9TieijChb
-         UVXfK++I46+9sTyzWRjtp+UhJS28zmjSsamqpd/xQGWRXQqzFdtnNCY8bbJhUNFxCN/j
-         DXwXRGxm0cdsj275kxvPWONwDJh0jqyOmnnhSkwp6c+VuZeLfYWoBoHX5OnXVMMQe5sQ
-         QaYX5h41tWTTANjOh7pAwUhuU2FjKzbhDqOHn7xGc/KW0ioJ6B4GidKVmw0PjSrcfR1y
-         rcUg==
-X-Forwarded-Encrypted: i=1; AJvYcCVpyj37Gusmw/KyeTnSpHcCYz0l/mzu2tzO8x3umzaFEUs5aPYdV29R+xmyb3SfT+5HbWVu9qaB0NdHHQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yw2nmwpofNaFOPk6ehfFT1TDso7H0yqECivgdmSVjS/xT0ZKLNq
-	jZH1wcS9zrPyqRGF2rhYzEtZHLtaVmJOZf2nBAQ4VH4rkbCP4n/VydW8PROGYMJVgCtiC0HLMbX
-	D6pVURpSa6/6ZzN6VZmIRA9SnSxZ9/OAf8s62RimpvbNwzQCRh40jFmo=
-X-Google-Smtp-Source: AGHT+IFKtFGaqePh6jqrV+0nz9puMqKJ0NJ8dZc7Oky0yBhBIIdKWvKHESrfC407QbqjT2FcACqA1WQmkM1DpiD1eY+MPDNOsk9U
+	s=arc-20240116; t=1735981884; c=relaxed/simple;
+	bh=F5hxa229mm2emWXssEaQjuuhAwKyEgCJ8aNxtfV6GNY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Oa0Xi6H5c9yvNjI3zsKWKHgu3hOAdSlmk4IFnlZpRLsqfEiKC1c5jhxVZFPTQAxG1p+bPky4hUtmEnjDj+Iy+TLJAdxSCaBKflMyQwsXrGsJa0UDHQosvc+S1RWCwUr3Fxj6JWpAHjVHunmFgzfNPTI1CTTQPHpfErkyklaXOJ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=rrQI4ruh; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="rrQI4ruh"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BD9FDC4CED1;
+	Sat,  4 Jan 2025 09:11:21 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1735981884;
+	bh=F5hxa229mm2emWXssEaQjuuhAwKyEgCJ8aNxtfV6GNY=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=rrQI4ruhBAPRMDyHEPdHYUctjVWuU6b4FKk7S4fzqdIdLy10nQ5CY3odyWTWN22to
+	 ZJzhFTY6CVwgI7IucjmyXMxIRwosNxIG69PcHYoyyosrk+Y82f2hiGkjmEIl79Yv3O
+	 DV2DKnLeFNJJ25RcfoxstKqj1rxb9YpkZCtBxy5jMpBCWyeC46H8Yl1HkcsMuf7nsK
+	 OFNlfJ3Xkr/yFwgmKK60e4OaMxG3ikKftFjZOta69tSOGjPfFPQYB4TPHuwv32pV4Q
+	 s3hPpRJy6vkndY/a78EON8N7nwRKSLQIbh/BYUW7O59rSUbO9G8QDsOdk90fFQ79aZ
+	 8ivw17zc5ckng==
+Date: Sat, 4 Jan 2025 10:11:19 +0100
+From: Christian Brauner <brauner@kernel.org>
+To: syzbot <syzbot+5b9d613904b2f185f2fe@syzkaller.appspotmail.com>
+Cc: jack@suse.cz, jfs-discussion@lists.sourceforge.net, 
+	konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, shaggy@kernel.org, syzkaller-bugs@googlegroups.com, 
+	viro@zeniv.linux.org.uk
+Subject: Re: [syzbot] [jfs?] [nilfs?] WARNING in mnt_ns_release
+Message-ID: <20250104-vokabel-nimmersatt-8534deaf69ff@brauner>
+References: <676a3d1b.050a0220.2f3838.014f.GAE@google.com>
+ <677030ff.050a0220.2f3838.0499.GAE@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6e02:1d0d:b0:3a7:e528:6ee6 with SMTP id
- e9e14a558f8ab-3c2d2783efdmr234544455ab.13.1735521321870; Sun, 29 Dec 2024
- 17:15:21 -0800 (PST)
-Date: Sun, 29 Dec 2024 17:15:21 -0800
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6771f429.050a0220.2f3838.04b1.GAE@google.com>
-Subject: [syzbot] Monthly nilfs report (Dec 2024)
-From: syzbot <syzbot+list99087fe8e73d8e0de54e@syzkaller.appspotmail.com>
-To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <677030ff.050a0220.2f3838.0499.GAE@google.com>
 
-Hello nilfs maintainers/developers,
+On Sat, Dec 28, 2024 at 09:10:23AM -0800, syzbot wrote:
+> syzbot has found a reproducer for the following issue on:
+> 
+> HEAD commit:    8155b4ef3466 Add linux-next specific files for 20241220
 
-This is a 31-day syzbot report for the nilfs subsystem.
-All related reports/information can be found at:
-https://syzkaller.appspot.com/upstream/s/nilfs
-
-During the period, 3 new issues were detected and 1 were fixed.
-In total, 7 issues are still open and 57 have already been fixed.
-
-Some of the still happening issues:
-
-Ref Crashes Repro Title
-<1> 21      Yes   kernel BUG in nilfs_delete_entry
-                  https://syzkaller.appspot.com/bug?extid=32c3706ebf5d95046ea1
-<2> 4       Yes   WARNING in mnt_ns_release
-                  https://syzkaller.appspot.com/bug?extid=5b9d613904b2f185f2fe
-<3> 1       No    WARNING in nilfs_rename
-                  https://syzkaller.appspot.com/bug?extid=de6c4b3beb823e112ead
-
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
-
-To disable reminders for individual bugs, reply with the following command:
-#syz set <Ref> no-reminders
-
-To change bug's subsystems, reply with:
-#syz set <Ref> subsystems: new-subsystem
-
-You may send multiple commands in a single email message.
+This is already fixed in -next. Please report if this happens again.
