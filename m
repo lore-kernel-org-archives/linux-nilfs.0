@@ -1,55 +1,79 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9EC7A149C7B;
-	Sat,  4 Jan 2025 09:11:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 768E4136326;
+	Mon,  6 Jan 2025 15:16:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1735981884; cv=none; b=qdLqtDxnTpPLfMFce9LfsLxmziiFbmz5bfnlfyXGrtTtxsMlcyp0iL9s6xE5O7YbisX+zNGWoROkOtGyl7n+PgQLQTmPIc8DBOPNo/EByG6Ux42Wkp/ITAfczO5TEW+JxuvFM9nDl/mrXZGNLD3xthseM0oQL4CjY1lBp8ycY6o=
+	t=1736176578; cv=none; b=jxiFF5gIQ40Yckl0UArXW3YHNIuwsXwY3UKJrFDLxpt9IMbEFmpl2+V/INiczI2EOu5Rqj0moVLEZ7yHiL+WCo/3BAVHB5c3/Gd2P75VbcnfV3+rLBD+ArirIwgSTvz/OvAvu66OslqoSpHcvXyNCep7aJ3NCJLlMwdWplYOW/A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1735981884; c=relaxed/simple;
-	bh=F5hxa229mm2emWXssEaQjuuhAwKyEgCJ8aNxtfV6GNY=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Oa0Xi6H5c9yvNjI3zsKWKHgu3hOAdSlmk4IFnlZpRLsqfEiKC1c5jhxVZFPTQAxG1p+bPky4hUtmEnjDj+Iy+TLJAdxSCaBKflMyQwsXrGsJa0UDHQosvc+S1RWCwUr3Fxj6JWpAHjVHunmFgzfNPTI1CTTQPHpfErkyklaXOJ0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=rrQI4ruh; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1736176578; c=relaxed/simple;
+	bh=HOnizWLZAhy/wkB+o9qiK1H9iSrRkEDBHT7WZlAI8S8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=P1R+2ajvoylMQzRiSPKJxcSmZovKaL1G60SLMwg2ZEwGPUcwPNf9eoH19Tnl3LqmscuzYWwENHRal/3qxO6HHeoPDqjq32MMCKn5Q8XI5eNBolhJsfalqtfNSByWbgZAFFdUbyBOpprLRbc7Xn5a/ivqIhzl9prG/bDxeMLA3Ts=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=GQUA4Usw; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="rrQI4ruh"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BD9FDC4CED1;
-	Sat,  4 Jan 2025 09:11:21 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1735981884;
-	bh=F5hxa229mm2emWXssEaQjuuhAwKyEgCJ8aNxtfV6GNY=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=rrQI4ruhBAPRMDyHEPdHYUctjVWuU6b4FKk7S4fzqdIdLy10nQ5CY3odyWTWN22to
-	 ZJzhFTY6CVwgI7IucjmyXMxIRwosNxIG69PcHYoyyosrk+Y82f2hiGkjmEIl79Yv3O
-	 DV2DKnLeFNJJ25RcfoxstKqj1rxb9YpkZCtBxy5jMpBCWyeC46H8Yl1HkcsMuf7nsK
-	 OFNlfJ3Xkr/yFwgmKK60e4OaMxG3ikKftFjZOta69tSOGjPfFPQYB4TPHuwv32pV4Q
-	 s3hPpRJy6vkndY/a78EON8N7nwRKSLQIbh/BYUW7O59rSUbO9G8QDsOdk90fFQ79aZ
-	 8ivw17zc5ckng==
-Date: Sat, 4 Jan 2025 10:11:19 +0100
-From: Christian Brauner <brauner@kernel.org>
-To: syzbot <syzbot+5b9d613904b2f185f2fe@syzkaller.appspotmail.com>
-Cc: jack@suse.cz, jfs-discussion@lists.sourceforge.net, 
-	konishi.ryusuke@gmail.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, shaggy@kernel.org, syzkaller-bugs@googlegroups.com, 
-	viro@zeniv.linux.org.uk
-Subject: Re: [syzbot] [jfs?] [nilfs?] WARNING in mnt_ns_release
-Message-ID: <20250104-vokabel-nimmersatt-8534deaf69ff@brauner>
-References: <676a3d1b.050a0220.2f3838.014f.GAE@google.com>
- <677030ff.050a0220.2f3838.0499.GAE@google.com>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="GQUA4Usw"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=jy8o97NScLsr8D+JTV/npG7c5ZKkdETvzkEgkO/6CGw=; b=GQUA4Usw7tyLD3rYsWTB6BuU0X
+	PpzDBYo19qJJm8A9KnBxAWW3kb0tu9cP+o4TOiJ29Rf6Npa0JZKolRWwiYbLC459eu0uQnzEb3Nro
+	a8YyP+pVAL+xUCN52UK5pg4oLlnU9zO/yjzCADLvL37jwwuLuSPwlnwdU4udjRsui3CCdWtSCXJUq
+	Hy8bRAjUHrt7VpLvt0bB30K8QBktlC6g3lMLnTImlKAmWVoNEBKSV4yVRilBT/YjQfnoieMG8YXwX
+	GBlZWiYMmfSCGldu1l6Ep1iHoDbbtT2gQL8aL6iQkRvrM9TyDeEtSZ2TNaEu4HULwbavonuHM1iGz
+	zbVGGKgg==;
+Received: from 2a02-8389-2341-5b80-db6b-99e8-3feb-3b4e.cable.dynamic.v6.surfer.at ([2a02:8389:2341:5b80:db6b:99e8:3feb:3b4e] helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.98 #2 (Red Hat Linux))
+	id 1tUopv-00000001isR-2vPZ;
+	Mon, 06 Jan 2025 15:16:12 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>
+Cc: Jan Kara <jack@suse.cz>,
+	Chandan Babu R <chandan.babu@oracle.com>,
+	"Darrick J. Wong" <djwong@kernel.org>,
+	Hongbo Li <lihongbo22@huawei.com>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-xfs@vger.kernel.org
+Subject: add STATX_DIO_READ_ALIGN
+Date: Mon,  6 Jan 2025 16:15:53 +0100
+Message-ID: <20250106151607.954940-1-hch@lst.de>
+X-Mailer: git-send-email 2.45.2
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <677030ff.050a0220.2f3838.0499.GAE@google.com>
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Sat, Dec 28, 2024 at 09:10:23AM -0800, syzbot wrote:
-> syzbot has found a reproducer for the following issue on:
-> 
-> HEAD commit:    8155b4ef3466 Add linux-next specific files for 20241220
+Hi all,
 
-This is already fixed in -next. Please report if this happens again.
+file systems that write out of place usually require different alignment
+for direct I/O writes than what they can do for reads.  This series tries
+to address this by yet another statx field.
+
+Note that the code is completely untested - I wrote it and got preempted
+and only sent this out because Hongbo Li brought the issue up in the
+nilfs2 context.  I've just started a vacation so I'm unlikely to get
+back to it any time soon, but if someone wants to take the work over
+go for it.  I'll probably answer to email at least every other day or
+so.
+
+Changes from RFC:
+ - add a cleanup patch for xfs_vn_getattr
+ - use xfs_inode_alloc_unitsize in xfs_vn_getattr
+ - improve a comment in XFS
+
+Diffstat:
+ fs/stat.c                 |    1 
+ fs/xfs/xfs_iops.c         |   65 +++++++++++++++++++-----------
+ include/linux/stat.h      |    1 
+ include/uapi/linux/stat.h |   99 ++++++++++++++++++++++++++++++++++------------
+ 4 files changed, 118 insertions(+), 48 deletions(-)
