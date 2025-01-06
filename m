@@ -1,34 +1,88 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A1301474A0;
-	Mon,  6 Jan 2025 15:19:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F3784142E7C;
+	Mon,  6 Jan 2025 16:28:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736176785; cv=none; b=IiAnx9lnt272SBtMlk91rVLCwXuQAKk8E1DcoNa3NvJ3QdKaN/M8lTjf1zWbT16hcFQXCRpgF/eNAzr8q3hRGBw6KOOQbrqwhbxqpA0gwaBEvP03kXpR4NRwr0olEScrItdweVNyTXy4hLml3V0O3sKQ3SdCVJDZt0v/6YvpRHI=
+	t=1736180933; cv=none; b=usOmPmX4+MJPGkmYAkliqJ4g7mZTQk1MAaazzAKA1v2ecCARYe64a79dcdWPtnvIDoui2IFbye8ssZB/M/L8ywumpnBNEgr9et4uS+nbvmaaXzS+cpRzwhjIwAVhpZZOOW6wkt8jKA6yfFzI0GmiAofTh7MMvsJU7p3AZk2X9Gs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736176785; c=relaxed/simple;
-	bh=8zrCXLf6X5v1dVcJogjOZPO6npUy+5xRwpbRzC49N90=;
+	s=arc-20240116; t=1736180933; c=relaxed/simple;
+	bh=IklxIHPtgMbN+/+3Y2Pr2Utb2V+Wd2RauiNMoXWluRI=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Qyql2XY532r4GiYEc2oagyexbdiFWV1xzVhT2mES/JJHh/WyPluuAi3zFxqi/tvJvlHCZsi/DeeyGzzZ4eOI4ITWv0TGM91woSKw9CIrZNaKRhfABPlLpIiZrFlgiSEuw29E4CtrTp2QMN8/RIIVBTSKHTqW/kLGZI/TRMErQb8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id D493468C7B; Mon,  6 Jan 2025 16:19:38 +0100 (CET)
-Date: Mon, 6 Jan 2025 16:19:38 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>
-Cc: Jan Kara <jack@suse.cz>, Chandan Babu R <chandan.babu@oracle.com>,
-	"Darrick J. Wong" <djwong@kernel.org>,
-	Hongbo Li <lihongbo22@huawei.com>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-xfs@vger.kernel.org, linux-man@vger.kernel.org
-Subject: [PATCH] statx.2: document STATX_DIO_READ_ALIGN
-Message-ID: <20250106151938.GA27324@lst.de>
+	 Content-Type:Content-Disposition:In-Reply-To; b=a5tGHiuniHp8UpsvWu/eGn9Y/y3FRvcWcwm7TJIgewdrVUMStX3/1k9zykcyzq6mnSXra3jSv8TDoSSfMs7wuRYUDL9H/PcxHS/ZGs+adKzBsR2igQxtfDNsM01TvaG1ykxnUhiCnX6KtRtPnA7GUBBoUbw/3b5yQ8quiDPeCFo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Ztc4uGGi; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=gxEzzlq+; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Ztc4uGGi; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=gxEzzlq+; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Ztc4uGGi";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="gxEzzlq+";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Ztc4uGGi";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="gxEzzlq+"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 0B6E421114;
+	Mon,  6 Jan 2025 16:28:50 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1736180930; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ccKG3tbctQt4qp4iia2LI9uHvYP1rYFEwKMr2pLwwAU=;
+	b=Ztc4uGGiFzMseT8fJSNOFgh2QVxZQ+1+DvTArnpwy1Zv+mSFi+pyM+eJ02IAHt19i2m1bC
+	DZ88X/fj0fq3Bmvx0h7Zy0+fWmSf1QYQuh/0pUywTzrpVksqR21A5Sk25ImygIqYBIXOv3
+	zavRfeoy6DzyNaNijCJys5l2yvVPimQ=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1736180930;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ccKG3tbctQt4qp4iia2LI9uHvYP1rYFEwKMr2pLwwAU=;
+	b=gxEzzlq+NK0fRDNhcJJ0JsnwLV2kpfVtmq3TRRpcX/DLz3ApZzhEOizIH6jNHiPw6mbtou
+	kM2tScNwVGJgPCCw==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1736180930; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ccKG3tbctQt4qp4iia2LI9uHvYP1rYFEwKMr2pLwwAU=;
+	b=Ztc4uGGiFzMseT8fJSNOFgh2QVxZQ+1+DvTArnpwy1Zv+mSFi+pyM+eJ02IAHt19i2m1bC
+	DZ88X/fj0fq3Bmvx0h7Zy0+fWmSf1QYQuh/0pUywTzrpVksqR21A5Sk25ImygIqYBIXOv3
+	zavRfeoy6DzyNaNijCJys5l2yvVPimQ=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1736180930;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ccKG3tbctQt4qp4iia2LI9uHvYP1rYFEwKMr2pLwwAU=;
+	b=gxEzzlq+NK0fRDNhcJJ0JsnwLV2kpfVtmq3TRRpcX/DLz3ApZzhEOizIH6jNHiPw6mbtou
+	kM2tScNwVGJgPCCw==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id EB01A137DA;
+	Mon,  6 Jan 2025 16:28:49 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id t34bOcEEfGeVWQAAD6G6ig
+	(envelope-from <jack@suse.cz>); Mon, 06 Jan 2025 16:28:49 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id 89073A089C; Mon,  6 Jan 2025 17:28:49 +0100 (CET)
+Date: Mon, 6 Jan 2025 17:28:49 +0100
+From: Jan Kara <jack@suse.cz>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
+	Chandan Babu R <chandan.babu@oracle.com>, "Darrick J. Wong" <djwong@kernel.org>, 
+	Hongbo Li <lihongbo22@huawei.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, 
+	linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org
+Subject: Re: [PATCH 1/4] fs: reformat the statx definition
+Message-ID: <ggon3g5j7a5epncdfapqwxtoefptoxuimxvihmadc3aurqkfyr@bqypxcr43rvn>
 References: <20250106151607.954940-1-hch@lst.de>
+ <20250106151607.954940-2-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -37,76 +91,175 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250106151607.954940-1-hch@lst.de>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20250106151607.954940-2-hch@lst.de>
+X-Spam-Level: 
+X-Spamd-Result: default: False [-2.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	RCVD_TLS_LAST(0.00)[];
+	ARC_NA(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCVD_COUNT_THREE(0.00)[3];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	FREEMAIL_CC(0.00)[zeniv.linux.org.uk,kernel.org,suse.cz,oracle.com,huawei.com,gmail.com,vger.kernel.org];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	RCPT_COUNT_SEVEN(0.00)[11];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	MISSING_XM_UA(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.cz:email]
+X-Spam-Score: -2.30
+X-Spam-Flag: NO
 
-Document the new STATX_DIO_READ_ALIGN flag and the new
-stx_dio_read_offset_align field guarded by it.
+On Mon 06-01-25 16:15:54, Christoph Hellwig wrote:
+> The comments after the declaration are becoming rather unreadable with
+> long enough comments.  Move them into lines of their own.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Darrick J. Wong <djwong@kernel.org>
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- man/man2/statx.2 | 27 ++++++++++++++++++++++++++-
- 1 file changed, 26 insertions(+), 1 deletion(-)
+Looks good. Feel free to add:
 
-diff --git a/man/man2/statx.2 b/man/man2/statx.2
-index c5b5a28ec2f1..378bf363d93f 100644
---- a/man/man2/statx.2
-+++ b/man/man2/statx.2
-@@ -76,6 +76,9 @@ struct statx {
-     __u32 stx_atomic_write_unit_min;
-     __u32 stx_atomic_write_unit_max;
-     __u32 stx_atomic_write_segments_max;
-+
-+    /* File offset alignment for direct I/O reads */
-+    __u32   stx_dio_read_offset_align;
- };
- .EE
- .in
-@@ -261,7 +264,7 @@ STATX_BTIME	Want stx_btime
- STATX_ALL	The same as STATX_BASIC_STATS | STATX_BTIME.
- 	It is deprecated and should not be used.
- STATX_MNT_ID	Want stx_mnt_id (since Linux 5.8)
--STATX_DIOALIGN	Want stx_dio_mem_align and stx_dio_offset_align
-+STATX_DIOALIGN	Want stx_dio_mem_align and stx_dio_offset_align.
- 	(since Linux 6.1; support varies by filesystem)
- STATX_MNT_ID_UNIQUE	Want unique stx_mnt_id (since Linux 6.8)
- STATX_SUBVOL	Want stx_subvol
-@@ -270,6 +273,8 @@ STATX_WRITE_ATOMIC	Want stx_atomic_write_unit_min,
- 	stx_atomic_write_unit_max,
- 	and stx_atomic_write_segments_max.
- 	(since Linux 6.11; support varies by filesystem)
-+STATX_DIO_READ_ALIGN	Want stx_dio_read_offset_align.
-+	(since Linux 6.14; support varies by filesystem)
- .TE
- .in
- .P
-@@ -467,6 +472,26 @@ This will only be nonzero if
- .I stx_dio_mem_align
- is nonzero, and vice versa.
- .TP
-+.I stx_dio_read_offset_align
-+The alignment (in bytes) required for file offsets and I/O segment lengths for
-+direct I/O reads
-+.RB ( O_DIRECT )
-+on this file.  If zero the limit in
-+.I
-+stx_dio_offset_align
-+applies for reads as well.  If non-zero this value must be
-+smaller than
-+.I
-+stx_dio_offset_align
-+which must be provided by the file system.
-+This value does not affect the memory alignent in
-+.I stx_dio_mem_align .
-+.IP
-+.B STATX_DIO_READ_ALIGN
-+.I ( stx_dio_offset_align )
-+support by filesystem;
-+it is supported by xfs since Linux 6.14.
-+.TP
- .I stx_subvol
- Subvolume number of the current file.
- .IP
+Reviewed-by: Jan Kara <jack@suse.cz>
+
+								Honza
+
+> ---
+>  include/uapi/linux/stat.h | 95 +++++++++++++++++++++++++++++----------
+>  1 file changed, 72 insertions(+), 23 deletions(-)
+> 
+> diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
+> index 887a25286441..8b35d7d511a2 100644
+> --- a/include/uapi/linux/stat.h
+> +++ b/include/uapi/linux/stat.h
+> @@ -98,43 +98,92 @@ struct statx_timestamp {
+>   */
+>  struct statx {
+>  	/* 0x00 */
+> -	__u32	stx_mask;	/* What results were written [uncond] */
+> -	__u32	stx_blksize;	/* Preferred general I/O size [uncond] */
+> -	__u64	stx_attributes;	/* Flags conveying information about the file [uncond] */
+> +	/* What results were written [uncond] */
+> +	__u32	stx_mask;
+> +
+> +	/* Preferred general I/O size [uncond] */
+> +	__u32	stx_blksize;
+> +
+> +	/* Flags conveying information about the file [uncond] */
+> +	__u64	stx_attributes;
+> +
+>  	/* 0x10 */
+> -	__u32	stx_nlink;	/* Number of hard links */
+> -	__u32	stx_uid;	/* User ID of owner */
+> -	__u32	stx_gid;	/* Group ID of owner */
+> -	__u16	stx_mode;	/* File mode */
+> +	/* Number of hard links */
+> +	__u32	stx_nlink;
+> +
+> +	/* User ID of owner */
+> +	__u32	stx_uid;
+> +
+> +	/* Group ID of owner */
+> +	__u32	stx_gid;
+> +
+> +	/* File mode */
+> +	__u16	stx_mode;
+>  	__u16	__spare0[1];
+> +
+>  	/* 0x20 */
+> -	__u64	stx_ino;	/* Inode number */
+> -	__u64	stx_size;	/* File size */
+> -	__u64	stx_blocks;	/* Number of 512-byte blocks allocated */
+> -	__u64	stx_attributes_mask; /* Mask to show what's supported in stx_attributes */
+> +	/* Inode number */
+> +	__u64	stx_ino;
+> +
+> +	/* File size */
+> +	__u64	stx_size;
+> +
+> +	/* Number of 512-byte blocks allocated */
+> +	__u64	stx_blocks;
+> +
+> +	/* Mask to show what's supported in stx_attributes */
+> +	__u64	stx_attributes_mask;
+> +
+>  	/* 0x40 */
+> -	struct statx_timestamp	stx_atime;	/* Last access time */
+> -	struct statx_timestamp	stx_btime;	/* File creation time */
+> -	struct statx_timestamp	stx_ctime;	/* Last attribute change time */
+> -	struct statx_timestamp	stx_mtime;	/* Last data modification time */
+> +	/* Last access time */
+> +	struct statx_timestamp	stx_atime;
+> +
+> +	/* File creation time */
+> +	struct statx_timestamp	stx_btime;
+> +
+> +	/* Last attribute change time */
+> +	struct statx_timestamp	stx_ctime;
+> +
+> +	/* Last data modification time */
+> +	struct statx_timestamp	stx_mtime;
+> +
+>  	/* 0x80 */
+> -	__u32	stx_rdev_major;	/* Device ID of special file [if bdev/cdev] */
+> +	/* Device ID of special file [if bdev/cdev] */
+> +	__u32	stx_rdev_major;
+>  	__u32	stx_rdev_minor;
+> -	__u32	stx_dev_major;	/* ID of device containing file [uncond] */
+> +
+> +	/* ID of device containing file [uncond] */
+> +	__u32	stx_dev_major;
+>  	__u32	stx_dev_minor;
+> +
+>  	/* 0x90 */
+>  	__u64	stx_mnt_id;
+> -	__u32	stx_dio_mem_align;	/* Memory buffer alignment for direct I/O */
+> -	__u32	stx_dio_offset_align;	/* File offset alignment for direct I/O */
+> +
+> +	/* Memory buffer alignment for direct I/O */
+> +	__u32	stx_dio_mem_align;
+> +
+> +	/* File offset alignment for direct I/O */
+> +	__u32	stx_dio_offset_align;
+> +
+>  	/* 0xa0 */
+> -	__u64	stx_subvol;	/* Subvolume identifier */
+> -	__u32	stx_atomic_write_unit_min;	/* Min atomic write unit in bytes */
+> -	__u32	stx_atomic_write_unit_max;	/* Max atomic write unit in bytes */
+> +	/* Subvolume identifier */
+> +	__u64	stx_subvol;
+> +
+> +	/* Min atomic write unit in bytes */
+> +	__u32	stx_atomic_write_unit_min;
+> +
+> +	/* Max atomic write unit in bytes */
+> +	__u32	stx_atomic_write_unit_max;
+> +
+>  	/* 0xb0 */
+> -	__u32   stx_atomic_write_segments_max;	/* Max atomic write segment count */
+> +	/* Max atomic write segment count */
+> +	__u32   stx_atomic_write_segments_max;
+> +
+>  	__u32   __spare1[1];
+> +
+>  	/* 0xb8 */
+>  	__u64	__spare3[9];	/* Spare space for future expansion */
+> +
+>  	/* 0x100 */
+>  };
+>  
+> -- 
+> 2.45.2
+> 
 -- 
-2.45.2
-
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
