@@ -1,45 +1,47 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D50E1FF7D5;
-	Wed,  8 Jan 2025 17:27:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0EF220125C;
+	Wed,  8 Jan 2025 17:54:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736357263; cv=none; b=nYP8e5C+n7oXaMHJFXEeKzrDXytsSa0jl3izveTdYGC5Rz1RdoE8b4SwYusOGiAQ0Ei8EYwp74GxhzE6cEP2vcsALkgJGsZuuB7jHM2YKXVPLzQgpC3kLXiPG/Leg8TXO6/CEP65aTJcvk2yniMrMC39GqpUJehALZvo9VfVAQc=
+	t=1736358841; cv=none; b=d3muPuOWBRmx3PgDyVHIYmLiQOPm1h309pYlp9bjeE3hSm6zjeXVHlViLGVDfrDCbnCxmSry317V62Mu8t72zDz6p6VVrhMBLsV9QMv1urykp+/M+1q8vnpuFnGTexDyhEHIpFq1j9zaFVMp83EWfacLPAL2Txj2IgFzSCB6UmA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736357263; c=relaxed/simple;
-	bh=Fd/ChOXqWXSLL6ad01QK9TB9XaT+4qZHk5d/62xJaSI=;
+	s=arc-20240116; t=1736358841; c=relaxed/simple;
+	bh=Q1c3/3DbUd0P+MtXDw49ne6s4AUUeCoRFzfzF/oK9Bc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=n4tYYOqsHJ8mwi04pLtUGE2+T/NEYkkc89gSFeEOyu9tFdggxrVedFnNWFZFzJALEbmKfu3PBeYRCpuJ+PSBK3HoaSK87HibVfY3LSCt9J4yEWOmL9kKJhQioFWCjMuU4eWUikQK0n9rauG5wQFt5izrUuA8kNsC65DTeN38D3g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pWS/oUo+; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=VnTl8QVSJep5s02XSzcJqX73r7T7u6PkWCzyc5wz5PJMIvzBzuWj2XphRiKv298l1vlzA14b1FMv5jMljZ68KER8uf8po1a6O12bsyuH1Wqv9gWu7e2YcKdC7qHeVJvtB4WMPY/r/+A9t6kwpA17Rk1MRmuttZc9sd8175sScNg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=uX5Dw/pE; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pWS/oUo+"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D5B0EC4CED3;
-	Wed,  8 Jan 2025 17:27:42 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="uX5Dw/pE"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 08E20C4CEE1;
+	Wed,  8 Jan 2025 17:54:00 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1736357262;
-	bh=Fd/ChOXqWXSLL6ad01QK9TB9XaT+4qZHk5d/62xJaSI=;
+	s=k20201202; t=1736358840;
+	bh=Q1c3/3DbUd0P+MtXDw49ne6s4AUUeCoRFzfzF/oK9Bc=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=pWS/oUo+z1iZbbqIThQJ9SY8CG3ds2ucVWo0LaCtoRXf3hL6b3B3/r4+AxCRvB4nm
-	 N16ORCVDFJLZUuOxPdk/8MbFS9qJ5UopEHQGvNVrQd0BPvIN+J7D6FbY8AxD8XHfVR
-	 H+xnuwtP0ls3E5fO08XEaz7QoFtMKhMPnyMrLIVvjjpOsFQRKFbATRXiTHqAh0QTx1
-	 dDeViBKg/XM0JnYj0OnGBMRygkTlX3+d4bCo5rz667lhmCC+28rLA00IlPLbNpu0o6
-	 j1qx7vP2gKJ+PuN9hs67LCWGX0zn5gsDZWgRnx7Vg1gH6c+BwT2bbzuAlJ/fIaz34V
-	 FvcV7xcrOq1Ng==
-Date: Wed, 8 Jan 2025 09:27:42 -0800
-From: "Darrick J. Wong" <djwong@kernel.org>
+	b=uX5Dw/pEHtivzEPdMnqzho3rt/SjWveeCKtz5Yv+BXW/ANSBHZuED7sEbBCE8t20a
+	 7LDUgEfD9di/OeDCzWIEQ/zMHS0BRiidmyco7cUQ9DBQOircsxFmcKEpdCIs8srkwe
+	 eXwxei3299OO+uopDDLWZD4vWzHOYJr25BkERWWV6ApqgwQQXZXYQm07St1k3yY1n6
+	 BJmyOk23cpA93KL6XzucVtamFeydDmw4BFRSGzgOHvXH2YUMtOubfZrh+W6Q6AeOrB
+	 dcDvFuIvDdU+xaYF6fpjuR5cNyR4eJT975/JsJp8zuP8J18tC7hkEYkEhFrnQB2weq
+	 KK+x2X1pCqMzw==
+Date: Wed, 8 Jan 2025 09:53:58 -0800
+From: Eric Biggers <ebiggers@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
 Cc: Alexander Viro <viro@zeniv.linux.org.uk>,
 	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
 	Chandan Babu R <chandan.babu@oracle.com>,
+	"Darrick J. Wong" <djwong@kernel.org>,
 	Hongbo Li <lihongbo22@huawei.com>,
 	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
 	linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-xfs@vger.kernel.org, linux-man@vger.kernel.org
-Subject: Re: [PATCH] statx.2: document STATX_DIO_READ_ALIGN
-Message-ID: <20250108172742.GH1306365@frogsfrogsfrogs>
+	linux-xfs@vger.kernel.org
+Subject: Re: [PATCH 4/5] xfs: report the correct read/write dio alignment for
+ reflinked inodes
+Message-ID: <20250108175358.GA29347@sol.localdomain>
 References: <20250108085549.1296733-1-hch@lst.de>
- <20250108085900.GA27227@lst.de>
+ <20250108085549.1296733-5-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -48,92 +50,64 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250108085900.GA27227@lst.de>
+In-Reply-To: <20250108085549.1296733-5-hch@lst.de>
 
-On Wed, Jan 08, 2025 at 09:59:00AM +0100, Christoph Hellwig wrote:
-> Document the new STATX_DIO_READ_ALIGN flag and the new
-> stx_dio_read_offset_align field guarded by it.
+On Wed, Jan 08, 2025 at 09:55:32AM +0100, Christoph Hellwig wrote:
+> For I/O to reflinked blocks we always need to write an entire new
+> file system block, and the code enforces the file system block alignment
+> for the entire file if it has any reflinked blocks.
+> 
+> Use the new STATX_DIO_READ_ALIGN flag to report the asymmetric read
+> vs write alignments for reflinked files.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: "Darrick J. Wong" <djwong@kernel.org>
 > ---
->  man/man2/statx.2 | 26 +++++++++++++++++++++++++-
->  1 file changed, 25 insertions(+), 1 deletion(-)
+>  fs/xfs/xfs_iops.c | 21 ++++++++++++++++++---
+>  1 file changed, 18 insertions(+), 3 deletions(-)
 > 
-> diff --git a/man/man2/statx.2 b/man/man2/statx.2
-> index c5b5a28ec2f1..8ef6a1cfb1c0 100644
-> --- a/man/man2/statx.2
-> +++ b/man/man2/statx.2
-> @@ -76,6 +76,9 @@ struct statx {
->      __u32 stx_atomic_write_unit_min;
->      __u32 stx_atomic_write_unit_max;
->      __u32 stx_atomic_write_segments_max;
+> diff --git a/fs/xfs/xfs_iops.c b/fs/xfs/xfs_iops.c
+> index 6b0228a21617..40289fe6f5b2 100644
+> --- a/fs/xfs/xfs_iops.c
+> +++ b/fs/xfs/xfs_iops.c
+> @@ -580,9 +580,24 @@ xfs_report_dioalign(
+>  	struct xfs_buftarg	*target = xfs_inode_buftarg(ip);
+>  	struct block_device	*bdev = target->bt_bdev;
+>  
+> -	stat->result_mask |= STATX_DIOALIGN;
+> +	stat->result_mask |= STATX_DIOALIGN | STATX_DIO_READ_ALIGN;
+>  	stat->dio_mem_align = bdev_dma_alignment(bdev) + 1;
+> -	stat->dio_offset_align = bdev_logical_block_size(bdev);
 > +
-> +    /* File offset alignment for direct I/O reads */
-> +    __u32   stx_dio_read_offset_align;
->  };
->  .EE
->  .in
-> @@ -261,7 +264,7 @@ STATX_BTIME	Want stx_btime
->  STATX_ALL	The same as STATX_BASIC_STATS | STATX_BTIME.
->  	It is deprecated and should not be used.
->  STATX_MNT_ID	Want stx_mnt_id (since Linux 5.8)
-> -STATX_DIOALIGN	Want stx_dio_mem_align and stx_dio_offset_align
-> +STATX_DIOALIGN	Want stx_dio_mem_align and stx_dio_offset_align.
->  	(since Linux 6.1; support varies by filesystem)
->  STATX_MNT_ID_UNIQUE	Want unique stx_mnt_id (since Linux 6.8)
->  STATX_SUBVOL	Want stx_subvol
-> @@ -270,6 +273,8 @@ STATX_WRITE_ATOMIC	Want stx_atomic_write_unit_min,
->  	stx_atomic_write_unit_max,
->  	and stx_atomic_write_segments_max.
->  	(since Linux 6.11; support varies by filesystem)
-> +STATX_DIO_READ_ALIGN	Want stx_dio_read_offset_align.
-> +	(since Linux 6.14; support varies by filesystem)
->  .TE
->  .in
->  .P
-> @@ -467,6 +472,25 @@ This will only be nonzero if
->  .I stx_dio_mem_align
->  is nonzero, and vice versa.
->  .TP
-> +.I stx_dio_read_offset_align
-> +The alignment (in bytes) required for file offsets and I/O segment lengths for
-> +direct I/O reads
-> +.RB ( O_DIRECT )
-> +on this file.
-> +If zero the limit in
+> +	/*
+> +	 * For COW inodes, we can only perform out of place writes of entire
+> +	 * allocation units (blocks or RT extents).
+> +	 * For writes smaller than the allocation unit, we must fall back to
+> +	 * buffered I/O to perform read-modify-write cycles.  At best this is
+> +	 * highly inefficient; at worst it leads to page cache invalidation
+> +	 * races.  Tell applications to avoid this by reporting the larger write
+> +	 * alignment in dio_offset_align, and the smaller read alignment in
+> +	 * dio_read_offset_align.
+> +	 */
+> +	stat->dio_read_offset_align = bdev_logical_block_size(bdev);
+> +	if (xfs_is_cow_inode(ip))
+> +		stat->dio_offset_align = xfs_inode_alloc_unitsize(ip);
+> +	else
+> +		stat->dio_offset_align = stat->dio_read_offset_align;
 
-nit: add a comma here (really a dependent clause) to make it clearer
-that 'zero' isn't being used as a verb here:
+This contradicts the proposed man page, which says the following about
+stx_dio_read_offset_align offset:
 
-"If zero, the limit in..."
+          If non-zero this value must be smaller than  stx_dio_offset_align
+          which  must be provided by the file system.
 
-> +.I stx_dio_offset_align
-> +applies for reads as well.
-> +If non-zero this value must be smaller than
+The proposed code sets stx_dio_read_offset_align and stx_dio_offset_align to the
+same value in some cases.
 
-Same here.
+Perhaps the documentation should say "less than or equal to"?
 
-"If non-zero, this value..."
+Also, the claim that stx_dio_offset_align "must be provided by the file system"
+if stx_dio_read_offset_align is nonzero should probably be conditional on
+STATX_DIOALIGN being provided too.
 
-With that fixed,
-Reviewed-by: "Darrick J. Wong" <djwong@kernel.org>
-
---D
-
-> +.I stx_dio_offset_align
-> +which must be provided by the file system.
-> +The memory alignment in
-> +.I stx_dio_mem_align
-> +is not affected by this value.
-> +.IP
-> +.B STATX_DIO_READ_ALIGN
-> +.RI ( stx_dio_offset_align )
-> +is supported by xfs on regular files since Linux 6.14.
-> +.TP
->  .I stx_subvol
->  Subvolume number of the current file.
->  .IP
-> -- 
-> 2.45.2
-> 
-> 
+- Eric
