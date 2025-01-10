@@ -1,92 +1,138 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com [209.85.214.170])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D6CB20469B;
-	Thu,  9 Jan 2025 15:24:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B243115E90;
+	Fri, 10 Jan 2025 01:07:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736436284; cv=none; b=rPPkVhBVLmYFT38Vx517fp5JC2E7z34nhOz6ujf1imHOPiYsm4FP3FUd75C+TiTGKjCCSmmM91z/lbA+fnSIVtk73v6hQV/GLQ97qkbuxPLKOeh7+DDrNBaXiX3MbE0nP+iX+aL3dODMeDWh6u/S+fcPYi19Zqzx/Sa163PPgtQ=
+	t=1736471229; cv=none; b=lDZ78rpkai6M1Vo2Bg08dimymszj1Tn+EqvzdlH6z12eVfuWgqj3B4vLWadyfygnYB5TJ9FJltLexKq2GHGRlLrH2B+vllNRLQ+nW3pkIIoqI2YZrzY60c86ZDqtHFSks2rUX6Q6Lv1HguEADp3wjf7GRnOOpZlaGDLaZ/10HAI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736436284; c=relaxed/simple;
-	bh=Cgj4SKDnVIxVoAkg16mjvYmaG/UVaegsKkU2/H3f3zI=;
+	s=arc-20240116; t=1736471229; c=relaxed/simple;
+	bh=tSOlNkDzzQ5h4pEcVGPmTNaIEQ88+cEiN4pfuOhFWT0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=tw6YB8hs7EIXwf/opIv92l++uxnsMKzOT4/F06A58BZQd4DJ1TZaOY0uCmolHgFEUEY6xW9VJjAsUZr7WeXdvwqWjTtwkaXk3QK0CsxWwl4fHaGdkCCCBNAyICsa2o4PtC4Br0pIbDP1PiJHNY8OMz5mqnbCkYgsgWWSE4H2rbk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=V1Z5425o; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=G8d+P2WDYmo2//Z09CqVqW4ywzTsS1LRI31x2CMg2YeAXrklcSkuHDb/pIw+L8TqxlH74+1AP2tFvJK9m8YqLDh0PuUp9rmgzt9BGh39jKkk/5ouhhcLHmohDugn5/HOO/uF/YMxVInNkJZIit1Wb14+ehid489nQrvMAiN+sME=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XWQy/78s; arc=none smtp.client-ip=209.85.214.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="V1Z5425o"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 25DBBC4CED2;
-	Thu,  9 Jan 2025 15:24:40 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1736436283;
-	bh=Cgj4SKDnVIxVoAkg16mjvYmaG/UVaegsKkU2/H3f3zI=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=V1Z5425o6M21GALwFnyU7b5Z25TxvsbgYTKJzVNP6ZqNqyhfAVzdhv6n6dH7lFj6E
-	 +fe8oHbcApI6WhuQmnyj/cdFwCUoZ9ntYi2hAfomY1rJy1tx27kueIg7IN6FN2XiBS
-	 OYtwYvfpSHIkqdERgesQaOJXxETl5Gds9yu0gBA1+z6wcsO/N26iKWgFyORMthzcwL
-	 xx1/mRoIHr9T4BlnTYWIOrnAGFy9Q8YjGIIzLUl40U8HcQHx1lJapIxy3vSMXtxDyN
-	 uLQ9IzwO4gfv22yIeesKCaHE+17D5djicPqqG8oMlhZW4cT4XuD9wOlScjXUVdkdZo
-	 1L+KvRpcP74Rg==
-From: Christian Brauner <brauner@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Christian Brauner <brauner@kernel.org>,
-	Jan Kara <jack@suse.cz>,
-	Chandan Babu R <chandan.babu@oracle.com>,
-	"Darrick J. Wong" <djwong@kernel.org>,
-	Hongbo Li <lihongbo22@huawei.com>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XWQy/78s"
+Received: by mail-pl1-f170.google.com with SMTP id d9443c01a7336-216281bc30fso29423645ad.0;
+        Thu, 09 Jan 2025 17:07:07 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1736471227; x=1737076027; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=gSD7wwqA3NPwOWw67AZeqj8Bavxm8bOTKHpP8Z1y9M0=;
+        b=XWQy/78sTDNE6eCKGOH6ke5cdznY3Odqi/vQ/S/4afxGfOK2Cw+JeX77RvBTqjiQhG
+         mBwcHIE3Zs8o43mkaNdvkh7KOVHptcN5GkhBWwov6t20Re1bEmY5buaZoEMDK76o7fnG
+         TDgVGik2O9L/6IgzNOjvzMaJuwM0EYT2XvOCcRv6VD/RHpelovjLUGQgSy7HEbaTY4WF
+         WUPXryrw5px83FeE4rCugo+zLJCuYLkF6bixwEiu0KBMd4JGHeKO/V8hoxsPrxuZ7cZ6
+         Wlt1CAwybdwOnXRgnYk203oU5Z64hhP2DYN/L3w1/EsEzeCurTeYOnTV5pX5yx5a01mR
+         9mVQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1736471227; x=1737076027;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=gSD7wwqA3NPwOWw67AZeqj8Bavxm8bOTKHpP8Z1y9M0=;
+        b=KEoST9NswwyHSMUmJ2EK0qVstZAXuit0+wLhqT6hguQILu7Ii0oqoFh31ysFcssuUJ
+         qXWGyuEKfIRblOcr1cNC8anhJZ0nDuRrkebQy7Nuu8F5/BIcuNA0XUwPE9Lkfc5AwNiF
+         tac81o0uBtrXNasS7F1xha16UtNgHwBkuJWPySISWU090lKlwTSnBMUFJiB0wTLFw7Ur
+         Z4xtQLeeX+gU/V80Q6WkOFzC51NfI+X7jHVxDoej87+9mQkOf9E+OBGPW3xKQd/Df2oE
+         BS8Erg+PFy7MUunaZPmcR2vkKNT9i3dkev7JYvrI1eD/035vrLfmh2Vs8R9uodNEJRDa
+         Hd6A==
+X-Forwarded-Encrypted: i=1; AJvYcCUgoutPUWmx8PcqNI3CuafxPfv2Qe2RXor5cjJBmMGOpnTW9vuCCL5qw7ryRnE04yPHqi24wxBZw1HtqvA=@vger.kernel.org, AJvYcCWsKBOIofqtXP+dJRdAK0UvdkiW8iSRfM73w/x6zHEmD/4cQxoU58PkXjMHDOtYdWxvEnz3MzFotLVJOpY=@vger.kernel.org
+X-Gm-Message-State: AOJu0YyoE+y7j6Fs2EXTZttZYW3SysUmkv3NVou500xqJQstY1y1ipqw
+	tb6v/pTugBkOQuhz1ou5tRBmWSw7UrFdqetH+Wnl1IJowZweRwhb
+X-Gm-Gg: ASbGncsROEIyuzQ7sf/tMBfRYmWrgWSkb0CW2H5pJTkJN9t0f1EMMV0aHW0fRGXi8Ap
+	NmhTSmNXwhG549IHs5dqCE4ilnSNNlQPiB9ubAlncEm7BFKOt5DhZVa6/aBU6Du5GujI1ZiYbov
+	Vbkbb2AWQntBWE2p+J5cK2fyE59A+dJ3zjRGp+rIoJd1eRC8BkyY1s/Tx61pWqT1+YRM5eoDg/6
+	jphtom9aNk56UjYAAm+UiWcpjQHlaLGziSrre4YpgB7Z9YN+yOdD9bI070KSpq3CtuMzwpLKV+v
+	Lx7fxlo33azg7DO9NnbKbC9374T4
+X-Google-Smtp-Source: AGHT+IHe5/xzhYogjB/BhIOpUk6Hz7pMyY/uRJf9e2/lnumVPuS4UHYquZ2l3MefP0TPGQU5qUBq9w==
+X-Received: by 2002:a05:6a21:9999:b0:1e1:f281:8d36 with SMTP id adf61e73a8af0-1e88d1062d3mr13799182637.10.1736471226962;
+        Thu, 09 Jan 2025 17:07:06 -0800 (PST)
+Received: from carrot.. (i114-186-237-30.s41.a014.ap.plala.or.jp. [114.186.237.30])
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-a31ddb9e4b4sm1862834a12.70.2025.01.09.17.07.04
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 09 Jan 2025 17:07:06 -0800 (PST)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: "Brian G ." <gissf1@gmail.com>,
 	linux-nilfs@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org,
-	linux-xfs@vger.kernel.org,
-	Alexander Viro <viro@zeniv.linux.org.uk>
-Subject: Re: add STATX_DIO_READ_ALIGN v3
-Date: Thu,  9 Jan 2025 16:24:28 +0100
-Message-ID: <20250109-neigen-eisern-3024e1ffbde0@brauner>
-X-Mailer: git-send-email 2.45.2
-In-Reply-To: <20250109083109.1441561-1-hch@lst.de>
-References: <20250109083109.1441561-1-hch@lst.de>
+	linux-kernel@vger.kernel.org
+Subject: [PATCH -v2 0/7] nilfs2: fix kernel-doc comments for function return values
+Date: Fri, 10 Jan 2025 10:01:43 +0900
+Message-ID: <20250110010530.21872-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <CAKFNMoksY6f5NtVwmn6K0K2QKTvdjq+s0FbdgLvHzS3YueKqYQ@mail.gmail.com>
+References: <CAKFNMoksY6f5NtVwmn6K0K2QKTvdjq+s0FbdgLvHzS3YueKqYQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1626; i=brauner@kernel.org; h=from:subject:message-id; bh=Cgj4SKDnVIxVoAkg16mjvYmaG/UVaegsKkU2/H3f3zI=; b=owGbwMvMwCU28Zj0gdSKO4sYT6slMaTXvzK5Unc/l+uq7//nars4kk4qeOcdiE8z2dZk72BW+ Kev8JBARykLgxgXg6yYIotDu0m43HKeis1GmRowc1iZQIYwcHEKwESYoxj+p6sFppiK5Mnn/zNW 1nNy71vllmL4SPmSnmC+qbJUaVE5I8OJwB38mldYtFsZA+rWvb+pIppf8+VygBp78jMFdf0ZVxg B
-X-Developer-Key: i=brauner@kernel.org; a=openpgp; fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
 Content-Transfer-Encoding: 8bit
 
-On Thu, 9 Jan 2025 09:31:00 +0100, Christoph Hellwig wrote:
-> [I hope that no one gets too annoyed by the rapid resends, but s we're
->  down to comment an man page tweaks I thought I'd stick to the fast pace]
-> 
-> file systems that write out of place usually require different alignment
-> for direct I/O writes than what they can do for reads.  This series tries
-> to address this by adding yet another statx field.
-> 
-> [...]
+This series fixes the inadequacies in the return value descriptions in
+nilfs2's kernel-doc comments (mainly incorrect formatting), as well as
+the lack of return value descriptions themselves, and fixes most of
+the remaining warnings that are output when the kernel-doc script is
+run with the "-Wall" option.
 
-Applied to the vfs-6.14.statx.dio branch of the vfs/vfs.git tree.
-Patches in the vfs-6.14.statx.dio branch should appear in linux-next soon.
+Changes since v1 (in response to Brian G.'s comments):
+- Fix typos in the comments.  Plus, fix spell checker detections.
+- Fix missing -ENOMEM in the return code list of nilfs_ioctl_set_suinfo().
+- Ensure that the adjective "negative" is included for negative error
+ codes.
+- Change the description style of return codes that list multiple error
+ codes to match "..., or one of the following negative error codes on
+ failure:" (applied across patches).
+- Apply similar style adjustments to existing return code descriptions that
+ are not warned about by the kernel-doc script (patch 7/7).
 
-Please report any outstanding bugs that were missed during review in a
-new review to the original patch series allowing us to drop it.
+The patch 7/7 is an addition, and the rest are revisions that correspond
+one-to-one to the -v1 series.
 
-It's encouraged to provide Acked-bys and Reviewed-bys even though the
-patch has now been applied. If possible patch trailers will be updated.
+Thanks,
+Ryusuke Konishi
 
-Note that commit hashes shown below are subject to change due to rebase,
-trailer updates or similar. If in doubt, please check the listed branch.
+Ryusuke Konishi (7):
+  nilfs2: correct return value kernel-doc descriptions for ioctl
+    functions
+  nilfs2: correct return value kernel-doc descriptions for bmap
+    functions
+  nilfs2: correct return value kernel-doc descriptions for sufile
+  nilfs2: correct return value kernel-doc descriptions for metadata
+    files
+  nilfs2: correct return value kernel-doc descriptions for the rest
+  nilfs2: add missing return value kernel-doc descriptions
+  nilfs2: revise the return value description style for consistency.
 
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
-branch: vfs-6.14.statx.dio
+ fs/nilfs2/alloc.c     |  67 +++++++++++-
+ fs/nilfs2/alloc.h     |   2 +
+ fs/nilfs2/bmap.c      | 124 ++++++++++------------
+ fs/nilfs2/btnode.c    |   3 +-
+ fs/nilfs2/btree.c     |   7 +-
+ fs/nilfs2/cpfile.c    |  69 ++++++------
+ fs/nilfs2/dat.c       |  45 ++++----
+ fs/nilfs2/gcinode.c   |  24 ++---
+ fs/nilfs2/ifile.c     |  37 ++++---
+ fs/nilfs2/inode.c     |  16 ++-
+ fs/nilfs2/ioctl.c     | 236 ++++++++++++++++++------------------------
+ fs/nilfs2/mdt.c       |  63 ++++++-----
+ fs/nilfs2/page.c      |   8 +-
+ fs/nilfs2/recovery.c  |  62 +++++++----
+ fs/nilfs2/segbuf.c    |  12 +--
+ fs/nilfs2/segment.c   |  62 ++++++-----
+ fs/nilfs2/sufile.c    | 112 +++++++++-----------
+ fs/nilfs2/sufile.h    |  22 ++--
+ fs/nilfs2/super.c     |  10 +-
+ fs/nilfs2/the_nilfs.c |  26 +++--
+ 20 files changed, 507 insertions(+), 500 deletions(-)
 
-[1/5] fs: reformat the statx definition
-      https://git.kernel.org/vfs/vfs/c/8fc7e23a9bd8
-[2/5] fs: add STATX_DIO_READ_ALIGN
-      https://git.kernel.org/vfs/vfs/c/7ed6cbe0f8ca
-[3/5] xfs: cleanup xfs_vn_getattr
-      https://git.kernel.org/vfs/vfs/c/7e17483c7b15
-[4/5] xfs: report the correct read/write dio alignment for reflinked inodes
-      https://git.kernel.org/vfs/vfs/c/7422bbd03021
-[5/5] xfs: report larger dio alignment for COW inodes
-      https://git.kernel.org/vfs/vfs/c/468210ec76e1
+-- 
+2.43.0
+
