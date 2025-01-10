@@ -1,179 +1,75 @@
-Received: from mail-il1-f205.google.com (mail-il1-f205.google.com [209.85.166.205])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.inka.de (quechua.inka.de [193.197.184.2])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 474512080DB
-	for <linux-nilfs@vger.kernel.org>; Fri, 10 Jan 2025 13:42:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.205
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5202821171A
+	for <linux-nilfs@vger.kernel.org>; Fri, 10 Jan 2025 15:54:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.197.184.2
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736516545; cv=none; b=WxpVNwpO2H121oIPO8+zlwpV868p/EHzqqFZUk7yVXw1gl6rw1SqlMqU9/NFhPUEy/OXxpRBYNEb6Yi5owD5sTICLxwCLCBYNasTz3lOcyXBQwHFXrCQxNzQyo6E1rvBFAJMaIm7OFHGXM+n+IiEc8vW62huWPFazCztwdq5Axc=
+	t=1736524478; cv=none; b=lgcIwbS879FCPj28fBBfEVXWJhHCFFPSya2Taxf6WHo85o8zYYoDuCp3k+U/uKFAP2jyOwoBeBcELXZjb54LcmDEBnmcMnHQ4PZLGcOTtza5xa2E1tiS1ycoqYGL8wkqXIJNJGvDDfOD1FAOT8bB0FBAw5igQHoH2CCV0RV+wRk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736516545; c=relaxed/simple;
-	bh=2oPafSaF+U+wwnSSIQrB7MzNnyrsIiqx0JQVHkSvoao=;
-	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=aHwsRjQGlvrL5khE2u8Fx8fsFgrIsm6Vfp2LD1PF+laQQkvrvwDnfcFfKZvqccv8wCCdfQFwKd6ufGBhRZZN9OkCJYDUFhQmcpTCkUMDOrtm6/i9Gv/G8rDXzhzDgnYsOCJFDRisHVza8N0favQk5XFFOpQFRqbW1GqG35jYW/E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.205
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-il1-f205.google.com with SMTP id e9e14a558f8ab-3a7e4bfae54so16211825ab.0
-        for <linux-nilfs@vger.kernel.org>; Fri, 10 Jan 2025 05:42:24 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736516543; x=1737121343;
-        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=ueKhbx99YrxbsA7xImzVYe47LV++NIJ+2cMP5wQU9F8=;
-        b=JYrax+hq/ZkOaddTfW518h12GP2zPEHWe52WosLopqK7K2i44Rtuo/1xRzCqJE7xc8
-         OJoEm3wqRPMHoS9zG6L6PDQj/UIwN5aDrzZ2tiOIqUgCIWkbDoUwEYqS5dEpE3ALmmNn
-         DE05ZPcQe8j7z2t9bUi/cHHu6gSJKjpm7jAYSzfI4Vt6JgUH9ghaYhQ/FT8z4Lo7UHs+
-         FSNKtEyhcjmh+0ZWe9JjEUwoJmCvhZZcpQjF/X5mNFLUnTv1DVrgYTi1Yk2mXJcO+vug
-         bTi0GCsu2DFWQitcSx+U4bVEzNeiLOe4d0VWUwDReBQp7Qq3G3+WR6RkZXzP+OK6mnQF
-         uxCQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXpFmf8APAD1I+2/LlK/FVFWSoAtYhW1TNWzxp7u4Nawdu7ShdDwnGkL6osfPKVL+0p3pON7O6SDVYBMg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxjWtTmJ75CYOOZx6wXpaAG+QoXpn61ysAX6aAiNqADapKLas6M
-	++Jk8BvjtW/stsE47KyacPpaVhZ/FWxE8pEa3KUwfnVgJHyQvRAvDDpg4xn/+zrYo/il0+bv+jf
-	yYWsYwGUaR6+lbtTPLIRo83VMuVpei0+HKxW7EKuECwoZ3Dke8m4ZPqY=
-X-Google-Smtp-Source: AGHT+IFnFAXzyi2qiswxzO/hFplzsmpbM7CTSR4KY19xlJZsXrWCGH2C7Ucvn6+g3w7OfadTighnLG/RXOkeonqEuWEu18hnlfk1
+	s=arc-20240116; t=1736524478; c=relaxed/simple;
+	bh=DXWeQ40v8QqfQHMJcAfsIzz+Ze1xsAHwFrKvTyPBWIE=;
+	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=ORZO1eYFhjeZ/yzrTLZyZZqiIfrKMOJLWS9I8Tc+6VMNZ5CUtKYse7i2v5i4RsRyopF+GSlPhg7IhBWTFtLm/DKpbyM3vnaPV0CC9t9BngyTL0kn3CXADr4V1r6xGp36fEhkPxk4hzA+/4MyPVumulZ2EEYXzTyHZfCd/sr9h1E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=inka.de; spf=pass smtp.mailfrom=inka.de; arc=none smtp.client-ip=193.197.184.2
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=inka.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=inka.de
+Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com [209.85.214.171])
+	by mail.inka.de with esmtpsa 
+	id 1tWHLF-006YS2-4A; Fri, 10 Jan 2025 16:54:33 +0100
+Received: by mail-pl1-f171.google.com with SMTP id d9443c01a7336-21634338cfdso4759325ad.2
+        for <linux-nilfs@vger.kernel.org>; Fri, 10 Jan 2025 07:54:32 -0800 (PST)
+X-Gm-Message-State: AOJu0YxSTCy9izkkvVCIL1OVP74un+2wio4j8Rp/pjSkfr6D/YZXudDK
+	7hbENQUVT7Nn4mW4pFbf9b0smkSMt4XTE0iM8jY7ROKNWvOTMQpd5DPIps2z1RyBM/KN3WxMIK5
+	5dPWbTlC5lVP4e3i684teF4Li/vfBgFGi/ztf
+X-Google-Smtp-Source: AGHT+IFRQ9SNquNsCXd8reMh1Of0Dfn3SAihyB9xGnl8AyGMnw9XSMWH6lV8zDX0MMQt/8BoeK0jgmV3eKbAUGyyOv4=
+X-Received: by 2002:a05:6a20:8416:b0:1e3:e77d:1460 with SMTP id
+ adf61e73a8af0-1e88d133bdbmr19652037637.22.1736524471494; Fri, 10 Jan 2025
+ 07:54:31 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a92:c24f:0:b0:3a7:e592:55ee with SMTP id
- e9e14a558f8ab-3ce3aa746d1mr86893085ab.20.1736516543463; Fri, 10 Jan 2025
- 05:42:23 -0800 (PST)
-Date: Fri, 10 Jan 2025 05:42:23 -0800
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <678123bf.050a0220.216c54.000f.GAE@google.com>
-Subject: [syzbot] [nilfs?] kernel BUG in nilfs_set_link
-From: syzbot <syzbot+1097e95f134f37d9395c@syzkaller.appspotmail.com>
-To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+From: "Felix E. Klee" <felix.klee@inka.de>
+Date: Fri, 10 Jan 2025 16:54:03 +0100
+X-Gmail-Original-Message-ID: <CA+m_8J37qo6fKFUp0wpRuK1FHawXNmCMiEyVYEwpt2Nc3uX5Og@mail.gmail.com>
+X-Gm-Features: AbW1kvYiKnWM4KE86u9TlmAPJw7weu8_6GFlMw1evDEdNLDU5gs0P_da2BcvHUg
+Message-ID: <CA+m_8J37qo6fKFUp0wpRuK1FHawXNmCMiEyVYEwpt2Nc3uX5Og@mail.gmail.com>
+Subject: Massive overhead even after deleting checkpoints
+To: linux-nilfs@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hello,
+The disk is full close to the max:
 
-syzbot found the following issue on:
+    $ df -h /bigstore/
+    Filesystem            Size  Used Avail Use% Mounted on
+    /dev/mapper/bigstore  3.5T  3.3T   65G  99% /bigstore
 
-HEAD commit:    9d89551994a4 Linux 6.13-rc6
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=1510b418580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=4ef22c4fce5135b4
-dashboard link: https://syzkaller.appspot.com/bug?extid=1097e95f134f37d9395c
-compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+Yet, not that much is actually used by the files themselves:
 
-Unfortunately, I don't have any reproducer for this issue yet.
+    $ du -sh /bigstore/
+    2.5T    /bigstore/
 
-Downloadable assets:
-disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9d895519.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/bcfa24563a7a/vmlinux-9d895519.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/5bc14c94d0b7/bzImage-9d895519.xz
+Using `rmcp` I deleted all checkpoints, but that didn=E2=80=99t solve the i=
+ssue.
+Furthermore, there are no snapshots:
 
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+1097e95f134f37d9395c@syzkaller.appspotmail.com
+    $ lscp
+             CNO        DATE     TIME  MODE  FLG      BLKCNT       ICNT
+          443574  2025-01-10 16:41:44   cp    -    652100924     421961
+          443575  2025-01-10 16:41:44   cp    -    652100923     421960
 
-loop0: detected capacity change from 0 to 2048
-loop0: detected capacity change from 2048 to 0
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=84, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=0)
-NILFS (loop0): error -5 truncating bmap (ino=16)
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=100, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=100, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=100, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=100, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=100, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=70, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=6, block-offset=0)
-syz.0.0: attempt to access beyond end of device
-loop0: rw=0, sector=70, nr_sectors = 2 limit=0
-NILFS (loop0): I/O error reading meta-data file (ino=6, block-offset=0)
-NILFS (loop0): mounting fs with errors
-Buffer I/O error on dev loop0, logical block 1, lost sync page write
-NILFS (loop0): unable to write superblock: err=-5
-NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=2)
-------------[ cut here ]------------
-kernel BUG at fs/nilfs2/dir.c:413!
-Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN NOPTI
-CPU: 0 UID: 0 PID: 5317 Comm: syz.0.0 Not tainted 6.13.0-rc6-syzkaller #0
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
-RIP: 0010:nilfs_set_link+0x3ed/0x3f0 fs/nilfs2/dir.c:413
-Code: c6 60 af 46 8c e8 03 b8 6d fe 90 0f 0b e8 eb f7 23 fe 4c 89 ef 48 c7 c6 60 af 46 8c e8 ec b7 6d fe 90 0f 0b e8 d4 f7 23 fe 90 <0f> 0b 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 55 41 57
-RSP: 0018:ffffc9000d1ff8c0 EFLAGS: 00010283
-RAX: ffffffff837b8c4c RBX: 00000000fffffffb RCX: 0000000000100000
-RDX: ffffc9000e672000 RSI: 0000000000000edb RDI: 0000000000000edc
-RBP: ffff88804cb93050 R08: ffffffff837b8a9b R09: 1ffff11008674b79
-R10: dffffc0000000000 R11: ffffed1008674b7a R12: dffffc0000000000
-R13: ffffea000132e4c0 R14: 0000000000000050 R15: 0000000000000018
-FS:  00007f595bb756c0(0000) GS:ffff88801fc00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007ff7ccc87580 CR3: 00000000339c0000 CR4: 0000000000352ef0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-Call Trace:
- <TASK>
- nilfs_rename+0x6a3/0xb60 fs/nilfs2/namei.c:409
- vfs_rename+0xbdb/0xf00 fs/namei.c:5067
- do_renameat2+0xd94/0x13f0 fs/namei.c:5224
- __do_sys_rename fs/namei.c:5271 [inline]
- __se_sys_rename fs/namei.c:5269 [inline]
- __x64_sys_rename+0x82/0x90 fs/namei.c:5269
- do_syscall_x64 arch/x86/entry/common.c:52 [inline]
- do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-RIP: 0033:0x7f595ad85d29
-Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007f595bb75038 EFLAGS: 00000246 ORIG_RAX: 0000000000000052
-RAX: ffffffffffffffda RBX: 00007f595af75fa0 RCX: 00007f595ad85d29
-RDX: 0000000000000000 RSI: 0000000020000040 RDI: 0000000020000000
-RBP: 00007f595ae01b08 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
-R13: 0000000000000000 R14: 00007f595af75fa0 R15: 00007ffd8f311a58
- </TASK>
-Modules linked in:
----[ end trace 0000000000000000 ]---
-RIP: 0010:nilfs_set_link+0x3ed/0x3f0 fs/nilfs2/dir.c:413
-Code: c6 60 af 46 8c e8 03 b8 6d fe 90 0f 0b e8 eb f7 23 fe 4c 89 ef 48 c7 c6 60 af 46 8c e8 ec b7 6d fe 90 0f 0b e8 d4 f7 23 fe 90 <0f> 0b 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 55 41 57
-RSP: 0018:ffffc9000d1ff8c0 EFLAGS: 00010283
-RAX: ffffffff837b8c4c RBX: 00000000fffffffb RCX: 0000000000100000
-RDX: ffffc9000e672000 RSI: 0000000000000edb RDI: 0000000000000edc
-RBP: ffff88804cb93050 R08: ffffffff837b8a9b R09: 1ffff11008674b79
-R10: dffffc0000000000 R11: ffffed1008674b7a R12: dffffc0000000000
-R13: ffffea000132e4c0 R14: 0000000000000050 R15: 0000000000000018
-FS:  00007f595bb756c0(0000) GS:ffff88801fc00000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007f595bb53fe0 CR3: 00000000339c0000 CR4: 0000000000352ef0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+The cleaner daemon is running with default configuration (Arch):
 
+    $ ps ax | grep -i cleanerd
+        827 ?        S      0:39 /sbin/nilfs_cleanerd
+/dev/mapper/bigstore /bigstore
+     117067 pts/1    S+     0:00 grep --color=3Dauto -i cleanerd
 
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+I also rebooted the system, causing a remount of the partition. Yet,
+still no improvement.
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
-
-If the report is already addressed, let syzbot know by replying with:
-#syz fix: exact-commit-title
-
-If you want to overwrite report's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
-
-If the report is a duplicate of another one, reply with:
-#syz dup: exact-subject-of-another-report
-
-If you want to undo deduplication, reply with:
-#syz undup
+Is there a solution, or is the missing space simply used up by NILFS
+data structures? (it would be a bit very much overhead)
