@@ -1,254 +1,179 @@
-Received: from mail-pl1-f181.google.com (mail-pl1-f181.google.com [209.85.214.181])
+Received: from mail-il1-f205.google.com (mail-il1-f205.google.com [209.85.166.205])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4D0E2204688;
-	Fri, 10 Jan 2025 01:07:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 474512080DB
+	for <linux-nilfs@vger.kernel.org>; Fri, 10 Jan 2025 13:42:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.205
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736471250; cv=none; b=nuyKsH2QQZThSbs0FR6LdnytKthYJC6HxhUyddSzh+G3T3HF4URd47ilnsyZQjZIYy5nK2u8fSOgv4wmkWTcybEIHycv9B9HJbMBOlpbijBbZ1MK5N8MAjvYQYk5PfO4pnrndVNFryNTj2j6z0z5AvT9Qjn713VYNY9Pn163HNA=
+	t=1736516545; cv=none; b=WxpVNwpO2H121oIPO8+zlwpV868p/EHzqqFZUk7yVXw1gl6rw1SqlMqU9/NFhPUEy/OXxpRBYNEb6Yi5owD5sTICLxwCLCBYNasTz3lOcyXBQwHFXrCQxNzQyo6E1rvBFAJMaIm7OFHGXM+n+IiEc8vW62huWPFazCztwdq5Axc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736471250; c=relaxed/simple;
-	bh=Vuzbb9b0/RVgkNoXGl0DdHm2sJbX4Ly2PcejX8w3lCU=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rj11Q9Nb8rnJGWWrl4GN+d1Bc/LOVVSOlFqUHHHCCSEA//eY9MaFNC1om+C+vgo76JmXLmEVbD3G/hqldL4BKvH8FPp1s3hHhSV2mysKnLeYvlXWb7/FuufsmgWmYxkl0Lyw2NoR89xDDiFM9nOE4HasyyNeZHewL+AaSgdtS68=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SwRxLo0N; arc=none smtp.client-ip=209.85.214.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SwRxLo0N"
-Received: by mail-pl1-f181.google.com with SMTP id d9443c01a7336-21634338cfdso34465065ad.2;
-        Thu, 09 Jan 2025 17:07:28 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1736471247; x=1737076047; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=2cMk0RgEMQ6q9ONC0S36gIY8rZpiqX9AbZN0DEHDcMM=;
-        b=SwRxLo0NTtHJiD3eiHzaPWU+z31b5E182XaCjX6mkQzh87NeZ5mj1MvcHR+bSOy/fN
-         f1KXL/DQl0MKaXOVs3S+yCAB6BCYdbqhck2ro+NmOBtBT9qgXkgroxjX/mEekdgpc+A7
-         PrhCvWp6FbOb1FPnGOR0Hs48oeL4c8QebFqkWpkcfEPGkld/8sDvknWyrmwjH5Z3o5aX
-         Us5gAvtrNtsRgVnl9KbKf6b4g+f2922zlD4Zn7xNXzUgy+nYBJvuWNEq7A7yRQ0rXc+x
-         FOq/2XTlZfxlGZaiSRDyznrr4OxIxHs5BKoYbRLWXNdHD1g7Npbx0cNBZ4wQWFTq4XS3
-         H+yA==
+	s=arc-20240116; t=1736516545; c=relaxed/simple;
+	bh=2oPafSaF+U+wwnSSIQrB7MzNnyrsIiqx0JQVHkSvoao=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=aHwsRjQGlvrL5khE2u8Fx8fsFgrIsm6Vfp2LD1PF+laQQkvrvwDnfcFfKZvqccv8wCCdfQFwKd6ufGBhRZZN9OkCJYDUFhQmcpTCkUMDOrtm6/i9Gv/G8rDXzhzDgnYsOCJFDRisHVza8N0favQk5XFFOpQFRqbW1GqG35jYW/E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.205
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f205.google.com with SMTP id e9e14a558f8ab-3a7e4bfae54so16211825ab.0
+        for <linux-nilfs@vger.kernel.org>; Fri, 10 Jan 2025 05:42:24 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736471247; x=1737076047;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=2cMk0RgEMQ6q9ONC0S36gIY8rZpiqX9AbZN0DEHDcMM=;
-        b=L6zYO8VODQAzp4i1ip4ewr8nRfH5LTmLgffIRCaJLPEeZ8PE5s0gaNqfGlEoOOubZP
-         pMhmDlQCw+JikmA3kWxjgt/ChOiAbXyJnBRKIw/+0eQvLLQWGrvZeqWASV8IvZtB65S7
-         sh9zL8ARneNRaTRCto3IFG7/2c3oyUf3q+9EQHZfsMCOeCvXkIVUuh8YSGk9x+h8w4J9
-         HK5OiHflNYjEGQTMIjBajDZi/t1mk91efQ6sVEkkKLhzTJLYOKyCQqVnvw69I8sUOPms
-         z2DqaigRrAzggjzpmcIIdAIcYw7qNgYQ272VtHWk/E+45wEwpHSf/jWVnxEHxnf3rAxE
-         GXTw==
-X-Forwarded-Encrypted: i=1; AJvYcCVpbXzRqPV/Oi64QXYUNQp17Lkw2hInNnJis5K0UHQjVQpa+e+eCUlUwEF8wphgSgplzY6As0HZiwqx81U=@vger.kernel.org, AJvYcCVvrYPHTt+/rHPXmE1Spy3XHn+VdKcmMboLQ/HfNwaHDy3rCpBG3f1ufHGICvs586ERdXp+mcuT/3Blf5M=@vger.kernel.org
-X-Gm-Message-State: AOJu0YyCiZJK9yJxEwJ9Phdv9ALetYwwhymJ40Tze55bXoGaBk+GPbzW
-	SQj08QqH/byCzY4afB8YF5BoQy+39nw8J1cc48sWmAaJXdUCBW/A
-X-Gm-Gg: ASbGncuGl1GPXWPrC2HeHYyU8bEdX/T2Hqc0CETqDG1dHm+Q21PKUcjiIoL7qr9Q/pz
-	/CNvBCISQALc51P4YQhTU5jfQML1kBHNP9HSLd6ZC9jzaIVpcPJ1gn2XLnuKxaIlOKtU/RxNd5n
-	MOSbo148RLeOXi4LuJkVOfBOopaJqFRft6mRqrUot3ZfRh2bL0p2tPGyAfGpRbv0taIvBO//RC/
-	kJWMJbZeSYwmWYJ0rA0DyVYu1J47DyUHpNL9JfUo2FK+ixrLzXXzn3PlBuyEga0HPF3kqKcjVyb
-	hb+ochic+tDQvwqzNWhaWjD54+Og
-X-Google-Smtp-Source: AGHT+IFMAqFqUvHtWYbC1xwQgd+o53O4MVZ8rx3aft2LKvFZI8ziGHcLrR9o+t/ghEHs0KEvKnuSpw==
-X-Received: by 2002:a05:6a20:c887:b0:1e1:932e:b348 with SMTP id adf61e73a8af0-1e88d306a82mr14461825637.41.1736471247432;
-        Thu, 09 Jan 2025 17:07:27 -0800 (PST)
-Received: from carrot.. (i114-186-237-30.s41.a014.ap.plala.or.jp. [114.186.237.30])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-a31ddb9e4b4sm1862834a12.70.2025.01.09.17.07.24
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 09 Jan 2025 17:07:26 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: "Brian G ." <gissf1@gmail.com>,
-	linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH -v2 7/7] nilfs2: revise the return value description style for consistency.
-Date: Fri, 10 Jan 2025 10:01:50 +0900
-Message-ID: <20250110010530.21872-8-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20250110010530.21872-1-konishi.ryusuke@gmail.com>
-References: <CAKFNMoksY6f5NtVwmn6K0K2QKTvdjq+s0FbdgLvHzS3YueKqYQ@mail.gmail.com>
- <20250110010530.21872-1-konishi.ryusuke@gmail.com>
+        d=1e100.net; s=20230601; t=1736516543; x=1737121343;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=ueKhbx99YrxbsA7xImzVYe47LV++NIJ+2cMP5wQU9F8=;
+        b=JYrax+hq/ZkOaddTfW518h12GP2zPEHWe52WosLopqK7K2i44Rtuo/1xRzCqJE7xc8
+         OJoEm3wqRPMHoS9zG6L6PDQj/UIwN5aDrzZ2tiOIqUgCIWkbDoUwEYqS5dEpE3ALmmNn
+         DE05ZPcQe8j7z2t9bUi/cHHu6gSJKjpm7jAYSzfI4Vt6JgUH9ghaYhQ/FT8z4Lo7UHs+
+         FSNKtEyhcjmh+0ZWe9JjEUwoJmCvhZZcpQjF/X5mNFLUnTv1DVrgYTi1Yk2mXJcO+vug
+         bTi0GCsu2DFWQitcSx+U4bVEzNeiLOe4d0VWUwDReBQp7Qq3G3+WR6RkZXzP+OK6mnQF
+         uxCQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXpFmf8APAD1I+2/LlK/FVFWSoAtYhW1TNWzxp7u4Nawdu7ShdDwnGkL6osfPKVL+0p3pON7O6SDVYBMg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxjWtTmJ75CYOOZx6wXpaAG+QoXpn61ysAX6aAiNqADapKLas6M
+	++Jk8BvjtW/stsE47KyacPpaVhZ/FWxE8pEa3KUwfnVgJHyQvRAvDDpg4xn/+zrYo/il0+bv+jf
+	yYWsYwGUaR6+lbtTPLIRo83VMuVpei0+HKxW7EKuECwoZ3Dke8m4ZPqY=
+X-Google-Smtp-Source: AGHT+IFnFAXzyi2qiswxzO/hFplzsmpbM7CTSR4KY19xlJZsXrWCGH2C7Ucvn6+g3w7OfadTighnLG/RXOkeonqEuWEu18hnlfk1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a92:c24f:0:b0:3a7:e592:55ee with SMTP id
+ e9e14a558f8ab-3ce3aa746d1mr86893085ab.20.1736516543463; Fri, 10 Jan 2025
+ 05:42:23 -0800 (PST)
+Date: Fri, 10 Jan 2025 05:42:23 -0800
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <678123bf.050a0220.216c54.000f.GAE@google.com>
+Subject: [syzbot] [nilfs?] kernel BUG in nilfs_set_link
+From: syzbot <syzbot+1097e95f134f37d9395c@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Also for comments that do not cause kernel-doc warnings (those that
-list multiple error codes), revise the return value description style
-to match Brian G.'s suggestion of "..., or one of the following
-negative error codes on failure:".
+Hello,
 
-Link: https://lkml.kernel.org/r/CAAq45aNh1qV8P6XgDhKeNstT=PvcPUaCXsAF-f9rvmzznsZL5A@mail.gmail.com
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+syzbot found the following issue on:
+
+HEAD commit:    9d89551994a4 Linux 6.13-rc6
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=1510b418580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=4ef22c4fce5135b4
+dashboard link: https://syzkaller.appspot.com/bug?extid=1097e95f134f37d9395c
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+
+Unfortunately, I don't have any reproducer for this issue yet.
+
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/7feb34a89c2a/non_bootable_disk-9d895519.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/bcfa24563a7a/vmlinux-9d895519.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/5bc14c94d0b7/bzImage-9d895519.xz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+1097e95f134f37d9395c@syzkaller.appspotmail.com
+
+loop0: detected capacity change from 0 to 2048
+loop0: detected capacity change from 2048 to 0
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=84, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=0)
+NILFS (loop0): error -5 truncating bmap (ino=16)
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=100, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=100, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=100, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=100, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=100, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=226)
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=70, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=6, block-offset=0)
+syz.0.0: attempt to access beyond end of device
+loop0: rw=0, sector=70, nr_sectors = 2 limit=0
+NILFS (loop0): I/O error reading meta-data file (ino=6, block-offset=0)
+NILFS (loop0): mounting fs with errors
+Buffer I/O error on dev loop0, logical block 1, lost sync page write
+NILFS (loop0): unable to write superblock: err=-5
+NILFS (loop0): I/O error reading meta-data file (ino=3, block-offset=2)
+------------[ cut here ]------------
+kernel BUG at fs/nilfs2/dir.c:413!
+Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN NOPTI
+CPU: 0 UID: 0 PID: 5317 Comm: syz.0.0 Not tainted 6.13.0-rc6-syzkaller #0
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2~bpo12+1 04/01/2014
+RIP: 0010:nilfs_set_link+0x3ed/0x3f0 fs/nilfs2/dir.c:413
+Code: c6 60 af 46 8c e8 03 b8 6d fe 90 0f 0b e8 eb f7 23 fe 4c 89 ef 48 c7 c6 60 af 46 8c e8 ec b7 6d fe 90 0f 0b e8 d4 f7 23 fe 90 <0f> 0b 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 55 41 57
+RSP: 0018:ffffc9000d1ff8c0 EFLAGS: 00010283
+RAX: ffffffff837b8c4c RBX: 00000000fffffffb RCX: 0000000000100000
+RDX: ffffc9000e672000 RSI: 0000000000000edb RDI: 0000000000000edc
+RBP: ffff88804cb93050 R08: ffffffff837b8a9b R09: 1ffff11008674b79
+R10: dffffc0000000000 R11: ffffed1008674b7a R12: dffffc0000000000
+R13: ffffea000132e4c0 R14: 0000000000000050 R15: 0000000000000018
+FS:  00007f595bb756c0(0000) GS:ffff88801fc00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007ff7ccc87580 CR3: 00000000339c0000 CR4: 0000000000352ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ nilfs_rename+0x6a3/0xb60 fs/nilfs2/namei.c:409
+ vfs_rename+0xbdb/0xf00 fs/namei.c:5067
+ do_renameat2+0xd94/0x13f0 fs/namei.c:5224
+ __do_sys_rename fs/namei.c:5271 [inline]
+ __se_sys_rename fs/namei.c:5269 [inline]
+ __x64_sys_rename+0x82/0x90 fs/namei.c:5269
+ do_syscall_x64 arch/x86/entry/common.c:52 [inline]
+ do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f595ad85d29
+Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f595bb75038 EFLAGS: 00000246 ORIG_RAX: 0000000000000052
+RAX: ffffffffffffffda RBX: 00007f595af75fa0 RCX: 00007f595ad85d29
+RDX: 0000000000000000 RSI: 0000000020000040 RDI: 0000000020000000
+RBP: 00007f595ae01b08 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 0000000000000000 R14: 00007f595af75fa0 R15: 00007ffd8f311a58
+ </TASK>
+Modules linked in:
+---[ end trace 0000000000000000 ]---
+RIP: 0010:nilfs_set_link+0x3ed/0x3f0 fs/nilfs2/dir.c:413
+Code: c6 60 af 46 8c e8 03 b8 6d fe 90 0f 0b e8 eb f7 23 fe 4c 89 ef 48 c7 c6 60 af 46 8c e8 ec b7 6d fe 90 0f 0b e8 d4 f7 23 fe 90 <0f> 0b 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 55 41 57
+RSP: 0018:ffffc9000d1ff8c0 EFLAGS: 00010283
+RAX: ffffffff837b8c4c RBX: 00000000fffffffb RCX: 0000000000100000
+RDX: ffffc9000e672000 RSI: 0000000000000edb RDI: 0000000000000edc
+RBP: ffff88804cb93050 R08: ffffffff837b8a9b R09: 1ffff11008674b79
+R10: dffffc0000000000 R11: ffffed1008674b7a R12: dffffc0000000000
+R13: ffffea000132e4c0 R14: 0000000000000050 R15: 0000000000000018
+FS:  00007f595bb756c0(0000) GS:ffff88801fc00000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007f595bb53fe0 CR3: 00000000339c0000 CR4: 0000000000352ef0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+
+
 ---
- fs/nilfs2/btnode.c  |  3 ++-
- fs/nilfs2/cpfile.c  | 16 ++++++++++------
- fs/nilfs2/dat.c     |  3 ++-
- fs/nilfs2/ifile.c   |  3 ++-
- fs/nilfs2/ioctl.c   |  3 ++-
- fs/nilfs2/segment.c |  6 ++++--
- fs/nilfs2/sufile.c  |  2 +-
- 7 files changed, 23 insertions(+), 13 deletions(-)
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-diff --git a/fs/nilfs2/btnode.c b/fs/nilfs2/btnode.c
-index 54a3fa0cf67e..568367129092 100644
---- a/fs/nilfs2/btnode.c
-+++ b/fs/nilfs2/btnode.c
-@@ -201,7 +201,8 @@ void nilfs_btnode_delete(struct buffer_head *bh)
-  * Note that the current implementation does not support folio sizes larger
-  * than the page size.
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EIO	- I/O error (metadata corruption).
-  * * %-ENOMEM	- Insufficient memory available.
-  */
-diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
-index aaab0ae90261..bcc7d76269ac 100644
---- a/fs/nilfs2/cpfile.c
-+++ b/fs/nilfs2/cpfile.c
-@@ -236,7 +236,8 @@ static inline int nilfs_cpfile_delete_checkpoint_block(struct inode *cpfile,
-  * stores it to the inode file given by @ifile and the nilfs root object
-  * given by @root.
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EINVAL	- Invalid checkpoint.
-  * * %-ENOMEM	- Insufficient memory available.
-  * * %-EIO	- I/O error (including metadata corruption).
-@@ -304,7 +305,8 @@ int nilfs_cpfile_read_checkpoint(struct inode *cpfile, __u64 cno,
-  * In either case, the buffer of the block containing the checkpoint entry
-  * and the cpfile inode are made dirty for inclusion in the write log.
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-ENOMEM	- Insufficient memory available.
-  * * %-EIO	- I/O error (including metadata corruption).
-  * * %-EROFS	- Read only filesystem
-@@ -373,7 +375,8 @@ int nilfs_cpfile_create_checkpoint(struct inode *cpfile, __u64 cno)
-  * cpfile with the data given by the arguments @root, @blkinc, @ctime, and
-  * @minor.
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-ENOMEM	- Insufficient memory available.
-  * * %-EIO	- I/O error (including metadata corruption).
-  */
-@@ -712,7 +715,7 @@ static ssize_t nilfs_cpfile_do_get_ssinfo(struct inode *cpfile, __u64 *cnop,
-  * number to continue searching.
-  *
-  * Return: Count of checkpoint info items stored in the output buffer on
-- * success, or the following negative error code on failure.
-+ * success, or one of the following negative error codes on failure:
-  * * %-EINVAL	- Invalid checkpoint mode.
-  * * %-ENOMEM	- Insufficient memory available.
-  * * %-EIO	- I/O error (including metadata corruption).
-@@ -737,7 +740,8 @@ ssize_t nilfs_cpfile_get_cpinfo(struct inode *cpfile, __u64 *cnop, int mode,
-  * @cpfile: checkpoint file inode
-  * @cno:    checkpoint number to delete
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EBUSY	- Checkpoint in use (snapshot specified).
-  * * %-EIO	- I/O error (including metadata corruption).
-  * * %-ENOENT	- No valid checkpoint found.
-@@ -1005,7 +1009,7 @@ static int nilfs_cpfile_clear_snapshot(struct inode *cpfile, __u64 cno)
-  * @cno:    checkpoint number
-  *
-  * Return: 1 if the checkpoint specified by @cno is a snapshot, 0 if not, or
-- * the following negative error code on failure.
-+ * one of the following negative error codes on failure:
-  * * %-EIO	- I/O error (including metadata corruption).
-  * * %-ENOENT	- No such checkpoint.
-  * * %-ENOMEM	- Insufficient memory available.
-diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-index c5664035b3e3..c664daba56ae 100644
---- a/fs/nilfs2/dat.c
-+++ b/fs/nilfs2/dat.c
-@@ -276,7 +276,8 @@ void nilfs_dat_abort_update(struct inode *dat,
-  * @dat:      DAT file inode
-  * @vblocknr: virtual block number
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EINVAL	- Invalid DAT entry (internal code).
-  * * %-EIO	- I/O error (including metadata corruption).
-  * * %-ENOMEM	- Insufficient memory available.
-diff --git a/fs/nilfs2/ifile.c b/fs/nilfs2/ifile.c
-index e1e050dfbbc2..c4cd4a4dedd0 100644
---- a/fs/nilfs2/ifile.c
-+++ b/fs/nilfs2/ifile.c
-@@ -172,7 +172,8 @@ int nilfs_ifile_count_free_inodes(struct inode *ifile,
-  * @cno: number of checkpoint entry to read
-  * @inode_size: size of an inode
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EINVAL	- Invalid checkpoint.
-  * * %-ENOMEM	- Insufficient memory available.
-  * * %-EIO	- I/O error (including metadata corruption).
-diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-index e877c97974a4..a66d62a51f77 100644
---- a/fs/nilfs2/ioctl.c
-+++ b/fs/nilfs2/ioctl.c
-@@ -1268,7 +1268,8 @@ static int nilfs_ioctl_get_fslabel(struct super_block *sb, void __user *argp)
-  * @filp: file object
-  * @argp: pointer to userspace memory that contains the volume name
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EFAULT	- Error copying input data.
-  * * %-EINVAL	- Label length exceeds record size in superblock.
-  * * %-EIO	- I/O error.
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 94f45281253c..3a202e51b360 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -1122,7 +1122,8 @@ static int nilfs_segctor_scan_file_dsync(struct nilfs_sc_info *sci,
-  * a super root block containing this sufile change is complete, and it can
-  * be canceled with nilfs_sufile_cancel_freev() until then.
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EINVAL	- Invalid segment number.
-  * * %-EIO	- I/O error (including metadata corruption).
-  * * %-ENOMEM	- Insufficient memory available.
-@@ -2834,7 +2835,8 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
-  * This allocates a log writer object, initializes it, and starts the
-  * log writer.
-  *
-- * Return: 0 on success, or the following negative error code on failure.
-+ * Return: 0 on success, or one of the following negative error codes on
-+ * failure:
-  * * %-EINTR	- Log writer thread creation failed due to interruption.
-  * * %-ENOMEM	- Insufficient memory available.
-  */
-diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-index 47d01255a8fb..330f269abedf 100644
---- a/fs/nilfs2/sufile.c
-+++ b/fs/nilfs2/sufile.c
-@@ -850,7 +850,7 @@ int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs)
-  * @nsi:    size of suinfo array
-  *
-  * Return: Count of segment usage info items stored in the output buffer on
-- * success, or the following negative error code on failure.
-+ * success, or one of the following negative error codes on failure:
-  * * %-EIO	- I/O error (including metadata corruption).
-  * * %-ENOMEM	- Insufficient memory available.
-  */
--- 
-2.43.0
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
