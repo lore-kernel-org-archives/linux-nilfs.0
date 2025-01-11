@@ -1,162 +1,103 @@
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
+Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A7B9129A78
-	for <linux-nilfs@vger.kernel.org>; Sat, 11 Jan 2025 06:22:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5296524B22A;
+	Sat, 11 Jan 2025 14:35:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736576538; cv=none; b=KAlefxV3DDCaxY5LqgcRfxviEkt0s7z83cCM4jV0KSkKsXCud8uW+e0jW7ekcKyq/mLaCJzMeupT6X3/zIYhlHsM7SvbzoT5Dhpd/tqW1s9yQkPiXQ7X/Gjd5K932C2WHiXQU9Ua1TtW/ezs4yCYuKEE2GccPrXPaYqZWTBQs2s=
+	t=1736606126; cv=none; b=BRsV/mKVo38P8q8HNK6m7yYHduFvaCWj+AW/noqJfVN6Z5V64687BCfoUUDixxyOJO6pOneMw+L5J7z6d1BbgodE4jERp/dFKoEB1FQxhpMpSH70dE1otqFUTKDZnHEXQ38MNB8s9iww3tuxddFKKo9dApIoxugPKM4rVbSnWWg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736576538; c=relaxed/simple;
-	bh=VVSFZ8E5Uqc1AF3IPCXNFr5aLs7jWBr0VmoYCeZICWI=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=K9DmQKgSOOHKdYPa8at2AQ1bsF26OersbYt7Q5gmi9NcNXyUELoklUANIjqlXg6HSUizR7ROHF7VZUoeKQt9QidcVYHC0X6oHb/taj6XY6stgXTdlUCgiohwXra9M7y4NtlsS+bFqm8dCqHq8bee1XUxS5vVECPThNdn8WBNPl0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=eNqTNd7z; arc=none smtp.client-ip=209.85.167.49
+	s=arc-20240116; t=1736606126; c=relaxed/simple;
+	bh=q6c5s2eRmCagwfqSZOsldyYzlQhNfovqNgiz8luLwoA=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=OfIir2clcps94G7kzcJ77R9zpVfhMYa2El/Gt4KBOexzQWT04YsnFDvIe65f0uA0zGU7DDJKOwcdTASA5olgXsPQfN3IOfMhSUYIwhp4deeaV5uJzZRafUJUGljFaaRdyLwD7nJE0vrAs4T57zJ74npFeMdjPo+TQ5noQ9vtu1o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kOtknJHd; arc=none smtp.client-ip=209.85.214.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eNqTNd7z"
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-5401c68b89eso2961965e87.0
-        for <linux-nilfs@vger.kernel.org>; Fri, 10 Jan 2025 22:22:17 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kOtknJHd"
+Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-2166360285dso50661065ad.1;
+        Sat, 11 Jan 2025 06:35:25 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1736576535; x=1737181335; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1736606124; x=1737210924; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=UO29qrN5NA9atVg0YgeJg588MsLJOfsdgwm5baCndjI=;
-        b=eNqTNd7z4UVxvtpBkNXSo8lrvO9WNk/m5x5RTmG61tN7RIlZ4LSJnc/WpRgRhiJP6q
-         b3MK5RfDFsR7QzmxX+5rqFTXDkBX51CN7bkiWia9unfIt1rmgS2RHnGwHu+WVgxPkPnp
-         piE+v1TatTjoaJaoYCXif/7ptwTJL0rmwasZs0ugc5QoQT7IPYQsazUymNeK3NDQ2ljq
-         AdLF05WtlMg/2dlE9DamrZRD5jGKsPGjID48EkvfbDr9WmxvcX6S26jPA2aizZBE8wI8
-         QIi4Og1ht88GrtpFqYYJvjsvtwsgN0VMimKm5YYpzb46qCaI5tWQPZEnDzZwIlbQ9RtN
-         pdCw==
+        bh=i9b3i6awUULJrF5mx3BUBsHFMfaDDZu0dulCYqwSa2Y=;
+        b=kOtknJHd55UBSH6wdxKrJ+JTb0OLdkAlBv64Uxj0YT1EMjhltt2F2kgNvAuHG/7JqK
+         lT+W4/S6+7ZtXgT/pDvepshZrL47JjB2nI+sUjCn2pMozWS0DkFmkAn8ru3ONeccs//P
+         eAhCnBZ4ouAP32dkQBTocfhNVAw/Qr1GJUBbh5hLciTCnoUSNDrFiNGvgOmaa4NLx2s8
+         4Z7hI+NMNxCNZF+eWYD7aoXUCZjKeDkqmpSe3tGjM2EJhLkmXJ7jaLK19LUR2i0co2RJ
+         L3j5xZG61RTxb6+7tazAoZkRvM4r/mp8yfLTjX9VLUzCwQ/70MAIk/WD7kYyyE3nDE1V
+         qpZw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736576535; x=1737181335;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+        d=1e100.net; s=20230601; t=1736606124; x=1737210924;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=UO29qrN5NA9atVg0YgeJg588MsLJOfsdgwm5baCndjI=;
-        b=K2ALg6kiQkNM2ui/R+WxX9Feq3kk8Sd9tJ4rlzToP0ZUHAmNdFRJDF/xQg6AiOZ7uK
-         uh98AnDDJSo6GjVmoasg1K2Aaetpjfffi5Wn0hbkaEX7bezmPtiNeDko3a49rTZlgci6
-         1KUUD0VrQLVrMSCBVuyPXSuzYQTtVFcKaRO0OGK/y/FcVbArcHmVrMn7vkAkFKgxBsiR
-         dyO6TmpLst13HXMIZNu47qfLJqkAgWW2tXiFHL1AUsR2MZ4GY6GADRlz8LRZpxic9YMV
-         tRlftqfYHHbO7kZPN+iuyZwx6fyf9r9Jb478jJeT+rtozfRGtbZti0qG3X3qzN2v2e65
-         Sqxg==
-X-Gm-Message-State: AOJu0YzsLjCmSozuGgFPiSJ5iQmM+bbJK0eQF4xWJKUsSSU/Uoa5kWJi
-	OAGEFF81rvcxagVNW6bLl/eL2rs0kkJNhCHXXF85Co+BI2twdFfahbtRyKyl1zG0wBwZIy/aMw5
-	cJxYx/AWBxkXmTORyfLZ8nXD7/LXITMhO
-X-Gm-Gg: ASbGncvyVS6SNH0QTmpM/P6D0rbTNCB3ibfVQYDHXU0KFY/eiHCJ8EBA1X7niivEZWg
-	F50PhB6M0YaH+ajWLarYPRKKI122jCZEL1xRMcoCdmZxfRHTRYlBryiNOMEH0s4ZV+BDsgII=
-X-Google-Smtp-Source: AGHT+IEAgll0wfCRusJ31bOsSOfKz/mO8moV3Bp2l/v61wtb5+VkuiuR0K58l+AJKKsogJB/4n1PfusbOSFqQBDGnt0=
-X-Received: by 2002:a05:6512:238e:b0:542:91ac:3f78 with SMTP id
- 2adb3069b0e04-54291ac3fd5mr1621075e87.17.1736576535124; Fri, 10 Jan 2025
- 22:22:15 -0800 (PST)
+        bh=i9b3i6awUULJrF5mx3BUBsHFMfaDDZu0dulCYqwSa2Y=;
+        b=ju0bb7twj5qqrjqonmpCPMZ9o6dcLPRajt5s8Qj4FBLG4RHAx0riyQ1bMdxG1WIexf
+         uC1Tz/IvM7TQQhiiw/bzqUDogBmJ/xKmn/WVOcvpvQrd8KtBRPQRS2jsZBBE4RIxiHta
+         CJPdrxoZfh3lpqIUczBiCtEuoJznwSdG1E18G7tVOOExZ6/ovgbr4XW+RzfncAdEWEX8
+         YQjlCdieljff+QkcazIk4+y48sa+BX9jEdnFNsv09tPSvBDRrNwQKlzUTQvS5WJhcYwN
+         poX+gJxM1158D7yklmN7eV+zUNBs4nLpkEAMjPNML9yt1eofXAnfGPHyANRIa4rfpM+g
+         O3BQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVnWh8hZJ0HoGBLSZE9yo+RlYmn2g+kpX+TNLNIPDCDVyBuXW/diZdTGNbEe5SVpNHm6uJUTVULKYilpis=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxnTE0fFqCE/6wf84tYF11jHHFeEQzcaARwFlHtDSBLrxzPmZyb
+	iDz2NvrkvxtMBMn228oU9vfThYImeuusoQvf4mFl19EkuvdoTwJq
+X-Gm-Gg: ASbGncvJ5EZ2pUaSemIe14mH08JTSYTdbEPDVGbIKnoEyN+UtkC9E6mnpQRHzTDA62g
+	OmZUnlLIboqt4GVxQIxQLIEJBgacwKSzRtPI24oTXCfCG6WSbGPkyUrdxmB//IAYr/n46/WW+Ti
+	dNWJoqTZBdtyhd1wmnaaxTYS4+9WtJ1PsAdWiTnow6yecPyUTJ3BB7HmsIM/Rxrbd6RBSh/1e+T
+	wjaH6xYMTtzIS5Uc2L/DxJ5LTo4X0jIxGUB/nsyve4O8vl2mlwQnliYEFmDNqHxedqRHk5F/+/j
+	3cPpusycEeceJ825sxsGQrbQwiJ1
+X-Google-Smtp-Source: AGHT+IFGeEMU7948ikIYsSQOs6528dK0BXmNEcxeKhsCGPyZ2MdB5KCDd/24Gsbcna2/UwPa3bh1zQ==
+X-Received: by 2002:a05:6a20:394b:b0:1e1:aef4:9ce8 with SMTP id adf61e73a8af0-1e88d2d5ecamr26005553637.28.1736606124434;
+        Sat, 11 Jan 2025 06:35:24 -0800 (PST)
+Received: from carrot.. (i114-186-237-30.s41.a014.ap.plala.or.jp. [114.186.237.30])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-72d40549322sm3095362b3a.8.2025.01.11.06.35.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 11 Jan 2025 06:35:23 -0800 (PST)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
+	syzbot+1097e95f134f37d9395c@syzkaller.appspotmail.com,
+	syzbot+32c3706ebf5d95046ea1@syzkaller.appspotmail.com,
+	syzkaller-bugs@googlegroups.com,
+	LKML <linux-kernel@vger.kernel.org>
+Subject: [PATCH 0/2] nilfs2: fix issues with rename operations
+Date: Sat, 11 Jan 2025 23:26:34 +0900
+Message-ID: <20250111143518.7901-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <678123bf.050a0220.216c54.000f.GAE@google.com>
+References: <678123bf.050a0220.216c54.000f.GAE@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CA+m_8J37qo6fKFUp0wpRuK1FHawXNmCMiEyVYEwpt2Nc3uX5Og@mail.gmail.com>
- <CAKFNMokeyee6PEAHs+zs2OO8gEKftK+_RCt9wYD+2cG6sEqDoQ@mail.gmail.com>
- <CA+m_8J3Cf5BZUB-c4gVko84FuA0=OtyNCq89A3gJR8-vcTxDyg@mail.gmail.com> <CAKFNMomiYJhNXTTVH5wRuWSBEEYmHcnxqRU8iUPVxFNmfcezMw@mail.gmail.com>
-In-Reply-To: <CAKFNMomiYJhNXTTVH5wRuWSBEEYmHcnxqRU8iUPVxFNmfcezMw@mail.gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 11 Jan 2025 15:21:58 +0900
-X-Gm-Features: AbW1kvZeM0diVil6e8fCSKppb76o1mKbGhlbamdJKAHwWMEljgqWop5Y3mgCIuo
-Message-ID: <CAKFNMons0oLVgByGXEa4Pv3rgxmgEYP9h4z_fjgMm1qjEJDHFA@mail.gmail.com>
-Subject: Re: Massive overhead even after deleting checkpoints
-To: "Felix E. Klee" <felix.klee@inka.de>
-Cc: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Sat, Jan 11, 2025 at 2:29=E2=80=AFPM Ryusuke Konishi wrote:
->
-> On Sat, Jan 11, 2025 at 3:25=E2=80=AFAM Felix E. Klee wrote:
-> >
-> > On Fri, Jan 10, 2025 at 6:37=E2=80=AFPM Ryusuke Konishi
-> > <konishi.ryusuke@gmail.com> wrote:
-> > > Example:
-> > > $ sudo nilfs-clean -S 20/0.1
-> >
-> > Thank you! That improved things. But there is still a lot of overhead.
-> > It=E2=80=99s 3.0TB in total vs. 2.5TB actually used by files:
-> >
-> >     $ sudo nilfs-clean -S 20/0.1
-> >     $ df -h /bigstore/
-> >     Filesystem            Size  Used Avail Use% Mounted on
-> >     /dev/mapper/bigstore  3.5T  3.0T  338G  91% /bigstore
-> >     $ du -sh /bigstore/
-> >     2.5T    /bigstore/
-> >
-> > As mentioned in my original email, initially usage according to `df` wa=
-s
-> > 3.3TB. So only 0.3TB have been gained.
-> >
-> > > $ sudo lssu -l
-> >
-> > It generates 28 MB of data that starts off like this:
-> >
-> >           SEGNUM        DATE     TIME STAT     NBLOCKS       NLIVEBLOCK=
-S
-> >                3  2025-01-10 12:19:48 -d--        2048       2036 ( 99%=
-)
-> >                4  2025-01-10 12:19:48 -d--        2048       2040 ( 99%=
-)
-> >                5  2025-01-10 12:19:48 -d--        2048       2036 ( 99%=
-)
-> >                6  2025-01-10 12:19:48 -d--        2048       2040 ( 99%=
-)
-> >                7  2025-01-10 12:19:48 -d--        2048       2036 ( 99%=
-)
-> >
-> > I have no idea what to make out of this.
->
-> The output seems to be after GC, but by default nilfs considers blocks
-> less than an hour old as live (in use), so if you run "lssu -l" again
-> or add the "-p 0" option to set the protection period to 0 seconds,
-> the results may be different.
->
-> $ sudo lssu -l -p 0
->
-> Note that the disk capacity output of the df command includes the
-> reserved space of the file system. By default, NILFS reserves 5% of
-> the disk capacity as a reserved space for GC and normal file system
-> operations (the ratio is the same as ext4). Therefore, the effective
-> capacity of a 3.5TiB disk is about 3.3TiB.
->
-> In addition to that, NILFS has overhead due to various metadata, the
-> largest of which are DAT for disk address management (1), segment
-> summary for managing segments and logs (2), and B-tree blocks (3).
->
-> Of these, (3) should be included in the du output capacity, so (1) and
-> (2) are likely to be the main causes.
-> (1) is just over 32 bytes per 4KiB block, which is about 0.78%, and
-> (2) is at most 1.5% depending on usage, so there is a total overhead
-> of just over 2.3%.
-> If the effective capacity is 3.3TiB, the calculated overhead is
-> 0.076TiB, so the upper limit capacity should be around 3.2TiB
-> (theoretically).
->
-> Other factors may include the 3600 second protection period, and the
-> fact that the NILFS df output is roughly calculated from used segments
-> rather than actual used blocks, so this difference may be affecting
-> it.
+Hi Andrew,
 
-Incidentally, the reason why the df output (used capacity) of NILFS is
-calculated from the used segments and not the number of used blocks is
-because the blocks in use on NILFS change dynamically depending on the
-conditions, making it difficult to respond immediately. If the
-dissociation is large, I think some kind of algorithm should be
-introduced to improve it.
+please add this series to the queue for the next merge window.
 
-The actual blocks in use should be able to be calculated as follows
-using the output of "lssu -l" (when the block size is 4KiB).  For your
-reference.
+This series fixes BUG_ON check failures reported by syzbot around
+rename operations, and a minor behavioral issue where the mtime of a
+child directory changes when it is renamed instead of moved.
 
-$ sudo lssu -l -p 0 | awk 'NR>1{sum+=3D$6}END{print sum*4096}' | numfmt --t=
-o=3Diec-i
-
-Regards,
+Thanks,
 Ryusuke Konishi
+
+Ryusuke Konishi (2):
+  nilfs2: handle errors that nilfs_prepare_chunk() may return
+  nilfs2: do not update mtime of renamed directory that is not moved
+
+ fs/nilfs2/dir.c   | 13 ++++++++++---
+ fs/nilfs2/namei.c | 39 +++++++++++++++++++++------------------
+ fs/nilfs2/nilfs.h |  4 ++--
+ 3 files changed, 33 insertions(+), 23 deletions(-)
+
+-- 
+2.43.0
+
