@@ -1,174 +1,139 @@
-Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
+Received: from mail-il1-f205.google.com (mail-il1-f205.google.com [209.85.166.205])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5AA6B1AF0CB;
-	Sat, 11 Jan 2025 14:35:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E68D233522
+	for <linux-nilfs@vger.kernel.org>; Tue, 14 Jan 2025 07:40:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.205
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1736606132; cv=none; b=b6AHLljM5stwGbXHRXLRNVyp6f2SUi/IUauinzTwdmu3Udx1Bqld3N6hATHWwomIfCLenuoLCzM/4tj3mD/ZvP5PJHljABfNUGh5zkb11+k5RbcJqNXN09AeqWXMsIWIbFQ2r2W54yMCE+E2crVePer0BzDM85ylzquarbwNQiM=
+	t=1736840430; cv=none; b=PgtcySyLEtbZJtkAR7u6BumSJ1/siWiCvpKX7d+8x3PCQqta4soAokP3PMjCpbvAjFUpb3nFMnHSmGxn1cbruDrLraeP9Z1jIb4wfNmGPdS6zn80n9z72wue6XEVCYHS2MCo+WxIcB1qnMNKg7zFnMKEyI+UAFmz5qjCdYWGK58=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1736606132; c=relaxed/simple;
-	bh=poCTxwupH45gha+ZAqJswXD6i+uYF1J0jjqZucy6qlI=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=LyxyYIYe5vvz6JY+WbVOnzBeR5rPPvailUQXufefnKkSMHOPpCbQ3Zk6NNjt10JFXH6psO6tgJnm7bNN/a7wgEJgv3tr6q4Fttgrakha7Mx50TOpY1NSVkjmcSLYDooUu/Wo0RXvL1wgcUTUBKh7tQwJWtJj6KRQVX+ToT99Lks=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=npGVJdsN; arc=none smtp.client-ip=209.85.214.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="npGVJdsN"
-Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-2164b1f05caso51020945ad.3;
-        Sat, 11 Jan 2025 06:35:31 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1736606130; x=1737210930; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=3Dn46M+plxtAC0uoszoGd/SO9rhSI/AIAtTY5U8h4Us=;
-        b=npGVJdsN21/z0db4ecxsTstGJRH80onGK81lTOVvFi+0s8uVuuC2uHnl3YijyLkQHh
-         mRoFfWhLHFezjjQjmLaLvsyoU1tPX7u68PdV0Xa04nfQdhnT0lapiummUBvGT9EVqtIN
-         XnXgwxaKSXe7ANn6EMxjmDen7VyVExflrpP2VBUdrKBH2zN2wqhQ7ihWo8Lhw7CZLS9k
-         iQRo3AndxrMGYSfaxKoOqVYq2LbLDHp1HVBbtwh+VSva4UG7csbCdgJbd/CKijhqcGMk
-         yLgJG6ZdvZJX2oIDLDR/sBZswXARlC55PQN5h0mC7Ip6hmFKocR6mdBOUUJRwOD4bel5
-         l07Q==
+	s=arc-20240116; t=1736840430; c=relaxed/simple;
+	bh=W+sybKBZUORKHtVluB1HD9DfHJ5n6vNx6XmHAsUn9Ks=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=KSkfWqti6PxFeU5LFHeNkmv3sDGKw+J4dv5ZuaGtxub2evsk8NHY11kIY/bM5NoFTG5NEMWhdPhn43MpOMmjRW0vkhP9OiRW+NYpH0Y6U6JM+jcz5lENVwqvewLK78bKxaKMt2JNSX47Jx45mASzPYix7ox+5iaLWhQA8JpnTxE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.205
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f205.google.com with SMTP id e9e14a558f8ab-3ce7b6225aeso5897325ab.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 13 Jan 2025 23:40:27 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1736606130; x=1737210930;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=3Dn46M+plxtAC0uoszoGd/SO9rhSI/AIAtTY5U8h4Us=;
-        b=P9NWdvWfa0FOu7HZxKKIuC3ZrL/n2wIjgXAaE8rysxMpoFwuJ3d7EaPFZ78igRqVLv
-         VmeWmj6Ghp/MiHp8gC8hfE+aqTJVeNXL3EgQ02cdvCJWlaK6eOMY03F82XUOhYou8d61
-         OXmrxMgideHBq2mwxd1kQT4B5ej3AlPZ6c2dXWlm/OtMCsSycvfr+wISqAf1CGe1L0Cs
-         TGzwT3D3B8UrtFM2ZSEGNc6vEotK66Xf6WmrJPdfHSaw8dGgNOOGA18Lb4j53QB5vFYz
-         ihBrX3+3qx0EhGFeXtBPVsKemKJ3DxWSvYUrj9pdsGskRU4e7s3cxtcnrzu0961+YHn/
-         vmnw==
-X-Forwarded-Encrypted: i=1; AJvYcCW9qE2mwas5sfeRZ8mIjQPk1lKNIGNL3c6J9vpQDMOHf4xXLQXbkFGGPnyD2Ve4/zxdGL7NRmW//FHD4AM=@vger.kernel.org
-X-Gm-Message-State: AOJu0YzHf0cILebEOJrkB4JWCHs+bB3zFZ1UdJ5sdSFfnkdA55d6gaif
-	fxN27yu3gJccPhnmJEwEFJRnSng0jo/i1yEPxD1VAGvv/PylGVCP
-X-Gm-Gg: ASbGncsoEMBBwBJ70UrxlOpyUeubpzg+K+pdlF3rDKuFMqoBTlxUUraA8Qir/V3meEA
-	mZgZ2rEos4qQCvBQecKPgKwAKqFoW03Yf9FRTyNNMRxg1XidLrzE98iKQ+sy+iNhdL8FUl6MlRg
-	lp+C7nRtoF0WN8j6PimSeGwGepGdzGtZfpp5BNhLGCNbXx2oy7gK/vBGivjfFIruCNUY4/F/pLU
-	871JDvjp8a5nghudAHGNOzx4C/yToQ3HHf0+jjXhcvEySATfuCB2tnP47AyfpQYdLxoVSuLK6VX
-	4HayXMOHhjuVC6P0Q3F2XIZXnXgr
-X-Google-Smtp-Source: AGHT+IEid+OHAdDOYWZjA+JRK6ZuqZWBj6HAcKzUJUJRjbttA6qmltLJeF9yFoM8HUGzp2d90Hoicg==
-X-Received: by 2002:a05:6a21:339b:b0:1e0:c432:32fe with SMTP id adf61e73a8af0-1e88cff3d1amr20813082637.26.1736606130509;
-        Sat, 11 Jan 2025 06:35:30 -0800 (PST)
-Received: from carrot.. (i114-186-237-30.s41.a014.ap.plala.or.jp. [114.186.237.30])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-72d40549322sm3095362b3a.8.2025.01.11.06.35.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 11 Jan 2025 06:35:29 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
-	syzbot+1097e95f134f37d9395c@syzkaller.appspotmail.com,
-	syzbot+32c3706ebf5d95046ea1@syzkaller.appspotmail.com,
-	syzkaller-bugs@googlegroups.com,
-	LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH 2/2] nilfs2: do not update mtime of renamed directory that is not moved
-Date: Sat, 11 Jan 2025 23:26:36 +0900
-Message-ID: <20250111143518.7901-3-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20250111143518.7901-1-konishi.ryusuke@gmail.com>
-References: <678123bf.050a0220.216c54.000f.GAE@google.com>
- <20250111143518.7901-1-konishi.ryusuke@gmail.com>
+        d=1e100.net; s=20230601; t=1736840426; x=1737445226;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=YzOMITXG2rhrRFWMRxtEWT1X0Hq5zBUt2BcKWWbkhDg=;
+        b=gQha2oe+HYdDCZbognaZZ8ommzUgZd9qcEDN6MOiVN+hPW11SexULM97EGQYBKWR+r
+         fFJo1chU5jrUk8d7FPhBpHx3RUd0AdVv83CdwUazTh2Tmbn566nb3I2LF0GGO0LgaebX
+         dgXL63NyQFyu0nIidQFBAUf/NgAHjzMP0v34BVwGxbBE2gFIp5bY/bD3hWEEF3DvUrDk
+         wqnHuSsk80u/PlyAeJeg4S1ok5Q81B2BGo0lKPVxn5sYaRPH6jS//PfTxY+8fk/ve9c+
+         59CVszQh2ggUkuO4YCnoDoeDy26X2jbD5nUvwP2Ab8122bDIvR9XQWiGqtWSUypza+hF
+         vj4A==
+X-Forwarded-Encrypted: i=1; AJvYcCUh1jFMKaNViFVjHhg4GLRcpkcWsBgn/UYRT//8mgdsXdnyjgjNFIjtbR2KW4ahMiqMk0sPh/Cou09iOQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxL4lsunm41Qqy6b+ZKvid/sKWayw8MdBfWKt+EesAaokgtAy2a
+	bePL0xNuPEmZLU58eYCwSQtm5DVWsreZ1I0fK9T2qioFNs4G4/AR4iiJ+TcaSzljWtfYpTpAFA8
+	yJnt01TtBg116y3N7MkM7jJuVIcMScgAzWw8Ncc9puabKzKYjGzU2jBE=
+X-Google-Smtp-Source: AGHT+IFCkBpCM8w7m7331YuI8ldxWACRQA+BSZWfk+zmGHd8Ym79trP9y5WiaW3PZJa71wS+dE3+u2hHALc3hrR04pmSrfOsTcUA
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6e02:18c9:b0:3ce:46e2:42cc with SMTP id
+ e9e14a558f8ab-3ce46e2465fmr168876655ab.10.1736840426395; Mon, 13 Jan 2025
+ 23:40:26 -0800 (PST)
+Date: Mon, 13 Jan 2025 23:40:26 -0800
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <678614ea.050a0220.216c54.006c.GAE@google.com>
+Subject: [syzbot] [nilfs?] WARNING in nilfs_btree_assign (3)
+From: syzbot <syzbot+158be45e4d99232e1900@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-A minor issue with nilfs_rename, originating from an old ext2
-implementation, is that the mtime is updated even if the rename target
-is a directory and it is renamed within the same directory, rather
-than moved to a different directory.
+Hello,
 
-In this case, the child directory being renamed does not change in any
-way, so changing its mtime is unnecessary according to the
-specification, and can unnecessarily confuse backup tools.
+syzbot found the following issue on:
 
-In ext2, this issue was fixed by commit 39fe7557b4d6 ("ext2: Do not
-update mtime of a moved directory") and a few subsequent fixes, but it
-remained in nilfs2.
+HEAD commit:    643e2e259c2b Merge tag 'for-6.13-rc6-tag' of git://git.ker..
+git tree:       upstream
+console+strace: https://syzkaller.appspot.com/x/log.txt?x=1719a218580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=7ac4cd61d548c1ef
+dashboard link: https://syzkaller.appspot.com/bug?extid=158be45e4d99232e1900
+compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Debian) 2.40
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=132021df980000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1530cf0f980000
 
-Fix this issue by not calling nilfs_set_link(), which rewrites the
-inode number of the directory entry that refers to the parent
-directory, when the move target is a directory and the source and
-destination are the same directory.
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/76410f8b1345/disk-643e2e25.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/1ee033602aec/vmlinux-643e2e25.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/b8062c57eaa0/bzImage-643e2e25.xz
+mounted in repro #1: https://storage.googleapis.com/syzbot-assets/ca71c75d50c5/mount_0.gz
+mounted in repro #2: https://storage.googleapis.com/syzbot-assets/f6a710039269/mount_4.gz
 
-Here, the directory to be moved only needs to be read if the inode
-number of the parent directory is rewritten with nilfs_set_link, so
-also adjust the execution conditions of the preparation work to avoid
-unnecessary directory reads.
+Bisection is inconclusive: the issue happens on the oldest tested release.
 
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=140b4cb0580000
+final oops:     https://syzkaller.appspot.com/x/report.txt?x=160b4cb0580000
+console output: https://syzkaller.appspot.com/x/log.txt?x=120b4cb0580000
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+158be45e4d99232e1900@syzkaller.appspotmail.com
+
+------------[ cut here ]------------
+WARNING: CPU: 0 PID: 6214 at fs/nilfs2/btree.c:2301 nilfs_btree_assign+0xabb/0xd20 fs/nilfs2/btree.c:2301
+Modules linked in:
+CPU: 0 UID: 0 PID: 6214 Comm: segctord Not tainted 6.13.0-rc6-syzkaller-00059-g643e2e259c2b #0
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 09/13/2024
+RIP: 0010:nilfs_btree_assign+0xabb/0xd20 fs/nilfs2/btree.c:2301
+Code: 00 00 44 89 f0 48 8d 65 d8 5b 41 5c 41 5d 41 5e 41 5f 5d c3 cc cc cc cc e8 e2 52 24 fe 4c 8b 7c 24 38 eb a2 e8 d6 52 24 fe 90 <0f> 0b 90 41 be fe ff ff ff eb 91 44 89 f1 80 e1 07 80 c1 03 38 c1
+RSP: 0018:ffffc90004bcf600 EFLAGS: 00010293
+RAX: ffffffff837b20fa RBX: ffff8880758fa658 RCX: ffff888027200000
+RDX: 0000000000000000 RSI: 00000000fffffffe RDI: 00000000fffffffe
+RBP: ffffc90004bcf730 R08: ffffffff837b1a3b R09: 0000000000000000
+R10: ffffc90004bcf560 R11: fffff52000979eaf R12: dffffc0000000000
+R13: ffff8880330ca580 R14: 00000000fffffffe R15: 1ffff92000979ed0
+FS:  0000000000000000(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000000020094000 CR3: 0000000030296000 CR4: 00000000003526f0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Call Trace:
+ <TASK>
+ nilfs_bmap_assign+0x8f/0x160 fs/nilfs2/bmap.c:390
+ nilfs_segctor_update_payload_blocknr fs/nilfs2/segment.c:1633 [inline]
+ nilfs_segctor_assign fs/nilfs2/segment.c:1667 [inline]
+ nilfs_segctor_do_construct+0x35c5/0x6ea0 fs/nilfs2/segment.c:2126
+ nilfs_segctor_construct+0x181/0x6b0 fs/nilfs2/segment.c:2479
+ nilfs_segctor_thread_construct fs/nilfs2/segment.c:2587 [inline]
+ nilfs_segctor_thread+0x69e/0xe80 fs/nilfs2/segment.c:2701
+ kthread+0x2f0/0x390 kernel/kthread.c:389
+ ret_from_fork+0x4b/0x80 arch/x86/kernel/process.c:147
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:244
+ </TASK>
+
+
 ---
- fs/nilfs2/namei.c | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-index e02fae6757f1..953fbd5f0851 100644
---- a/fs/nilfs2/namei.c
-+++ b/fs/nilfs2/namei.c
-@@ -370,6 +370,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 	struct folio *old_folio;
- 	struct nilfs_dir_entry *old_de;
- 	struct nilfs_transaction_info ti;
-+	bool old_is_dir = S_ISDIR(old_inode->i_mode);
- 	int err;
- 
- 	if (flags & ~RENAME_NOREPLACE)
-@@ -385,7 +386,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 		goto out;
- 	}
- 
--	if (S_ISDIR(old_inode->i_mode)) {
-+	if (old_is_dir && old_dir != new_dir) {
- 		err = -EIO;
- 		dir_de = nilfs_dotdot(old_inode, &dir_folio);
- 		if (!dir_de)
-@@ -397,7 +398,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 		struct nilfs_dir_entry *new_de;
- 
- 		err = -ENOTEMPTY;
--		if (dir_de && !nilfs_empty_dir(new_inode))
-+		if (old_is_dir && !nilfs_empty_dir(new_inode))
- 			goto out_dir;
- 
- 		new_de = nilfs_find_entry(new_dir, &new_dentry->d_name,
-@@ -412,7 +413,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 			goto out_dir;
- 		nilfs_mark_inode_dirty(new_dir);
- 		inode_set_ctime_current(new_inode);
--		if (dir_de)
-+		if (old_is_dir)
- 			drop_nlink(new_inode);
- 		drop_nlink(new_inode);
- 		nilfs_mark_inode_dirty(new_inode);
-@@ -420,7 +421,7 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 		err = nilfs_add_link(new_dentry, old_inode);
- 		if (err)
- 			goto out_dir;
--		if (dir_de) {
-+		if (old_is_dir) {
- 			inc_nlink(new_dir);
- 			nilfs_mark_inode_dirty(new_dir);
- 		}
-@@ -434,9 +435,10 @@ static int nilfs_rename(struct mnt_idmap *idmap,
- 
- 	err = nilfs_delete_entry(old_de, old_folio);
- 	if (likely(!err)) {
--		if (dir_de) {
--			err = nilfs_set_link(old_inode, dir_de, dir_folio,
--					     new_dir);
-+		if (old_is_dir) {
-+			if (old_dir != new_dir)
-+				err = nilfs_set_link(old_inode, dir_de,
-+						     dir_folio, new_dir);
- 			drop_nlink(old_dir);
- 		}
- 		nilfs_mark_inode_dirty(old_dir);
--- 
-2.43.0
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+For information about bisection process see: https://goo.gl/tpsmEJ#bisection
 
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
