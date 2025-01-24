@@ -1,195 +1,137 @@
-Received: from mail-lf1-f50.google.com (mail-lf1-f50.google.com [209.85.167.50])
+Received: from mail-pj1-f44.google.com (mail-pj1-f44.google.com [209.85.216.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8252522F39F
-	for <linux-nilfs@vger.kernel.org>; Thu, 16 Jan 2025 18:25:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A92F2224CC;
+	Fri, 24 Jan 2025 22:21:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737051915; cv=none; b=YVFiyAwSqBMWaIpdh4e4LQAhOWTFeHACEFvmgKpjlKOk30/qbVB1MeVZGgDBv+Mokjqam5BVK26ulJ7W3O1WlstpqT0JtJBYWFeR3WEyXxtq4nFgZUzbBOF6Pk22xxfurNWSjMSb1DnYdxelwoqmRarGNQxd9/BfXhRjZfrQSOI=
+	t=1737757301; cv=none; b=kmEKOGRTTB6hH8rxt84Ol1CGjnSzH8KhmU4Irob960GZTWQ14TieBLFvlYghY52FYw9TGlU/5luYpw1c37QsmP5AgmqjKVfn4/v7uFRRDfUvGDQNf1d+Ey9pmHCqLfNP5+9dx+ZnGecVRLBWKhkCaLI3KWI7MArpPgcescOxOQQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737051915; c=relaxed/simple;
-	bh=XoKKHvjjHrORXXSJZFHJ9eIINsXUlEt8wUuN9T0zWt8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=AgH3gA3NGNFt2R2rabvJ71R/cgOKvadeJsh6l4NdQMVDGHaqkDzBzlCaqwpkolsUNBCuGYKye8ho5jXw/0H39W0RdG3/XPyf/1BuzTnspx0y/4tIb1UKqoSGRZ0nNIMRrzAGt3OCw3QPnDOfXQZkS0eDen0UDx3ArnmRDQ4K3zw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FQbeQfnI; arc=none smtp.client-ip=209.85.167.50
+	s=arc-20240116; t=1737757301; c=relaxed/simple;
+	bh=DFHVtpm5WRlp6fk8/2L90OXAD00RGBbr6Aqyl2ZZc40=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=tLFK9LsETTUINArJxNbekE5rDEbbad+RiEcT5DueZIcZZYMn78p1Mjlm8N1rAa8vn0Y69pWwSB9hOxfrxuQS4e3dOc6rHI3IEGORyQCvTn+P40uDMjujVj7ifGqU/P9jLFDCTQRo9WTisiPzMttMLybTvMScBhtWQacdAcl6ISw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jeUhXucb; arc=none smtp.client-ip=209.85.216.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FQbeQfnI"
-Received: by mail-lf1-f50.google.com with SMTP id 2adb3069b0e04-53e3a227b82so1289783e87.0
-        for <linux-nilfs@vger.kernel.org>; Thu, 16 Jan 2025 10:25:13 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jeUhXucb"
+Received: by mail-pj1-f44.google.com with SMTP id 98e67ed59e1d1-2ee86a1a92dso3872301a91.1;
+        Fri, 24 Jan 2025 14:21:39 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1737051912; x=1737656712; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=kagais1OrhMLEUM/ZfMTS+ts0QrDEuaPJTsoOuwUe84=;
-        b=FQbeQfnI4pEnrw2Vqeo25QhNGxA3w4nRkle0n8B0feQFz7yGnz6v5Ie40ZV+tyDrmo
-         A0YcQve+5kXZ9s4hRBjt9GCnCyb5sogX8AYDQv4Jb7woFsFC+Jjl9xRarhMVoURjn7sr
-         VFqyyP5nT8pCzt15GZUIIN0dmYuKhdj+DBEkYkXJBw2TrwLNFFYXy3g5p4qnUXaVVcj8
-         5fo3ThlbW0Y5iyI2dbHiuO3VTeEPaekt0t0FH3yS+6xM5uCcuKYxXALe+ASUEcrBoJnc
-         Kq11GzzOa6psmL++sKtgKk78kSOl6oTeVhO5vnWP8j+xytEKqLDAtfCfMND3hDti22V0
-         YHxQ==
+        d=gmail.com; s=20230601; t=1737757299; x=1738362099; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=Q0uh1VYqMHEULRTRj+ZhwSgmFGNbcJjirINg2aG27/4=;
+        b=jeUhXucbc30/FifU5TnLcBbV/j/m8GRbWJtZsFkHcc6zsRciD47BFJuoyKQ9Q9HZ/d
+         YaS6A4czl6dFKhRkxXkY1nZg/p305E1waCE18OlwSLvARTwNlgp4XiHL4S05mbVGfxMC
+         pMZTB71BmqHKPM4vA9oyKcsVwMtildPUf1uPICPnx2xCvvwA+QEqdPPTjN49aEliy9lu
+         uhTYRMGmCyiPMfXsOhixt2//7DUT4S3VBenY1eCr5Cn8hVQHWM79kVJhmJN3gEFxIkrW
+         2Dja7qvNryjuPwXoZXSsMjddhMUQPmrOEORIeZcn/MOFgb/PKiIfX6W6XnnZFxNjCzIe
+         rO3Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1737051912; x=1737656712;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=kagais1OrhMLEUM/ZfMTS+ts0QrDEuaPJTsoOuwUe84=;
-        b=Pp1tvmERDicGPRFtjyp+83jHqs7VQK5qwRMZ3oLV2Pr8OhAxafKERy6MM3w3HmM3nF
-         LytfI4yHkvXHvw7mEryS3XkVRTxeIVQJzsOa8vVJyzlD188OzCPQf6VvtJxlM1fLbD0F
-         A7R3YRpcSqjNNtCs9wr0Y6e2dRHg22lOKxPDdUwzaFBZWd+aX0j6Oc92p6j0lVY82I5J
-         ZDZr53gTkk3iv3yk+adVGyJzfJdsiFiGHCyMXMrC7zAbfgYm/ikTW60Xy5ixqRzGy/Zo
-         /YCROFYqcS/UBTEyGjQYOuRWDZld4W7UJ6dxcE6wJpmniaQe8bpgkLh7G0/165/DwpP/
-         3FDA==
-X-Gm-Message-State: AOJu0YysaQx2lxwI8Q/rJeEde9c18Fx7vIWU+2iryhzMR7ATIDDtOMLu
-	wEpEQelYP0XQg3cygBmWFcm9XdV9CBjxzcNcNev3wANmBkO85rBPaLZ+YnFd/BvILpMNefU0kto
-	OnQaYCmzb1xzxkZmbjL/Pfk2o4Qa8VjUx
-X-Gm-Gg: ASbGnctQVhee9bbPNq5uKWAgGjixCQsbVgkQpj43iMmvx4h0IWoO5el4nwmpeeMOzY9
-	2qU91oDeW0EugJlPnWEO1MSy1yBdfiIjBgF0pIzO/bxXiong+U18y18nSo9q3Ql1NrqgHbrFs
-X-Google-Smtp-Source: AGHT+IF5KrlUb3AiQQZYS1gZ/BET3UlZcwp+orwzbQdudO5IBhmOgnL4f29d6iaZ7QB9B+iUhK91hA+/lJAGgAbBHWg=
-X-Received: by 2002:a05:6512:138e:b0:541:cdef:7ca3 with SMTP id
- 2adb3069b0e04-542845c47a0mr12069064e87.27.1737051911253; Thu, 16 Jan 2025
- 10:25:11 -0800 (PST)
+        d=1e100.net; s=20230601; t=1737757299; x=1738362099;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=Q0uh1VYqMHEULRTRj+ZhwSgmFGNbcJjirINg2aG27/4=;
+        b=Yg5v9twuW/6kz/tArOGXjfDcGmQXqrSjYyFBwMVm++u34Vmnn3PrVleFcNsKHY1fVi
+         gmE3nBGtmIBVxeYiWxIs7kmd57zXRm61TIw8qGPFmaLao9CkfIo2x2JylPk6Q+cDXgGg
+         JUKIVOd2Knr+kGm8HL1JKiKb6CmPXF02jWDjRQ+Y3rfQfXz3UEGgyVXq+8XiwHEOVF2E
+         UWxyqa13LlHpsbwJ9eLBUSvjf58/C0MG9DLqPKDsxwtoLjBH2r4y4Zt1PPjuLuQRtpGY
+         S63vAMZ+tQLIlfg0gCZAA+y3Jj+v6CFk9xOmC5f6XXYfc/4Dh0HC5LIs2cr32qZjsDPI
+         lH7Q==
+X-Forwarded-Encrypted: i=1; AJvYcCWteg/yIW+EXouFjchmXQ6jATaT2t8RT7UEMLwYjk9dOZdxtOg7DzJ+TbMWKtHdkBV2SvqoIFgc5LAxj8Y=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yytxq/agoWLV5/KdEbBFcb53z03K9BPx1S/c0sWHmgTCnNL7Yrg
+	H+OimZ9TdSefEwNniuIKJ16BJfXZgQJYZ3468lLU4XvzJ7t8VyxmIwmMsQ==
+X-Gm-Gg: ASbGncucT5l/RyzWaY5MXLKjply8SSUbjYVwYPtiKKgyIG5h9445G6Ba9Wa5h9VL6oW
+	MDli165FjXGoOer2FqnmffDIMf09JHd9GLkQbRmsi9h0rS6OYiemJFvLG/yNv/PS8Al3PDBbDvT
+	Lk4znBbR0zRHMl6N4raN1JYbI6zCe8JINfGVSAc+htiCqq4pjb5e0ThrDRS5MzQnbY/9RumWywK
+	9msfgh2mJ2xvVKBskbZWA7hWVILZ+fBYF33zUJSR7SDnr3DtlOgioPKLtZSA7gAzrrt2z+Uxgal
+	03j7o6SosckNSurqu0rVP127tA20LYRYoDGhk+1mmvMVHYmrkQ==
+X-Google-Smtp-Source: AGHT+IFVZWZMdI3aYM18TpoNRTEz/h1aB6RIBzsS2uIz45fhqbeHyFCNb/O0pxd668nCHPC/zWpDEg==
+X-Received: by 2002:a05:6a00:849:b0:725:f18a:da52 with SMTP id d2e1a72fcca58-72daf92a025mr48388418b3a.4.1737757298743;
+        Fri, 24 Jan 2025 14:21:38 -0800 (PST)
+Received: from carrot.. (i118-20-85-182.s41.a014.ap.plala.or.jp. [118.20.85.182])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-72f8a77c73dsm2468953b3a.140.2025.01.24.14.21.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 24 Jan 2025 14:21:37 -0800 (PST)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Nikita Zhandarovich <n.zhandarovich@fintech.ru>
+Subject: [PATCH] nilfs2: fix possible int overflows in nilfs_fiemap()
+Date: Sat, 25 Jan 2025 07:20:53 +0900
+Message-ID: <20250124222133.5323-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CA+m_8J37qo6fKFUp0wpRuK1FHawXNmCMiEyVYEwpt2Nc3uX5Og@mail.gmail.com>
- <CAKFNMokeyee6PEAHs+zs2OO8gEKftK+_RCt9wYD+2cG6sEqDoQ@mail.gmail.com>
- <CA+m_8J3Cf5BZUB-c4gVko84FuA0=OtyNCq89A3gJR8-vcTxDyg@mail.gmail.com>
- <CAKFNMomiYJhNXTTVH5wRuWSBEEYmHcnxqRU8iUPVxFNmfcezMw@mail.gmail.com>
- <CAKFNMons0oLVgByGXEa4Pv3rgxmgEYP9h4z_fjgMm1qjEJDHFA@mail.gmail.com> <CA+m_8J0UjaOONaRwSMTCup-8xFmjkf6rHaLv0XSMOmvR3_d=PA@mail.gmail.com>
-In-Reply-To: <CA+m_8J0UjaOONaRwSMTCup-8xFmjkf6rHaLv0XSMOmvR3_d=PA@mail.gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Fri, 17 Jan 2025 03:24:54 +0900
-X-Gm-Features: AbW1kvZxmrjIPMntTmzeoaW6z-sKbnThOlxnYQxWZUQDzhP_YttrTb9H6Dx2VJE
-Message-ID: <CAKFNMomMZB9oBppxqfAebOQNHAS1+fQRTDPORVH4PYTVnapBig@mail.gmail.com>
-Subject: Re: Massive overhead even after deleting checkpoints
-To: "Felix E. Klee" <felix.klee@inka.de>
-Cc: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Thu, Jan 16, 2025 at 8:09=E2=80=AFPM Felix E. Klee wrote:
->
-> Thank you for the detailed explanation! The overhead for metadata is
-> what I expected. However, I wasn=E2=80=99t aware of the default protectio=
-n
-> period of one hour, also not of the concept of segments.
->
-> Now, a few days later, I get:
->
->     $ df -h /bigstore/
->     Filesystem            Size  Used Avail Use% Mounted on
->     /dev/mapper/bigstore  3.5T  2.7T  699G  80% /bigstore
->     $ du -sh /bigstore/
->     2.5T    /bigstore/
->
-> The used space reported by `df -f` is not 2.7T vs 3.0T a few days ago.
-> Back then I was apparently too close to a major file operation. I had
-> geotagged tens of thousands of raw image files, modifying them directly
-> (exif headers).
->
-> Should the following command have freed up diskspace?
->
->     # nilfs-clean -S 20/0.1 --protection-period=3D0 /bigstore
->
-> I realize it doesn=E2=80=99t reduce the number of checkpoints.
+From: Nikita Zhandarovich <n.zhandarovich@fintech.ru>
 
-The nilfs-clean command is a maintenance command, so use it when you
-want to free up disk space quickly (especially if you don't mind
-turning off the protection period).  GC runs automatically in the
-background based on the watermark conditions set in
-/etc/nilfs_cleanerd.conf, even if you don't run the nilfs-clean
-command.
+Since nilfs_bmap_lookup_contig() in nilfs_fiemap() calculates its
+result by being prepared to go through potentially
+maxblocks == INT_MAX blocks, the value in n may experience an
+overflow caused by left shift of blkbits.
 
-However, the GC speed is slow by default, so if the capacity is large,
-you may want to adjust parameters such as "nsegments_per_clean" (and
-"mc_nsegments_per_clean") and "cleaning_interval" (and
-"mc_cleaning_interval") to increase the GC speed.
+While it is extremely unlikely to occur, play it safe and cast right
+hand expression to wider type to mitigate the issue.
 
-The nilfs-clean command takes a device path as an argument, so the
-command line is:
+Found by Linux Verification Center (linuxtesting.org) with static
+analysis tool SVACE.
 
-# nilfs-clean -S 20/0.1 --protection-period=3D0 /dev/mapper/bigstore
+Fixes: 622daaff0a89 ("nilfs2: fiemap support")
+Cc: stable@vger.kernel.org
+Signed-off-by: Nikita Zhandarovich <n.zhandarovich@fintech.ru>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Hi Andrew, please apply this as a bug fix.
 
-or, omitting the device:
+This fixes integer overflows in the fiemap ioctl that don't happen
+with normal FS formats, but can happen in special circumstances where
+the segment size is tuned to be extra large.
 
-# nilfs-clean -S 20/0.1 --protection-period=3D0
-
-Also, I forgot to explain one thing.  The current GC skips segments
-whose free block ratio is equal to or less than the
-"min_reclaimable_blocks" parameter (default is 10%, and 1% of
-mc_min_reclaimable_blocks if the remaining capacity is low) in
-/etc/nilfs_cleanerd.conf.
-
-If you want to ignore this ratio and force GC, use the "-m" option, like th=
-is:
-
-# nilfs-clean -S 20/0.1 -p 0 -m 5
-
-or  specify a percentage:
-
-# nilfs-clean -S 20/0.1 -p 0 -m 1%
-
-When running GC manually, be aware that once GC of all segments is
-finished, GC will be skipped until some change is made to avoid
-infinite GC execution.
-
-If you change the GC conditions and rerun it, it may work if you make
-a change and then run the nilfs-clean command, as in the example
-below:
-
-# touch /bigstore
-# mkcp
-# nilfs-clean -S 20/0.1 -p 0 -m 1%
-
-I've gotten into a lot of detail.  Please understand that these are
-tips to use for when you're in trouble.
-
-> I really am a n00b when it comes to log structured file systems. I just
-> want to use NILFS2 for the ability to revert accidental file changes.
-
-LFS is a legacy method and is not common, so the need for this kind of
-interaction is a drawback in a sense, and it may be an area where the
-tools need to be improved.
-
-One thing to note is that while nilfs can save you from data loss due
-to user misoperation, it is powerless against physical device failure,
-so you still need to back up important data.
-
-> One more question, as you wrote:
-> > Incidentally, the reason why the df output (used capacity) of NILFS is
-> > calculated from the used segments and not the number of used blocks is
-> > because the blocks in use on NILFS change dynamically depending on the
-> > conditions, making it difficult to respond immediately. If the
-> > dissociation is large, I think some kind of algorithm should be
-> > introduced to improve it.
-> >
-> > The actual blocks in use should be able to be calculated as follows
-> > using the output of "lssu -l" (when the block size is 4KiB). For your
-> > reference.
-> >
-> > $ sudo lssu -l -p 0 | awk 'NR>1{sum+=3D$6}END{print sum*4096}' | numfmt=
- --to=3Diec-i
->
-> Certainly interesting! But, I assume, without garbage collection I
-> cannot use the space in sparse segments anyhow. So `df` should give me
-> the space that currently is available for actual use. Do I understand
-> that correctly?
-
-That understanding is correct.  The above example is for checking
-potential free space and isolating the problem.
-
-On the other hand, the current capacity calculation is not without issues.
-For example, I think it is counterintuitive that a segment is judged
-to be in use even if all the blocks inside are garbage (reclaimable)
-until the GC runs.
-Well, but rather than improving the capacity calculation, it may be
-better to cover this by improving the GC.
-
-Regards,
+Thanks,
 Ryusuke Konishi
+
+ fs/nilfs2/inode.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index e8015d24a82c..6613b8fcceb0 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -1186,7 +1186,7 @@ int nilfs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+ 			if (size) {
+ 				if (phys && blkphy << blkbits == phys + size) {
+ 					/* The current extent goes on */
+-					size += n << blkbits;
++					size += (u64)n << blkbits;
+ 				} else {
+ 					/* Terminate the current extent */
+ 					ret = fiemap_fill_next_extent(
+@@ -1199,14 +1199,14 @@ int nilfs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+ 					flags = FIEMAP_EXTENT_MERGED;
+ 					logical = blkoff << blkbits;
+ 					phys = blkphy << blkbits;
+-					size = n << blkbits;
++					size = (u64)n << blkbits;
+ 				}
+ 			} else {
+ 				/* Start a new extent */
+ 				flags = FIEMAP_EXTENT_MERGED;
+ 				logical = blkoff << blkbits;
+ 				phys = blkphy << blkbits;
+-				size = n << blkbits;
++				size = (u64)n << blkbits;
+ 			}
+ 			blkoff += n;
+ 		}
+-- 
+2.43.0
+
