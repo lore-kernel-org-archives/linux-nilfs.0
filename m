@@ -1,137 +1,80 @@
-Received: from mail-pj1-f44.google.com (mail-pj1-f44.google.com [209.85.216.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mail.inka.de (quechua.inka.de [193.197.184.2])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A92F2224CC;
-	Fri, 24 Jan 2025 22:21:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 18732632
+	for <linux-nilfs@vger.kernel.org>; Fri, 31 Jan 2025 08:42:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.197.184.2
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1737757301; cv=none; b=kmEKOGRTTB6hH8rxt84Ol1CGjnSzH8KhmU4Irob960GZTWQ14TieBLFvlYghY52FYw9TGlU/5luYpw1c37QsmP5AgmqjKVfn4/v7uFRRDfUvGDQNf1d+Ey9pmHCqLfNP5+9dx+ZnGecVRLBWKhkCaLI3KWI7MArpPgcescOxOQQ=
+	t=1738312937; cv=none; b=qa4HgDOKtq/dnN1lgqV/OxTCH6Prn6P5MeVbMVeY9nTcpezPWbTQMBU0Elz3IN0tuBiEIvoj55NwEYLaQBWgpOKIEB43gPI8NGyCTYH9SGDbrOya9tWuiRG73O0x4IkN1Q3Jei6KtcX7fwtXZGbHKuLUHGPTinUHNNPQmrIiWcc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1737757301; c=relaxed/simple;
-	bh=DFHVtpm5WRlp6fk8/2L90OXAD00RGBbr6Aqyl2ZZc40=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=tLFK9LsETTUINArJxNbekE5rDEbbad+RiEcT5DueZIcZZYMn78p1Mjlm8N1rAa8vn0Y69pWwSB9hOxfrxuQS4e3dOc6rHI3IEGORyQCvTn+P40uDMjujVj7ifGqU/P9jLFDCTQRo9WTisiPzMttMLybTvMScBhtWQacdAcl6ISw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jeUhXucb; arc=none smtp.client-ip=209.85.216.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jeUhXucb"
-Received: by mail-pj1-f44.google.com with SMTP id 98e67ed59e1d1-2ee86a1a92dso3872301a91.1;
-        Fri, 24 Jan 2025 14:21:39 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1737757299; x=1738362099; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=Q0uh1VYqMHEULRTRj+ZhwSgmFGNbcJjirINg2aG27/4=;
-        b=jeUhXucbc30/FifU5TnLcBbV/j/m8GRbWJtZsFkHcc6zsRciD47BFJuoyKQ9Q9HZ/d
-         YaS6A4czl6dFKhRkxXkY1nZg/p305E1waCE18OlwSLvARTwNlgp4XiHL4S05mbVGfxMC
-         pMZTB71BmqHKPM4vA9oyKcsVwMtildPUf1uPICPnx2xCvvwA+QEqdPPTjN49aEliy9lu
-         uhTYRMGmCyiPMfXsOhixt2//7DUT4S3VBenY1eCr5Cn8hVQHWM79kVJhmJN3gEFxIkrW
-         2Dja7qvNryjuPwXoZXSsMjddhMUQPmrOEORIeZcn/MOFgb/PKiIfX6W6XnnZFxNjCzIe
-         rO3Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1737757299; x=1738362099;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=Q0uh1VYqMHEULRTRj+ZhwSgmFGNbcJjirINg2aG27/4=;
-        b=Yg5v9twuW/6kz/tArOGXjfDcGmQXqrSjYyFBwMVm++u34Vmnn3PrVleFcNsKHY1fVi
-         gmE3nBGtmIBVxeYiWxIs7kmd57zXRm61TIw8qGPFmaLao9CkfIo2x2JylPk6Q+cDXgGg
-         JUKIVOd2Knr+kGm8HL1JKiKb6CmPXF02jWDjRQ+Y3rfQfXz3UEGgyVXq+8XiwHEOVF2E
-         UWxyqa13LlHpsbwJ9eLBUSvjf58/C0MG9DLqPKDsxwtoLjBH2r4y4Zt1PPjuLuQRtpGY
-         S63vAMZ+tQLIlfg0gCZAA+y3Jj+v6CFk9xOmC5f6XXYfc/4Dh0HC5LIs2cr32qZjsDPI
-         lH7Q==
-X-Forwarded-Encrypted: i=1; AJvYcCWteg/yIW+EXouFjchmXQ6jATaT2t8RT7UEMLwYjk9dOZdxtOg7DzJ+TbMWKtHdkBV2SvqoIFgc5LAxj8Y=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yytxq/agoWLV5/KdEbBFcb53z03K9BPx1S/c0sWHmgTCnNL7Yrg
-	H+OimZ9TdSefEwNniuIKJ16BJfXZgQJYZ3468lLU4XvzJ7t8VyxmIwmMsQ==
-X-Gm-Gg: ASbGncucT5l/RyzWaY5MXLKjply8SSUbjYVwYPtiKKgyIG5h9445G6Ba9Wa5h9VL6oW
-	MDli165FjXGoOer2FqnmffDIMf09JHd9GLkQbRmsi9h0rS6OYiemJFvLG/yNv/PS8Al3PDBbDvT
-	Lk4znBbR0zRHMl6N4raN1JYbI6zCe8JINfGVSAc+htiCqq4pjb5e0ThrDRS5MzQnbY/9RumWywK
-	9msfgh2mJ2xvVKBskbZWA7hWVILZ+fBYF33zUJSR7SDnr3DtlOgioPKLtZSA7gAzrrt2z+Uxgal
-	03j7o6SosckNSurqu0rVP127tA20LYRYoDGhk+1mmvMVHYmrkQ==
-X-Google-Smtp-Source: AGHT+IFVZWZMdI3aYM18TpoNRTEz/h1aB6RIBzsS2uIz45fhqbeHyFCNb/O0pxd668nCHPC/zWpDEg==
-X-Received: by 2002:a05:6a00:849:b0:725:f18a:da52 with SMTP id d2e1a72fcca58-72daf92a025mr48388418b3a.4.1737757298743;
-        Fri, 24 Jan 2025 14:21:38 -0800 (PST)
-Received: from carrot.. (i118-20-85-182.s41.a014.ap.plala.or.jp. [118.20.85.182])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-72f8a77c73dsm2468953b3a.140.2025.01.24.14.21.36
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 24 Jan 2025 14:21:37 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Nikita Zhandarovich <n.zhandarovich@fintech.ru>
-Subject: [PATCH] nilfs2: fix possible int overflows in nilfs_fiemap()
-Date: Sat, 25 Jan 2025 07:20:53 +0900
-Message-ID: <20250124222133.5323-1-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.43.0
+	s=arc-20240116; t=1738312937; c=relaxed/simple;
+	bh=I/RMwky+hgI4v4pq9gBtg8tdf/i5vrV29XN4+j+4sXI=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=ZfAZBdn2My3O+PHLa+qZeudypjsQtIVpWTBGgWyy5ULKfbewY73jDDXX5CYpvz/rR91sJXDvC7Y6LDCGBuac8Nb4JTzKw4gQVQbt/6+sh6xxQYasnmTkekzXPkFAFfhRIsOynuQRX1604DxMaLKDOYUZ/SqnxUMJn/A9vFCK4qU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=inka.de; spf=pass smtp.mailfrom=inka.de; arc=none smtp.client-ip=193.197.184.2
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=inka.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=inka.de
+Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com [209.85.216.43])
+	by mail.inka.de with esmtpsa 
+	id 1tdmA6-000GCK-KX; Fri, 31 Jan 2025 09:14:02 +0100
+Received: by mail-pj1-f43.google.com with SMTP id 98e67ed59e1d1-2f43d17b0e3so2959069a91.0
+        for <linux-nilfs@vger.kernel.org>; Fri, 31 Jan 2025 00:14:02 -0800 (PST)
+X-Gm-Message-State: AOJu0Yw4BQrwaw2XCPBKkgI53C+4s8YYfmLZvxYf6ZNouY77u+3xSEiL
+	CRRdxJyh2oocvMv1LpdHaWriMav3TODSVnE/hol70bYmxzTcFNF3gFPPOVXJf4Ao4GBTcoggP9U
+	3Uqcq9rSuRyIT3aXYfCiBHwsuz5D0kmXCCAOa
+X-Google-Smtp-Source: AGHT+IHoKAt+sKbLyuevFHMyUxsQxKVXW5/f46ppfvaO970zUqosmLB4yRCvOmxxeyb5PmOdEhj21fh0kViHT7WhmwQ=
+X-Received: by 2002:a17:90b:4d0c:b0:2ee:db1a:2e3c with SMTP id
+ 98e67ed59e1d1-2f83abab598mr14537504a91.1.1738311241169; Fri, 31 Jan 2025
+ 00:14:01 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <CA+m_8J37qo6fKFUp0wpRuK1FHawXNmCMiEyVYEwpt2Nc3uX5Og@mail.gmail.com>
+ <CAKFNMokeyee6PEAHs+zs2OO8gEKftK+_RCt9wYD+2cG6sEqDoQ@mail.gmail.com>
+ <CA+m_8J3Cf5BZUB-c4gVko84FuA0=OtyNCq89A3gJR8-vcTxDyg@mail.gmail.com>
+ <CAKFNMomiYJhNXTTVH5wRuWSBEEYmHcnxqRU8iUPVxFNmfcezMw@mail.gmail.com>
+ <CAKFNMons0oLVgByGXEa4Pv3rgxmgEYP9h4z_fjgMm1qjEJDHFA@mail.gmail.com>
+ <CA+m_8J0UjaOONaRwSMTCup-8xFmjkf6rHaLv0XSMOmvR3_d=PA@mail.gmail.com> <CAKFNMomMZB9oBppxqfAebOQNHAS1+fQRTDPORVH4PYTVnapBig@mail.gmail.com>
+In-Reply-To: <CAKFNMomMZB9oBppxqfAebOQNHAS1+fQRTDPORVH4PYTVnapBig@mail.gmail.com>
+From: "Felix E. Klee" <felix.klee@inka.de>
+Date: Fri, 31 Jan 2025 16:13:34 +0800
+X-Gmail-Original-Message-ID: <CA+m_8J22Maw3+=13QvCKvy5fQpFQ+taCZDU3m2yXHAh1+B3QcA@mail.gmail.com>
+X-Gm-Features: AWEUYZmkO6BreResNGyhe8Gf6efb18z2eBVqwQPkaV9uDg_2XQNrYnmgWC09RoY
+Message-ID: <CA+m_8J22Maw3+=13QvCKvy5fQpFQ+taCZDU3m2yXHAh1+B3QcA@mail.gmail.com>
+Subject: Re: Massive overhead even after deleting checkpoints
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-From: Nikita Zhandarovich <n.zhandarovich@fintech.ru>
+On Fri, Jan 17, 2025 at 2:25=E2=80=AFAM Ryusuke Konishi
+<konishi.ryusuke@gmail.com> wrote:
+> GC runs automatically in the background based on the watermark
+> conditions set in /etc/nilfs_cleanerd.conf, even if you don't run the
+> nilfs-clean command.
 
-Since nilfs_bmap_lookup_contig() in nilfs_fiemap() calculates its
-result by being prepared to go through potentially
-maxblocks == INT_MAX blocks, the value in n may experience an
-overflow caused by left shift of blkbits.
+When I run `nilfs-clean` with options such as `--protection-period=3D0`,
+will that change the settings of `cleanerd` until the next reboot? Or do
+the options only apply to a single GC run?
 
-While it is extremely unlikely to occur, play it safe and cast right
-hand expression to wider type to mitigate the issue.
+> If you want to ignore this ratio and force GC, use the "-m" option,
+> like this:
+>
+> # nilfs-clean -S 20/0.1 -p 0 -m 5
 
-Found by Linux Verification Center (linuxtesting.org) with static
-analysis tool SVACE.
+Thanks!
 
-Fixes: 622daaff0a89 ("nilfs2: fiemap support")
-Cc: stable@vger.kernel.org
-Signed-off-by: Nikita Zhandarovich <n.zhandarovich@fintech.ru>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
-Hi Andrew, please apply this as a bug fix.
+Regarding `-S 20/0.1`, that means the cleaning happens 20 times for
+every 0.1 seconds? And each time `nsegments_per_clean` /
+`mc_nsegments_per_clean` are cleaned?
 
-This fixes integer overflows in the fiemap ioctl that don't happen
-with normal FS formats, but can happen in special circumstances where
-the segment size is tuned to be extra large.
+> LFS is a legacy method and is not common
 
-Thanks,
-Ryusuke Konishi
+=E2=80=9Cnot common=E2=80=9D I understand, but why legacy? What does supers=
+ede it?
 
- fs/nilfs2/inode.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index e8015d24a82c..6613b8fcceb0 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -1186,7 +1186,7 @@ int nilfs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
- 			if (size) {
- 				if (phys && blkphy << blkbits == phys + size) {
- 					/* The current extent goes on */
--					size += n << blkbits;
-+					size += (u64)n << blkbits;
- 				} else {
- 					/* Terminate the current extent */
- 					ret = fiemap_fill_next_extent(
-@@ -1199,14 +1199,14 @@ int nilfs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
- 					flags = FIEMAP_EXTENT_MERGED;
- 					logical = blkoff << blkbits;
- 					phys = blkphy << blkbits;
--					size = n << blkbits;
-+					size = (u64)n << blkbits;
- 				}
- 			} else {
- 				/* Start a new extent */
- 				flags = FIEMAP_EXTENT_MERGED;
- 				logical = blkoff << blkbits;
- 				phys = blkphy << blkbits;
--				size = n << blkbits;
-+				size = (u64)n << blkbits;
- 			}
- 			blkoff += n;
- 		}
--- 
-2.43.0
-
+High frequency snapshotting is something I am missing from other file
+systems.
