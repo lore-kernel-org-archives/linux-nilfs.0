@@ -1,248 +1,137 @@
-Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
+Received: from mail-lj1-f175.google.com (mail-lj1-f175.google.com [209.85.208.175])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A8EB23B0;
-	Tue,  4 Feb 2025 02:20:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C36BF145B3E
+	for <linux-nilfs@vger.kernel.org>; Thu,  6 Feb 2025 07:08:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1738635638; cv=none; b=C/pLK98e6C3JDgF3Hs4TaO7xv9ZeV5uokua9mWM6vvHeTnbeYgxQ8O5XtihoIgHnrmwMtt0vEJS7JKng6zv75OECCmrQTzmjw0C3vyoDP7tgL/C2RBwo+fN8xd9LsFvjYAaOQOJX1szVxBH/HcF4eKzOOZpVFVSDWB0IY7XEFuw=
+	t=1738825699; cv=none; b=GGTsb2lZsUUlJGXPZDQJ6pF6ccJ52ckffCp6V/VXCq6fdgh2q5wF2LpKwYWx/qaKTV23SC8Y+jkN/nOAZjwDPsdjVmyJHvsa7jRp75yyon+OVL3IwaLCOuFB0SJP8HNQgGNI39/AWf2naPzmEPDg7tR9nPqQOd+uAbBYjWqwRwM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1738635638; c=relaxed/simple;
-	bh=w56wgNTcHy7sN4WrtDrSW2hWwGFeoKdy/o501PjU634=;
+	s=arc-20240116; t=1738825699; c=relaxed/simple;
+	bh=ImsANtgJWoTI0NfSEDIF85LOZA5mVbVk6IlYwN4PTmI=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=VseCD1gM05y/KoR7VBZXtf3g/0Sb+mc9Lh31EFm2cVZLcJJ97MvSORrVEHMR/P+VhqAJUvYGExMNaUb0iwvwPJyxk2nmivvadRfwv23enXoMEu4Ec3+io9itQSV7x7VJhxYvZfFhBkqaUNOl8nY8mRn0iC/is3zu8J+7Z8QzmY4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iBhoCSq1; arc=none smtp.client-ip=209.85.167.53
+	 To:Cc:Content-Type; b=BUuyVB5pU76d0r1u9E+ix8kLNQV2V1EMhEk+n1ijAC2ck/5Rte7UVv8WCdh+IPWNv8Awl5Au1Kfqm/Hdd0KzkYgxVElMIzkpZBqajIOI2l076ndRY3mNby+oSIQmGNt1l3OYwt8Ep047Ih9EP1zGH6VTG+Z7yDoJjjFw8gflr6c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AzblVgCS; arc=none smtp.client-ip=209.85.208.175
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iBhoCSq1"
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-53e3a227b82so4703744e87.0;
-        Mon, 03 Feb 2025 18:20:36 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AzblVgCS"
+Received: by mail-lj1-f175.google.com with SMTP id 38308e7fff4ca-307325f2436so5226331fa.0
+        for <linux-nilfs@vger.kernel.org>; Wed, 05 Feb 2025 23:08:17 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1738635634; x=1739240434; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1738825696; x=1739430496; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=Sib5koDEj9hSsupiDaUBfbc6ojkqSjZC2kdEMK99roU=;
-        b=iBhoCSq125Gkqow89H/gtJuCapolce3+uc0AlkCCK+QeWssfh+3ZP5cniT5u2KAFOu
-         O+sIhPQSVULVu/rY6Qj4bqIb/RvoOnVPjzY0c0hhuQjTi/kLi5H/zNlu/6eUX47NwL6b
-         An7t9CvlKt23VAOLlrWQ1ESgGL4t+BO1hTd9scrNEQ3MSMqFpe39H8HG/B2dcaFbeHxT
-         /w1U5w1zBAVwYzOfCnX2qTmzIkzieiUV3SPkWEjGCs+UybEY0qI8z+SoNtkejt/gd13q
-         SkuzfGmTl0Gt9ql2LFpQzVyOStNTLgZZPK+DwdKr+pof7Z7/D3UdNze8QiUS2/TGfEb0
-         J66g==
+        bh=8pUaQQqJ2xU0FAabHk0RqUjVVx9K0IZZsDB9D+D8IhM=;
+        b=AzblVgCSuekxHmUgWnPC4gxzKGBXeqK5MDHx8o+fjMK+s6Q0cJJLAF2pbswHdjiaxp
+         lajIPZPkCu0PPl9EF0SLrH1HET/o7gn9rFMFVmE8ZwX0y5K8+37J8pUWB7i076z9IU1A
+         hR9P2mi91WQw4+re2axdGK8+T0nvZESWucq7NYCIiNZUrofbhNkJlmoEOLjSeq6/45rT
+         AY78/vUpVE8W1Xv/0fM+ZyzxK4i6H8XfeedZ4CZL3TmWlEWDXKmqrOXEVbJ6iAYDmkqL
+         SgJrilyTvbZPEIq/GpEWdNRAfmp3e0W8WoCEosEvUPZLWz0cmjKb/2eRbbiJzZV96hcA
+         Awyg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1738635634; x=1739240434;
+        d=1e100.net; s=20230601; t=1738825696; x=1739430496;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=Sib5koDEj9hSsupiDaUBfbc6ojkqSjZC2kdEMK99roU=;
-        b=kO3FbTqqS5GSYxcei7FmXCY3sGsBX5zPmq8aZrUGoPFfDFwCtK1+tsQjJQP+tqGZk+
-         wHFVgQnKHyXSUSTttMlNz4J1m/LzbidS2HsQLXmACKefqrb0sUh6FdcCOUhHNukvFVWf
-         mHMztcjcRO8b+vUF/mXpV5efVJvA2tavpZ84dRlsRwyQ0s8JdmbBBuQrTX2h+rpPPKiA
-         KGKIABu3NwOr2LGeCgslnMM+is93391EIzib73sR1X1OXg+qs0Xibz/15ofvhI4aakhV
-         SwRmKxco6gLhv2ZEnNvAluNOFvZZ1cFeHx6HU8SJBEev4UlfmSY9wtqDTNTjqhfmUFvk
-         2mow==
-X-Forwarded-Encrypted: i=1; AJvYcCVfYKdC/WqEMTa+ohvoSM2tE28kEuY90tztW9jM5d1P1sEF8aaKHtOCACtHjnKdJFM4HN3olILnTtAFlA==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxgVnTgWWH2XlOE2g8Cv8KZlrGqABcLfztLTBbShs1ZFk4twWp9
-	PHPx5nVhbDOxjAkyeLP3nhOz6tlYrQ0KugS/7FuvNMDdiG3ue4hB3N3sf6b8/9UXrbly2sgZGa7
-	M7vc79/ldMtEO+jUCqKbMc4PXPY7PLnJD
-X-Gm-Gg: ASbGncsZY3f6ksBfZDw9PD5oeyBh6/0GKj0QOeRxTde8vyIv7dLmMuNnO9mN8+puYo+
-	vw7JDNVCJMx5zu/njHBXYLT/E+Bh2+r+x2zxbas9gs2IQdXYuyHO7gmicZvEg1hb/YCYpbX02rh
-	af6F+R2IhHcZOdU4SwTcXhFkTQzzCMb7g=
-X-Google-Smtp-Source: AGHT+IF2o0crBa1jdxmEaZXDPdSh1BZhrQylfMPAdu5TCkW+OvSWbXj1VdCN+42syPn8Qi7Jcl1wixFTU9gU/+XgCVo=
-X-Received: by 2002:a05:6512:32c8:b0:544:b5:7487 with SMTP id
- 2adb3069b0e04-54400b5765emr198654e87.17.1738635634102; Mon, 03 Feb 2025
- 18:20:34 -0800 (PST)
+        bh=8pUaQQqJ2xU0FAabHk0RqUjVVx9K0IZZsDB9D+D8IhM=;
+        b=dyhbyi+0jj5ZcoxiOD6jNo3Ihh1nvGdboWZi8OkFkr2UFqV0VNg3MUfWSTLYcPs85t
+         wLS3s2A/XBHP6ZYWugTRPMhTIy4A9vv2fFp2kF0chTOVrhGVi+qYEZuZ2U71qZMuw4Fc
+         du88K1WJZcbiPX9Zo5NBfdqafsk+ggTnBQ7GPcFCw51YimMF8FOBIeAOp9UijWFosoZx
+         V40fVM0jSVjzt/qgf74JAuOsF/dn6xGFpN33AtnjBsksq02s12aL1KOwjROdis7Qb46r
+         mwrH3gqN7HXBpFzuXpY+m1koF0d1d03NYm2N8enuyQltlUnSjSA9Gvpx7Uop0X9j5YCo
+         OS3g==
+X-Gm-Message-State: AOJu0Yy9t225XuV370FVQaJVHLpF/onp5m4+/Vx/6dKf6xY71ruesrBI
+	b4/LqjmVSnGYCI8Q41hFGwkxpil3ZYoF5sIgYoH1h2froQjRxB0fbQlVXpTQMMaYPCP2qq8v2x4
+	g9fwvZr1YKABfL5eggaH5xIXh+EwkS4Az
+X-Gm-Gg: ASbGncsRFKYEduSiMO3wv7JEYYzUT7dIYarFB79YXhmc5YJKtBb2mdW0EWjAE6zkRnN
+	TTutQoooTHQUQQLf0C7uQjZ0phkEOCu92lzFAWyziHaT/v4LGdSrQmF/SCFWrH1JsW0h2YNvfim
+	sx+6RX5G+tAqk8HI37mux+CK1HctKQDg==
+X-Google-Smtp-Source: AGHT+IEdn3CxNX7j4KgHUMga4mL0f7Mgfx79HLSCmUEc8Jd9i0tTyoPU3lLHR9s8Ari3yZf3u7SulE994Xk2n6KyETw=
+X-Received: by 2002:ac2:4c45:0:b0:544:11e4:d53b with SMTP id
+ 2adb3069b0e04-54411e4d5c6mr95389e87.48.1738825695422; Wed, 05 Feb 2025
+ 23:08:15 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <67a1111a.050a0220.d7c5a.00a4.GAE@google.com>
-In-Reply-To: <67a1111a.050a0220.d7c5a.00a4.GAE@google.com>
+References: <CA+m_8J37qo6fKFUp0wpRuK1FHawXNmCMiEyVYEwpt2Nc3uX5Og@mail.gmail.com>
+ <CAKFNMokeyee6PEAHs+zs2OO8gEKftK+_RCt9wYD+2cG6sEqDoQ@mail.gmail.com>
+ <CA+m_8J3Cf5BZUB-c4gVko84FuA0=OtyNCq89A3gJR8-vcTxDyg@mail.gmail.com>
+ <CAKFNMomiYJhNXTTVH5wRuWSBEEYmHcnxqRU8iUPVxFNmfcezMw@mail.gmail.com>
+ <CAKFNMons0oLVgByGXEa4Pv3rgxmgEYP9h4z_fjgMm1qjEJDHFA@mail.gmail.com>
+ <CA+m_8J0UjaOONaRwSMTCup-8xFmjkf6rHaLv0XSMOmvR3_d=PA@mail.gmail.com>
+ <CAKFNMomMZB9oBppxqfAebOQNHAS1+fQRTDPORVH4PYTVnapBig@mail.gmail.com> <CA+m_8J22Maw3+=13QvCKvy5fQpFQ+taCZDU3m2yXHAh1+B3QcA@mail.gmail.com>
+In-Reply-To: <CA+m_8J22Maw3+=13QvCKvy5fQpFQ+taCZDU3m2yXHAh1+B3QcA@mail.gmail.com>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Tue, 4 Feb 2025 11:20:17 +0900
-X-Gm-Features: AWEUYZkzSuMLPSDnVa4nYAmvlCX4V6arde7JCzuuxH1kvZF0zfyznhLKB3sP7ZE
-Message-ID: <CAKFNMok7t_KgxgS3vRL8YbTLcCmZd2F85=zk2zucvH2JwYNtmg@mail.gmail.com>
-Subject: Re: [syzbot] [nilfs?] general protection fault in __d_unalias
-To: syzbot <syzbot+ab57f676a518849a8d57@syzkaller.appspotmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
-	syzkaller-bugs@googlegroups.com, viro@zeniv.linux.org.uk
+Date: Thu, 6 Feb 2025 16:07:58 +0900
+X-Gm-Features: AWEUYZlEARenK0gcPbTJhF2C5fTddBFwz4DS-zdjtN-INg02rY_aFJqu2-2nUEY
+Message-ID: <CAKFNMon2MZkOY3FA_cH2pR=g1UxuFNnb2D__cUjeR=g+TDR5fQ@mail.gmail.com>
+Subject: Re: Massive overhead even after deleting checkpoints
+To: "Felix E. Klee" <felix.klee@inka.de>
+Cc: linux-nilfs@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Feb 4, 2025 at 3:55=E2=80=AFAM syzbot
-<syzbot+ab57f676a518849a8d57@syzkaller.appspotmail.com> wrote:
->
-> Hello,
->
-> syzbot found the following issue on:
->
-> HEAD commit:    69b8923f5003 Merge tag 'for-linus-6.14-ofs4' of git://git=
-...
-> git tree:       upstream
-> console+strace: https://syzkaller.appspot.com/x/log.txt?x=3D14fbdddf98000=
-0
-> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D57ab43c279fa6=
-14d
-> dashboard link: https://syzkaller.appspot.com/bug?extid=3Dab57f676a518849=
-a8d57
-> compiler:       Debian clang version 15.0.6, GNU ld (GNU Binutils for Deb=
-ian) 2.40
-> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D15da95f8580=
-000
-> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D165f8b2458000=
-0
->
-> Downloadable assets:
-> disk image: https://storage.googleapis.com/syzbot-assets/ea84ac864e92/dis=
-k-69b8923f.raw.xz
-> vmlinux: https://storage.googleapis.com/syzbot-assets/6a465997b4e0/vmlinu=
-x-69b8923f.xz
-> kernel image: https://storage.googleapis.com/syzbot-assets/d72b67b2bd15/b=
-zImage-69b8923f.xz
-> mounted in repro: https://storage.googleapis.com/syzbot-assets/7d96d510aa=
-23/mount_0.gz
->
-> The issue was bisected to:
->
-> commit 30d61efe118cad1a73ad2ad66a3298e4abdf9f41
-> Author: Al Viro <viro@zeniv.linux.org.uk>
-> Date:   Mon Jan 6 02:33:17 2025 +0000
->
->     9p: fix ->rename_sem exclusion
->
-> bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=3D148b7b6458=
-0000
-> final oops:     https://syzkaller.appspot.com/x/report.txt?x=3D168b7b6458=
-0000
-> console output: https://syzkaller.appspot.com/x/log.txt?x=3D128b7b6458000=
-0
->
-> IMPORTANT: if you fix the issue, please add the following tag to the comm=
-it:
-> Reported-by: syzbot+ab57f676a518849a8d57@syzkaller.appspotmail.com
-> Fixes: 30d61efe118c ("9p: fix ->rename_sem exclusion")
->
-> Oops: general protection fault, probably for non-canonical address 0xdfff=
-fc000000000d: 0000 [#1] PREEMPT SMP KASAN PTI
-> KASAN: null-ptr-deref in range [0x0000000000000068-0x000000000000006f]
-> CPU: 0 UID: 0 PID: 5821 Comm: syz-executor287 Not tainted 6.13.0-syzkalle=
-r-09793-g69b8923f5003 #0
-> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS G=
-oogle 12/27/2024
-> RIP: 0010:__d_unalias+0x199/0x2a0 fs/dcache.c:2969
-> Code: 98 00 00 00 4c 89 fb 48 c1 eb 03 49 89 ed 80 3c 2b 00 74 08 4c 89 f=
-f e8 65 62 e7 ff 49 8b 2f 48 83 c5 68 48 89 e8 48 c1 e8 03 <42> 80 3c 28 00=
- 74 08 48 89 ef e8 48 62 e7 ff 4c 8b 5d 00 4d 85 db
-> RSP: 0018:ffffc90003d9fa98 EFLAGS: 00010202
-> RAX: 000000000000000d RBX: 1ffff1100996cb61 RCX: ffff88804d821e00
-> RDX: 0000000000000000 RSI: ffff88804cb65a70 RDI: ffff88804cb658f8
-> RBP: 0000000000000068 R08: ffff88804e530f6b R09: 1ffff11009ca61ed
-> R10: dffffc0000000000 R11: ffffed1009ca61ee R12: ffff88804cb65a70
-> R13: dffffc0000000000 R14: 0000000000000000 R15: ffff88804cb65b08
-> FS:  000055555b892380(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000=
-000
-> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> CR2: 00007ffe074ff000 CR3: 0000000078440000 CR4: 00000000003526f0
-> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-> Call Trace:
->  <TASK>
->  d_splice_alias+0x1e6/0x330 fs/dcache.c:3037
->  nilfs_lookup+0x1c2/0x2a0 fs/nilfs2/namei.c:77
->  lookup_one_qstr_excl+0x126/0x2b0 fs/namei.c:1693
->  do_renameat2+0x706/0x13f0 fs/namei.c:5176
->  __do_sys_rename fs/namei.c:5273 [inline]
->  __se_sys_rename fs/namei.c:5271 [inline]
->  __x64_sys_rename+0x82/0x90 fs/namei.c:5271
->  do_syscall_x64 arch/x86/entry/common.c:52 [inline]
->  do_syscall_64+0xf3/0x230 arch/x86/entry/common.c:83
->  entry_SYSCALL_64_after_hwframe+0x77/0x7f
-> RIP: 0033:0x7f7cc482fad9
-> Code: 28 00 00 00 75 05 48 83 c4 28 c3 e8 f1 17 00 00 90 48 89 f8 48 89 f=
-7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff=
- ff 73 01 c3 48 c7 c1 b8 ff ff ff f7 d8 64 89 01 48
-> RSP: 002b:00007ffe074fe328 EFLAGS: 00000246 ORIG_RAX: 0000000000000052
-> RAX: ffffffffffffffda RBX: 00007f7cc4878fc8 RCX: 00007f7cc482fad9
-> RDX: 0000000000000000 RSI: 0000000020000800 RDI: 00000000200001c0
-> RBP: 00007f7cc48a35f0 R08: 000055555b8934c0 R09: 000055555b8934c0
-> R10: 000055555b8934c0 R11: 0000000000000246 R12: 00007ffe074fe350
-> R13: 00007ffe074fe578 R14: 431bde82d7b634db R15: 00007f7cc487803b
->  </TASK>
-> Modules linked in:
-> ---[ end trace 0000000000000000 ]---
-> RIP: 0010:__d_unalias+0x199/0x2a0 fs/dcache.c:2969
-> Code: 98 00 00 00 4c 89 fb 48 c1 eb 03 49 89 ed 80 3c 2b 00 74 08 4c 89 f=
-f e8 65 62 e7 ff 49 8b 2f 48 83 c5 68 48 89 e8 48 c1 e8 03 <42> 80 3c 28 00=
- 74 08 48 89 ef e8 48 62 e7 ff 4c 8b 5d 00 4d 85 db
-> RSP: 0018:ffffc90003d9fa98 EFLAGS: 00010202
-> RAX: 000000000000000d RBX: 1ffff1100996cb61 RCX: ffff88804d821e00
-> RDX: 0000000000000000 RSI: ffff88804cb65a70 RDI: ffff88804cb658f8
-> RBP: 0000000000000068 R08: ffff88804e530f6b R09: 1ffff11009ca61ed
-> R10: dffffc0000000000 R11: ffffed1009ca61ee R12: ffff88804cb65a70
-> R13: dffffc0000000000 R14: 0000000000000000 R15: ffff88804cb65b08
-> FS:  000055555b892380(0000) GS:ffff8880b8600000(0000) knlGS:0000000000000=
-000
-> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> CR2: 00007ffe074ff000 CR3: 0000000078440000 CR4: 00000000003526f0
-> DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-> ----------------
-> Code disassembly (best guess):
->    0:   98                      cwtl
->    1:   00 00                   add    %al,(%rax)
->    3:   00 4c 89 fb             add    %cl,-0x5(%rcx,%rcx,4)
->    7:   48 c1 eb 03             shr    $0x3,%rbx
->    b:   49 89 ed                mov    %rbp,%r13
->    e:   80 3c 2b 00             cmpb   $0x0,(%rbx,%rbp,1)
->   12:   74 08                   je     0x1c
->   14:   4c 89 ff                mov    %r15,%rdi
->   17:   e8 65 62 e7 ff          call   0xffe76281
->   1c:   49 8b 2f                mov    (%r15),%rbp
->   1f:   48 83 c5 68             add    $0x68,%rbp
->   23:   48 89 e8                mov    %rbp,%rax
->   26:   48 c1 e8 03             shr    $0x3,%rax
-> * 2a:   42 80 3c 28 00          cmpb   $0x0,(%rax,%r13,1) <-- trapping in=
-struction
->   2f:   74 08                   je     0x39
->   31:   48 89 ef                mov    %rbp,%rdi
->   34:   e8 48 62 e7 ff          call   0xffe76281
->   39:   4c 8b 5d 00             mov    0x0(%rbp),%r11
->   3d:   4d 85 db                test   %r11,%r11
->
->
-> ---
-> This report is generated by a bot. It may contain errors.
-> See https://goo.gl/tpsmEJ for more information about syzbot.
-> syzbot engineers can be reached at syzkaller@googlegroups.com.
->
-> syzbot will keep track of this issue. See:
-> https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
-> For information about bisection process see: https://goo.gl/tpsmEJ#bisect=
-ion
->
-> If the report is already addressed, let syzbot know by replying with:
-> #syz fix: exact-commit-title
->
-> If you want syzbot to run the reproducer, reply with:
-> #syz test: git://repo/address.git branch-or-commit-hash
-> If you attach or paste a git patch, syzbot will apply it before testing.
->
-> If you want to overwrite report's subsystems, reply with:
-> #syz set subsystems: new-subsystem
-> (See the list of subsystem names on the web dashboard)
->
-> If the report is a duplicate of another one, reply with:
-> #syz dup: exact-subject-of-another-report
->
-> If you want to undo deduplication, reply with:
-> #syz undup
+Hi Felix,
 
-I tested reproducers locally and found that the issue was fixed with
-the latest commit:
+On Fri, Jan 31, 2025 at 5:14=E2=80=AFPM Felix E. Klee wrote:
+>
+> On Fri, Jan 17, 2025 at 2:25=E2=80=AFAM Ryusuke Konishi
+> <konishi.ryusuke@gmail.com> wrote:
+> > GC runs automatically in the background based on the watermark
+> > conditions set in /etc/nilfs_cleanerd.conf, even if you don't run the
+> > nilfs-clean command.
+>
+> When I run `nilfs-clean` with options such as `--protection-period=3D0`,
+> will that change the settings of `cleanerd` until the next reboot? Or do
+> the options only apply to a single GC run?
 
-#syz fix: fix braino in "9p: fix ->rename_sem exclusion"
+It only affects a single (one round) GC.  Once that's done, it goes
+back to normal.
 
+> > If you want to ignore this ratio and force GC, use the "-m" option,
+> > like this:
+> >
+> > # nilfs-clean -S 20/0.1 -p 0 -m 5
+>
+> Thanks!
+>
+> Regarding `-S 20/0.1`, that means the cleaning happens 20 times for
+> every 0.1 seconds? And each time `nsegments_per_clean` /
+> `mc_nsegments_per_clean` are cleaned?
+
+'-S 20/0.1' gives the GC pace, meaning that 20 segments are GC'd every
+0.1 seconds.
+
+The numerator of the speed is the parameter equivalent to
+"nsegments_per_clean", which changes only during manual GC.
+
+> > LFS is a legacy method and is not common
+>
+> =E2=80=9Cnot common=E2=80=9D I understand, but why legacy? What does supe=
+rsede it?
+
+Generally speaking, copy-on-write file systems such as ZFS and Btrfs are ne=
+wer.
+The concept of LFS (Log-structured File System) itself was proposed in
+1988 and implemented in UNIX in 1992. It is an old method, and I
+believe there are few surviving implementations today. In that sense,
+I used the word "legacy".
+In a broad sense, LFS is also a copy-on-write file system, but the
+difference is that it divides the storage medium into segments and
+performs space management (GC) on those units.
+
+> High frequency snapshotting is something I am missing from other file
+> systems.
+
+That may be true, but frequent snapshots are in principle possible in
+copy-on-write filesystems (apart from the actual support), while
+retroactive snapshots (the ability to turn each checkpoint into a
+mountable snapshot at a later time) are unique to NILFS.
+
+Regards,
 Ryusuke Konishi
