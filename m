@@ -1,116 +1,58 @@
-Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from sendmail.purelymail.com (sendmail.purelymail.com [34.202.193.197])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96C1282D98;
-	Sat,  5 Apr 2025 14:13:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C23071A8F63
+	for <linux-nilfs@vger.kernel.org>; Sat,  5 Apr 2025 18:33:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=34.202.193.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743862440; cv=none; b=fawtEAGUIWbgBZyva4BECh1ASMTZd11oIXrlxHSCU7XzKD7iKj8d2M1FJ0FkZNsQj0VxaGphdAI4zYsc5UXzDOs36uINA5dg6jfs8prllCgkJytgrwgRW/Tj8oV6ljl4BCDV7dOnGiFVcCNbtTQUFkKEzubcEvJF2PM2f3SbBxE=
+	t=1743878011; cv=none; b=Esr4ugKDiOGRAHqgVOg1vz+0drcwnp75z6/2gjLVp7qXFX7yBCg+htfbrSn1p0ifZ5k640/C3OUWQZqA8Umtit7o8CirfQbrTx+dVLmodB5moqUjtpMkcONb30qB04kvm9tYB9fJDUDKm0eZWEb31UyXTDH+reWaZz2dSxMpVto=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743862440; c=relaxed/simple;
-	bh=P4J9KS6HKX854uNiABwvLAKikcCrRXqFEIVa83Zf9WI=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=EDXB2wUiCUHgpX+/k+iKcX1qMh6wnQ5Z7sOLA0ak8cUwsBtESKJJZ8rMcJhQtdj5kSfKI5swHOXfRMsopSG2kfZv9+q+CyrL+u+ehHEqU8TR1hKe75VUe7JLJgca3HXMG/3GG7EqbqWyB2+Rcft4Fznnn6+rWJ2Nd3jmv2cAr70=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VCEcmjBz; arc=none smtp.client-ip=209.85.208.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1743878011; c=relaxed/simple;
+	bh=uxhqY1YSip8wrLoA7rJKVntpVvxVOcrCmwg1BeQuBYs=;
+	h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type; b=aCUgIY4Sc/+R+S1coShjEVjX8rWguXUgz1Jk2OO3DxiP5Kpe4emlfExOeD/o17mtkLM4UjmhMpZu6qPAQFlsyr7zZwgIYYuP+NWIAjdwWj2pYlr/yuiuWqVCKGqRBA4KSk2/0gaJ8f5My9jsdKD+Q+He9lmaGXNT7qVvs3GmR8Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=askholm.net; spf=pass smtp.mailfrom=askholm.net; dkim=pass (2048-bit key) header.d=askholm.net header.i=@askholm.net header.b=bkBmR7T0; dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b=boaisdML; arc=none smtp.client-ip=34.202.193.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=askholm.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=askholm.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VCEcmjBz"
-Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-30db2c2c609so28534541fa.3;
-        Sat, 05 Apr 2025 07:13:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1743862436; x=1744467236; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=AZgFOhif6AUBxl+oaVaiAPhmHvSBVyu1yIQjR+GE1eQ=;
-        b=VCEcmjBzEBdzyx3zZbb6iOUlP1vSYw/cPNXXGXefiaynlrwj0Z/Owo8Ut7PAoEd9jW
-         ZxLXtqZpVsxipRt8Qy4DjC46S0jAN9hiFcDT8TT34DrW1vuo2ERrgQhFO7tHaPrXVmBO
-         d8JGOHx4fqEuU/BqFylaMIokUqksTEOuvTN1/6uimubiK4bRZCCdMNBgWjIlf8Db4+hO
-         c/fATwOei0YCjjqnVClpfPP7yGj9dv+FY6lKMM2PHtmgV18u3I6RqtpdOIJTB98Kw5zT
-         nJVgjQOzzqOI1olV1RphoRhMfmxOJGbrsFbS/PPFn8X6hELXko55t7MJjVJMC8ZBr4zt
-         KN4A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1743862436; x=1744467236;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=AZgFOhif6AUBxl+oaVaiAPhmHvSBVyu1yIQjR+GE1eQ=;
-        b=KpLIL3PWSf4dTTpRJZIKC1jdteWLOVrAf7XeS+RotYB+qOgWRK1TOirEARbHRvKIwa
-         6OZ7D6knuavkccJYO4NE19aBG0MNS4w+FaVc/P2KRh1BgXDtRZ8vORqWC8tnvEyNB5ft
-         oPFJxrW5lYqIf8P9zw9isFtYuGdTWrUrjaA7IrjNC8ZpvsdIfvD4h6ctTDsU+/Wckarb
-         mmqGYm8bjc7xIem0CWvsLLwjPr2gw80Xp3OhwbcoV2g49o5DbjyHj23fl19G0vu34Cma
-         ch3wwZa+9HK7YJGhiPmVJKp59NlhyFPCgtagNtvNqpHkGqWvb2xWTtd7FuQVaeXscmAI
-         IJog==
-X-Forwarded-Encrypted: i=1; AJvYcCWsf4hfpfd1a58d0yp6R8BeF1y9UQ1aR/CwdLSpYdyYPQKii71FxeK66/cyujhrz0Kk4TVErkYfVQyaPus=@vger.kernel.org
-X-Gm-Message-State: AOJu0YwC+mjstmvhCy7ZGzvgoeYE5nJoAAavbL8T06ELtkqM+CGsfRYk
-	lhdnVGXdXikSsHCEhQUNVq67IgOpC1mYrOElYJHINHDSMluCUQMNpuiAxZox2WKKfxBlphCFCiP
-	Cn+LLDwbxe3gampW3TC+wQP2bOkWnzRsG
-X-Gm-Gg: ASbGncuM2lFwQ4OkFNa9a3Lk7NTqrJ0VHvFSJSqG2QpHaG2tGOCsgQMKo1SHBbVDFKk
-	HFZcW9UGkmkeDjSBIot5kl7Hrzr1kaTQTdOw2O8+Fkv8WlEn8OlrAperkdEPl1v2FZirM3XoDd8
-	jv4ALKsu025EeidedcpGMgMhrjEqxq89IjuRp6W8NXdHeaQGrrZ+PoGGid21D47IE2jaJQ1A==
-X-Google-Smtp-Source: AGHT+IGISO1oEBMOP1pM1Z1rBBoXBXuhqvrd86bMxAIHDyBnh9d/puxeci2e6CwCDKEcvHLikD07am+C2lf3kKwU5pY=
-X-Received: by 2002:a2e:a80c:0:b0:30b:f52d:148f with SMTP id
- 38308e7fff4ca-30f0a12ef9emr19757481fa.18.1743862436318; Sat, 05 Apr 2025
- 07:13:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=askholm.net header.i=@askholm.net header.b="bkBmR7T0";
+	dkim=pass (2048-bit key) header.d=purelymail.com header.i=@purelymail.com header.b="boaisdML"
+DKIM-Signature: a=rsa-sha256; b=bkBmR7T0tdp75GfEzzPv7bXzEfoEc4igDn3Nqk9YFPlTT+ciZwinsYiGiqwO0PLjbSWv04p0JlATc3rqicAnlBpI+8Wx5abaOrfm1gP89yZoU4uy0rwGWC+4z8Lw+J4E8ZYhkY2Fr29/xbSlX4CsurKvrhwZsTMHYOswbEVmQTAh1Ygd6KWjttCbm5bekPm6zFh4P9H3ikX8agYgcfU9TbFs+qzgxa8U8NGJ6n0Lv3FeLP6ewKW+yBTJzefiFL+g438YOMj6K3LPwAkVImaKOWvhKSyVnwirYQaZ7DkE6rLpBklWn5PSzfo/CpJuSy9PYzq823fPSTbtvQadCVAG+w==; s=purelymail1; d=askholm.net; v=1; bh=uxhqY1YSip8wrLoA7rJKVntpVvxVOcrCmwg1BeQuBYs=; h=Received:Date:To:From:Subject;
+DKIM-Signature: a=rsa-sha256; b=boaisdML9t3aWEskGBEm6SyXhZIG/KwnKiUvHwGpiTtby9K6I8YpqvqYtv7kgqgWibpCFlghY9yw56QAhWiLMqpjdvcsHmfaEc4aRbRJhJ1f0Ivm620sJxswgGK/V0n5yo8+yyCRHn6DBWwNBFrm2oMNJJoUskqY399SEY+9ey/LfX4rSUZbv6A8OKAEkwrgUn3tKM9C3XJzKe/70sObfivip8SSaYD78iUBsOL/ifbvop7N7J8tpWUDwaA4tFLgLVtnVKeEej7uQNHv3sjbhLCTIEexbrLkXnNPYUb7johezlzkNu3WGewuz9+hpuk8yaAjm1D1zT2zdwO/FvcBcg==; s=purelymail1; d=purelymail.com; v=1; bh=uxhqY1YSip8wrLoA7rJKVntpVvxVOcrCmwg1BeQuBYs=; h=Feedback-ID:Received:Date:To:From:Subject;
+Feedback-ID: 2561:640:null:purelymail
+X-Pm-Original-To: linux-nilfs@vger.kernel.org
+Received: by smtp.purelymail.com (Purelymail SMTP) with ESMTPSA id 1843737438
+          for <linux-nilfs@vger.kernel.org>
+          (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
+          Sat, 05 Apr 2025 18:33:14 +0000 (UTC)
+Message-ID: <822efaae-2317-4002-bebe-538cbb90acbc@askholm.net>
+Date: Sat, 5 Apr 2025 20:33:11 +0200
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20250405095641.2009-1-vulab@iscas.ac.cn>
-In-Reply-To: <20250405095641.2009-1-vulab@iscas.ac.cn>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 5 Apr 2025 23:13:39 +0900
-X-Gm-Features: ATxdqUGOJhkEs4mkL5fNoc2aqdXOeEQlW-XZxZKDZQbmr-Jplo3H-P1kEDgei-E
-Message-ID: <CAKFNMon67-aNMFEd1yhYGqvfabob7RxTo0aQFGUUpKxOH4YF+g@mail.gmail.com>
-Subject: Re: [PATCH v2] nilfs2: Add pointer check for nilfs_direct_propagate()
-To: Wentao Liang <vulab@iscas.ac.cn>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+To: linux-nilfs@vger.kernel.org
+Content-Language: en-US
+From: Magnus Askholm <magnus@askholm.net>
+Subject: Question about reflink support in nilfs
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Sat, Apr 5, 2025 at 6:57=E2=80=AFPM Wentao Liang wrote:
->
-> In nilfs_direct_propagate(), the printer get from nilfs_direct_get_ptr()
-> need to be checked to ensure it is not an invalid pointer.
->
-> If the pointer value obtained by nilfs_direct_get_ptr() is
-> NILFS_BMAP_INVALID_PTR, means that the metadata (in this case,
-> i_bmap in the nilfs_inode_info struct) thatshould  point to the data
-> block at the buffer head of the argument is corrupted and the data
-> block is orphaned, meaning that the file system has lost consistency.
->
-> Add a value check and return -EINVAL when it is an invalid pointer.
->
-> Fixes: 36a580eb489f ("nilfs2: direct block mapping")
-> Signed-off-by: Wentao Liang <vulab@iscas.ac.cn>
-> ---
->  fs/nilfs2/direct.c | 3 +++
->  1 file changed, 3 insertions(+)
->
-> diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
-> index 893ab36824cc..2d8dc6b35b54 100644
-> --- a/fs/nilfs2/direct.c
-> +++ b/fs/nilfs2/direct.c
-> @@ -273,6 +273,9 @@ static int nilfs_direct_propagate(struct nilfs_bmap *=
-bmap,
->         dat =3D nilfs_bmap_get_dat(bmap);
->         key =3D nilfs_bmap_data_get_key(bmap, bh);
->         ptr =3D nilfs_direct_get_ptr(bmap, key);
-> +       if (ptr =3D=3D NILFS_BMAP_INVALID_PTR)
-> +               return -EINVAL;
-> +
->         if (!buffer_nilfs_volatile(bh)) {
->                 oldreq.pr_entry_nr =3D ptr;
->                 newreq.pr_entry_nr =3D ptr;
-> --
-> 2.42.0.windows.2
->
+Some places, I see people say, that nilfs is a copy-on-write filesystem.
+But when I try to copy a file inside nilfs, using reflinks, this happens:
 
-Thanks for your help!
+$ cp --reflink=always README.txt README2.txt
+cp: failed to clone 'README2.txt' from 'README.txt': Operation not supported
 
-I'll handle this patch.
+Normal copying works fine:
+$ cp --reflink=never README.txt README2.txt
 
-Ryusuke Konishi
+So it looks like nilfs doesn't support copy-on-write, where you can copy 
+a file
+without using extra space. E.g. copying a 5 GB file won't take 5 GB of 
+free space.
+
+Is this a bug or just a missing feature, that could be implemented in 
+the future?
