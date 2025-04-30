@@ -1,51 +1,51 @@
-Received: from mail-io1-f80.google.com (mail-io1-f80.google.com [209.85.166.80])
+Received: from mail-il1-f205.google.com (mail-il1-f205.google.com [209.85.166.205])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CDCD8188A0E
-	for <linux-nilfs@vger.kernel.org>; Wed, 30 Apr 2025 07:56:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.80
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F76125C80C
+	for <linux-nilfs@vger.kernel.org>; Wed, 30 Apr 2025 13:15:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.205
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745999791; cv=none; b=n2dK1IaOakWlMptcXgRJ91jqUZhblNcLwrpWVGKIOdi5IdVRXGIHO46ZDHCyzPTd+e/rhd6qWf2w2MC1bJVYebtn4uLbBXkgQ2Yb78imtYsUEuhAGLuV6HoGsI8rK8TJ3KhvF1S1uTg8oQc0YNt3Trr91Gj59+uOtaIT3A1h2kc=
+	t=1746018937; cv=none; b=V97DnbEQ0i1CoFs378MnseU7tcTm3FZt90mTWi+hxfN1t4nqV/0HLYzZyO93CdSZsDsGY31uV+5IwTqzXXHAhFqD0D4ZBOsKQVfjJjYpgEDsZgW4Qu5dwMZHPH65OJOfYZe0QjisITdHXBeqOPDW3mMrdvx5nafBDMao+Cn7D/w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745999791; c=relaxed/simple;
-	bh=RszhLQ2p9O753ftdP5ZTcrAl9pu69x1hx1AVesjP6iU=;
-	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=RgzrCqsAb10hsZ4TYuENiUwRMcqUXGKjrSOR+ysGnnTcWjtw4RmmsbPQ3fDsuwt8yV0LpXeiTvi0s4vI1Uq6JMuGrFlgx0XehgYMpaSfGRRchaTNVlx6I3txXEFo5azHiMNIirTizUpKUFEQMGKfsyM69M23fhMaR05iBmDjZPY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.80
+	s=arc-20240116; t=1746018937; c=relaxed/simple;
+	bh=NB06xXgHcJVbvFZPO9B3UPrXK79+T6graK5nUP02cbA=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=p/8bENpqm4m+EhG3DZIp9MrlzpLwTgq5MaWrTH8TMdbRb19MS89wPPN+EkmJj9i1T4e/RBxxnkrRYuy6zVH37yJ/73Pp4nlA7IBUgWBCjdgyJ3BPj9c7DOMiDHOMzd0Rc0wrKIy0VoBZ0elmM4sGm0RfsKPfJSF48Tj6+6DhdAs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.205
 Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-io1-f80.google.com with SMTP id ca18e2360f4ac-85c552b10b9so630456639f.1
-        for <linux-nilfs@vger.kernel.org>; Wed, 30 Apr 2025 00:56:29 -0700 (PDT)
+Received: by mail-il1-f205.google.com with SMTP id e9e14a558f8ab-3d458e61faaso10892995ab.0
+        for <linux-nilfs@vger.kernel.org>; Wed, 30 Apr 2025 06:15:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1745999789; x=1746604589;
+        d=1e100.net; s=20230601; t=1746018934; x=1746623734;
         h=to:from:subject:message-id:date:mime-version:x-gm-message-state
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=gp8rAvLAmfy0NJCQzYnwm1r1iXTxdGiBnxsm8zao6vY=;
-        b=dR67r3vLxneay18xdXgVpzDBchye8ykzQfOVXKH5M9q1Kz7BGEvHZJYUCCDTbvPW8Y
-         qPuRxTYAQ5jlel1NRtNWdrqlg57FK97Yi3INEKvp6dwLd2VmhvZMT4DOummdRwNm3noG
-         yGDg3++RbXi9+idHVsJd6naTjLPBunGjsQAsWyNAvpWmNrSqcuKPUlOeO4xyP3SoKJkz
-         4t/jCC8vLl1c1Tm9wM/HTCUzh4+cRpIrjx6VXhZ6QpvlzyMjdFppYSaHYATY+MxqL3xj
-         gvRZHV3fXp4Q+zVlXPlNwvwuYXtHx0g96uRh9mTzEFmKTsXcPZ2GYhDseBFVdlNfYXXk
-         whEg==
-X-Forwarded-Encrypted: i=1; AJvYcCUwwdYV1Ijw4MUbGNZslwHogX9SBwFGQQh53jgiMsRhTqnGntu34b7oWUEqN0Rpbc/iqPQMddQMYoPQgg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YwQq/WX0f6fOiv9OCFzkaCxAqEULW2tQ3AF09RHgHGIGv7/+Rjp
-	qsivWp4UdEle6RdTDpQ8PjRdhSQ6Mkjp4MWRXwcFFMV+GKE008r9sn0m8Gt678BXRBkeA1Ejgkc
-	ssvqnuS66ShfcTj6KKS0WH5wGIV6xfXMBpIqE6If65VzowNjVL95ujeE=
-X-Google-Smtp-Source: AGHT+IEsuzlP49aU25bLG0Ked4nMxkBgAx4ToAW5PVYFXtFOCTitXhEAHRGvCM5qlxhAt8HbMSoCWumiNZMmNnUsVk+xVS9N9Bk1
+        bh=2JuI3ic/5/btEWDh3YRfQoc1mfoo5Ezo7dOPT506X0Y=;
+        b=tS7SBvuS2IeWKNJiS8sC2c6vh3Kem1bXMx5jARb3ofz2UhgqV+FHOmy8dRpyadmD7u
+         7BrsQUtg58LQ5fYUKePAqivwQG6NpZhF31z2njxO6Sg5NCQPa8+rBZeDp1fulW5R5FXy
+         FhEd5P26OI6iWFHZNH0h3iNkAbQbuLN+vYurtvURW+4yZWsIqfUl+RTDlcUN/ioPASW1
+         8lW87sZJxp3le0XtRxDqcU5hs1HXycPxTFyUEIqpfKyOk+P6TxWM/f9nutM9Ouwp+cGl
+         +DYyjHw1X9vPJ/6WcihcvxMCMvgqOxqmyLgldmv0d6xDa/baqfYwBp9r6ik/lCLQbO5H
+         CSnQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUBSm1MmIWbuw0ZDx6BlewNWOgZafyz3mt2gvIPBOMXT5fxP95sGUrJWNAZdwhImcEtV5UriJD+I4vNVQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yz4NcLnKx9PpDC90WzLBA/uflHETd6HT6f/a3zXF1eDLkjeUUzh
+	oDlhn7lgOImFPaYQfSMhm8WbjiE5unOVojNkda3hIapBsWYHsiAyIF0FD97q1LhZ1TImlaJ8XVq
+	ZpJDtm26lhc0/EUuYtRtp9a2bO35uRknQVpKtLXCHCwDjATLBOdJdekc=
+X-Google-Smtp-Source: AGHT+IFWe3jnA5ocsG/20TDwQV9MImiTTtP1IBl6OH3K1Wm/ckaMdo8puH+sPA+tHR///5Y+9+QbDtU7Xm7hznj3kcVacsDnp8bR
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6602:7287:b0:855:5e3a:e56b with SMTP id
- ca18e2360f4ac-86495f0f3cfmr285730039f.12.1745999788957; Wed, 30 Apr 2025
- 00:56:28 -0700 (PDT)
-Date: Wed, 30 Apr 2025 00:56:28 -0700
+X-Received: by 2002:a92:4a02:0:b0:3d4:346e:8d49 with SMTP id
+ e9e14a558f8ab-3d9679c6d70mr25272355ab.9.1746018934543; Wed, 30 Apr 2025
+ 06:15:34 -0700 (PDT)
+Date: Wed, 30 Apr 2025 06:15:34 -0700
 X-Google-Appengine-App-Id: s~syzkaller
 X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6811d7ac.050a0220.16fb2c.000b.GAE@google.com>
-Subject: [syzbot] [nilfs?] possible deadlock in nilfs_page_mkwrite (2)
-From: syzbot <syzbot+3f86ff971bc63d62b932@syzkaller.appspotmail.com>
+Message-ID: <68122276.050a0220.3a872c.0000.GAE@google.com>
+Subject: [syzbot] [nilfs?] possible deadlock in nilfs_get_block
+From: syzbot <syzbot+f30591e72bfc24d4715b@syzkaller.appspotmail.com>
 To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
 	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
@@ -54,39 +54,74 @@ Hello,
 
 syzbot found the following issue on:
 
-HEAD commit:    ca91b9500108 Merge tag 'v6.15-rc4-ksmbd-server-fixes' of g..
+HEAD commit:    f1a3944c860b Merge tag 'bpf-fixes' of git://git.kernel.org..
 git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=175868d4580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=a42a9d552788177b
-dashboard link: https://syzkaller.appspot.com/bug?extid=3f86ff971bc63d62b932
+console output: https://syzkaller.appspot.com/x/log.txt?x=129390d4580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=c2f0ed2ec54b450e
+dashboard link: https://syzkaller.appspot.com/bug?extid=f30591e72bfc24d4715b
 compiler:       Debian clang version 20.1.2 (++20250402124445+58df0ef89dd6-1~exp1~20250402004600.97), Debian LLD 20.1.2
-
-Unfortunately, I don't have any reproducer for this issue yet.
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1355f574580000
 
 Downloadable assets:
-disk image: https://storage.googleapis.com/syzbot-assets/8f91302b28da/disk-ca91b950.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/99926b0845ed/vmlinux-ca91b950.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/ace62028a7c9/bzImage-ca91b950.xz
+disk image: https://storage.googleapis.com/syzbot-assets/3535f3097c2c/disk-f1a3944c.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/d516f4e48f72/vmlinux-f1a3944c.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/0f61802eee60/bzImage-f1a3944c.xz
+mounted in repro #1: https://storage.googleapis.com/syzbot-assets/185aa64b9980/mount_0.gz
+mounted in repro #2: https://storage.googleapis.com/syzbot-assets/897656dc8d9e/mount_2.gz
 
 IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+3f86ff971bc63d62b932@syzkaller.appspotmail.com
+Reported-by: syzbot+f30591e72bfc24d4715b@syzkaller.appspotmail.com
 
 ======================================================
 WARNING: possible circular locking dependency detected
-6.15.0-rc4-syzkaller-00021-gca91b9500108 #0 Not tainted
+6.15.0-rc3-syzkaller-00283-gf1a3944c860b #0 Not tainted
 ------------------------------------------------------
-syz.0.145/7282 is trying to acquire lock:
-ffff88806be68610 (sb_internal#4){.+.+}-{0:0}, at: nilfs_page_mkwrite+0x8b0/0xc20 fs/nilfs2/file.c:95
+syz.3.1001/9022 is trying to acquire lock:
+ffff8880301a5c70 (&dat_lock_key){.+.+}-{4:4}, at: nilfs_get_block+0x1b1/0x8f0 fs/nilfs2/inode.c:83
 
 but task is already holding lock:
-ffff88806be68518 (sb_pagefaults#4){.+.+}-{0:0}, at: do_page_mkwrite+0x14a/0x310 mm/memory.c:3287
+ffff8880116532a0 (&nilfs->ns_segctor_sem){++++}-{4:4}, at: nilfs_transaction_begin+0x365/0x710 fs/nilfs2/segment.c:221
 
 which lock already depends on the new lock.
 
 
 the existing dependency chain (in reverse order) is:
 
--> #5 (sb_pagefaults#4){.+.+}-{0:0}:
+-> #6 (&nilfs->ns_segctor_sem){++++}-{4:4}:
+       lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
+       down_read+0x46/0x2e0 kernel/locking/rwsem.c:1524
+       nilfs_transaction_begin+0x365/0x710 fs/nilfs2/segment.c:221
+       nilfs_setattr+0x10f/0x2b0 fs/nilfs2/inode.c:912
+       notify_change+0xb33/0xe40 fs/attr.c:552
+       do_truncate+0x19a/0x220 fs/open.c:65
+       vfs_truncate+0x493/0x520 fs/open.c:115
+       do_sys_truncate+0xdb/0x190 fs/open.c:138
+       __do_sys_truncate fs/open.c:150 [inline]
+       __se_sys_truncate fs/open.c:148 [inline]
+       __x64_sys_truncate+0x5b/0x70 fs/open.c:148
+       do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+       do_syscall_64+0xf6/0x210 arch/x86/entry/syscall_64.c:94
+       entry_SYSCALL_64_after_hwframe+0x77/0x7f
+
+-> #5 (sb_internal#2){.+.+}-{0:0}:
+       lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
+       percpu_down_read include/linux/percpu-rwsem.h:52 [inline]
+       __sb_start_write include/linux/fs.h:1783 [inline]
+       sb_start_intwrite include/linux/fs.h:1966 [inline]
+       nilfs_transaction_begin+0x268/0x710 fs/nilfs2/segment.c:218
+       nilfs_page_mkwrite+0x8b0/0xc20 fs/nilfs2/file.c:95
+       do_page_mkwrite+0x14a/0x310 mm/memory.c:3287
+       wp_page_shared mm/memory.c:3688 [inline]
+       do_wp_page+0x2626/0x5760 mm/memory.c:3907
+       handle_pte_fault mm/memory.c:6013 [inline]
+       __handle_mm_fault+0x1028/0x5380 mm/memory.c:6140
+       handle_mm_fault+0x2d5/0x7f0 mm/memory.c:6309
+       do_user_addr_fault+0xa81/0x1390 arch/x86/mm/fault.c:1337
+       handle_page_fault arch/x86/mm/fault.c:1480 [inline]
+       exc_page_fault+0x68/0x110 arch/x86/mm/fault.c:1538
+       asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:623
+
+-> #4 (sb_pagefaults#2){.+.+}-{0:0}:
        lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
        percpu_down_read include/linux/percpu-rwsem.h:52 [inline]
        __sb_start_write include/linux/fs.h:1783 [inline]
@@ -99,28 +134,12 @@ the existing dependency chain (in reverse order) is:
        handle_pte_fault mm/memory.c:5997 [inline]
        __handle_mm_fault+0x18d2/0x5380 mm/memory.c:6140
        handle_mm_fault+0x2d5/0x7f0 mm/memory.c:6309
-       faultin_page mm/gup.c:1193 [inline]
-       __get_user_pages+0x16f0/0x2a40 mm/gup.c:1491
-       __get_user_pages_locked mm/gup.c:1821 [inline]
-       __gup_longterm_locked+0x105d/0x15b0 mm/gup.c:2523
-       gup_fast_fallback+0x1843/0x1d60 mm/gup.c:3417
-       iov_iter_extract_user_pages lib/iov_iter.c:1849 [inline]
-       iov_iter_extract_pages+0x35a/0x5e0 lib/iov_iter.c:1912
-       dio_refill_pages fs/direct-io.c:172 [inline]
-       dio_get_page fs/direct-io.c:213 [inline]
-       do_direct_IO fs/direct-io.c:915 [inline]
-       __blockdev_direct_IO+0x10ed/0x3310 fs/direct-io.c:1243
-       blockdev_direct_IO include/linux/fs.h:3422 [inline]
-       nilfs_direct_IO+0xed/0x120 fs/nilfs2/inode.c:267
-       generic_file_read_iter+0x319/0x510 mm/filemap.c:2871
-       new_sync_read fs/read_write.c:489 [inline]
-       vfs_read+0x4cd/0x980 fs/read_write.c:570
-       ksys_read+0x145/0x250 fs/read_write.c:713
-       do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
-       do_syscall_64+0xf6/0x210 arch/x86/entry/syscall_64.c:94
-       entry_SYSCALL_64_after_hwframe+0x77/0x7f
+       do_user_addr_fault+0x764/0x1390 arch/x86/mm/fault.c:1388
+       handle_page_fault arch/x86/mm/fault.c:1480 [inline]
+       exc_page_fault+0x68/0x110 arch/x86/mm/fault.c:1538
+       asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:623
 
--> #4 (&mm->mmap_lock){++++}-{4:4}:
+-> #3 (&mm->mmap_lock){++++}-{4:4}:
        lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
        __might_fault+0xcc/0x130 mm/memory.c:7151
        _copy_to_iter+0xf3/0x15a0 lib/iov_iter.c:184
@@ -135,7 +154,7 @@ the existing dependency chain (in reverse order) is:
        do_syscall_64+0xf6/0x210 arch/x86/entry/syscall_64.c:94
        entry_SYSCALL_64_after_hwframe+0x77/0x7f
 
--> #3 (&sb->s_type->i_mutex_key#7){++++}-{4:4}:
+-> #2 (&sb->s_type->i_mutex_key#7){++++}-{4:4}:
        lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
        down_write+0x96/0x1f0 kernel/locking/rwsem.c:1577
        inode_lock include/linux/fs.h:867 [inline]
@@ -154,34 +173,31 @@ the existing dependency chain (in reverse order) is:
        do_syscall_64+0xf6/0x210 arch/x86/entry/syscall_64.c:94
        entry_SYSCALL_64_after_hwframe+0x77/0x7f
 
--> #2 (&nilfs->ns_sem){++++}-{4:4}:
+-> #1 (&nilfs->ns_sem){++++}-{4:4}:
        lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
        down_write+0x96/0x1f0 kernel/locking/rwsem.c:1577
        nilfs_set_error fs/nilfs2/super.c:92 [inline]
        __nilfs_error+0x1ca/0x4b0 fs/nilfs2/super.c:141
        nilfs_bmap_convert_error fs/nilfs2/bmap.c:35 [inline]
-       nilfs_bmap_propagate+0x108/0x130 fs/nilfs2/bmap.c:332
-       nilfs_collect_file_data+0x4f/0xd0 fs/nilfs2/segment.c:589
-       nilfs_segctor_apply_buffers+0x161/0x330 fs/nilfs2/segment.c:1010
-       nilfs_segctor_scan_file+0x68e/0x8e0 fs/nilfs2/segment.c:1059
-       nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1254 [inline]
-       nilfs_segctor_collect fs/nilfs2/segment.c:1547 [inline]
-       nilfs_segctor_do_construct+0x1d46/0x6970 fs/nilfs2/segment.c:2122
-       nilfs_segctor_construct+0x17b/0x690 fs/nilfs2/segment.c:2478
-       nilfs_segctor_thread_construct fs/nilfs2/segment.c:2586 [inline]
-       nilfs_segctor_thread+0x6f7/0xe00 fs/nilfs2/segment.c:2700
-       kthread+0x70e/0x8a0 kernel/kthread.c:464
-       ret_from_fork+0x4b/0x80 arch/x86/kernel/process.c:153
-       ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
-
--> #1 (&nilfs->ns_segctor_sem){++++}-{4:4}:
-       lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
-       down_read+0x46/0x2e0 kernel/locking/rwsem.c:1524
-       nilfs_transaction_begin+0x365/0x710 fs/nilfs2/segment.c:221
-       nilfs_create+0xc9/0x2f0 fs/nilfs2/namei.c:95
-       lookup_open fs/namei.c:3701 [inline]
-       open_last_lookups fs/namei.c:3800 [inline]
-       path_openat+0x14f1/0x3830 fs/namei.c:4036
+       nilfs_bmap_lookup_contig+0x13e/0x160 fs/nilfs2/bmap.c:100
+       nilfs_get_block+0x1fb/0x8f0 fs/nilfs2/inode.c:84
+       do_mpage_readpage+0x86d/0x19a0 fs/mpage.c:222
+       mpage_readahead+0x398/0x650 fs/mpage.c:371
+       read_pages+0x177/0x590 mm/readahead.c:160
+       page_cache_ra_unbounded+0x6b0/0x7b0 mm/readahead.c:297
+       filemap_get_pages+0x43c/0x1eb0 mm/filemap.c:2591
+       filemap_read+0x3fa/0x11d0 mm/filemap.c:2702
+       __kernel_read+0x469/0x8c0 fs/read_write.c:528
+       integrity_kernel_read+0x89/0xd0 security/integrity/iint.c:28
+       ima_calc_file_hash_tfm security/integrity/ima/ima_crypto.c:480 [inline]
+       ima_calc_file_shash security/integrity/ima/ima_crypto.c:511 [inline]
+       ima_calc_file_hash+0x152c/0x18d0 security/integrity/ima/ima_crypto.c:568
+       ima_collect_measurement+0x42e/0x8e0 security/integrity/ima/ima_api.c:293
+       process_measurement+0x1121/0x1a40 security/integrity/ima/ima_main.c:385
+       ima_file_check+0xd7/0x120 security/integrity/ima/ima_main.c:613
+       security_file_post_open+0xbb/0x290 security/security.c:3130
+       do_open fs/namei.c:3882 [inline]
+       path_openat+0x2f26/0x3830 fs/namei.c:4039
        do_filp_open+0x1fa/0x410 fs/namei.c:4066
        do_sys_openat2+0x121/0x1c0 fs/open.c:1429
        do_sys_open fs/open.c:1444 [inline]
@@ -192,72 +208,52 @@ the existing dependency chain (in reverse order) is:
        do_syscall_64+0xf6/0x210 arch/x86/entry/syscall_64.c:94
        entry_SYSCALL_64_after_hwframe+0x77/0x7f
 
--> #0 (sb_internal#4){.+.+}-{0:0}:
+-> #0 (&dat_lock_key){.+.+}-{4:4}:
        check_prev_add kernel/locking/lockdep.c:3166 [inline]
        check_prevs_add kernel/locking/lockdep.c:3285 [inline]
        validate_chain+0xb9b/0x2140 kernel/locking/lockdep.c:3909
        __lock_acquire+0xaac/0xd20 kernel/locking/lockdep.c:5235
        lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
-       percpu_down_read include/linux/percpu-rwsem.h:52 [inline]
-       __sb_start_write include/linux/fs.h:1783 [inline]
-       sb_start_intwrite include/linux/fs.h:1966 [inline]
-       nilfs_transaction_begin+0x268/0x710 fs/nilfs2/segment.c:218
-       nilfs_page_mkwrite+0x8b0/0xc20 fs/nilfs2/file.c:95
+       down_read+0x46/0x2e0 kernel/locking/rwsem.c:1524
+       nilfs_get_block+0x1b1/0x8f0 fs/nilfs2/inode.c:83
+       __block_write_begin_int+0x6b2/0x1900 fs/buffer.c:2151
+       block_page_mkwrite+0x34f/0x4d0 fs/buffer.c:2646
+       nilfs_page_mkwrite+0x8fd/0xc20 fs/nilfs2/file.c:101
        do_page_mkwrite+0x14a/0x310 mm/memory.c:3287
-       do_shared_fault mm/memory.c:5594 [inline]
-       do_fault mm/memory.c:5656 [inline]
-       do_pte_missing mm/memory.c:4160 [inline]
-       handle_pte_fault mm/memory.c:5997 [inline]
-       __handle_mm_fault+0x18d2/0x5380 mm/memory.c:6140
+       wp_page_shared mm/memory.c:3688 [inline]
+       do_wp_page+0x2626/0x5760 mm/memory.c:3907
+       handle_pte_fault mm/memory.c:6013 [inline]
+       __handle_mm_fault+0x1028/0x5380 mm/memory.c:6140
        handle_mm_fault+0x2d5/0x7f0 mm/memory.c:6309
-       faultin_page mm/gup.c:1193 [inline]
-       __get_user_pages+0x16f0/0x2a40 mm/gup.c:1491
-       __get_user_pages_locked mm/gup.c:1821 [inline]
-       __gup_longterm_locked+0x105d/0x15b0 mm/gup.c:2523
-       gup_fast_fallback+0x1843/0x1d60 mm/gup.c:3417
-       iov_iter_extract_user_pages lib/iov_iter.c:1849 [inline]
-       iov_iter_extract_pages+0x35a/0x5e0 lib/iov_iter.c:1912
-       dio_refill_pages fs/direct-io.c:172 [inline]
-       dio_get_page fs/direct-io.c:213 [inline]
-       do_direct_IO fs/direct-io.c:915 [inline]
-       __blockdev_direct_IO+0x10ed/0x3310 fs/direct-io.c:1243
-       blockdev_direct_IO include/linux/fs.h:3422 [inline]
-       nilfs_direct_IO+0xed/0x120 fs/nilfs2/inode.c:267
-       generic_file_read_iter+0x319/0x510 mm/filemap.c:2871
-       new_sync_read fs/read_write.c:489 [inline]
-       vfs_read+0x4cd/0x980 fs/read_write.c:570
-       ksys_read+0x145/0x250 fs/read_write.c:713
-       do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
-       do_syscall_64+0xf6/0x210 arch/x86/entry/syscall_64.c:94
-       entry_SYSCALL_64_after_hwframe+0x77/0x7f
+       do_user_addr_fault+0xa81/0x1390 arch/x86/mm/fault.c:1337
+       handle_page_fault arch/x86/mm/fault.c:1480 [inline]
+       exc_page_fault+0x68/0x110 arch/x86/mm/fault.c:1538
+       asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:623
 
 other info that might help us debug this:
 
 Chain exists of:
-  sb_internal#4 --> &mm->mmap_lock --> sb_pagefaults#4
+  &dat_lock_key --> sb_internal#2 --> &nilfs->ns_segctor_sem
 
  Possible unsafe locking scenario:
 
        CPU0                    CPU1
        ----                    ----
-  rlock(sb_pagefaults#4);
-                               lock(&mm->mmap_lock);
-                               lock(sb_pagefaults#4);
-  rlock(sb_internal#4);
+  rlock(&nilfs->ns_segctor_sem);
+                               lock(sb_internal#2);
+                               lock(&nilfs->ns_segctor_sem);
+  rlock(&dat_lock_key);
 
  *** DEADLOCK ***
 
-4 locks held by syz.0.145/7282:
- #0: ffff8880258a0b78 (&f->f_pos_lock){+.+.}-{4:4}, at: fdget_pos+0x247/0x320 fs/file.c:1213
- #1: ffff88805d73c8c0 (&sb->s_type->i_mutex_key#23){+.+.}-{4:4}, at: inode_lock include/linux/fs.h:867 [inline]
- #1: ffff88805d73c8c0 (&sb->s_type->i_mutex_key#23){+.+.}-{4:4}, at: __blockdev_direct_IO+0x318/0x3310 fs/direct-io.c:1140
- #2: ffff88806d6595e0 (&mm->mmap_lock){++++}-{4:4}, at: mmap_read_lock_killable include/linux/mmap_lock.h:193 [inline]
- #2: ffff88806d6595e0 (&mm->mmap_lock){++++}-{4:4}, at: __get_user_pages_locked mm/gup.c:1812 [inline]
- #2: ffff88806d6595e0 (&mm->mmap_lock){++++}-{4:4}, at: __gup_longterm_locked+0x1005/0x15b0 mm/gup.c:2523
- #3: ffff88806be68518 (sb_pagefaults#4){.+.+}-{0:0}, at: do_page_mkwrite+0x14a/0x310 mm/memory.c:3287
+4 locks held by syz.3.1001/9022:
+ #0: ffff88807c769948 (vm_lock){++++}-{0:0}, at: do_user_addr_fault+0x2d9/0x1390 arch/x86/mm/fault.c:1328
+ #1: ffff88807c3b0518 (sb_pagefaults#2){.+.+}-{0:0}, at: do_page_mkwrite+0x14a/0x310 mm/memory.c:3287
+ #2: ffff88807c3b0610 (sb_internal#2){.+.+}-{0:0}, at: nilfs_page_mkwrite+0x8b0/0xc20 fs/nilfs2/file.c:95
+ #3: ffff8880116532a0 (&nilfs->ns_segctor_sem){++++}-{4:4}, at: nilfs_transaction_begin+0x365/0x710 fs/nilfs2/segment.c:221
 
 stack backtrace:
-CPU: 1 UID: 0 PID: 7282 Comm: syz.0.145 Not tainted 6.15.0-rc4-syzkaller-00021-gca91b9500108 #0 PREEMPT(full) 
+CPU: 1 UID: 0 PID: 9022 Comm: syz.3.1001 Not tainted 6.15.0-rc3-syzkaller-00283-gf1a3944c860b #0 PREEMPT(full) 
 Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 04/19/2025
 Call Trace:
  <TASK>
@@ -269,49 +265,30 @@ Call Trace:
  validate_chain+0xb9b/0x2140 kernel/locking/lockdep.c:3909
  __lock_acquire+0xaac/0xd20 kernel/locking/lockdep.c:5235
  lock_acquire+0x120/0x360 kernel/locking/lockdep.c:5866
- percpu_down_read include/linux/percpu-rwsem.h:52 [inline]
- __sb_start_write include/linux/fs.h:1783 [inline]
- sb_start_intwrite include/linux/fs.h:1966 [inline]
- nilfs_transaction_begin+0x268/0x710 fs/nilfs2/segment.c:218
- nilfs_page_mkwrite+0x8b0/0xc20 fs/nilfs2/file.c:95
+ down_read+0x46/0x2e0 kernel/locking/rwsem.c:1524
+ nilfs_get_block+0x1b1/0x8f0 fs/nilfs2/inode.c:83
+ __block_write_begin_int+0x6b2/0x1900 fs/buffer.c:2151
+ block_page_mkwrite+0x34f/0x4d0 fs/buffer.c:2646
+ nilfs_page_mkwrite+0x8fd/0xc20 fs/nilfs2/file.c:101
  do_page_mkwrite+0x14a/0x310 mm/memory.c:3287
- do_shared_fault mm/memory.c:5594 [inline]
- do_fault mm/memory.c:5656 [inline]
- do_pte_missing mm/memory.c:4160 [inline]
- handle_pte_fault mm/memory.c:5997 [inline]
- __handle_mm_fault+0x18d2/0x5380 mm/memory.c:6140
+ wp_page_shared mm/memory.c:3688 [inline]
+ do_wp_page+0x2626/0x5760 mm/memory.c:3907
+ handle_pte_fault mm/memory.c:6013 [inline]
+ __handle_mm_fault+0x1028/0x5380 mm/memory.c:6140
  handle_mm_fault+0x2d5/0x7f0 mm/memory.c:6309
- faultin_page mm/gup.c:1193 [inline]
- __get_user_pages+0x16f0/0x2a40 mm/gup.c:1491
- __get_user_pages_locked mm/gup.c:1821 [inline]
- __gup_longterm_locked+0x105d/0x15b0 mm/gup.c:2523
- gup_fast_fallback+0x1843/0x1d60 mm/gup.c:3417
- iov_iter_extract_user_pages lib/iov_iter.c:1849 [inline]
- iov_iter_extract_pages+0x35a/0x5e0 lib/iov_iter.c:1912
- dio_refill_pages fs/direct-io.c:172 [inline]
- dio_get_page fs/direct-io.c:213 [inline]
- do_direct_IO fs/direct-io.c:915 [inline]
- __blockdev_direct_IO+0x10ed/0x3310 fs/direct-io.c:1243
- blockdev_direct_IO include/linux/fs.h:3422 [inline]
- nilfs_direct_IO+0xed/0x120 fs/nilfs2/inode.c:267
- generic_file_read_iter+0x319/0x510 mm/filemap.c:2871
- new_sync_read fs/read_write.c:489 [inline]
- vfs_read+0x4cd/0x980 fs/read_write.c:570
- ksys_read+0x145/0x250 fs/read_write.c:713
- do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
- do_syscall_64+0xf6/0x210 arch/x86/entry/syscall_64.c:94
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-RIP: 0033:0x7f75a3f8e969
-Code: ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 40 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 a8 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007f75a4de1038 EFLAGS: 00000246 ORIG_RAX: 0000000000000000
-RAX: ffffffffffffffda RBX: 00007f75a41b6080 RCX: 00007f75a3f8e969
-RDX: 0000000000001000 RSI: 0000200000000400 RDI: 0000000000000004
-RBP: 00007f75a4010ab1 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
-R13: 0000000000000001 R14: 00007f75a41b6080 R15: 00007fffacbb86c8
+ do_user_addr_fault+0xa81/0x1390 arch/x86/mm/fault.c:1337
+ handle_page_fault arch/x86/mm/fault.c:1480 [inline]
+ exc_page_fault+0x68/0x110 arch/x86/mm/fault.c:1538
+ asm_exc_page_fault+0x26/0x30 arch/x86/include/asm/idtentry.h:623
+RIP: 0033:0x7f5247b566d8
+Code: fc 89 37 c3 c5 fa 6f 06 c5 fa 6f 4c 16 f0 c5 fa 7f 07 c5 fa 7f 4c 17 f0 c3 66 0f 1f 84 00 00 00 00 00 48 8b 4c 16 f8 48 8b 36 <48> 89 37 48 89 4c 17 f8 c3 c5 fe 6f 54 16 e0 c5 fe 6f 5c 16 c0 c5
+RSP: 002b:00007fff67b42e28 EFLAGS: 00010246
+RAX: 0000200000000900 RBX: 0000000000000004 RCX: 0031656c69662f2e
+RDX: 0000000000000008 RSI: 0031656c69662f2e RDI: 0000200000000900
+RBP: 00007f5247db7ba0 R08: 00007f5247a00000 R09: 0000000000000001
+R10: 0000000000000001 R11: 0000000000000009 R12: 00007f5247db5fac
+R13: 00007f5247db5fa0 R14: fffffffffffffffe R15: 00007fff67b42f40
  </TASK>
-NILFS error (device loop0): nilfs_bmap_lookup_contig: broken bmap (inode number=2097152)
-Remounting filesystem read-only
 
 
 ---
@@ -324,6 +301,10 @@ https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
 If the report is already addressed, let syzbot know by replying with:
 #syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
 
 If you want to overwrite report's subsystems, reply with:
 #syz set subsystems: new-subsystem
