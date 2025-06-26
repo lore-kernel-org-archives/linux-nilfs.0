@@ -1,185 +1,202 @@
-Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from TYDPR03CU002.outbound.protection.outlook.com (mail-japaneastazon11013020.outbound.protection.outlook.com [52.101.127.20])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9FB2E10785;
-	Wed, 25 Jun 2025 02:27:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.53
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750818455; cv=none; b=OyiDWLgg8UEIVfeBE9CkLKpbksBHDZnpJSj/oALHTFYbSvtoW0xnVblwCO1TSNfMapg99VpHn5Ixe1xBw/729dKt3WBtGBk+AfEUogtE3dGWOOvkwDiQVm85VFpc0zDc+/3N68suQ8MLM5NnGEOYv2eU4Q3/dXC8uniZpGtbEfc=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750818455; c=relaxed/simple;
-	bh=xfLOCkWUstnGQK8VoH4yc1HuwRPQ8panlIf+Bwae70A=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=RC7VavMlZr9+daVeuv+xAZZH7rusdVUV336ScpnXqWq1/PuSkkJHUgzQ6fDl5OlXm2mZX6R4/gzcejXUkJbuyA/Ny5AMOyLvoxJN7xuvEEWUMStVDdmND9Xwru+E0aSx5JDzNZzG4q3jnJYGlROvoexeECSBuAAaIfSW4BBH+ls=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=l22Z6Yyq; arc=none smtp.client-ip=209.85.167.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76708216E24;
+	Thu, 26 Jun 2025 17:10:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.127.20
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1750957816; cv=fail; b=iqyOlFmrYFY61t/AMyV8LSCycEg7kuMlmruFIgAtIAvf9SNpW/0X+lWXsl7RU76SIIQtPGhp1PGrdSr1UJ9yd1oytBqWcyPVpFYZEtDqqD7bIiQVLk8aQjigefOFmLWdfiMgpokzx+3cewkZ5CoQZoskzgeiq905bkR84utWp+Y=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1750957816; c=relaxed/simple;
+	bh=avvBDJ5Qi3UfkZn0mW3O6NOnLyP2eOiuq1DHa3HGDGU=;
+	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=VNAdp06s/OyRB+1VFmuOgMXzIs4pLq8V+wJ8s4acRQxwxkAENrrrY1DAL3fd/oWspQ+IGJD/GRuumirWBG4FgBcspObgZUgMbisiNMeeQfwblJV7V+V2+fXO+fzd2mue1iKaycCncEr9JMSagI822B8fCb37nuiztwg2IrYnkPY=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=REMqDf32; arc=fail smtp.client-ip=52.101.127.20
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l22Z6Yyq"
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-5532a30ac45so435325e87.0;
-        Tue, 24 Jun 2025 19:27:33 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1750818452; x=1751423252; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=KMlWAo+QiozFk6BjxvZWUwjnbzKWgh6dn4hJEaOwCS0=;
-        b=l22Z6YyqA9AC5YpLDYrA3OuC32XX2wL7uGzerNjvqlZoHYfD8y7+MTYIV5VhjfqD69
-         vKAgw4R4OsfIrjgI2G6WKwk+RpHX31gBcPpIf7++iu4DHQr80fGaMGdkDrdGpdr1sghZ
-         bgAUXWCB282QAMqHYjg8OY64TVXL7cqpf65KK7nIRpEtr3JwPV6suddA9y8nIacOvvWj
-         LeJ6Q5bXynvgiu9X63tkik7gBM3qQeY52gsQupK75gOI5oCePlIGg6IehwOEzwMn2ToA
-         PvRrBR5bWfkS7p8srwmxBBcr4txJmC8+tO+qa7NgwOiNqqdm0dTewHlsIPOMnPasPd22
-         7WKQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1750818452; x=1751423252;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=KMlWAo+QiozFk6BjxvZWUwjnbzKWgh6dn4hJEaOwCS0=;
-        b=aQod1grwzGCdqkYsL5PahJ6SdNXF+P4rO15Y+Ng6ygKdYAfupvNEKmLVxDPrRAPCnZ
-         NRCI6gc6DxyHutTblKC4cG5IwAsoW1IeKC64Tu6AA5qPIHIfJfloZJexIvHyu728k9ZR
-         lHpr7zDc5cysrCMhx1G1fsyoFDoNv/cyKXjT36Jtbq0YTtjja3EIx4MBe+yOi9ZdAUZp
-         C0MxURFX/MXqL2c8Th/XRKLWv6Wq/wni1Fs1Jpy73nA8TDc+5WUFtcWd5xeMLYJ4OSJ3
-         hTs9e7hZcWVg7JEvZfcyZBM9Sadpgfdvh4dVeMdV3gBw6TeZxtHtDrSndOkc0tPez98C
-         VtKg==
-X-Forwarded-Encrypted: i=1; AJvYcCVJdgHgQJmqg4bfnPc4FDR5xSHVQEa9qWQdGR9AKcaLtuCrReOfe+t8fPy5v+zncA/u/LZCa6mM0LFBM7E=@vger.kernel.org
-X-Gm-Message-State: AOJu0YyJ3/CrgbcZI0izowhLuHTxHJEJe6mDbWD8hkEnqbjPjnLK3n0H
-	tEYKQl+oF6hUCKede7+aSPRofY/dWCkewrv3R2pXxu0EEA/YJ9wLhlS+VlD9HZJvgxpIkRiO+cV
-	JXJOI9xRUjVE8xOAIqTfIuMswYFn262Go3pH0seM=
-X-Gm-Gg: ASbGncuqmfnJ70Tdm0/x3ZpqrBXXpwxzAxaA5rHcKkSJxQJpNPNCs2mebVwSZKlDoAC
-	Iyotkcao6cahzpdG7fwDoGimnpbwYOmRzu0g4mUEQVm0rEonJ9/Y3H2T7iFpIiLGOJzkPkDaqvn
-	Os9WNA6sYcPEA2ONJTn5FpA6mUM3SXzYffieZviAJMRlHTc/dt9iPnIEp+PpQuutgymiEA//Glg
-	fGRfw==
-X-Google-Smtp-Source: AGHT+IHQc9/3iRv84jBYu+4kDSgCmEMuTsv+ZR1GYPSGZ8fNJa7ljtXss3KlGI3erKzQzKYyi146RThaGD8FY3QYty0=
-X-Received: by 2002:a05:6512:1281:b0:553:51a2:440a with SMTP id
- 2adb3069b0e04-554fdce6a6bmr278253e87.23.1750818451419; Tue, 24 Jun 2025
- 19:27:31 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="REMqDf32"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=KnUwErZ4YGKlgnTmee6e9pvl48EUjoZe2b49pnUF/895vsEHHMaqa/YIMPVGqWSEIV9VsW0ClzpAjqRx7XUXASfDGbQoLhY/RrozI16eC5mN3vtArv21YazqbtH6bwq+qHom9eSrTxzTC1T1/HkFmkspAgLB06ZfCuPlQlz9ZaRHM9XNXgzXF+6kqFAxTVYjmSxgKu4E2flSQRBhHz/fq+AQZnoPokguUp7iOhZsTEWTdix2Wio4HpYDBSVkjTwbyq2+mjrawBUonj/jPPyFWQAH2mFq2IpEA/FE7hLJkD95SrE3ogUZiIpUPZJTsh0WPW8TmTlRdFPSanvQ8qXiKw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=rmYVQNU2DXX8cxu/IfAvuzqp02Ybqd4zVBjOeUXs1tA=;
+ b=Z8xn4rAM77O8sa43NjUa+RIniyXH68oochyVAfkS7i1yRnwYh2PNIPkawu0WsFllXY5PHnIMQGVU5GgyUSimNl6n4IVko0ZqX9E0zZuXRAMuc/9qnHZ0Uq6nRASmtuPUAKosIJzIZwT4nkRl0i90E+GHhET3JgCZd52u5R6lTkgjxJCPn6EnrRUj9GscRT8FrdUkp5Pvj/rVDeCP9gh683KFs5nMsi50Dkl2+l18vBZFPWolrk7ZRkxQSvBzVdWg0WWcjwaRW9Z8J3oSLRMGjRoMJ/92ihAacRR5iAcQpvjHy2txWL92pwgKgNVeo0R2KwWKdfuiNWsepIXVlXwUQg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
+ dkim=pass header.d=vivo.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=rmYVQNU2DXX8cxu/IfAvuzqp02Ybqd4zVBjOeUXs1tA=;
+ b=REMqDf32WLV1KQCLW702/ca0suUex22PY4TkfTxKUq45OLpUmYgIhftLlPKRDiax+BFOGaR0SVEp8g9IG00SC7oaKvYDIT3fk2IZWamBjEcG6I8PnCWyFhRf7xcO6bdQNDd9JoXYoE6OAj3642mGTFhxqboYEPAiHnpYeESzWFQCJVqamnVvi1sI0U0e93rSdDB3x868l4BZCkPh5pslTHgFet2WOpFyALJ0bZbaqeTxFFp0IBXzgyAKxshMknJTEM+hmaFBMX7+StCg4Kk06IAzPOCNvWTZDZxhOKMri9aXD944qZWTuJDxCtOLLfYYCyaRy0Jjk0LNLtlzpK4X7Q==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=vivo.com;
+Received: from SEZPR06MB5269.apcprd06.prod.outlook.com (2603:1096:101:78::6)
+ by TY0PR06MB5610.apcprd06.prod.outlook.com (2603:1096:400:328::7) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8880.18; Thu, 26 Jun
+ 2025 17:10:09 +0000
+Received: from SEZPR06MB5269.apcprd06.prod.outlook.com
+ ([fe80::8c74:6703:81f7:9535]) by SEZPR06MB5269.apcprd06.prod.outlook.com
+ ([fe80::8c74:6703:81f7:9535%7]) with mapi id 15.20.8857.026; Thu, 26 Jun 2025
+ 17:10:08 +0000
+From: Yangtao Li <frank.li@vivo.com>
+To: axboe@kernel.dk,
+	aivazian.tigran@gmail.com,
+	viro@zeniv.linux.org.uk,
+	brauner@kernel.org,
+	jack@suse.cz,
+	linkinjeon@kernel.org,
+	sj1557.seo@samsung.com,
+	yuezhang.mo@sony.com,
+	slava@dubeyko.com,
+	glaubitz@physik.fu-berlin.de,
+	frank.li@vivo.com,
+	shaggy@kernel.org,
+	konishi.ryusuke@gmail.com,
+	almaz.alexandrovich@paragon-software.com,
+	me@bobcopeland.com,
+	willy@infradead.org,
+	josef@toxicpanda.com,
+	kovalev@altlinux.org,
+	dave@stgolabs.net,
+	mhocko@suse.com,
+	chentaotao@didiglobal.com
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-ext4@vger.kernel.org,
+	jfs-discussion@lists.sourceforge.net,
+	linux-nilfs@vger.kernel.org,
+	ntfs3@lists.linux.dev,
+	linux-karma-devel@lists.sourceforge.net,
+	bpf@vger.kernel.org
+Subject: [PATCH 0/4] hfs/hfsplus: add uncached buffer io support
+Date: Thu, 26 Jun 2025 11:30:19 -0600
+Message-Id: <20250626173023.2702554-1-frank.li@vivo.com>
+X-Mailer: git-send-email 2.34.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: SGXP274CA0008.SGPP274.PROD.OUTLOOK.COM (2603:1096:4:b8::20)
+ To SEZPR06MB5269.apcprd06.prod.outlook.com (2603:1096:101:78::6)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <87tt44lwbd.fsf@logand.com>
-In-Reply-To: <87tt44lwbd.fsf@logand.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 25 Jun 2025 11:27:14 +0900
-X-Gm-Features: Ac12FXyLfVYWAh_viBBHxCiUECUGP-Z82USg5Upqm_KDTBhATvsMlKd_d7i4tc8
-Message-ID: <CAKFNMo=GXQzR=19JxPvHaV2v_K7f2LiXr8h6Qx2GzjssC6tvLA@mail.gmail.com>
-Subject: Re: BUG: NILFS error (device dm-0): nilfs_bmap_lookup_contig: broken
- bmap (inode number=4023271)
-To: Tomas Hlavaty <tom@logand.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SEZPR06MB5269:EE_|TY0PR06MB5610:EE_
+X-MS-Office365-Filtering-Correlation-Id: b99d971c-4b95-4e28-66e9-08ddb4d44d47
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|366016|7416014|376014|52116014|1800799024|38350700014|921020;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?lP0XEJzRFMDGOXAAnsEWHG4RPipkGoA3f7qS3kKmhXN6o3JGgkusOymSpx8a?=
+ =?us-ascii?Q?kIqnuYjHjtq3XTUnk8hfEen9rrCthm41o0sfG7duuFdIgk+evLsJT8/3mfi7?=
+ =?us-ascii?Q?pX2Mwhg2hQkU1QaaSxuECmVDySvQD0kFecbsglDr6/02RR7W6heyAIjlq5ux?=
+ =?us-ascii?Q?pSMvC3c4qgw5PG14yjNOLlKnS8rRqtCkzJFXdlIvyIPz7ItN2S0FFB2QWWnP?=
+ =?us-ascii?Q?upvjkYo3VnECC8JsnGIWnkgViZmFJYVhZJFDw1UkPwhMaHSgmW2s6qwxyLu9?=
+ =?us-ascii?Q?Y+n4oQcjoFAY6+aJbYHkp8/zZ1obOXSShJ0jqgOb+BOqsUsO+iESaWkSKZ80?=
+ =?us-ascii?Q?dO+RFWZaJ9l/nUtYo825foJvh21jWa2CG1aUgl1daNK39sidrZ+qFZZO/6BJ?=
+ =?us-ascii?Q?QpXC9PnkMXuL11G2c4dWTnoZEFYVrrQW+F3PGqqj7FVEd3ieHbEeG4ngTMeY?=
+ =?us-ascii?Q?T1xwPP6cDT1SAdor3WoNkC8helOmJRVWg75vvDK6nDKX0ZsZBxbh8oqTREfb?=
+ =?us-ascii?Q?aPi6h9E35hvoED6CUYOxW5tJsGrQehn0fFb6KfLCZaFEfWbVDV43noPO1Wc9?=
+ =?us-ascii?Q?r/nMRPMezW4Rq54YcdT45dgXxEBPyOYEynzQ9Q86EPdH01nOQRj6zTYxiJlP?=
+ =?us-ascii?Q?tqtaRjcEANy54PS3/zP3eJ7lP1/gGdUCYxpG8FhBHq+pj0WJT93a4IVZxWo8?=
+ =?us-ascii?Q?v9FoVce1iAZ1TytX8XzpArJlEqNjNA4D4gtVw2yIPTeIyiDe1/2uW8ITqxaV?=
+ =?us-ascii?Q?FXgYVTEZYSUwwZxhM0BcBp8SDZfJQpoHUbSM6AJR3gaT3MQn1IC3yuVh7/lO?=
+ =?us-ascii?Q?gYqDvvRXoMBSTw0DNS9UhPXGS2j30EfswKiveR7yEDd69B9Yd52lKQzbkOJ+?=
+ =?us-ascii?Q?ZW2lZRaL+54UNv33OJ0h3/KuxHq4ON+QaIzHZj8WeGvGyvw5CIqi4mEBt42H?=
+ =?us-ascii?Q?ap9ySfapUNBLijZ/d/NsNkg1UQ991wmLU5oOb3x7IVMCfNsMw8s7wCAWmUxs?=
+ =?us-ascii?Q?yto8hJUrO8Gd0jtT2axJt7OstD7eWTswQJPxo9MYv1hkaDIMtrRwO9CL76PK?=
+ =?us-ascii?Q?Nr5D/ILiMcUyo62Mrlsywhx0rpHGkBcVvYttlrTIieUNruU+UjhqFwq8uFSg?=
+ =?us-ascii?Q?osx08FXzQA3UvmxPmtk6fGvKDOeJukJdUzdKXaIx16ibSejFdeJIc47MSnGT?=
+ =?us-ascii?Q?8rJ1+6qm0l/80a51BENpSQaxXxZxKDxW9kg5hXMiib3HS4SgTZFVseaf531u?=
+ =?us-ascii?Q?pr6dqN2jtBjNDRASWDfQEjAQwYjcl3Gv3wDkDD5nqjqsi0I+5iGbfv+BOtPX?=
+ =?us-ascii?Q?W0c/JrC5N2pft9E68x51zfKFBGR/vNReF2QXFhcXAnfof/LWmWmOl+T+vLlw?=
+ =?us-ascii?Q?JvN89NhMIVTkh1omce/3WBFN+I3jVtad9GQygP9sbVYFMOE8LsJ16tWl8BL8?=
+ =?us-ascii?Q?2s6u4AYM4e+dViWR3FGPJGojkuXolReJleRWL9XevQzLpxF5na92G1sa9uld?=
+ =?us-ascii?Q?NlHIJDMlfEAlaQs=3D?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SEZPR06MB5269.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(7416014)(376014)(52116014)(1800799024)(38350700014)(921020);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?ySK/GLbqHpiCg/NkWJZubmly88Uxn9WvHH7dJCuElAcI5SrLQ6JE3+9gaSQB?=
+ =?us-ascii?Q?GoYwSF9r5heWmqbojEUwne+hWh4a7nx0Yhvd912hKTlwNQZhNjDcfC6qHZSU?=
+ =?us-ascii?Q?aK+BR0QmUM1Cf9qDqr7bKja0r9PinciP2TJ5LYWNUMHT0XPsJc101XKxSfZS?=
+ =?us-ascii?Q?cb7KxKTuDIakTAuscoWxbPrVJgXe3/lB70g00t3wsYGeird6kNA+6tD/cXtD?=
+ =?us-ascii?Q?yh2TQu3r7MCl1UI3ZcDFjN7qGvZaQh2bEo9HuWuMt32kf8GbGydU6hzRhpxe?=
+ =?us-ascii?Q?F5GJ/QoYf6Ludmh9JMxxe/FRyP/D11T6PUIPvgTr60cDW29lGuw7ik1/yLCV?=
+ =?us-ascii?Q?gcZfSSytVzPxdVxT3XdXB+zTBF8uQcm1D7/Ehe/m1XPDyctkXrHuxhoPjyVS?=
+ =?us-ascii?Q?oesN0iL2cRLYDc4rzgvGP1wB55NYaFDJzjhKP7DyDnGwr04C3XZVN6o1wEbB?=
+ =?us-ascii?Q?qi2y1GYop5BBAjIb/Hd7RXUHQzEKbCcDZ0++5+ob8KY6cIMVFt/cRpZ4Cy0Y?=
+ =?us-ascii?Q?1M2o6g1VaxLxgo3txnxnDR/1o/CP54RACoOu6UFXRcb2XM7Tg1oK3vPR5/fQ?=
+ =?us-ascii?Q?tYedNXIaDSmFzbZQhERgYcmRZR0lAomJuxhnEhacrKrhl5CDiqBK9jFgHsg6?=
+ =?us-ascii?Q?8VA/iGBA7zz/nvOvwKG3tEhm7/5KuyktdO7xhHhecYSUyUgd+FUvmjOWGgB7?=
+ =?us-ascii?Q?MJFxuR1PAQTSGXzXUks0NL1zpYm6AJVi3zxzkAgWwAFRPeJsOXnZ5pXZ1nee?=
+ =?us-ascii?Q?bs5IOh66xDDsd1Pb5OVE4AcQRNaG/SJ9HTy2xfWpVN+kClX0Ch1se5EpnHou?=
+ =?us-ascii?Q?VdMi+PbHGPrNKJasu/09nv3ND1vYvvOaIMPdh9ZRt/nTZJhAWqbwbrDgqJhr?=
+ =?us-ascii?Q?ihCIoGBpD6s+3C7aGwjotOJrPVxccsP38XX1i+t1c/e3RhW5CGy01iaLT3Zl?=
+ =?us-ascii?Q?1nCU2GkPaTr5XDHq38/ys7LXfw2rm+JnTgZkwAo/UVxZh7a5k0lsoyKRCdEg?=
+ =?us-ascii?Q?1ws1bKHHfwsqm//6/2Q2BYUNl5Hjcl4diydMbcOJzat2RqnCj0A3QfIEjGmj?=
+ =?us-ascii?Q?zfy9GYRqDJNo1sGMzK5bZ54lKErtAGX37wV+SVpoRNQeuNx7SminWhvez9gO?=
+ =?us-ascii?Q?ebBlTGZu5lqJwV3EHdHBRqkJUMdOFbULjbrBziCK2ZP9CZhNSJ1AGiE7TSbT?=
+ =?us-ascii?Q?K8zzdaoeXHNEfmFh+BXP4H8dV9nu8vqEBONtor090sE+lK4UzT/HCCdYpVb6?=
+ =?us-ascii?Q?guZFKMwHDF0pOyWLmqlULmqWnjlMdhLqoCxkZhrSoOx/wyDxaPebrt8uRIrI?=
+ =?us-ascii?Q?BZIl4ibZJiwiIXxj20g4jMV24nebSx21HC3XtfG5Y23IAsGbAy5ZzGlupdh3?=
+ =?us-ascii?Q?SII1Fow6NxpHmyE0UeZKmCriXn3DKEI6V80eJexr9xvzlEmtOFoFB27kDdxB?=
+ =?us-ascii?Q?ErLSHVeHszh2tSibGEKWmrhp9xy8oacCbbcx/4+recl+3/Zv0gFWIt4CSrDH?=
+ =?us-ascii?Q?ulZxvZhB1KnwJ+3NtfuldMUBEHSIfaojDJCPltzX2WJZE1hKBQ/sGLwULbSf?=
+ =?us-ascii?Q?M2eY93MyaYCOUoLM/hjc090seyp5DObKklJ1kWx1?=
+X-OriginatorOrg: vivo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: b99d971c-4b95-4e28-66e9-08ddb4d44d47
+X-MS-Exchange-CrossTenant-AuthSource: SEZPR06MB5269.apcprd06.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 26 Jun 2025 17:10:08.3116
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: sNHMNzkJxWdv/HesB/s4a1v6eaTSwSmDaBV520iXtSncWl2qBb8ZZfc7FIbCIfCc4hpsypP2Z41tg3lecm+SAw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TY0PR06MB5610
 
-On Wed, Jun 25, 2025 at 5:27=E2=80=AFAM Tomas Hlavaty wrote:
->
-> Hi Ryusuke,
->
-> I get the following error:
->
->    NILFS error (device dm-0): nilfs_bmap_lookup_contig:
->    broken bmap (inode number=3D4023271)
->
-> and the filesystem gets mounted read-only.
->
-> I can remount the filesystem read-write again manually, but after an
-> operation which touches the broken part of the filesystem, it gets
-> remounted read-only again.
->
-> I have identified the file of the inode:
-> sudo find / -inum 4023271
-> as
-> /root/.cache/mesa_shader_cache_db/index
-> but remounting rw and trying to
-> rm -r /root/.cache
-> puts the filesystem to ro mode again.
-> (not sure why there is .cache dir and mesa_shader_cache_db dir in the
-> /root dir, I never use root account for GUI)
->
-> I am in the process of upgrading the system from nixos24.11 to
-> nixos25.05 but this issue is preventing me from doing so.  Is there a
-> way to fix the filesystem so that it stays read-write?  Or do I have to
-> discard the whole filesystem?
->
-> Also I have noticed since long time ago, that reboot or shutdown says
-> something about nilfs discarding stuff, which seems strange and those
-> messages were not there a year or more ago.  Not sure if this is
-> related, but it should not be discarding anything I guess.  I see these
-> messages on many machines so it is not related to a particular hardware.
->
-> Log and stacktrace are bellow.
-> Please let me know if I can provide more info about the problem.
->
-> Any help would be appreciated.
->
-> Thank you,
+Hi,
 
-Sorry for the inconvenience, and thank you for reporting the details
-of the problem.
+This patchset based git [1], and w/ patchset [2].
 
-The log suggests that the b-tree, which is the metadata of the file or
-directory with inode 4023271, is corrupted, making it impossible to
-read and, as a result, impossible to write.
+[1]
+kernel/git/torvalds/linux.git commit id=5e9388f7984a9cc7e659a105113f6ccf0aebedd0
+(selftests/bpf: adapt one more case in test_lru_map to the new target_free)
 
-The /root/.cache/... directory is not created by nilfs, so it is
-probably an application directory.
+[2]
+https://lore.kernel.org/all/20250624121149.2927-1-chentaotao@didiglobal.com/
 
-If the problem is only partial, first mount it read-only,
+Yangtao Li (4):
+  block: Add struct kiocb pointer to block_write_begin()
+  fs/buffer: parse IOCB_DONTCACHE flag in block_write_begin()
+  hfsplus: enable uncached buffer io support
+  hfs: enable uncached buffer io support
 
-and then try copying it to another device while excluding the
-directory from access, for example, by specifying the option
-"--exclude /root/.cache" in rsync.
+ block/fops.c                |  2 +-
+ fs/bfs/file.c               |  2 +-
+ fs/buffer.c                 | 13 ++++++++-----
+ fs/exfat/inode.c            |  3 +--
+ fs/ext2/inode.c             |  2 +-
+ fs/hfs/inode.c              |  1 +
+ fs/hfsplus/inode.c          |  1 +
+ fs/jfs/inode.c              |  2 +-
+ fs/minix/inode.c            |  2 +-
+ fs/nilfs2/inode.c           |  2 +-
+ fs/nilfs2/recovery.c        |  2 +-
+ fs/ntfs3/inode.c            |  2 +-
+ fs/omfs/file.c              |  2 +-
+ fs/udf/inode.c              |  2 +-
+ fs/ufs/inode.c              |  2 +-
+ include/linux/buffer_head.h |  4 ++--
+ 16 files changed, 24 insertions(+), 20 deletions(-)
 
-As for in-place repair, the conclusion is that there is currently no
-way to do it. The only thing we can do is mount the filesystem
-read-only and salvage as much data as possible (without touching the
-damage). If you have a backup, it may be quicker to retrieve important
-data from there (in any case, nilfs is powerless against block device
-corruption, so please make backups as frequently as necessary).
+-- 
+2.48.1
 
-syzbot started reporting a large number of automatically detected bugs
-a few years ago, so we have been fixing a lot of serious bugs over the
-past few years, and have also strengthened the detection of abnormal
-file system states.
-
-That is probably why the abnormal message from a few years ago
-(probably a message about dropping to read-only and discarding dirty
-data) has become a problem now.
-
-If there were no messages with the old kernel and there were no
-problems, you could use it to rescue your data, but since there is a
-high possibility that there is some abnormality that was not detected
-in the past, this method is generally not recommended.
-
-I hope this helps a little.
-
-Regards,
-Ryusuke Konishi
-
->
-> Tomas
->
-> $ uname -a
-> Linux buta 6.6.87 #1-NixOS SMP PREEMPT_DYNAMIC Thu Apr 10 12:37:44 UTC 20=
-25 x86_64 GNU/Linux
->
-> $ sudo dmesg | grep nilfs
-> [    1.087780] stage-1-init: [Tue Jun 24 19:32:16 UTC 2025] loading modul=
-e nilfs2...
-> [   35.318251] NILFS error (device dm-0): nilfs_bmap_lookup_contig: broke=
-n bmap (inode number=3D4023271)
-> [   35.319235] NILFS error (device dm-0): nilfs_bmap_lookup_contig: broke=
-n bmap (inode number=3D4023271)
-> [...]
-> [   35.347872] NILFS error (device dm-0): nilfs_bmap_lookup_contig:
-> broken bmap (inode number=3D4023271)
-> [ 1733.401421]  nilfs_segctor_do_construct+0xdd/0x2630 [nilfs2]
-> [ 1733.401747]  ? nilfs_mdt_fetch_dirty+0x19/0x50 [nilfs2]
-> [ 1733.401899]  ? nilfs_test_metadata_dirty.isra.0+0x50/0xb0 [nilfs2]
-> [ 1733.402059]  nilfs_segctor_construct+0x170/0x2b0 [nilfs2]
-> [ 1733.402220]  nilfs_segctor_thread+0x155/0x3f0 [nilfs2]
-> [ 1733.402385]  ? __pfx_nilfs_segctor_thread+0x10/0x10 [nilfs2]
-> [ 1738.068626] NILFS error (device dm-0): nilfs_bmap_last_key: broken
-> bmap (inode number=3D4023271)
