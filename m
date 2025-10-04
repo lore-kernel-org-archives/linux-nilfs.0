@@ -1,63 +1,83 @@
-Received: from out-170.mta0.migadu.com (out-170.mta0.migadu.com [91.218.175.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-il1-f199.google.com (mail-il1-f199.google.com [209.85.166.199])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C773D305050
-	for <linux-nilfs@vger.kernel.org>; Wed, 24 Sep 2025 13:45:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84ED01D90AD
+	for <linux-nilfs@vger.kernel.org>; Sat,  4 Oct 2025 09:17:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.199
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758721511; cv=none; b=V69a7L6mDGnDDnyTLyvqHsO/bGvScpNjHeuKcEvkDBxiT49Q2oFOTn8Q5dMCAKnGxmUHIMjE6Tt6A7sxoCoUusPvqD5Gv4LzSLYg4O5hCiSfMU165r40n1Ml/IbzW/H0zAvk3AbKncAyaiD3pO4j9WefArFlPidMJ/ukQUsqi8Y=
+	t=1759569450; cv=none; b=AoCabm5twB7jFFIqurdEIbU4rzXFB1kbEB1QOEdWPrlBfTS4qRkjT4GN4WoC6e7CZiby4bHkf/aaJ9e2hXxgER74yRKslmB8hMYmTywsFzVNOMxNYPjm+Wv+skQkmqy+WTEnFsnSB3KvNEjhJTnuZ23uJVhRfpZBXYm4w/KEYW8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758721511; c=relaxed/simple;
-	bh=XpovNoQrHLDRa2d3bvXHRdOCQ6hCK4CZOtSjxOfSRPg=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=C9wA7CHLPlevxN+m7Mfm8/7Et5PqBmCP90AqbetxFhvkGt5k/plqB/CFR/UuZ1aWbnN5wTrhX55Oqqee9X5SbJAxjzZ9CR8D7xcpQe3bEwWptS2g/1K8jhoWKrEOEOMGoyS0AWwY4trwr4D2Qk2xgi4qECg3mSi6KHkFRW/TJPU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=eY9Wnyj4; arc=none smtp.client-ip=91.218.175.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="eY9Wnyj4"
-Content-Type: text/plain;
-	charset=us-ascii
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1758721506;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XpovNoQrHLDRa2d3bvXHRdOCQ6hCK4CZOtSjxOfSRPg=;
-	b=eY9Wnyj4ml/7oZauWpjSqHWXWOekHE9SguB1/bZ1rlD5f7QsVFxXwNDgdcaUdwGraeqHCY
-	uScxc9Ij9xFTqJSUja/X+tpQPZGoRjQHiF6hYavlyiPwBYO6QhTxgkvj04fO/bwxYlRQq1
-	UAHzy+1BzS0XBXvCWOUTIZi8GJ+T9VI=
+	s=arc-20240116; t=1759569450; c=relaxed/simple;
+	bh=h55S7+UKs6SEE8xfVRiy/8Pruq0+NinfBkohqQ3QxEA=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=Z9WGDizE6yGeCKxrD0mhKPWOe0zAFYOTtZOHzx2OwEFYB+U6Lw6ua3PcwObmAOGeGXTbOkeDd3FCs6NUsN9Zps/5oK9I/XhXdn7WRSjk0y5kW/mg1VOe800TqdR/dtCgqSaHEh9ltodvSWHGd7TXZA9+Vye37TLeknvyNDV2MuQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.199
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f199.google.com with SMTP id e9e14a558f8ab-42e7b963212so56358485ab.3
+        for <linux-nilfs@vger.kernel.org>; Sat, 04 Oct 2025 02:17:28 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1759569447; x=1760174247;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=BIG6oZNTDpYclLfV7No+nENFcYt4Th02KE4t59yzIOI=;
+        b=FsXwx8TJ/v1hUlm3wy9f++rB5lnu95GJJv2g0TnmBsotjaxlyGpBBEpod+fBU/B2IQ
+         Id07m+mY1YckGy/3vwp47aBrzscLaMsXtBsrb0s8etZlPucPCsXu5fOXjqpMbZWWS43S
+         zbS86HedxOrxUrEuR2i6BNByChtf0F9iUA/HwpbVDUgJPQoX7ZTsIrAK78tVHMCDKWGY
+         phe6ZKivt018yb52yIqK3bhLHce1I1mSaujUVHgVbxJjj3Gvrt4N5Indfrxb0PYHyqGW
+         QfShImOFEHg3Xk9/htoYRH9Jtwd0t8w20H1nGG7/znlN79GxJxUC7eL+8GiANooWJpLL
+         ZvYg==
+X-Forwarded-Encrypted: i=1; AJvYcCWVm+ReteMMiX1xZH5Hu0PIUVx5jKEXjzSk89AFPpQmJsrytPMCQGJ2+hPrMj76sjiQZzR/7l2GiYMsvg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzxEkTTZcBK7l6Mwjrn4S5nJ9kjCWVq3sXkEQ6uscTXl3F6IrWp
+	aTkGEFwz5fJUH1R75HdbrdNzKQkcETras5loGlIzTduFfx+LNThgoL1eKlRwUsp7Wj0AiMFo3+N
+	KLiuHmHngPcYqqCZGFjblnEG1DAcm7dXpbTErlH4fn0YimdIbd43bHipztRY=
+X-Google-Smtp-Source: AGHT+IG+svriUzw2DiMwSyLn1M5GTJ/87nULoyQvu6EYW2Pfe/unhigyNbS1LMDqpSUTCx7ZhfVPJhDz/E4xBvM+Rf/eBz5e+CSh
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3826.700.81\))
-Subject: Re: [PATCH] nilfs2: replace vmalloc + copy_from_user with
- vmemdup_user
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Thorsten Blum <thorsten.blum@linux.dev>
-In-Reply-To: <CAKFNMonHxWSxW72Af8F_3Mhx39iO5hgVKAhTjpHVKsTBOQ-Z8g@mail.gmail.com>
-Date: Wed, 24 Sep 2025 15:45:02 +0200
-Cc: linux-nilfs@vger.kernel.org,
- linux-kernel@vger.kernel.org
-Content-Transfer-Encoding: 7bit
-Message-Id: <2B76A58C-8AE6-4DAF-9B6B-7927FB301F6B@linux.dev>
-References: <20250923120902.1844458-2-thorsten.blum@linux.dev>
- <CAKFNMonHxWSxW72Af8F_3Mhx39iO5hgVKAhTjpHVKsTBOQ-Z8g@mail.gmail.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-X-Migadu-Flow: FLOW_OUT
+MIME-Version: 1.0
+X-Received: by 2002:a05:6e02:3e04:b0:427:be36:2974 with SMTP id
+ e9e14a558f8ab-42e7acfca92mr74974265ab.5.1759569447693; Sat, 04 Oct 2025
+ 02:17:27 -0700 (PDT)
+Date: Sat, 04 Oct 2025 02:17:27 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <68e0e627.a00a0220.102ee.011c.GAE@google.com>
+Subject: [syzbot] Monthly nilfs report (Oct 2025)
+From: syzbot <syzbot+list7fdc58f8e19ec0678b0e@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Hi Ryusuke,
+Hello nilfs maintainers/developers,
 
-On 24. Sep 2025, at 14:18, Ryusuke Konishi wrote:
-> ...
-> So, rather than rushing it into the upcoming merge window, please let
-> me schedule this to be sent upstream in the cycle after that.
+This is a 31-day syzbot report for the nilfs subsystem.
+All related reports/information can be found at:
+https://syzkaller.appspot.com/upstream/s/nilfs
 
-Sounds good as this was meant for the next cycle anyway.
+During the period, 0 new issues were detected and 0 were fixed.
+In total, 4 issues are still open and 63 have already been fixed.
 
-Thanks,
-Thorsten
+Some of the still happening issues:
 
+Ref Crashes Repro Title
+<1> 6       Yes   WARNING in nilfs_btree_assign (3)
+                  https://syzkaller.appspot.com/bug?extid=158be45e4d99232e1900
+<2> 3       No    WARNING in nilfs_rename (2)
+                  https://syzkaller.appspot.com/bug?extid=f6c7e1f1809f235eeb90
+<3> 2       Yes   INFO: task hung in mISDN_ioctl
+                  https://syzkaller.appspot.com/bug?extid=5d83cecd003a369a9965
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+To disable reminders for individual bugs, reply with the following command:
+#syz set <Ref> no-reminders
+
+To change bug's subsystems, reply with:
+#syz set <Ref> subsystems: new-subsystem
+
+You may send multiple commands in a single email message.
