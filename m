@@ -1,163 +1,297 @@
-Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com [209.85.208.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com [35.158.23.94])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F11831C5D55
-	for <linux-nilfs@vger.kernel.org>; Sat, 18 Oct 2025 11:04:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC5902F83DF;
+	Mon, 20 Oct 2025 12:26:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=35.158.23.94
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760785489; cv=none; b=tu1X8SusZLXyzEhlCsmJBfYSXLwFq9p9VUYDv2sZ6YQ2QLVGKDMcROpY1IBPtbm/bevPOuEQ/+eGlWlkc7kIISKtrzOM6Sqpy9lzlCTLoXYSRVeJ8CS+ONmnwkjkmquKVMgzHzEq3pY1W5E8LzQ113dEsRkU7EaZodvJR8T/BY8=
+	t=1760963179; cv=none; b=QiB6hhTHqvhKXQ/lrZ/PUHWA07CoggZ8zevKjGhodF27fORztSn4HRvlPicNEJG7DVUSTynhwHRlAcXGCjWXFrJJTxtkaK1jpVIGjlbfLUGs73ltH8UI/lxt6BtcgQSGIAmv6/57f+bcve4BuzmNzpudr+xFGAlopOOrJmuh50g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760785489; c=relaxed/simple;
-	bh=m2ZP6SqcE+GcGJL6Kd8kiljOvnwYOw2hbodsY7Caj/4=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=IwW7C0cjNMhHJWjtgccLe2moIq0XtPHFsC48bqynYLxYuHuFZvSydoa6LUvHhojBFaMlmFofUaj+yzq8CSLSRT4UF25CDYY1dZPndunIpBHb8kDlY49L2Lio+eHocbZnKQLMC5ekTF0NOnV9K41abbV68T+sLg2lAzixvLSM87c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QvUbjfwM; arc=none smtp.client-ip=209.85.208.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1760963179; c=relaxed/simple;
+	bh=iFtNqAALTnaGMyjG4E8hOCEExNpCalehkWAxAsxgxcE=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Id4J3PkUD2+/SR/Tp3PLEk5bbUEhED8I6Fko/Qh+wOdyaiZBwI1L5B8X32Jj2/prqiI1qMp+m39KM4sqExuNWVuKJ4IAPmYAYK/mwCo9EX4ujfz0pGGO6/z3XNSK+bF6HDxZBMo0yQFW/oaLp+A+0SmjEs01OJlQaaJsby4KfOk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.de; spf=pass smtp.mailfrom=amazon.de; dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b=fOC+eo+2; arc=none smtp.client-ip=35.158.23.94
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QvUbjfwM"
-Received: by mail-lj1-f172.google.com with SMTP id 38308e7fff4ca-36527ac0750so27257191fa.3
-        for <linux-nilfs@vger.kernel.org>; Sat, 18 Oct 2025 04:04:46 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b="fOC+eo+2"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1760785485; x=1761390285; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=m2ZP6SqcE+GcGJL6Kd8kiljOvnwYOw2hbodsY7Caj/4=;
-        b=QvUbjfwMV/JqMdQK/MpgekxiqwDBGnY3Hpc2AQQp7YSO9r3eQM9NiJZus3qp7kL96w
-         mb0h1p77h9EfVGPhUmDnaje6U/Lt2VJ+w/NT9KMtakJRlDZzywYEYzZRI3q4I8OWCci2
-         sURHx9KXxX2d4YpJA9xsAyLL9Xm26235/PKy9A785fmLJfMbBP0mQchs5SAeWb3herCl
-         OTvEKhVm18beMORKGfdnInQRHVJ/aRLrPQ3Q23YtAuhmJvoJjK7/hbfzF7BBSbzIKzFl
-         I97W7FrRwnFaOZFZkCYb3TEq3jNLoE9FiZqztnUy9xu0hfzuaTcDeweOX2j+uznJNQ20
-         coMA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760785485; x=1761390285;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=m2ZP6SqcE+GcGJL6Kd8kiljOvnwYOw2hbodsY7Caj/4=;
-        b=p6he+mWQyivy4rd+yyxbbupdBiLvVO4s9IKE5ZzbVjXHMHVF/oa2m3pGoVa5/MsVow
-         fQWkYTOhMXctCpmB/2uv1JKrzzPxm1oaZ4+rDSCTlFUvWiPBY+KjlsBpQbZcOsgfAqNh
-         p2QQHWl13vI4tQleuGLsFZmUgiDn5U++qJecr/N+i5WeMVvvb4UnqdvfZenLKpEPwNIl
-         SzKAkuVs2Pp5Z/ZdNubLxphmJg9SiEskUobQ6RvKCFjicKEr1SM4oLr1xi3qy5rZu4yo
-         qv/WyrjiqmAIYpeBIqXAim0os6M1BT32UqGyWPyjwA4F7h+pQBU5v8cvelx+Rn4TgoUQ
-         J6HA==
-X-Gm-Message-State: AOJu0YyXwrNaHFpdzkEfJNzjhmOeSRlFbRL5S+tkQv+B0rPtZYzEX3Ne
-	L3fFgJGqvLI81Pir59I7j5UeYJ51V3YCTGoMX0uRmd9wJA6k8AbN07W2tD8v/igU6GDUQLW6sCr
-	SpCqDObz/r28nDTIzGHrY5m0NuIdu83o7Q7Ly
-X-Gm-Gg: ASbGnct8K9r7Owjw71SI/IgsH5os8kTuUUdTwwdjRaa7YkMO9pOHPwBoztCiouLapih
-	/5rybG/0oXtjdfwTSTDAb4lGwkAxIDiA+WIc9dtyT0G1jFUWYSg9lQwo9BiWsuKezceMjgQiVY4
-	TBXmtiS3CBtXqCT6JFUofWLU5DE/YFLvvHSBz1QFuqdVyPJY8v24UotW7s85cdMReQM+V2vtIUQ
-	78MKJ+e6YwYr0R3ADWROfSAZdeD/o2B+ioLpvIvShSMPVqT2ghqddb/PycYn62sab2oZHuo3NBt
-	kF1n342Y+1t8Yyq4g6Tw29Y7owC5
-X-Google-Smtp-Source: AGHT+IGNnraG7yuY5y20iRC5dECqim9O3niJA/8PVjjwVSibM9BSyfmcTWpiwgFtut2PxdUuwf/WvDRAZhokXqgfLuY=
-X-Received: by 2002:a2e:9a13:0:b0:372:414d:3cf0 with SMTP id
- 38308e7fff4ca-37797a79d00mr23615781fa.39.1760785484488; Sat, 18 Oct 2025
- 04:04:44 -0700 (PDT)
+  d=amazon.de; i=@amazon.de; q=dns/txt; s=amazoncorp2;
+  t=1760963173; x=1792499173;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=pLrkDc9uOZVP5QDcEFJpTtan3stKZzUb4ru8DIN6Jio=;
+  b=fOC+eo+2cjyx3LnwMEYK83XHVLMzOaD7namg5jVCriv4p4qe1wfjFiYV
+   oShjZYudTuvuZg7ERUo0jN/ZkFAOhdQXbMynxpG7KXUKwMpbn/PFOwPxG
+   RxfKUEaVdHY9L/NgC5L5WXYTwW2gb3vPJZhBopKFjMcTmo0ViOsyo7t29
+   novvirFPicueTsKXc7xeqvUul1INisuG0/s31p9iM3hwAqjjFLhoaqqRk
+   qZurTGMsEwfXDKKObDQ+2GoYAFGXWIFtT2bQ3BeGhM4Umi0Qz4xV6ixC3
+   pPoVWAtjnmX2/sSgiFKLVXHuARMjMb1YtSMNA6pjCZiVy9q3bOKr2J1yf
+   g==;
+X-CSE-ConnectionGUID: XMphiMhvTgeNxgLfSTa9kg==
+X-CSE-MsgGUID: 5gVlu9EYQo6obBnfNFlH0Q==
+X-IronPort-AV: E=Sophos;i="6.19,242,1754956800"; 
+   d="scan'208";a="3882177"
+Received: from ip-10-6-6-97.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.6.97])
+  by internal-fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 20 Oct 2025 12:25:59 +0000
+Received: from EX19MTAEUC001.ant.amazon.com [54.240.197.225:4783]
+ by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.33.169:2525] with esmtp (Farcaster)
+ id 71ef932b-06b0-4cee-8a75-9885cd1ac552; Mon, 20 Oct 2025 12:25:59 +0000 (UTC)
+X-Farcaster-Flow-ID: 71ef932b-06b0-4cee-8a75-9885cd1ac552
+Received: from EX19D013EUB004.ant.amazon.com (10.252.51.92) by
+ EX19MTAEUC001.ant.amazon.com (10.252.51.193) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20;
+ Mon, 20 Oct 2025 12:25:56 +0000
+Received: from dev-dsk-mngyadam-1c-cb3f7548.eu-west-1.amazon.com
+ (10.253.107.175) by EX19D013EUB004.ant.amazon.com (10.252.51.92) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Mon, 20 Oct 2025
+ 12:25:49 +0000
+From: Mahmoud Adam <mngyadam@amazon.de>
+To: <stable@vger.kernel.org>
+CC: <gregkh@linuxfoundation.org>, <nagy@khwaternagy.com>, "Darrick J. Wong"
+	<djwong@kernel.org>, Christoph Hellwig <hch@lst.de>, Luis Chamberlain
+	<mcgrof@kernel.org>, Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>,
+	"Jens Axboe" <axboe@kernel.dk>, Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	<linux-nilfs@vger.kernel.org>
+Subject: [PATCH 6.6 1/2] block: fix race between set_blocksize and read paths
+Date: Mon, 20 Oct 2025 14:25:38 +0200
+Message-ID: <20251020122541.7227-1-mngyadam@amazon.de>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <aPJNYX4UtFfUo8DX@merari.gmerlin.de>
-In-Reply-To: <aPJNYX4UtFfUo8DX@merari.gmerlin.de>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sat, 18 Oct 2025 20:04:28 +0900
-X-Gm-Features: AS18NWAOxZ-utJGmOhfUPNj9sBbtnSctPcalaMsKTDmuDXzj6CgyAysu88zwC4E
-Message-ID: <CAKFNMonRtuknO7G6p-eOuY+WgSQQGsYOWrDdbO2Zh1mBsGp3RA@mail.gmail.com>
-Subject: Re: nilfs_readdir: bad page in #
-To: Christopher Zimmermann <christopher@gmerlin.de>
-Cc: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-ClientProxiedBy: EX19D044UWB002.ant.amazon.com (10.13.139.188) To
+ EX19D013EUB004.ant.amazon.com (10.252.51.92)
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Sat, Oct 18, 2025 at 7:01=E2=80=AFAM Christopher Zimmermann wrote:
->
-> Hi,
->
-> this is what I saw today:
->
-> Oct 17 09:44:27 merari.gmerlin.de kernel: NILFS version 2 loaded
-> Oct 17 09:44:27 merari.gmerlin.de kernel: NILFS (nvme0n1p5): segctord sta=
-rting. Construction interval =3D 5 seconds, CP frequency < 30 seconds
-> Oct 17 09:44:27 merari.gmerlin.de nilfs_cleanerd[715]: start
-> Oct 17 09:44:27 merari.gmerlin.de nilfs_cleanerd[715]: pause (clean check=
-)
-> Oct 17 15:05:45 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_readdir: bad page in #235406
-> Oct 17 15:10:06 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D257)
-...
-> Oct 17 15:10:48 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D257)
-> Oct 17 15:10:49 merari.gmerlin.de nilfs_cleanerd[715]: shutdown
-> Oct 17 15:10:52 merari.gmerlin.de kernel: NILFS (nvme0n1p5): disposed unp=
-rocessed dirty file(s) when detaching log writer
->
-> [reboot]
->
-> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS version 2 loaded
-> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting unc=
-hecked fs
-> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): recovery com=
-plete
-> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): segctord sta=
-rting. Construction interval =3D 5 seconds, CP frequency < 30 seconds
-> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting fs =
-with errors
-> Oct 17 15:11:09 merari.gmerlin.de nilfs_cleanerd[704]: start
-> Oct 17 15:11:09 merari.gmerlin.de nilfs_cleanerd[704]: pause (clean check=
-)
-> Oct 17 15:51:11 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_readdir: bad page in #488967
-> Oct 17 15:53:04 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D258)
-...
-> Oct 17 15:53:04 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D258)
-> Oct 17 15:53:19 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D258)
-> Oct 17 15:53:20 merari.gmerlin.de nilfs_cleanerd[704]: shutdown
-> Oct 17 15:53:20 merari.gmerlin.de kernel: NILFS (nvme0n1p5): disposed unp=
-rocessed dirty file(s) when detaching log writer
->
-> [reboot]
->
-> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS version 2 loaded
-> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting unc=
-hecked fs
-> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): recovery com=
-plete
-> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): segctord sta=
-rting. Construction interval =3D 5 seconds, CP frequency < 30 seconds
-> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting fs =
-with errors
-> Oct 17 15:53:39 merari.gmerlin.de nilfs_cleanerd[717]: start
-> Oct 17 15:53:39 merari.gmerlin.de nilfs_cleanerd[717]: pause (clean
-> check)
->
-> Both, inode 257 and inode 258 were ~/.xsession-errors.old
->
-> What to think of "mounting fs with errors"?
-> Especially since there is no fsck?
+From: "Darrick J. Wong" <djwong@kernel.org>
 
-Yes, this is a flag that should be repaired by fsck, but because fsck
-is not available, it is in an unrecoverable state.
-This is a flaw in this project and there is no excuse for it.
+commit c0e473a0d226479e8e925d5ba93f751d8df628e9 upstream.
 
-For reference, I would like to ask under what circumstances did this occur?
+With the new large sector size support, it's now the case that
+set_blocksize can change i_blksize and the folio order in a manner that
+conflicts with a concurrent reader and causes a kernel crash.
 
-If this happens easily, I am concerned that there may be a new regression.
+Specifically, let's say that udev-worker calls libblkid to detect the
+labels on a block device.  The read call can create an order-0 folio to
+read the first 4096 bytes from the disk.  But then udev is preempted.
 
-The error message suggests a corrupted btree, which is causing the
-directory read to fail.
+Next, someone tries to mount an 8k-sectorsize filesystem from the same
+block device.  The filesystem calls set_blksize, which sets i_blksize to
+8192 and the minimum folio order to 1.
 
-I'm also concerned about the problem with .xsession-errors, a file
-that seems to have a short lifespan and involves rename.
+Now udev resumes, still holding the order-0 folio it allocated.  It then
+tries to schedule a read bio and do_mpage_readahead tries to create
+bufferheads for the folio.  Unfortunately, blocks_per_folio == 0 because
+the page size is 4096 but the blocksize is 8192 so no bufferheads are
+attached and the bh walk never sets bdev.  We then submit the bio with a
+NULL block device and crash.
 
-For reference, what version of your kernel are you using?
+Therefore, truncate the page cache after flushing but before updating
+i_blksize.  However, that's not enough -- we also need to lock out file
+IO and page faults during the update.  Take both the i_rwsem and the
+invalidate_lock in exclusive mode for invalidations, and in shared mode
+for read/write operations.
+
+I don't know if this is the correct fix, but xfs/259 found it.
+
+Signed-off-by: Darrick J. Wong <djwong@kernel.org>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
+Tested-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Link: https://lore.kernel.org/r/174543795699.4139148.2086129139322431423.stgit@frogsfrogsfrogs
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+[use bdev->bd_inode instead]
+Signed-off-by: Mahmoud Adam <mngyadam@amazon.de>
+---
+    Fixes CVE-2025-38073.
+
+ block/bdev.c      | 17 +++++++++++++++++
+ block/blk-zoned.c |  5 ++++-
+ block/fops.c      | 16 ++++++++++++++++
+ block/ioctl.c     |  6 ++++++
+ 4 files changed, 43 insertions(+), 1 deletion(-)
+
+diff --git a/block/bdev.c b/block/bdev.c
+index 5a54977518eeae..a8357b72a27b86 100644
+--- a/block/bdev.c
++++ b/block/bdev.c
+@@ -147,9 +147,26 @@ int set_blocksize(struct block_device *bdev, int size)
+ 
+ 	/* Don't change the size if it is same as current */
+ 	if (bdev->bd_inode->i_blkbits != blksize_bits(size)) {
++		/*
++		 * Flush and truncate the pagecache before we reconfigure the
++		 * mapping geometry because folio sizes are variable now.  If a
++		 * reader has already allocated a folio whose size is smaller
++		 * than the new min_order but invokes readahead after the new
++		 * min_order becomes visible, readahead will think there are
++		 * "zero" blocks per folio and crash.  Take the inode and
++		 * invalidation locks to avoid racing with
++		 * read/write/fallocate.
++		 */
++		inode_lock(bdev->bd_inode);
++		filemap_invalidate_lock(bdev->bd_inode->i_mapping);
++
+ 		sync_blockdev(bdev);
++		kill_bdev(bdev);
++
+ 		bdev->bd_inode->i_blkbits = blksize_bits(size);
+ 		kill_bdev(bdev);
++		filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
++		inode_unlock(bdev->bd_inode);
+ 	}
+ 	return 0;
+ }
+diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+index 619ee41a51cc8c..644bfa1f6753ea 100644
+--- a/block/blk-zoned.c
++++ b/block/blk-zoned.c
+@@ -401,6 +401,7 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
+ 		op = REQ_OP_ZONE_RESET;
+ 
+ 		/* Invalidate the page cache, including dirty pages. */
++		inode_lock(bdev->bd_inode);
+ 		filemap_invalidate_lock(bdev->bd_inode->i_mapping);
+ 		ret = blkdev_truncate_zone_range(bdev, mode, &zrange);
+ 		if (ret)
+@@ -423,8 +424,10 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
+ 			       GFP_KERNEL);
+ 
+ fail:
+-	if (cmd == BLKRESETZONE)
++	if (cmd == BLKRESETZONE) {
+ 		filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
++		inode_unlock(bdev->bd_inode);
++	}
+ 
+ 	return ret;
+ }
+diff --git a/block/fops.c b/block/fops.c
+index 7c257eb3564d0c..088143fa9ac9e1 100644
+--- a/block/fops.c
++++ b/block/fops.c
+@@ -681,7 +681,14 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ 			ret = direct_write_fallback(iocb, from, ret,
+ 					blkdev_buffered_write(iocb, from));
+ 	} else {
++		/*
++		 * Take i_rwsem and invalidate_lock to avoid racing with
++		 * set_blocksize changing i_blkbits/folio order and punching
++		 * out the pagecache.
++		 */
++		inode_lock_shared(bd_inode);
+ 		ret = blkdev_buffered_write(iocb, from);
++		inode_unlock_shared(bd_inode);
+ 	}
+ 
+ 	if (ret > 0)
+@@ -693,6 +700,7 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
+ {
+ 	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
++	struct inode *bd_inode = bdev->bd_inode;
+ 	loff_t size = bdev_nr_bytes(bdev);
+ 	loff_t pos = iocb->ki_pos;
+ 	size_t shorted = 0;
+@@ -728,7 +736,13 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
+ 			goto reexpand;
+ 	}
+ 
++	/*
++	 * Take i_rwsem and invalidate_lock to avoid racing with set_blocksize
++	 * changing i_blkbits/folio order and punching out the pagecache.
++	 */
++	inode_lock_shared(bd_inode);
+ 	ret = filemap_read(iocb, to, ret);
++	inode_unlock_shared(bd_inode);
+ 
+ reexpand:
+ 	if (unlikely(shorted))
+@@ -771,6 +785,7 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+ 	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
+ 		return -EINVAL;
+ 
++	inode_lock(inode);
+ 	filemap_invalidate_lock(inode->i_mapping);
+ 
+ 	/*
+@@ -811,6 +826,7 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+ 
+  fail:
+ 	filemap_invalidate_unlock(inode->i_mapping);
++	inode_unlock(inode);
+ 	return error;
+ }
+ 
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 231537f79a8cb4..024767fa1e52d5 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -114,6 +114,7 @@ static int blk_ioctl_discard(struct block_device *bdev, blk_mode_t mode,
+ 	    end > bdev_nr_bytes(bdev))
+ 		return -EINVAL;
+ 
++	inode_lock(inode);
+ 	filemap_invalidate_lock(inode->i_mapping);
+ 	err = truncate_bdev_range(bdev, mode, start, end - 1);
+ 	if (err)
+@@ -121,6 +122,7 @@ static int blk_ioctl_discard(struct block_device *bdev, blk_mode_t mode,
+ 	err = blkdev_issue_discard(bdev, start >> 9, len >> 9, GFP_KERNEL);
+ fail:
+ 	filemap_invalidate_unlock(inode->i_mapping);
++	inode_unlock(inode);
+ 	return err;
+ }
+ 
+@@ -146,12 +148,14 @@ static int blk_ioctl_secure_erase(struct block_device *bdev, blk_mode_t mode,
+ 	    end > bdev_nr_bytes(bdev))
+ 		return -EINVAL;
+ 
++	inode_lock(bdev->bd_inode);
+ 	filemap_invalidate_lock(bdev->bd_inode->i_mapping);
+ 	err = truncate_bdev_range(bdev, mode, start, end - 1);
+ 	if (!err)
+ 		err = blkdev_issue_secure_erase(bdev, start >> 9, len >> 9,
+ 						GFP_KERNEL);
+ 	filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
++	inode_unlock(bdev->bd_inode);
+ 	return err;
+ }
+ 
+@@ -184,6 +188,7 @@ static int blk_ioctl_zeroout(struct block_device *bdev, blk_mode_t mode,
+ 		return -EINVAL;
+ 
+ 	/* Invalidate the page cache, including dirty pages */
++	inode_lock(inode);
+ 	filemap_invalidate_lock(inode->i_mapping);
+ 	err = truncate_bdev_range(bdev, mode, start, end);
+ 	if (err)
+@@ -194,6 +199,7 @@ static int blk_ioctl_zeroout(struct block_device *bdev, blk_mode_t mode,
+ 
+ fail:
+ 	filemap_invalidate_unlock(inode->i_mapping);
++	inode_unlock(inode);
+ 	return err;
+ }
+ 
+-- 
+2.47.3
 
 
-Regards,
-Ryusuke Konishi
+
+
+Amazon Web Services Development Center Germany GmbH
+Tamara-Danz-Str. 13
+10243 Berlin
+Geschaeftsfuehrung: Christian Schlaeger
+Eingetragen am Amtsgericht Charlottenburg unter HRB 257764 B
+Sitz: Berlin
+Ust-ID: DE 365 538 597
+
