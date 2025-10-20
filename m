@@ -1,286 +1,146 @@
-Received: from fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com [35.158.23.94])
+Received: from fra-out-012.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-012.esa.eu-central-1.outbound.mail-perimeter.amazon.com [52.57.120.243])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC5902F83DF;
-	Mon, 20 Oct 2025 12:26:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=35.158.23.94
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D4221FECBA;
+	Mon, 20 Oct 2025 12:26:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.57.120.243
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760963179; cv=none; b=QiB6hhTHqvhKXQ/lrZ/PUHWA07CoggZ8zevKjGhodF27fORztSn4HRvlPicNEJG7DVUSTynhwHRlAcXGCjWXFrJJTxtkaK1jpVIGjlbfLUGs73ltH8UI/lxt6BtcgQSGIAmv6/57f+bcve4BuzmNzpudr+xFGAlopOOrJmuh50g=
+	t=1760963212; cv=none; b=XiInlTmrKhYQdtlHYnBNnCkyS2aNW7mb9j7DGuLUgjKZDoNvIKYpbtwrkyXKePfz/DXvShgTYVh7yUk/Mt+qprtjcNMlZYLv1NlVJbYLmKybrORBOfM6c2a9iafZBk3b+I+f7PdP/TLdXughdQGQDfAdOQtQPdg8pUGsbzXXVXs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760963179; c=relaxed/simple;
-	bh=iFtNqAALTnaGMyjG4E8hOCEExNpCalehkWAxAsxgxcE=;
-	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Id4J3PkUD2+/SR/Tp3PLEk5bbUEhED8I6Fko/Qh+wOdyaiZBwI1L5B8X32Jj2/prqiI1qMp+m39KM4sqExuNWVuKJ4IAPmYAYK/mwCo9EX4ujfz0pGGO6/z3XNSK+bF6HDxZBMo0yQFW/oaLp+A+0SmjEs01OJlQaaJsby4KfOk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.de; spf=pass smtp.mailfrom=amazon.de; dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b=fOC+eo+2; arc=none smtp.client-ip=35.158.23.94
+	s=arc-20240116; t=1760963212; c=relaxed/simple;
+	bh=Hrml92hO+sHgfm80c2Sv139C3pR2KNsFNCr8GaVC08M=;
+	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=pC28zdf9y5w8Ki6Dhn9zXlgE1AcLykQrqoqSQKrHdBG16EIPDNJpicU/cGefp+3sZGVvXxSyLsC7jTcAvjvau7K+AiWLZyCp58+ukg4BkmJ0nWk0KdxRk0vTWLgN7fu46JZ+VLYARymeZbPuUwsR/hrorlDV6L1VqBP5HpuBTyI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.de; spf=pass smtp.mailfrom=amazon.de; dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b=Glxaqv/J; arc=none smtp.client-ip=52.57.120.243
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b="fOC+eo+2"
+	dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b="Glxaqv/J"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
   d=amazon.de; i=@amazon.de; q=dns/txt; s=amazoncorp2;
-  t=1760963173; x=1792499173;
-  h=from:to:cc:subject:date:message-id:mime-version:
-   content-transfer-encoding;
-  bh=pLrkDc9uOZVP5QDcEFJpTtan3stKZzUb4ru8DIN6Jio=;
-  b=fOC+eo+2cjyx3LnwMEYK83XHVLMzOaD7namg5jVCriv4p4qe1wfjFiYV
-   oShjZYudTuvuZg7ERUo0jN/ZkFAOhdQXbMynxpG7KXUKwMpbn/PFOwPxG
-   RxfKUEaVdHY9L/NgC5L5WXYTwW2gb3vPJZhBopKFjMcTmo0ViOsyo7t29
-   novvirFPicueTsKXc7xeqvUul1INisuG0/s31p9iM3hwAqjjFLhoaqqRk
-   qZurTGMsEwfXDKKObDQ+2GoYAFGXWIFtT2bQ3BeGhM4Umi0Qz4xV6ixC3
-   pPoVWAtjnmX2/sSgiFKLVXHuARMjMb1YtSMNA6pjCZiVy9q3bOKr2J1yf
+  t=1760963209; x=1792499209;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references:mime-version:content-transfer-encoding;
+  bh=kx5jVyu5oZ3p0Hh+shYGjcsfkk0CaJ+y6g0ZOwv4/CM=;
+  b=Glxaqv/J619u1fDLs5cK1mIv0HruYbQmGBCBQ9N3oHjxk2bndUK+C4XC
+   EZnfGb+kAU473vE4vhKl9gqA3PRZUVlZYOUZcntnPX5YLAJCMqzra8IYa
+   2/tVR5TySM8ZQgDJBjDk6gMI5m28ruv0IbD/drU3hz+yBZu1Ms0K5xYXR
+   UC40iJjzCGm4C8/ivTy+1pNh/BUPK2K4BOlUFPbio5AYeRrBoQCaTIS/G
+   C4haDkHZY7PAhk1FLwEe9UGroshhWrdZ/ggd0m0DAIcgDhJEJ6AHXb4l9
+   RLwxP3eXxm8RWW5Dd+bTbok/v0wNwHWk3ULLJwRQo6JMG8TFmjMaaDLg6
    g==;
-X-CSE-ConnectionGUID: XMphiMhvTgeNxgLfSTa9kg==
-X-CSE-MsgGUID: 5gVlu9EYQo6obBnfNFlH0Q==
+X-CSE-ConnectionGUID: cKLDWJtZTeawHgQ6jj7fGw==
+X-CSE-MsgGUID: heQ2jjnfQTiOkX+6fHNqJA==
 X-IronPort-AV: E=Sophos;i="6.19,242,1754956800"; 
-   d="scan'208";a="3882177"
+   d="scan'208";a="3774967"
 Received: from ip-10-6-6-97.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.6.97])
-  by internal-fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 20 Oct 2025 12:25:59 +0000
-Received: from EX19MTAEUC001.ant.amazon.com [54.240.197.225:4783]
- by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.33.169:2525] with esmtp (Farcaster)
- id 71ef932b-06b0-4cee-8a75-9885cd1ac552; Mon, 20 Oct 2025 12:25:59 +0000 (UTC)
-X-Farcaster-Flow-ID: 71ef932b-06b0-4cee-8a75-9885cd1ac552
+  by internal-fra-out-012.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 20 Oct 2025 12:26:37 +0000
+Received: from EX19MTAEUA001.ant.amazon.com [54.240.197.233:3361]
+ by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.15.203:2525] with esmtp (Farcaster)
+ id e782b80c-d46d-437f-92e9-d119d216c6f5; Mon, 20 Oct 2025 12:26:37 +0000 (UTC)
+X-Farcaster-Flow-ID: e782b80c-d46d-437f-92e9-d119d216c6f5
 Received: from EX19D013EUB004.ant.amazon.com (10.252.51.92) by
- EX19MTAEUC001.ant.amazon.com (10.252.51.193) with Microsoft SMTP Server
+ EX19MTAEUA001.ant.amazon.com (10.252.50.223) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20;
- Mon, 20 Oct 2025 12:25:56 +0000
+ Mon, 20 Oct 2025 12:26:30 +0000
 Received: from dev-dsk-mngyadam-1c-cb3f7548.eu-west-1.amazon.com
  (10.253.107.175) by EX19D013EUB004.ant.amazon.com (10.252.51.92) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Mon, 20 Oct 2025
- 12:25:49 +0000
+ 12:26:26 +0000
 From: Mahmoud Adam <mngyadam@amazon.de>
 To: <stable@vger.kernel.org>
-CC: <gregkh@linuxfoundation.org>, <nagy@khwaternagy.com>, "Darrick J. Wong"
-	<djwong@kernel.org>, Christoph Hellwig <hch@lst.de>, Luis Chamberlain
-	<mcgrof@kernel.org>, Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>,
-	"Jens Axboe" <axboe@kernel.dk>, Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+CC: <gregkh@linuxfoundation.org>, <nagy@khwaternagy.com>, Ryusuke Konishi
+	<konishi.ryusuke@gmail.com>,
+	<syzbot+00f7f5b884b117ee6773@syzkaller.appspotmail.com>,
+	<syzbot+f30591e72bfc24d4715b@syzkaller.appspotmail.com>, Andrew Morton
+	<akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>, Luis Chamberlain
+	<mcgrof@kernel.org>, "Darrick J. Wong" <djwong@kernel.org>,
 	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
 	<linux-nilfs@vger.kernel.org>
-Subject: [PATCH 6.6 1/2] block: fix race between set_blocksize and read paths
-Date: Mon, 20 Oct 2025 14:25:38 +0200
-Message-ID: <20251020122541.7227-1-mngyadam@amazon.de>
+Subject: [PATCH 6.6 2/2] nilfs2: fix deadlock warnings caused by lock dependency in init_nilfs()
+Date: Mon, 20 Oct 2025 14:25:39 +0200
+Message-ID: <20251020122541.7227-2-mngyadam@amazon.de>
 X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20251020122541.7227-1-mngyadam@amazon.de>
+References: <20251020122541.7227-1-mngyadam@amazon.de>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-ClientProxiedBy: EX19D044UWB002.ant.amazon.com (10.13.139.188) To
+X-ClientProxiedBy: EX19D031UWC003.ant.amazon.com (10.13.139.252) To
  EX19D013EUB004.ant.amazon.com (10.252.51.92)
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: "Darrick J. Wong" <djwong@kernel.org>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 
-commit c0e473a0d226479e8e925d5ba93f751d8df628e9 upstream.
+commit fb881cd7604536b17a1927fb0533f9a6982ffcc5 upstream.
 
-With the new large sector size support, it's now the case that
-set_blocksize can change i_blksize and the folio order in a manner that
-conflicts with a concurrent reader and causes a kernel crash.
+After commit c0e473a0d226 ("block: fix race between set_blocksize and read
+paths") was merged, set_blocksize() called by sb_set_blocksize() now locks
+the inode of the backing device file.  As a result of this change, syzbot
+started reporting deadlock warnings due to a circular dependency involving
+the semaphore "ns_sem" of the nilfs object, the inode lock of the backing
+device file, and the locks that this inode lock is transitively dependent
+on.
 
-Specifically, let's say that udev-worker calls libblkid to detect the
-labels on a block device.  The read call can create an order-0 folio to
-read the first 4096 bytes from the disk.  But then udev is preempted.
+This is caused by a new lock dependency added by the above change, since
+init_nilfs() calls sb_set_blocksize() in the lock section of "ns_sem".
+However, these warnings are false positives because init_nilfs() is called
+in the early stage of the mount operation and the filesystem has not yet
+started.
 
-Next, someone tries to mount an 8k-sectorsize filesystem from the same
-block device.  The filesystem calls set_blksize, which sets i_blksize to
-8192 and the minimum folio order to 1.
+The reason why "ns_sem" is locked in init_nilfs() was to avoid a race
+condition in nilfs_fill_super() caused by sharing a nilfs object among
+multiple filesystem instances (super block structures) in the early
+implementation.  However, nilfs objects and super block structures have
+long ago become one-to-one, and there is no longer any need to use the
+semaphore there.
 
-Now udev resumes, still holding the order-0 folio it allocated.  It then
-tries to schedule a read bio and do_mpage_readahead tries to create
-bufferheads for the folio.  Unfortunately, blocks_per_folio == 0 because
-the page size is 4096 but the blocksize is 8192 so no bufferheads are
-attached and the bh walk never sets bdev.  We then submit the bio with a
-NULL block device and crash.
+So, fix this issue by removing the use of the semaphore "ns_sem" in
+init_nilfs().
 
-Therefore, truncate the page cache after flushing but before updating
-i_blksize.  However, that's not enough -- we also need to lock out file
-IO and page faults during the update.  Take both the i_rwsem and the
-invalidate_lock in exclusive mode for invalidations, and in shared mode
-for read/write operations.
-
-I don't know if this is the correct fix, but xfs/259 found it.
-
-Signed-off-by: Darrick J. Wong <djwong@kernel.org>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
-Tested-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Link: https://lore.kernel.org/r/174543795699.4139148.2086129139322431423.stgit@frogsfrogsfrogs
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
-[use bdev->bd_inode instead]
+Link: https://lkml.kernel.org/r/20250503053327.12294-1-konishi.ryusuke@gmail.com
+Fixes: c0e473a0d226 ("block: fix race between set_blocksize and read paths")
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Reported-by: syzbot+00f7f5b884b117ee6773@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=00f7f5b884b117ee6773
+Tested-by: syzbot+00f7f5b884b117ee6773@syzkaller.appspotmail.com
+Reported-by: syzbot+f30591e72bfc24d4715b@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=f30591e72bfc24d4715b
+Tested-by: syzbot+f30591e72bfc24d4715b@syzkaller.appspotmail.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 Signed-off-by: Mahmoud Adam <mngyadam@amazon.de>
 ---
-    Fixes CVE-2025-38073.
+    Follow up fix.
 
- block/bdev.c      | 17 +++++++++++++++++
- block/blk-zoned.c |  5 ++++-
- block/fops.c      | 16 ++++++++++++++++
- block/ioctl.c     |  6 ++++++
- 4 files changed, 43 insertions(+), 1 deletion(-)
+ fs/nilfs2/the_nilfs.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/block/bdev.c b/block/bdev.c
-index 5a54977518eeae..a8357b72a27b86 100644
---- a/block/bdev.c
-+++ b/block/bdev.c
-@@ -147,9 +147,26 @@ int set_blocksize(struct block_device *bdev, int size)
+diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+index be41e26b782469..05fdbbc63e1f5f 100644
+--- a/fs/nilfs2/the_nilfs.c
++++ b/fs/nilfs2/the_nilfs.c
+@@ -680,8 +680,6 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
+ 	int blocksize;
+ 	int err;
  
- 	/* Don't change the size if it is same as current */
- 	if (bdev->bd_inode->i_blkbits != blksize_bits(size)) {
-+		/*
-+		 * Flush and truncate the pagecache before we reconfigure the
-+		 * mapping geometry because folio sizes are variable now.  If a
-+		 * reader has already allocated a folio whose size is smaller
-+		 * than the new min_order but invokes readahead after the new
-+		 * min_order becomes visible, readahead will think there are
-+		 * "zero" blocks per folio and crash.  Take the inode and
-+		 * invalidation locks to avoid racing with
-+		 * read/write/fallocate.
-+		 */
-+		inode_lock(bdev->bd_inode);
-+		filemap_invalidate_lock(bdev->bd_inode->i_mapping);
-+
- 		sync_blockdev(bdev);
-+		kill_bdev(bdev);
-+
- 		bdev->bd_inode->i_blkbits = blksize_bits(size);
- 		kill_bdev(bdev);
-+		filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
-+		inode_unlock(bdev->bd_inode);
- 	}
- 	return 0;
- }
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 619ee41a51cc8c..644bfa1f6753ea 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -401,6 +401,7 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
- 		op = REQ_OP_ZONE_RESET;
- 
- 		/* Invalidate the page cache, including dirty pages. */
-+		inode_lock(bdev->bd_inode);
- 		filemap_invalidate_lock(bdev->bd_inode->i_mapping);
- 		ret = blkdev_truncate_zone_range(bdev, mode, &zrange);
- 		if (ret)
-@@ -423,8 +424,10 @@ int blkdev_zone_mgmt_ioctl(struct block_device *bdev, blk_mode_t mode,
- 			       GFP_KERNEL);
- 
- fail:
--	if (cmd == BLKRESETZONE)
-+	if (cmd == BLKRESETZONE) {
- 		filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
-+		inode_unlock(bdev->bd_inode);
-+	}
- 
- 	return ret;
- }
-diff --git a/block/fops.c b/block/fops.c
-index 7c257eb3564d0c..088143fa9ac9e1 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -681,7 +681,14 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
- 			ret = direct_write_fallback(iocb, from, ret,
- 					blkdev_buffered_write(iocb, from));
- 	} else {
-+		/*
-+		 * Take i_rwsem and invalidate_lock to avoid racing with
-+		 * set_blocksize changing i_blkbits/folio order and punching
-+		 * out the pagecache.
-+		 */
-+		inode_lock_shared(bd_inode);
- 		ret = blkdev_buffered_write(iocb, from);
-+		inode_unlock_shared(bd_inode);
- 	}
- 
- 	if (ret > 0)
-@@ -693,6 +700,7 @@ static ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
- static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
- {
- 	struct block_device *bdev = I_BDEV(iocb->ki_filp->f_mapping->host);
-+	struct inode *bd_inode = bdev->bd_inode;
- 	loff_t size = bdev_nr_bytes(bdev);
- 	loff_t pos = iocb->ki_pos;
- 	size_t shorted = 0;
-@@ -728,7 +736,13 @@ static ssize_t blkdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
- 			goto reexpand;
- 	}
- 
-+	/*
-+	 * Take i_rwsem and invalidate_lock to avoid racing with set_blocksize
-+	 * changing i_blkbits/folio order and punching out the pagecache.
-+	 */
-+	inode_lock_shared(bd_inode);
- 	ret = filemap_read(iocb, to, ret);
-+	inode_unlock_shared(bd_inode);
- 
- reexpand:
- 	if (unlikely(shorted))
-@@ -771,6 +785,7 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
- 		return -EINVAL;
- 
-+	inode_lock(inode);
- 	filemap_invalidate_lock(inode->i_mapping);
- 
- 	/*
-@@ -811,6 +826,7 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
- 
-  fail:
- 	filemap_invalidate_unlock(inode->i_mapping);
-+	inode_unlock(inode);
- 	return error;
- }
- 
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 231537f79a8cb4..024767fa1e52d5 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -114,6 +114,7 @@ static int blk_ioctl_discard(struct block_device *bdev, blk_mode_t mode,
- 	    end > bdev_nr_bytes(bdev))
- 		return -EINVAL;
- 
-+	inode_lock(inode);
- 	filemap_invalidate_lock(inode->i_mapping);
- 	err = truncate_bdev_range(bdev, mode, start, end - 1);
- 	if (err)
-@@ -121,6 +122,7 @@ static int blk_ioctl_discard(struct block_device *bdev, blk_mode_t mode,
- 	err = blkdev_issue_discard(bdev, start >> 9, len >> 9, GFP_KERNEL);
- fail:
- 	filemap_invalidate_unlock(inode->i_mapping);
-+	inode_unlock(inode);
+-	down_write(&nilfs->ns_sem);
+-
+ 	blocksize = sb_min_blocksize(sb, NILFS_MIN_BLOCK_SIZE);
+ 	if (!blocksize) {
+ 		nilfs_err(sb, "unable to set blocksize");
+@@ -757,7 +755,6 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
+ 	set_nilfs_init(nilfs);
+ 	err = 0;
+  out:
+-	up_write(&nilfs->ns_sem);
  	return err;
- }
  
-@@ -146,12 +148,14 @@ static int blk_ioctl_secure_erase(struct block_device *bdev, blk_mode_t mode,
- 	    end > bdev_nr_bytes(bdev))
- 		return -EINVAL;
- 
-+	inode_lock(bdev->bd_inode);
- 	filemap_invalidate_lock(bdev->bd_inode->i_mapping);
- 	err = truncate_bdev_range(bdev, mode, start, end - 1);
- 	if (!err)
- 		err = blkdev_issue_secure_erase(bdev, start >> 9, len >> 9,
- 						GFP_KERNEL);
- 	filemap_invalidate_unlock(bdev->bd_inode->i_mapping);
-+	inode_unlock(bdev->bd_inode);
- 	return err;
- }
- 
-@@ -184,6 +188,7 @@ static int blk_ioctl_zeroout(struct block_device *bdev, blk_mode_t mode,
- 		return -EINVAL;
- 
- 	/* Invalidate the page cache, including dirty pages */
-+	inode_lock(inode);
- 	filemap_invalidate_lock(inode->i_mapping);
- 	err = truncate_bdev_range(bdev, mode, start, end);
- 	if (err)
-@@ -194,6 +199,7 @@ static int blk_ioctl_zeroout(struct block_device *bdev, blk_mode_t mode,
- 
- fail:
- 	filemap_invalidate_unlock(inode->i_mapping);
-+	inode_unlock(inode);
- 	return err;
- }
- 
+  failed_sbh:
 -- 
 2.47.3
 
