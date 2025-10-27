@@ -1,116 +1,241 @@
-Received: from fra-out-006.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-006.esa.eu-central-1.outbound.mail-perimeter.amazon.com [18.197.217.180])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-il1-f207.google.com (mail-il1-f207.google.com [209.85.166.207])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68D8AB652;
-	Tue, 21 Oct 2025 10:16:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=18.197.217.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 245392E6CA6
+	for <linux-nilfs@vger.kernel.org>; Mon, 27 Oct 2025 21:18:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.207
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761041818; cv=none; b=q5vu3XH7RwplcL3gmIUwhVwfwUCS/2RH8xjhv92WesjLLikNOVSRGcrcT9giw3Ko9UZPT3e52J/XocL6yqrxKksAYLX4FVuYNlQzbKgVj/UAi0lVYK0HE9Y4+yvgjr/l3CqHcIrrxQhDQvFhTZk+nn6/5EUyRH7Tnj+tXGHIFiM=
+	t=1761599914; cv=none; b=ADFcjS2lxkjZkiCysFHOHEj641G6/f/82KQjfOFQ4s7Xp0qpyQts4GxKotb3RmvOBQaED0AHIBbKiBtw9lzt1w3AHtS1w27XFR1uFPxG8EJFRikWmzZh6tEWn/e6VaVB/o2Pkrn52LhGqAhHlhDnuZwy8KZrOoD58/nJXRk9iYs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761041818; c=relaxed/simple;
-	bh=8MDXwoEIFINszKm73LVpBYFxmKJH+hoRSLKsyiU5mp4=;
-	h=From:To:CC:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=ekI26XMv60VVgiaDaYmwisgY6cdATOkc8yzoIU8m82DpGAJsnRWbP7QiMO6CZLj1g+ouIBfaVrKCfnut70PgmfVbPmrqoN82RPglUJe51noezA8M7oX1B+qx0TKmiiccJx7ZuFmHQ7Ub7hGEA6k5+rGzA7BRstMcBGfOhIfP7K8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.de; spf=pass smtp.mailfrom=amazon.de; dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b=olPmgnty; arc=none smtp.client-ip=18.197.217.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.de header.i=@amazon.de header.b="olPmgnty"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.de; i=@amazon.de; q=dns/txt; s=amazoncorp2;
-  t=1761041814; x=1792577814;
-  h=from:to:cc:subject:in-reply-to:references:date:
-   message-id:mime-version:content-transfer-encoding;
-  bh=8MDXwoEIFINszKm73LVpBYFxmKJH+hoRSLKsyiU5mp4=;
-  b=olPmgnty0B68hZrxZ6JCcV0+5pyyPv/kxvZgpPBRXNSZSMNZHEcTzF0o
-   0/C+d8QVlnwdzXg4y5hQzX/vQAawN28aoTt4Q1gCiAWMauCsktSB1tOLj
-   7M+bsEt+uHH1h5rvDpSDyTYgGtA1HleMbhNo4WS4gNsggsoPp8qogUBHl
-   PJffsdN+2uEXcvq7RBsL41xwpxOiq8AKq6MpJddvrjI6/IQpSpNjLXRIi
-   lF3S0kgKumF2Sa0QVTpkx9KDRsDhBQpHAxmxyU+5hs4zdxW06Z9sUIRTS
-   T13N1/EHRD5r7HSG504fFSfxCnYO/ouu2axEDSTHnh6jKgHae3Z4KLi1L
-   g==;
-X-CSE-ConnectionGUID: t3cCI8X3TtayPGBVW0wUyg==
-X-CSE-MsgGUID: KEzN1gffTHWZaf9BIhzJBg==
-X-IronPort-AV: E=Sophos;i="6.19,244,1754956800"; 
-   d="scan'208";a="3947772"
-Received: from ip-10-6-3-216.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.3.216])
-  by internal-fra-out-006.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 Oct 2025 10:16:43 +0000
-Received: from EX19MTAEUA002.ant.amazon.com [54.240.197.232:30186]
- by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.17.8:2525] with esmtp (Farcaster)
- id faaeaca1-ecac-4e7b-891e-ed40e4b2799d; Tue, 21 Oct 2025 10:16:43 +0000 (UTC)
-X-Farcaster-Flow-ID: faaeaca1-ecac-4e7b-891e-ed40e4b2799d
-Received: from EX19D013EUB004.ant.amazon.com (10.252.51.92) by
- EX19MTAEUA002.ant.amazon.com (10.252.50.126) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20;
- Tue, 21 Oct 2025 10:16:35 +0000
-Received: from dev-dsk-mngyadam-1c-cb3f7548.eu-west-1.amazon.com.amazon.de
- (10.253.107.175) by EX19D013EUB004.ant.amazon.com (10.252.51.92) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Tue, 21 Oct 2025
- 10:16:26 +0000
-From: Mahmoud Nagy Adam <mngyadam@amazon.de>
-To: Greg KH <gregkh@linuxfoundation.org>
-CC: <stable@vger.kernel.org>, <nagy@khwaternagy.com>, Jens Axboe
-	<axboe@kernel.dk>, Xiubo Li <xiubli@redhat.com>, Ilya Dryomov
-	<idryomov@gmail.com>, Jeff Layton <jlayton@kernel.org>, Alexander Viro
-	<viro@zeniv.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger
-	<adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu
-	<chao@kernel.org>, Christoph Hellwig <hch@infradead.org>, "Darrick J. Wong"
-	<djwong@kernel.org>, Trond Myklebust <trond.myklebust@hammerspace.com>, "Anna
- Schumaker" <anna@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	"Matthew Wilcox (Oracle)" <willy@infradead.org>, Andrew Morton
-	<akpm@linux-foundation.org>, Hannes Reinecke <hare@suse.de>, Damien Le Moal
-	<dlemoal@kernel.org>, Luis Chamberlain <mcgrof@kernel.org>,
-	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-	<ceph-devel@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
-	<linux-ext4@vger.kernel.org>, <linux-f2fs-devel@lists.sourceforge.net>,
-	<linux-xfs@vger.kernel.org>, <linux-nfs@vger.kernel.org>,
-	<linux-nilfs@vger.kernel.org>, <linux-mm@kvack.org>
-Subject: Re: [PATCH 6.1 0/8] Backporting CVE-2025-38073 fix patch
-In-Reply-To: <2025102111-stoppage-clergyman-f425@gregkh> (Greg KH's message of
-	"Tue, 21 Oct 2025 09:43:45 +0200")
-References: <20251021070353.96705-2-mngyadam@amazon.de>
-	<2025102128-agent-handheld-30a6@gregkh>
-	<lrkyqms5klnri.fsf@dev-dsk-mngyadam-1c-cb3f7548.eu-west-1.amazon.com>
-	<2025102111-stoppage-clergyman-f425@gregkh>
-Date: Tue, 21 Oct 2025 12:16:22 +0200
-Message-ID: <lrkyqikg8lfux.fsf_-_@dev-dsk-mngyadam-1c-cb3f7548.eu-west-1.amazon.com>
-User-Agent: Gnus/5.13 (Gnus v5.13)
+	s=arc-20240116; t=1761599914; c=relaxed/simple;
+	bh=yWnQOcvj5nXT4iKmipWt5HgJE+kFx6wV2L3dMTdY7kQ=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=XlDEdh1o3egDBDWg1bCoLLIc/QhGkRZQ7wVi9A2y3t6dzCakwHphzHTZr1HDDT16g25Z8dFgS9WlUrjxVtE1+qGOj+UEcF1P+8M7dYrcUfe/ib3u0f5gg8EBLQQu6hRQ/b34NQo0t32I0Vj0cnuXK7LGV0L5cwXKnXoZlBG+5lU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.166.207
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-il1-f207.google.com with SMTP id e9e14a558f8ab-430d4ed5cfcso190750645ab.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 27 Oct 2025 14:18:32 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1761599912; x=1762204712;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=t74g6tD6twh87/78NLoHkEzhT0tBtwgTsI86ZtSWuf0=;
+        b=WD0w0cgy2fohQn1MSKzU+Kt5h26pxnPmAA8m4f4mtyYUFloSVfSN7MUN0FUKzH8+tH
+         K+2sUn5Tgywf2ZJ0N5hI513PopkrW29uib4oqOrQKN01YR3iXTH/fjERtWvqx6RfBX0N
+         Yt7wuxIjkZyyQpildbJUhBd8Xt+PqZQPew/FXo6rNrXUQeql88Q8UsbxinEyZ8QaUq1i
+         KR4caNNzQQK48q5ztyvc1TB1qyzSA1KH23dxYfSC8rZIHe6LPLE+Qz7bP3k3CIOMN9bv
+         A9Sj+FMTHdt3D8YXNPikfbZ0gA9Cau6ffGIE3JPWHsgbnFGs4ArTIR7w27znrjAgRWoT
+         iikQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUgq9SpLMS3lBK5Z55ASBfXmDuwLbSHtM02weiKCg77DbV7KjunQDizGnfdtlf/azz59Yg1uszBZhG0Vw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxbNDVjVO8yJjsRjwcEJoIubxqNpb23HsF0QWDyGbYWKO9jiZtv
+	b/ZCIbCOU2TF1hD0daFbvfKpI3leQkieJN1rL7NmXfdVvL238AJMxFde5kWlsvIwvBiv8rQ8+AZ
+	QuSWGkYfSgCiB5Y0lbYHmL5UeBdZaA1nlczdCGX6CMBlJFopeM8hgxBlcwgU=
+X-Google-Smtp-Source: AGHT+IGyAr3zQUoQQPc7ccSMkcTKfUdmtTVqtn4Dtu5YYPplk9AIWdbXth2wHp1LLK/JKLf8kLOJCATVKRa/KaILsParrBNoXTPh
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-X-ClientProxiedBy: EX19D040UWB004.ant.amazon.com (10.13.138.91) To
- EX19D013EUB004.ant.amazon.com (10.252.51.92)
-Content-Transfer-Encoding: base64
+X-Received: by 2002:a05:6e02:170f:b0:431:d763:193b with SMTP id
+ e9e14a558f8ab-4320f79b3e8mr21701555ab.24.1761599912295; Mon, 27 Oct 2025
+ 14:18:32 -0700 (PDT)
+Date: Mon, 27 Oct 2025 14:18:32 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <68ffe1a8.050a0220.3344a1.03a1.GAE@google.com>
+Subject: [syzbot] [nilfs?] WARNING: ODEBUG bug in nilfs_detach_log_writer (2)
+From: syzbot <syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-R3JlZyBLSCA8Z3JlZ2toQGxpbnV4Zm91bmRhdGlvbi5vcmc+IHdyaXRlczoKCj4gT24gVHVlLCBP
-Y3QgMjEsIDIwMjUgYXQgMDk6MjU6MzdBTSArMDIwMCwgTWFobW91ZCBOYWd5IEFkYW0gd3JvdGU6
-Cj4+IEdyZWcgS0ggPGdyZWdraEBsaW51eGZvdW5kYXRpb24ub3JnPiB3cml0ZXM6Cj4+Cj4+ID4K
-Pj4gPgo+PiA+IE9uIFR1ZSwgT2N0IDIxLCAyMDI1IGF0IDA5OjAzOjM1QU0gKzAyMDAsIE1haG1v
-dWQgQWRhbSB3cm90ZToKPj4gPj4gVGhpcyBzZXJpZXMgYWltcyB0byBmaXggdGhlIENWRS0yMDI1
-LTM4MDczIGZvciA2LjEgTFRTLgo+PiA+Cj4+ID4gVGhhdCdzIG5vdCBnb2luZyB0byB3b3JrIHVu
-dGlsIHRoZXJlIGlzIGEgZml4IGluIHRoZSA2LjYueSB0cmVlIGZpcnN0Lgo+PiA+IFlvdSBhbGwg
-a25vdyB0aGlzIHF1aXRlIHdlbGwgOigKPj4gPgo+PiA+IFBsZWFzZSB3b3JrIG9uIHRoYXQgdHJl
-ZSBmaXJzdCwgYW5kIHRoZW4gbW92ZSB0byBvbGRlciBvbmVzLgo+PiA+Cj4+Cj4+IFl1cCwgSSd2
-ZSBhbHJlYWR5IHNlbnQgYSBzZXJpZXMgZm9yIDYuNiB5ZXN0ZXJkYXk6Cj4+IGh0dHBzOi8vbG9y
-ZS5rZXJuZWwub3JnL3N0YWJsZS8yMDI1MTAyMDEyMjU0MS43MjI3LTEtbW5neWFkYW1AYW1hem9u
-LmRlLwo+Cj4gQWgsIHRvdGFsbHkgbWlzc2VkIHRoYXQgYXMgaXQgd2FzICJqdXN0IiBhIHNpbmds
-ZSBiYWNrcG9ydCwgbXkgZmF1bHQuCj4KCjYuNiBoYWQgYWxsIHRoZSByZXF1aXJlZCBkZXBlbmRl
-bmNpZXMgYWxyZWFkeSBzbyBpdCB3YXMgZm9ydHVuYXRlbHkgYQpzaW1wbGVyIHNlcmllcyA6KS4g
-SSdsbCBtYWtlIHN1cmUgdG8gcmVmZXJlbmNlIHRoZSBvdGhlciBzZXJpZXMgaW4gdGhlCmZ1dHVy
-ZSBhcyB3ZWxsLgoKPiBUaGFua3MgZm9yIHRoaXMsIEknbGwgcmV2aWV3IHRoaXMgd2hlbiBJIGdl
-dCBhIGNoYW5jZS4gIEhvdyB3YXMgdGhpcwo+IHRlc3RlZD8KClRoaXMgd2FzIHRlc3RlZCBieSBv
-dXIgaW50ZXJuYWwgdGVzdGluZyBvdmVyIHZhcmlvdXMgRUMyIGluc3RhbmNlcwooeDg2XzY0ICYg
-QVJNKS4gT3VyIHRlc3RpbmcgaW5jbHVkZXMgcnVubmluZyBrc2VsZnRlc3RzLCBmc3Rlc3RzLCBM
-VFAKc3VpdGVzLgoKSWYgdGhlcmUgYXJlIHNwZWNpZmljIHRlc3RzIHlvdeKAmWQgbGlrZSBtZSB0
-byBydW4gb3IgcmVzdWx0cyB0byBwcm92aWRlLApwbGVhc2UgbGV0IG1lIGtub3cuCgpUaGFua3Ms
-Ck1OQWRhbQoKCgpBbWF6b24gV2ViIFNlcnZpY2VzIERldmVsb3BtZW50IENlbnRlciBHZXJtYW55
-IEdtYkgKVGFtYXJhLURhbnotU3RyLiAxMwoxMDI0MyBCZXJsaW4KR2VzY2hhZWZ0c2Z1ZWhydW5n
-OiBDaHJpc3RpYW4gU2NobGFlZ2VyCkVpbmdldHJhZ2VuIGFtIEFtdHNnZXJpY2h0IENoYXJsb3R0
-ZW5idXJnIHVudGVyIEhSQiAyNTc3NjQgQgpTaXR6OiBCZXJsaW4KVXN0LUlEOiBERSAzNjUgNTM4
-IDU5Nwo=
+Hello,
 
+syzbot found the following issue on:
+
+HEAD commit:    b98c94eed4a9 arm64: mte: Do not warn if the page is alread..
+git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
+console output: https://syzkaller.appspot.com/x/log.txt?x=14144be2580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=158bd6857eb7a550
+dashboard link: https://syzkaller.appspot.com/bug?extid=24d8b70f039151f65590
+compiler:       Debian clang version 20.1.8 (++20250708063551+0c9f909b7976-1~exp1~20250708183702.136), Debian LLD 20.1.8
+userspace arch: arm64
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=12ce5d2f980000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=16136e7c580000
+
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/2c82e514449b/disk-b98c94ee.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/a322ed38c368/vmlinux-b98c94ee.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/059db7d7114e/Image-b98c94ee.gz.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/3ad719caa640/mount_0.gz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com
+
+------------[ cut here ]------------
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: __ll_sc_atomic64_andnot arch/arm64/include/asm/atomic_ll_sc.h:-1 [inline]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: arch_atomic64_andnot arch/arm64/include/asm/atomic.h:64 [inline]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: raw_atomic64_andnot include/linux/atomic/atomic-arch-fallback.h:3675 [inline]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: raw_atomic_long_andnot include/linux/atomic/atomic-long.h:964 [inline]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: arch_clear_bit include/asm-generic/bitops/atomic.h:25 [inline]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: clear_bit include/asm-generic/bitops/instrumented-atomic.h:42 [inline]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: clear_nilfs_purging fs/nilfs2/the_nilfs.h:206 [inline]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: nilfs_construction_timeout+0x0/0x50 fs/nilfs2/segment.c:2893
+WARNING: CPU: 0 PID: 6673 at lib/debugobjects.c:615 debug_print_object lib/debugobjects.c:612 [inline]
+WARNING: CPU: 0 PID: 6673 at lib/debugobjects.c:615 __debug_check_no_obj_freed lib/debugobjects.c:1099 [inline]
+WARNING: CPU: 0 PID: 6673 at lib/debugobjects.c:615 debug_check_no_obj_freed+0x390/0x470 lib/debugobjects.c:1129
+Modules linked in:
+CPU: 0 UID: 0 PID: 6673 Comm: syz-executor Not tainted syzkaller #0 PREEMPT 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 06/30/2025
+pstate: 63400005 (nZCv daif +PAN -UAO +TCO +DIT -SSBS BTYPE=--)
+pc : debug_print_object lib/debugobjects.c:612 [inline]
+pc : __debug_check_no_obj_freed lib/debugobjects.c:1099 [inline]
+pc : debug_check_no_obj_freed+0x390/0x470 lib/debugobjects.c:1129
+lr : debug_print_object lib/debugobjects.c:612 [inline]
+lr : __debug_check_no_obj_freed lib/debugobjects.c:1099 [inline]
+lr : debug_check_no_obj_freed+0x390/0x470 lib/debugobjects.c:1129
+sp : ffff8000a1547910
+x29: ffff8000a1547950 x28: ffff0000cf608400 x27: 0000000000000000
+x26: ffff80008aed7f20 x25: ffff0000cf608270 x24: ffff800082080a4c
+x23: ffff0000d8cabfc0 x22: ffff0000cf608000 x21: dfff800000000000
+x20: 0000000000000000 x19: ffff0000cf608000 x18: 00000000ffffffff
+x17: 626f206131313462 x16: ffff800082de9540 x15: 0000000000000001
+x14: 1fffe000337db6fa x13: 0000000000000000 x12: 0000000000000000
+x11: ffff6000337db6fb x10: 0000000000ff0100 x9 : c941407f25652900
+x8 : c941407f25652900 x7 : ffff8000805638d4 x6 : 0000000000000000
+x5 : 0000000000000000 x4 : 0000000000000000 x3 : ffff8000807d4f2c
+x2 : 0000000000000001 x1 : 0000000100000000 x0 : 0000000000000000
+Call trace:
+ debug_print_object lib/debugobjects.c:612 [inline] (P)
+ __debug_check_no_obj_freed lib/debugobjects.c:1099 [inline] (P)
+ debug_check_no_obj_freed+0x390/0x470 lib/debugobjects.c:1129 (P)
+ slab_free_hook mm/slub.c:2454 [inline]
+ slab_free mm/slub.c:6611 [inline]
+ kfree+0x120/0x600 mm/slub.c:6818
+ nilfs_segctor_destroy fs/nilfs2/segment.c:2811 [inline]
+ nilfs_detach_log_writer+0x668/0x8cc fs/nilfs2/segment.c:2877
+ nilfs_put_super+0x4c/0x12c fs/nilfs2/super.c:509
+ generic_shutdown_super+0x12c/0x2b8 fs/super.c:642
+ kill_block_super+0x44/0x90 fs/super.c:1722
+ deactivate_locked_super+0xc4/0x12c fs/super.c:473
+ deactivate_super+0xe0/0x100 fs/super.c:506
+ cleanup_mnt+0x31c/0x3ac fs/namespace.c:1327
+ __cleanup_mnt+0x20/0x30 fs/namespace.c:1334
+ task_work_run+0x1dc/0x260 kernel/task_work.c:227
+ resume_user_mode_work include/linux/resume_user_mode.h:50 [inline]
+ exit_to_user_mode_loop+0xfc/0x178 kernel/entry/common.c:43
+ exit_to_user_mode_prepare include/linux/irq-entry-common.h:225 [inline]
+ arm64_exit_to_user_mode arch/arm64/kernel/entry-common.c:103 [inline]
+ el0_svc+0x170/0x254 arch/arm64/kernel/entry-common.c:747
+ el0t_64_sync_handler+0x84/0x12c arch/arm64/kernel/entry-common.c:765
+ el0t_64_sync+0x198/0x19c arch/arm64/kernel/entry.S:596
+irq event stamp: 136662
+hardirqs last  enabled at (136661): [<ffff800080559f90>] vprintk_store+0x898/0xac8 kernel/printk/printk.c:2329
+hardirqs last disabled at (136662): [<ffff80008ade9670>] el1_brk64+0x20/0x54 arch/arm64/kernel/entry-common.c:434
+softirqs last  enabled at (136170): [<ffff8000801f95fc>] local_bh_enable+0x10/0x34 include/linux/bottom_half.h:32
+softirqs last disabled at (136168): [<ffff8000801f95c8>] local_bh_disable+0x10/0x34 include/linux/bottom_half.h:19
+---[ end trace 0000000000000000 ]---
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+NILFS (loop1): disposed unprocessed dirty file(s) when stopping log writer
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
