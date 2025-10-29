@@ -1,221 +1,111 @@
-Received: from mail-lf1-f54.google.com (mail-lf1-f54.google.com [209.85.167.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out162-62-57-252.mail.qq.com (out162-62-57-252.mail.qq.com [162.62.57.252])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EED8C2F99BE
-	for <linux-nilfs@vger.kernel.org>; Mon, 27 Oct 2025 22:17:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E67C054652;
+	Wed, 29 Oct 2025 05:29:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=162.62.57.252
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761603483; cv=none; b=ELbTRhWJ0M+uEXVtfcSdQCHeGmCUBE/WL6CFJTtyAv4Y3Wc1CAAzP2mjSZcdEW0zwdlw8qKb07hp0KIdeTaSbKwpw3+FIYHRXdmKoR+tJz+nYHc47OVf/LNyG8GlbN5Q41pIT3SLARvO7FtJxvHhNc1gxKrvsl76W2pnCSOWlfU=
+	t=1761715766; cv=none; b=rpr1ZkaKmi/7VS2cNR7gBesNqz6FSR3PM1Mxm8L+0sUAP/RKTjj7ybpB6RrsI1FMsnLzGg1YnO5Yq8I4crWDrrKuss2BaP+/pw86Svc9CEQZifBQ4quCdyh42Z69voSMvV41mneVPYfwsqJIBQEJDhDDL1sHiuvWRP/AZw8AAYs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761603483; c=relaxed/simple;
-	bh=UILyFPHH6WFnH48B4FK/HoaO/ta/M9fvzea4oqNQZE0=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=GtEh51uAjnRDAg++7z/2ZYdk0IeoQx5kBX6fdUhhq3aHO1+43aCuLsZ8tdT+GvO05pH08ajnqXC0/Os2dVUNLv6t/mLgWqT5CI3netD2QGsHIOKSUHk3dEqj2V7lfS7lmRebZw6zzthRyWze5Wwss7FXjVh5vVyGfQiHvQyutVU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Q5BJyzJF; arc=none smtp.client-ip=209.85.167.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1761715766; c=relaxed/simple;
+	bh=iRuX74GgjNLnLHSyDYfI9YOEboHzqkhZUvwQbsumsyE=;
+	h=Message-ID:From:To:Cc:Subject:Date:In-Reply-To:References:
+	 MIME-Version; b=sYu7iJmonB4Baob4JQ7jfYz6CHFVcXHIFHcY9gjpkyBRseL7KZXxFc/lLyRDdNPiM+fyTA0c1rcdnCysoKpD6ApifD+b5m2oUG8A9e9l68PThWdo7L3R9YYCWHDTk2I165Vg2QxLtLTPD6rVEYinF1U0EvBI1vKBOGG0GmFFABc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=Zv9p2w9G; arc=none smtp.client-ip=162.62.57.252
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Q5BJyzJF"
-Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-58b025fce96so4513966e87.1
-        for <linux-nilfs@vger.kernel.org>; Mon, 27 Oct 2025 15:17:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1761603478; x=1762208278; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ez6u+oyLVjp14aXPRb5LJtS/2qhJekd0zFngxvClats=;
-        b=Q5BJyzJFdGjozI2E1vSCEHQNsS/FocAURcy+T474gverGak0qtNyZjfscraxI0OV/Z
-         OS44IpOCIpr0nwfQ766/PEvp+UX5hO26YFZkrcav9Yc0aDPEemnM90rVXI1OSr1pQoL5
-         q+B4HVP4ViJ/9BiaMhHDw990UFvYEDHUdUhsoY4ClyKuOCsmZqbGn8qm/zZeqhHtTS9j
-         M2oQCQSopQQ8o4dnarEevrA3BJ3MP9iCli0utJE9C0Ib1Y16SAd4vMmBO6tm6nY6b7Xu
-         gl2xdl2pDFid7g5USm2ohVzMPRNv5vkp4kFhnww+9ka1FryYqD4j+Y5e/KId58msgvkE
-         IBeA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1761603478; x=1762208278;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ez6u+oyLVjp14aXPRb5LJtS/2qhJekd0zFngxvClats=;
-        b=Ev5wryZ2efYItSLGsktuhVWC6liuWFoLxnEPGDav7Yu7Ao4H79pObZWIkOp+0uqZY5
-         tbu/ODyULk9pT+mw5hr/vo4wqljjGe4dtbwhwk7vB/naAYTEm9iF5DF0uQFiK2cFgWHa
-         EKdDCjipLsJG5StdI/OuSQOmVHTlAuXR0FzKYA5t3op5gsxD8fcGCCFa13ZySQX4OaDY
-         A3IH5Poh1tGrgs8W6TeVC1Vn8EpxJj9wckTGp8+mVQEFti9SA4AHlbId3es998UiO1b+
-         F3glenBdeJmtL6ZuIqcUE6VGuyvCUgVM1lMO6i2ix6mRS7S4VcwqOK9ZarymbWrylq63
-         WCQw==
-X-Forwarded-Encrypted: i=1; AJvYcCWw7SpGHnU95Vufp7gxVGFaXnFR4AFLQPzBmvOforJb5neVBsmPPKpXL8t6cLEHviGEb86Xk2bmIndD/Q==@vger.kernel.org
-X-Gm-Message-State: AOJu0YweMt3aBdD+Rga7fN07BofAid0MH9gObaZczUyhXzW8m8Z5yuyQ
-	YPvVATEp5AOykwhh2OfTAmxqKv6DxJaNOaVuDXZGMzhoCif38ePKf6tk1vmhI243ZbHjAUgKBjQ
-	LaX/0TaX0bSncq/oRA80cn0CL+CvY1fQ=
-X-Gm-Gg: ASbGncvqbfE1XUfizRTsrcgwuT5vqUHUX7NmxaNAbZPOwBIajVhePFOtSy+e8X2O2vm
-	rYsDdq2YtzahNTFPHzWKJMJJt9XGv8SKD5XGtBSI9n6MCf9CxbNUUrS3xoDA9npsQR6JTd7jTed
-	KOIo37hus2bLK2kT2h6ZGqMjULYH2sFpbbPlZRYUOrgb/q6b1xQUChkQecGsbblePXSfDmV9rTr
-	uNI9Tfm5jWv2L5lDQs3NrsYxkzyqNSwPNmhVT3eluSq0M2MhAmIfsjGbHqU+9OanhFMCAeC
-X-Google-Smtp-Source: AGHT+IFMFYtqRx7R2MtY+vJbKiFwScQM6685ttz21KpZqNxkwJe/YPCBqFxxy/srJSqAPy3XcWFnngfTNtlBMkIrfjk=
-X-Received: by 2002:a05:6512:2350:b0:58a:f88b:25a1 with SMTP id
- 2adb3069b0e04-5930e99bba2mr522791e87.5.1761603477847; Mon, 27 Oct 2025
- 15:17:57 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="Zv9p2w9G"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1761715753; bh=DIh+8csSGjJQ2zoSLu9gHv9q3FGHiu9zAKN/fONJMak=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=Zv9p2w9GpGy+bJSOx2IhFt0rGXbxbolyxptf+fKU8Rmbv65L7+bMtDWIo/627f7Ht
+	 o2xEfcy9LUHTBLhWITioF/NpQ2LGGyBtDscWbzBXVg9GNjnCeIRrq0R6xA6SuWYmbZ
+	 WNxm3DMw7vOhFibiy0XrQMEMtGwoyDVXh0ThDjDc=
+Received: from pek-lxu-l1.corp.ad.wrs.com ([111.201.7.117])
+	by newxmesmtplogicsvrszb20-0.qq.com (NewEsmtp) with SMTP
+	id 5C1882C1; Wed, 29 Oct 2025 13:23:01 +0800
+X-QQ-mid: xmsmtpt1761715381tgspgkq2o
+Message-ID: <tencent_B12C968C36824B2C74BD76FD66763DB13709@qq.com>
+X-QQ-XMAILINFO: MzNwb/pqyJTkC03Q5VGJQF0pHFXLJPHmWwJKM5fK7XEto/rqA8Xjcl2yppJj8J
+	 TJShFABbQYcHHKJWfIDECGnRQdjuA4Dduzgmlh4oUvQOo8KzNemiH02VVEq7/YWTzko3ODTgEwcE
+	 ik+N9W6RBdcEidMkMY9StSwb+ktGJa9hvviQDuwOA9x+BWgrCT3O+k21m68GBmRcTbLvH3qKdcyr
+	 7X2cS7Xk6Z48ua0T3y3lEVmkkNMgenQ42VsFceWgzof06ke51uH3NOptaDlkkKdE1vp8ggezocCp
+	 M/U3JKd04lHVYZ/PuQ+sQUJDmxOuBRfKzm7nLfmej9aOSiLPOZE6ACo2JVQLrhow/DHRXNiXzVLS
+	 ygIbywUsvnJCHPgM5xSqB1wzA/sUh6+3S3qG4DAA0osUCrdJ3NpPPMTfVD/TVyiruIXGnE2IVklr
+	 a3PhfDG972ZAd4GLm9ceKfCQ4duvK9kyAiW9ka+FkhkI8glWcjmWjawA4jqqKgnBwvflX5jNPS/5
+	 dzuXTtG4Xu6+XC5r4d2v0XarVaIZEFAByh/iCgcux9Dhb2h02q9uKZm4y4PAINWiM4GiMFAO4aBG
+	 mpDF5oqFlXAFGg5e1S6xLwhxT26FhEeTXLK1uaU7wEYg7ct/6c5/kd8bGrvWK7yg49f74uG0BW6N
+	 Es2A+VVOzyiKlUdapmcVZ4wSEqEy6UiTOcj8kvEYB//20pq8mTNPMGRm6soCJTeY+9TtKKF02cb0
+	 WWmArqI3Nmg1+upAcWt4DicFMFPnY9r9WobeJEgEZSfRe19D1EYbAV3mIAGTLgRksMz0mDPQd56z
+	 RcBOtmttJSHNIkzlehrsYL11pG5W/cayaUrr2ve/gnNl33PaQYraYNTYG4x0sMAvNEPjxMpH3QRJ
+	 arOiCHsRPhcFiqpgvPJaKoIg/KlE8D5PsfKmukVmtQ0iKwKcVlGp6WI6kmLLNQJ5DruBwZq8P+0w
+	 t1HSYgMpxcPf8Okxjab2bTz9wIT8RHkYHQL26yzL2MEEiadC4JSCQjW33LOX+U
+X-QQ-XMRINFO: NI4Ajvh11aEj8Xl/2s1/T8w=
+From: Edward Adam Davis <eadavis@qq.com>
+To: syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com
+Cc: konishi.ryusuke@gmail.com,
+	linux-kernel@vger.kernel.org,
+	linux-nilfs@vger.kernel.org,
+	syzkaller-bugs@googlegroups.com
+Subject: [PATCH] nilfs2: Avoid having an active sc_timer before freeing sci
+Date: Wed, 29 Oct 2025 13:23:02 +0800
+X-OQ-MSGID: <20251029052301.3325543-2-eadavis@qq.com>
+X-Mailer: git-send-email 2.50.1
+In-Reply-To: <68ffe1a8.050a0220.3344a1.03a1.GAE@google.com>
+References: <68ffe1a8.050a0220.3344a1.03a1.GAE@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <68ffe1a8.050a0220.3344a1.03a1.GAE@google.com>
-In-Reply-To: <68ffe1a8.050a0220.3344a1.03a1.GAE@google.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Tue, 28 Oct 2025 07:17:40 +0900
-X-Gm-Features: AWmQ_bljhOEzlenxMlB9xull_iZ5GoO0D5mYiCd2ityCdsjvzvDTGLve7KZBGYU
-Message-ID: <CAKFNMo=KN0_D0bh2UjxSAtUxdHt=uTKdMJeODVTY0wUh=z5-bw@mail.gmail.com>
-Subject: Re: [syzbot] [nilfs?] WARNING: ODEBUG bug in nilfs_detach_log_writer (2)
-To: syzbot <syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Tue, Oct 28, 2025 at 6:18=E2=80=AFAM syzbot
-<syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com> wrote:
->
-> Hello,
->
-> syzbot found the following issue on:
->
-> HEAD commit:    b98c94eed4a9 arm64: mte: Do not warn if the page is alrea=
-d..
-> git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux=
-.git for-kernelci
-> console output: https://syzkaller.appspot.com/x/log.txt?x=3D14144be258000=
-0
-> kernel config:  https://syzkaller.appspot.com/x/.config?x=3D158bd6857eb7a=
-550
-> dashboard link: https://syzkaller.appspot.com/bug?extid=3D24d8b70f039151f=
-65590
-> compiler:       Debian clang version 20.1.8 (++20250708063551+0c9f909b797=
-6-1~exp1~20250708183702.136), Debian LLD 20.1.8
-> userspace arch: arm64
-> syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=3D12ce5d2f980=
-000
-> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=3D16136e7c58000=
-0
->
-> Downloadable assets:
-> disk image: https://storage.googleapis.com/syzbot-assets/2c82e514449b/dis=
-k-b98c94ee.raw.xz
-> vmlinux: https://storage.googleapis.com/syzbot-assets/a322ed38c368/vmlinu=
-x-b98c94ee.xz
-> kernel image: https://storage.googleapis.com/syzbot-assets/059db7d7114e/I=
-mage-b98c94ee.gz.xz
-> mounted in repro: https://storage.googleapis.com/syzbot-assets/3ad719caa6=
-40/mount_0.gz
->
-> IMPORTANT: if you fix the issue, please add the following tag to the comm=
-it:
-> Reported-by: syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com
->
-> ------------[ cut here ]------------
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: __ll_sc_atomic64_andnot arch/arm64/include/asm/atomic_ll=
-_sc.h:-1 [inline]
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: arch_atomic64_andnot arch/arm64/include/asm/atomic.h:64 =
-[inline]
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: raw_atomic64_andnot include/linux/atomic/atomic-arch-fal=
-lback.h:3675 [inline]
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: raw_atomic_long_andnot include/linux/atomic/atomic-long.=
-h:964 [inline]
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: arch_clear_bit include/asm-generic/bitops/atomic.h:25 [i=
-nline]
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: clear_bit include/asm-generic/bitops/instrumented-atomic=
-.h:42 [inline]
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: clear_nilfs_purging fs/nilfs2/the_nilfs.h:206 [inline]
-> ODEBUG: free active (active state 0) object: 00000000dacb411a object type=
-: timer_list hint: nilfs_construction_timeout+0x0/0x50 fs/nilfs2/segment.c:=
-2893
-> WARNING: CPU: 0 PID: 6673 at lib/debugobjects.c:615 debug_print_object li=
-b/debugobjects.c:612 [inline]
-> WARNING: CPU: 0 PID: 6673 at lib/debugobjects.c:615 __debug_check_no_obj_=
-freed lib/debugobjects.c:1099 [inline]
-> WARNING: CPU: 0 PID: 6673 at lib/debugobjects.c:615 debug_check_no_obj_fr=
-eed+0x390/0x470 lib/debugobjects.c:1129
-> Modules linked in:
-> CPU: 0 UID: 0 PID: 6673 Comm: syz-executor Not tainted syzkaller #0 PREEM=
-PT
-> Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS G=
-oogle 06/30/2025
-> pstate: 63400005 (nZCv daif +PAN -UAO +TCO +DIT -SSBS BTYPE=3D--)
-> pc : debug_print_object lib/debugobjects.c:612 [inline]
-> pc : __debug_check_no_obj_freed lib/debugobjects.c:1099 [inline]
-> pc : debug_check_no_obj_freed+0x390/0x470 lib/debugobjects.c:1129
-> lr : debug_print_object lib/debugobjects.c:612 [inline]
-> lr : __debug_check_no_obj_freed lib/debugobjects.c:1099 [inline]
-> lr : debug_check_no_obj_freed+0x390/0x470 lib/debugobjects.c:1129
-> sp : ffff8000a1547910
-> x29: ffff8000a1547950 x28: ffff0000cf608400 x27: 0000000000000000
-> x26: ffff80008aed7f20 x25: ffff0000cf608270 x24: ffff800082080a4c
-> x23: ffff0000d8cabfc0 x22: ffff0000cf608000 x21: dfff800000000000
-> x20: 0000000000000000 x19: ffff0000cf608000 x18: 00000000ffffffff
-> x17: 626f206131313462 x16: ffff800082de9540 x15: 0000000000000001
-> x14: 1fffe000337db6fa x13: 0000000000000000 x12: 0000000000000000
-> x11: ffff6000337db6fb x10: 0000000000ff0100 x9 : c941407f25652900
-> x8 : c941407f25652900 x7 : ffff8000805638d4 x6 : 0000000000000000
-> x5 : 0000000000000000 x4 : 0000000000000000 x3 : ffff8000807d4f2c
-> x2 : 0000000000000001 x1 : 0000000100000000 x0 : 0000000000000000
-> Call trace:
->  debug_print_object lib/debugobjects.c:612 [inline] (P)
->  __debug_check_no_obj_freed lib/debugobjects.c:1099 [inline] (P)
->  debug_check_no_obj_freed+0x390/0x470 lib/debugobjects.c:1129 (P)
->  slab_free_hook mm/slub.c:2454 [inline]
->  slab_free mm/slub.c:6611 [inline]
->  kfree+0x120/0x600 mm/slub.c:6818
->  nilfs_segctor_destroy fs/nilfs2/segment.c:2811 [inline]
->  nilfs_detach_log_writer+0x668/0x8cc fs/nilfs2/segment.c:2877
->  nilfs_put_super+0x4c/0x12c fs/nilfs2/super.c:509
->  generic_shutdown_super+0x12c/0x2b8 fs/super.c:642
->  kill_block_super+0x44/0x90 fs/super.c:1722
->  deactivate_locked_super+0xc4/0x12c fs/super.c:473
->  deactivate_super+0xe0/0x100 fs/super.c:506
->  cleanup_mnt+0x31c/0x3ac fs/namespace.c:1327
->  __cleanup_mnt+0x20/0x30 fs/namespace.c:1334
->  task_work_run+0x1dc/0x260 kernel/task_work.c:227
->  resume_user_mode_work include/linux/resume_user_mode.h:50 [inline]
->  exit_to_user_mode_loop+0xfc/0x178 kernel/entry/common.c:43
->  exit_to_user_mode_prepare include/linux/irq-entry-common.h:225 [inline]
->  arm64_exit_to_user_mode arch/arm64/kernel/entry-common.c:103 [inline]
->  el0_svc+0x170/0x254 arch/arm64/kernel/entry-common.c:747
->  el0t_64_sync_handler+0x84/0x12c arch/arm64/kernel/entry-common.c:765
->  el0t_64_sync+0x198/0x19c arch/arm64/kernel/entry.S:596
-> irq event stamp: 136662
-> hardirqs last  enabled at (136661): [<ffff800080559f90>] vprintk_store+0x=
-898/0xac8 kernel/printk/printk.c:2329
-> hardirqs last disabled at (136662): [<ffff80008ade9670>] el1_brk64+0x20/0=
-x54 arch/arm64/kernel/entry-common.c:434
-> softirqs last  enabled at (136170): [<ffff8000801f95fc>] local_bh_enable+=
-0x10/0x34 include/linux/bottom_half.h:32
-> softirqs last disabled at (136168): [<ffff8000801f95c8>] local_bh_disable=
-+0x10/0x34 include/linux/bottom_half.h:19
-> ---[ end trace 0000000000000000 ]---
-> NILFS (loop1): disposed unprocessed dirty file(s) when stopping log write=
-r
-> NILFS (loop1): disposed unprocessed dirty file(s) when stopping log write=
-r
-...
-> NILFS (loop1): disposed unprocessed dirty file(s) when stopping log write=
-r
+Because kthread_stop did not stop sc_task properly and returned -EINTR,
+the sc_timer was not properly closed, ultimately causing the problem [1]
+reported by syzbot when freeing sci due to the sc_timer not being closed.
 
-It seems that a timer-related resource leak was detected in the final
-kfree() call of nilfs_segctor_destroy(), which releases the log writer
-during unmount.
+Because the thread sc_task main function nilfs_segctor_thread() returns 0
+when it succeeds, when the return value of kthread_stop() is not 0 in
+nilfs_segctor_destroy(), we believe that it has not properly closed sc_timer.
+We use timer_shutdown_sync() to sync wait for sc_timer to shutdown, and set
+the value of sc_task to NULL under the protection of lock sc_state_lock,
+so as to avoid the issue caused by sc_timer not being properly shutdowned.
 
-This issue was supposed to have been resolved already, but it=E2=80=99s
-possible that something was overlooked.
+[1]
+ODEBUG: free active (active state 0) object: 00000000dacb411a object type: timer_list hint: nilfs_construction_timeout
+Call trace:
+ nilfs_segctor_destroy fs/nilfs2/segment.c:2811 [inline]
+ nilfs_detach_log_writer+0x668/0x8cc fs/nilfs2/segment.c:2877
+ nilfs_put_super+0x4c/0x12c fs/nilfs2/super.c:509
 
-If it can be reproduced with a reproducer, I=E2=80=99d like to dig deeper i=
-nto
-what=E2=80=99s happening.
+Reported-by: syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=24d8b70f039151f65590
+Tested-by: syzbot+24d8b70f039151f65590@syzkaller.appspotmail.com
+Signed-off-by: Edward Adam Davis <eadavis@qq.com>
+---
+ fs/nilfs2/segment.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-Ryusuke Konishi
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index f15ca6fc400d..deee16bc9d4e 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -2768,7 +2768,12 @@ static void nilfs_segctor_destroy(struct nilfs_sc_info *sci)
+ 
+ 	if (sci->sc_task) {
+ 		wake_up(&sci->sc_wait_daemon);
+-		kthread_stop(sci->sc_task);
++		if (kthread_stop(sci->sc_task)) {
++			spin_lock(&sci->sc_state_lock);
++			sci->sc_task = NULL;
++			timer_shutdown_sync(&sci->sc_timer);
++			spin_unlock(&sci->sc_state_lock);
++		}
+ 	}
+ 
+ 	spin_lock(&sci->sc_state_lock);
+-- 
+2.43.0
+
