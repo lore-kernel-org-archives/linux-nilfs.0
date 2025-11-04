@@ -1,217 +1,204 @@
-Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com [209.85.167.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from server57.webgo24.de (server57.webgo24.de [185.30.32.57])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 572872620DE
-	for <linux-nilfs@vger.kernel.org>; Tue,  4 Nov 2025 15:29:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00ACE2853F7
+	for <linux-nilfs@vger.kernel.org>; Tue,  4 Nov 2025 16:04:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.30.32.57
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762270157; cv=none; b=cChyipMHbBzLE9YwXVrJ/W6uwyU776tNpvYiC2KNT5CbNZSRg6ZWsn3t2jHX2D6J7kk22KVL1am7/hgblu5+eGt7LYAp85bU/GQylmXp0J9fYA2o17WKyZBRpSKUZ3Xvp/FOk+xgYQmBKc1K8VCYxFfxmE1dwyD217nFbq837UQ=
+	t=1762272267; cv=none; b=JEYiAf9FW+Dpu8ilDidB4+9iuULvwdpazisNKvAnqZazuXW550gkVKcofldPzdTGA6UXX4zRVhRG4mP/BE3Ky3nNQ8fBEmfuHBfQ8fyM3B5TYEBbz1NDebMcLwNYGntfkqIIkqqRcRW6QBLtGCzTOyIumG2tymolVreF9Ymvub4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762270157; c=relaxed/simple;
-	bh=lvUlzmQDICbuFXm7g5Q+44V+LEKq4GaNIyG0JSW/DNU=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=cIS7AiBpBdVZqSQlxSCauBjZqr55PTaf/w6XGTjg9mEnbkiSinyaZPZ8Dysxn+pQj4g73TOIn0LP6okbs7N4PryfRR2M/bNIH4GOa1datXlMzv6OFQzk4nxZAPbUAWZUbTHq7aVLoSf5qF1MjXjQbAyUZ19HabPT81QKXgGuOqQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=H92jp/Wx; arc=none smtp.client-ip=209.85.167.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1762272267; c=relaxed/simple;
+	bh=eDxeXm4eBrid2LsESyk9vHzSceiRI+AdKHGynqoCzTo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=MbZECcFZV/eAUGBuz1lF3nXlp2vuHZtY3kxYo/GIcWJrdydu6d0POaV1cxvrzbNavXzsRTq/q9hzKSVqG7fSFsCZWRkTrL4wmWJ8sCcvykrvVkGTqneNJY2kdWcHihwKp7n7jIYRtC8jljeU0Nc7HHcq4ZIib03BVuca8od0o0g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmerlin.de; spf=pass smtp.mailfrom=gmerlin.de; dkim=pass (2048-bit key) header.d=gmerlin.de header.i=@gmerlin.de header.b=qO7iokbe; arc=none smtp.client-ip=185.30.32.57
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmerlin.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmerlin.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="H92jp/Wx"
-Received: by mail-lf1-f48.google.com with SMTP id 2adb3069b0e04-5930f751531so5436919e87.3
-        for <linux-nilfs@vger.kernel.org>; Tue, 04 Nov 2025 07:29:15 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762270153; x=1762874953; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=lvUlzmQDICbuFXm7g5Q+44V+LEKq4GaNIyG0JSW/DNU=;
-        b=H92jp/WxCO0kRkXCPaEx/O5x9ulbrraqLy7JxvaOJBAPAQE9uK6MLXbQ8wDpAU/kN6
-         nYPIiM0p1axmBrU2Gw0HTTdRq9dMOZf/sh/G+yaRECUnuqv9CcKuPVTfQxaKm4GnYvbH
-         hyUUpU6vKatlYz4AmNMvfeHFA3JQoExUbn+U5FJsQW6+bx7dAQUYZSozK0ek69StXwZh
-         zfBQtvQbKEZayMye0nw08jcqyuUxAcgxZavutY2q7A8wbz4FRN1gJefEfm7q1J9eSjam
-         ZkvyHgS/dm+K4x04eeRrzbyCLGeXMaya99V/sc6V80fMAY1XxfKvXhbbuuTqHB9W4B+h
-         7eFQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762270153; x=1762874953;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=lvUlzmQDICbuFXm7g5Q+44V+LEKq4GaNIyG0JSW/DNU=;
-        b=HrWo2DexG5rJENzhiHQGSDbHsmyQIeySF9+2EKnwdhmlgCQsrhVNdBF+hgmjqYjU5A
-         +5jjWFmLjpaWlCUJA3/n9LxdPlBMl7pN1RNqs7oMO3DBJTb9AfK7VP3HK9iO2PGFqucS
-         oHrQlNr28TvRR4d0TNM3VyQtz69KmXo5lIQ0sYwe80XJgrEMFIX0iauiTKMgGZYo2gPF
-         G6hGvK+o0BlXmwaABuhD25kIFzvjVpjcR8HGs/3z36xFPsqNqDrDsZEiM0pBo25TPg9A
-         C4h/HHIHgI+n2s/HTgRHRbCyYln4SV5GINql4gE8mpV5QylvRPtvBpHEakfOziYo+F+T
-         4i9w==
-X-Gm-Message-State: AOJu0YyXSXMgtHti/8Cqzk6ApnmXpMxCDRURGFxcWko2kiuA/1tiKw1d
-	Do55F1TwcEGG5rnFXhFnLGRuWMi1roKQCqWJtf7seqKgqNJnXc2wENHDZj6XjGin4mIyrw35gU4
-	8nmkqHMGTFKcEpTYPMNbbxxN9S1hjOX0mw0AL
-X-Gm-Gg: ASbGncvym5rNePDqSJJi9o2SeqcT3+aVQVoo8dVzgnCUnObbr373gbYM/FGWVUNey/p
-	NVq9ntkcb2O5Td96dQRcO4lLtCS35A4H94KIP40JOT4CCgKczqCQ+xNdVUWGvZr6zxMhkqiFPyF
-	mGH/58DJyfc/6LFfyRAEgl7trQWWjyd/keGT46KJYzy9oSZyoMEyZrtL6lfpX/S85bXSnRCpJCG
-	PTAja4rjd0tLODoa55GZ+OOeWPLFnVfK+cdih60h8X55diwGUq+FhiwUMnq4g==
-X-Google-Smtp-Source: AGHT+IFXdmHUKJRXO85DvPhGWuqKgteJX2coKaiMmeOuCOK0mfQVSskPHt6hgxaTNkCAdtTkkvYRqJvMokOTAX9bmqU=
-X-Received: by 2002:a05:6512:b27:b0:594:35b6:2639 with SMTP id
- 2adb3069b0e04-59435b62763mr1096588e87.6.1762270153020; Tue, 04 Nov 2025
- 07:29:13 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmerlin.de header.i=@gmerlin.de header.b="qO7iokbe"
+Received: from merari.gmerlin.de (unknown [195.52.48.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by server57.webgo24.de (Postfix) with ESMTPSA id 7C66A56A068C;
+	Tue,  4 Nov 2025 17:04:22 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmerlin.de; s=dkim;
+	t=1762272262;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=nUeQlnoFMesX0EUWMvPx6iE8+gp2azoy/ugOLn5rrHc=;
+	b=qO7iokbewfIzGAiqn1X7eVsPI73w6ovz3TtGyNOyS3gZZBhZ7nDKR+d4bwYn/IQsNkp7zQ
+	p9/5ElQe1w5diYvgh7QdmRYHif50vcRSqKMR948HjoFIlMf8r4f7QZYbWKEt6tnwowHv53
+	bhPieT5PsWrZzk7B28uBbrNS/5/6KOJa4w3lrk7eE4zg7H/XOyC69KfOMwIcQVYzcBnbSw
+	61Erx+d1ss7UhiwMecu4YRrtgRIulJDJz043t0I6NGElD3tY06SvIL+T5Xn+ztR1cbhmIe
+	tWKEAEw9/hVprDpGzULXdEoWsXBqtBq8U6Tn+KSDTfWHlocQQCvI2SEQuCPovg==
+Received: from localhost (merari.gmerlin.de [local])
+	by merari.gmerlin.de (OpenSMTPD) with ESMTPA id 2294e363;
+	Tue, 4 Nov 2025 16:04:21 +0000 (UTC)
+Date: Tue, 4 Nov 2025 17:04:18 +0100
+From: Christopher Zimmermann <christopher@gmerlin.de>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
+Subject: Re: nilfs_readdir: bad page in #
+Message-ID: <aQokBe0xUtcitVnj@merari.gmerlin.de>
+References: <aPJNYX4UtFfUo8DX@merari.gmerlin.de>
+ <CAKFNMonRtuknO7G6p-eOuY+WgSQQGsYOWrDdbO2Zh1mBsGp3RA@mail.gmail.com>
+ <aQoHEXBY9tusAkQ9@merari.gmerlin.de>
+ <CAKFNMonYLKSikthtoGP9z6Loetu0LxrUsGC6vMSAwaCPE6muqQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <aPJNYX4UtFfUo8DX@merari.gmerlin.de> <CAKFNMonRtuknO7G6p-eOuY+WgSQQGsYOWrDdbO2Zh1mBsGp3RA@mail.gmail.com>
- <aQoHEXBY9tusAkQ9@merari.gmerlin.de>
-In-Reply-To: <aQoHEXBY9tusAkQ9@merari.gmerlin.de>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 5 Nov 2025 00:28:54 +0900
-X-Gm-Features: AWmQ_bl7Bz2dvPUnMFvW5wtImF_p7tRlwUSu-SZODhakqXsPWg86GghZvCGIrz8
-Message-ID: <CAKFNMonYLKSikthtoGP9z6Loetu0LxrUsGC6vMSAwaCPE6muqQ@mail.gmail.com>
-Subject: Re: nilfs_readdir: bad page in #
-To: Christopher Zimmermann <christopher@gmerlin.de>
-Cc: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="PL1csfp8h61ckpWt"
+Content-Disposition: inline
+In-Reply-To: <CAKFNMonYLKSikthtoGP9z6Loetu0LxrUsGC6vMSAwaCPE6muqQ@mail.gmail.com>
+
+
+--PL1csfp8h61ckpWt
+Content-Type: text/plain; protected-headers=v1; charset=utf-8;
+	format=flowed
+Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
+Date: Tue, 4 Nov 2025 17:04:18 +0100
+From: Christopher Zimmermann <christopher@gmerlin.de>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs@vger.kernel.org
+Subject: Re: nilfs_readdir: bad page in #
 
-On Tue, Nov 4, 2025 at 11:00=E2=80=AFPM Christopher Zimmermann wrote:
+On Wed, Nov 05, 2025 at 12:28:54AM +0900, Ryusuke Konishi wrote:
+>Based on what's happening with the .xsession-errors file, I guess that
+>the problem is indeed occurring with files that are renamed or have a
+>short lifespan.
 >
-> On Sat, Oct 18, 2025 at 08:04:28PM +0900, Ryusuke Konishi wrote:
-> >On Sat, Oct 18, 2025 at 7:01=E2=80=AFAM Christopher Zimmermann wrote:
-> >>
-> >> Hi,
-> >>
-> >> this is what I saw today:
-> >>
-> >> Oct 17 09:44:27 merari.gmerlin.de kernel: NILFS version 2 loaded
-> >> Oct 17 09:44:27 merari.gmerlin.de kernel: NILFS (nvme0n1p5): segctord =
-starting. Construction interval =3D 5 seconds, CP frequency < 30 seconds
-> >> Oct 17 09:44:27 merari.gmerlin.de nilfs_cleanerd[715]: start
-> >> Oct 17 09:44:27 merari.gmerlin.de nilfs_cleanerd[715]: pause (clean ch=
-eck)
-> >> Oct 17 15:05:45 merari.gmerlin.de kernel: NILFS error (device nvme0n1p=
-5): nilfs_readdir: bad page in #235406
-> >> Oct 17 15:10:06 merari.gmerlin.de kernel: NILFS error (device nvme0n1p=
-5): nilfs_bmap_lookup_contig: broken bmap (inode number=3D257)
-> >...
-> >> Oct 17 15:10:48 merari.gmerlin.de kernel: NILFS error (device nvme0n1p=
-5): nilfs_bmap_lookup_contig: broken bmap (inode number=3D257)
-> >> Oct 17 15:10:49 merari.gmerlin.de nilfs_cleanerd[715]: shutdown
-> >> Oct 17 15:10:52 merari.gmerlin.de kernel: NILFS (nvme0n1p5): disposed =
-unprocessed dirty file(s) when detaching log writer
-> >>
-> >> [reboot]
-> >>
-> >> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS version 2 loaded
-> >> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting =
-unchecked fs
-> >> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): recovery =
-complete
-> >> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): segctord =
-starting. Construction interval =3D 5 seconds, CP frequency < 30 seconds
-> >> Oct 17 15:11:09 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting =
-fs with errors
-> >> Oct 17 15:11:09 merari.gmerlin.de nilfs_cleanerd[704]: start
-> >> Oct 17 15:11:09 merari.gmerlin.de nilfs_cleanerd[704]: pause (clean ch=
-eck)
-> >> Oct 17 15:51:11 merari.gmerlin.de kernel: NILFS error (device nvme0n1p=
-5): nilfs_readdir: bad page in #488967
-> >> Oct 17 15:53:04 merari.gmerlin.de kernel: NILFS error (device nvme0n1p=
-5): nilfs_bmap_lookup_contig: broken bmap (inode number=3D258)
-> >...
-> >> Oct 17 15:53:04 merari.gmerlin.de kernel: NILFS error (device nvme0n1p=
-5): nilfs_bmap_lookup_contig: broken bmap (inode number=3D258)
-> >> Oct 17 15:53:19 merari.gmerlin.de kernel: NILFS error (device nvme0n1p=
-5): nilfs_bmap_lookup_contig: broken bmap (inode number=3D258)
-> >> Oct 17 15:53:20 merari.gmerlin.de nilfs_cleanerd[704]: shutdown
-> >> Oct 17 15:53:20 merari.gmerlin.de kernel: NILFS (nvme0n1p5): disposed =
-unprocessed dirty file(s) when detaching log writer
-> >>
-> >> [reboot]
-> >>
-> >> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS version 2 loaded
-> >> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting =
-unchecked fs
-> >> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): recovery =
-complete
-> >> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): segctord =
-starting. Construction interval =3D 5 seconds, CP frequency < 30 seconds
-> >> Oct 17 15:53:39 merari.gmerlin.de kernel: NILFS (nvme0n1p5): mounting =
-fs with errors
-> >> Oct 17 15:53:39 merari.gmerlin.de nilfs_cleanerd[717]: start
-> >> Oct 17 15:53:39 merari.gmerlin.de nilfs_cleanerd[717]: pause (clean
-> >> check)
-> >>
-> >> Both, inode 257 and inode 258 were ~/.xsession-errors.old
-> >>
-> >> What to think of "mounting fs with errors"?
-> >> Especially since there is no fsck?
-> >
-> >For reference, I would like to ask under what circumstances did this
-> >occur?
->
-> It occured running debian trixie kernel 6.12.48+deb13-amd64
->
-> /home was on a nilfs2 filesystem:
-> /dev/nvme0n1p5 on /home type nilfs2 (rw,noatime,nodiratime,discard)
->
-> >If this happens easily, I am concerned that there may be a new regressio=
-n.
->
-> Now I had some weeks without the issue re-occuring. Now it happened
-> again (after formatting the fs and restoring from backup a few weeks
-> ago) :-(
->
-> Nov 04 14:31:01 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_readdir: bad page in #170719
-> Nov 04 14:34:07 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D259)
-> Nov 04 14:34:07 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D259)
-> Nov 04 14:34:07 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D259)
-> Nov 04 14:34:07 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D259)
-> Nov 04 14:34:07 merari.gmerlin.de kernel: NILFS error (device nvme0n1p5):=
- nilfs_bmap_lookup_contig: broken bmap (inode number=3D259)
->
-> want to take a wild guess which file had inode 259 at the time of the
-> error? - ~/.xsession-error again.
->
-> >The error message suggests a corrupted btree, which is causing the
-> >directory read to fail.
-> >
-> >I'm also concerned about the problem with .xsession-errors, a file
-> >that seems to have a short lifespan and involves rename.
-> >
-> >For reference, what version of your kernel are you using?
->
-> 6.12.48+deb13-amd64
+>I'll try to create an environment that reproduces these conditions.
 
-HI Christopher,
+Not sure if this helps. Here are some more observations:
 
-I appreciate your feedback despite the frustration caused by the
-repeated issues.
+The nilfs_readdir: bad page in #170719 error was triggered by a
+find ~/ -iname =E2=80=A6
 
-It's becoming more likely that what I feared is occurring.
-I suspect that an issue (probably a regression) that shouldn't occur
-during normal operation has occurred.
+The following
+nilfs_bmap_lookup_contig: broken bmap (inode number=3D259)
+errors were then triggered by running a backup (restic) or simply=20
+reading ~/.xsession-errors. Some content of the broken=20
+~/.xsession-errors could then still be read.
 
-6.12 is a well-maintained kernel series, and 6.12.48 is fairly
-up-to-date, except for two stable fixes that are unrelated to this
-issue.
+What I noticed now while killing processes preventing the unmounting of=20
+the errored filesystem is that it is passed to many x-clients as=20
+stdout/stderr fd:
 
-Therefore, it's likely that this issue can be reproduced even with the
-latest mainline kernel.
+COMMAND    PID     USER FD   TYPE DEVICE SIZE/OFF NODE NAME
+herbstluf 1506 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+herbstluf 1506 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+dunst     1642 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+dunst     1642 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+conky     1643 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+conky     1643 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+nm-applet 1644 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+nm-applet 1644 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+blueman-a 1645 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+blueman-a 1645 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+firefox-e 1655 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+firefox-e 1655 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+crashhelp 1727 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+crashhelp 1727 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+blueman-t 1821 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+blueman-t 1821 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+polybar   2069 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+polybar   2069 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Socket    2087 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Socket    2087 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Privilege 2122 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Privilege 2122 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+RDD\x20Pr 2129 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+RDD\x20Pr 2129 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Isolated  2167 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Isolated  2167 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+WebExtens 2230 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+WebExtens 2230 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Utility   2317 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Utility   2317 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Web\x20Co 2449 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Web\x20Co 2449 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Web\x20Co 2525 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Web\x20Co 2525 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Web\x20Co 2559 madroach 1w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
+Web\x20Co 2559 madroach 2w   REG  259,5     3637   11 /home/madroach/.xsess=
+ion-errors
 
-6.12.48 has backported nearly a dozen stable patches for nilfs2,
-including important bug fixes for rename, bmap/btree, and preventing
-the reuse of deleted inodes. It's possible that one of these patches
-is backfiring.
+Most content comes from herbstluftwm logging unbound keypresses, but=20
+that's not a huge amount of logs. A typical .xsession-errors on that=20
+machine has less than or a few hundred lines of content.
 
-Based on what's happening with the .xsession-errors file, I guess that
-the problem is indeed occurring with files that are renamed or have a
-short lifespan.
+Logging the inode numbers reveals back-and-forth renameing of=20
+=2Exsession-errors and .xsession-errors.old:
 
-I'll try to create an environment that reproduces these conditions.
 
-Thanks,
-Ryusuke Konishi
+     11 -rw------- 1 madroach users 5,0K  4. Nov 16:50 .xsession-errors
+126604 -rw------- 1 madroach users  11K  4. Nov 15:03 .xsession-errors.old
+
+120042 -rw------- 1 madroach users 3,2K  4. Nov 16:51 .xsession-errors
+     11 -rw------- 1 madroach users 5,5K  4. Nov 16:51 .xsession-errors.old
+
+     11 -rw------- 1 madroach users 3,2K  4. Nov 16:54 .xsession-errors
+120042 -rw------- 1 madroach users 4,4K  4. Nov 16:52 .xsession-errors.old
+
+118708 -rw------- 1 madroach users 3,0K  4. Nov 16:55 .xsession-errors
+     11 -rw------- 1 madroach users 4,2K  4. Nov 16:55 .xsession-errors.old
+
+
+Thanks for you efforts,
+
+Christopher
+
+--PL1csfp8h61ckpWt
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQTx1sLGWPXQ3Lw7C6mL4mz1Ey5T2QUCaQokAgAKCRCL4mz1Ey5T
+2bKeAP9MfQov2CPzrpHcpKIDIcg4EZS+9TSd85a0z6Y8RSiMwwEA8E2E+1bqAMmg
+HVIyu6LQO+PvLyl5YNLNIh1GR5YoHAE=
+=dXDe
+-----END PGP SIGNATURE-----
+
+--PL1csfp8h61ckpWt--
