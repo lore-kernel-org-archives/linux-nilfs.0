@@ -1,230 +1,112 @@
-Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com [209.85.167.51])
+Received: from mail-pf1-f180.google.com (mail-pf1-f180.google.com [209.85.210.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4BC6B2C08BC
-	for <linux-nilfs@vger.kernel.org>; Wed,  5 Nov 2025 06:44:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 272261D90AD
+	for <linux-nilfs@vger.kernel.org>; Wed,  5 Nov 2025 15:01:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762325091; cv=none; b=RQzvi/5HzJZzZs5Tdk9L14wcbUx21TpBwFGuaqntd6FkE5LYyS0Hd08o2Ac0pcNapCHxnhzCw+GIKO6hnm3XA3SfS1B1wMYkuCgg8d/Kxm8XwDY307fWbahYTEWXImx/nZc15cRiC5hAAaYAQoM5cdS7ucBGaqsh/3hRDShNHck=
+	t=1762354878; cv=none; b=tghOjOxhkNijEd5zLFG02c5WySZz+Esoc7vRbzMLZHMsOuJTVg6zocceAomlSEe0A+qHeioXAWkgv3Euw8yYvTTR7ELhLTJ7HuTgazdcYe2K1+fvm06APjVIiTrFU1k6+sAoWECnNaQDTNzTT5/6CUhC24+V8pQ8zspZ9IJf7iQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762325091; c=relaxed/simple;
-	bh=lY3vPl04ZAKMtCRjX+ENRrC2aboYJ9X17xqXbfIYB8E=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=pwRYYXRv0GJIMaBV1PT5eNTzMyi7NKxirAk+CJ8ONJGjYnhtyV3/068ktySl3TwVShwWvCkHIPFkPVuUVb2tSAQQaoAIDrOkEyno7bRsCbymGZrBaunZoqfh2HYGOmnOOv0pAV8iiUset5fNRKPBxfjgjv+u1qGLS3APrhvrDeQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lwSaT46B; arc=none smtp.client-ip=209.85.167.51
+	s=arc-20240116; t=1762354878; c=relaxed/simple;
+	bh=bAm6t8rPyJySoZj9CJIRcl8XyO3CdL0m6UHioYJInXM=;
+	h=Date:Message-Id:To:Cc:Subject:From:In-Reply-To:References:
+	 Mime-Version:Content-Type; b=ARyYqb+tC1ndtSHDbsbnvgnteG7SMhffOt4wJcllvOd5oQxFvDwfqoRpKsyVV2Rbu0E4H9HJi8bhJlion3nkHIjJHfuVVnGkE9TALMNEgDjNCC230PuBx+nEpVoXy7jYlSf1It4/D0OGHcJStve2WQR100wIEC6DqrRxKRMiW9o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Gxv8rALX; arc=none smtp.client-ip=209.85.210.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lwSaT46B"
-Received: by mail-lf1-f51.google.com with SMTP id 2adb3069b0e04-59431cce798so2707652e87.1
-        for <linux-nilfs@vger.kernel.org>; Tue, 04 Nov 2025 22:44:47 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Gxv8rALX"
+Received: by mail-pf1-f180.google.com with SMTP id d2e1a72fcca58-7acd9a03ba9so1782910b3a.1
+        for <linux-nilfs@vger.kernel.org>; Wed, 05 Nov 2025 07:01:17 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762325086; x=1762929886; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=lY3vPl04ZAKMtCRjX+ENRrC2aboYJ9X17xqXbfIYB8E=;
-        b=lwSaT46B5g/VGTD5weD71e84PazG+6S7vsKMBCo3Tppo+5nj+V6Cf2aD5wHEppsKH/
-         NxaegJzaa6UD+K0KEMyRUvhnubjhK0nmj+GOCD7PcJ3dHPCaQLdYOq1ivl+ICY1HMuLk
-         eSfrJ87CX90l217wO5d02JOdM2KozpFu0rCZrpOb/PbKvpP/SMG/ib3rBNWuPaBHM/YP
-         ETPUvu4BF55xYFBHmkh4yEGXhekEjnF0lS3Hiv1CnSGGOcTLb+LFXBrcNXAt8Tdi0UHS
-         3mX0oWbQ5rsS2Y37V3+b6Oo8cOAzFK3GiAcQqfpm6+PtmUjwRTw6MA+0RUd8Y2+kHYfT
-         vCGg==
+        d=gmail.com; s=20230601; t=1762354876; x=1762959676; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to:from
+         :subject:cc:to:message-id:date:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=J/9wQ+QLv1LipY2KGPvcEfKIp32ghzdO2uLU18Rtzog=;
+        b=Gxv8rALXdhHW49Mcv14Oc//Xq7AhqAvenrVErr2zwlr8FHa3+wLpio5nlk+3X7vvhT
+         wgKc9iOWoqxDlLHxNDJM7MS+z7OpdxRi0g4DhjEByzkEuWRW8zOtUKD5PHb4U9x2QsSz
+         mKJ5jlyBbsf5ZXmYm/SdgfhJ1MH9Db0O+bhq9AFghNWLg0xUe7XAJ2FbD0cvVSd1n8FX
+         7LhAxWOwDC8zgGaqDaWAXsDYPNyCcU5ylsr5qMbMFTo1RRNXEr/A1Vpdvp3d1TA8Rc/l
+         iLzBrkgqUJ0fMDtM1Eb7cFjtco57bICaV7O1GlDLUwL+/3PWi+GbdqaF1GmERJ8sQTi0
+         TI9g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762325086; x=1762929886;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=lY3vPl04ZAKMtCRjX+ENRrC2aboYJ9X17xqXbfIYB8E=;
-        b=dzcjZtUBEP2XcoTx7VtsBAsdch5oO/6MRr9S70E6GSsWO5PpQIVVHypeb6BjfQP8H3
-         AwkcF3pGnjbcaphfa8KK40HrFgaBQm7Vk2I/pSiljnsrwxI0Wt+8ABjS+b6C9l7V2u9W
-         mbEbcdwIXvlqNu+X8AMhmC+Ap4tCjBnvqrBIP2NkyFuSylr0iVb7J0lmUlIImg8tHiUY
-         jDFebheMDlqE/7wb0LXpckDVChTAfpsv8EAYNn7pc2+UywX7N1Fz4qAHPBJuSzFR7lpc
-         Dd4zMhCaortRW7XKJR15adskzPY85D34pgtnnqxP420b6gzYpt3vU1pUVnOmIVlxZu/l
-         swWw==
-X-Gm-Message-State: AOJu0Yw6YvrasqxGVbKrYdKprrEDhbr0ZqV6702kcqxzCjE4iBzitJrD
-	LJ2tCy7NUIh+GW0NynoRO+ls9kIT7LKIma8kUnSKtnJwUkuAU5GrR+aaoZbJrkLV/faEJvl0ftC
-	Um+7Qhm4EmOXaMmFjFjpUvl/uwoDGNjaQy2Lt
-X-Gm-Gg: ASbGncvXp4CmzgopxtYOpEHzBraUvsm7x7dCZgKLgDxCY+0pVnsXE8I9zJgt3cE0P3L
-	ZYyp0WgL3V+H7A8/fXePeD/RKIT8djHuilWhWLeUVp2gA5K9uDVAxBVvM8lbDeUnxLtjUj2z1IX
-	Xb9akwYNGiueKwFjiyFWjDjTGzAqx9YrFbq2ErVwFYlhAjCfQf9GT6Rj9tWiDUIVuZJucx8ICBI
-	jmwygSEESNxUewIObvv5M/HCdq5ZVTp1uhJ838AoKmTb+tGnVaoUfsq5nHY3g==
-X-Google-Smtp-Source: AGHT+IHr0RrUE3c6iDbo2kxmtFqV7r/Zt/IEclwndCFwGaTjx6iuh89vpaCi6+DSKw8wZzeVnwt/lz8MWmH7yjetkrQ=
-X-Received: by 2002:a05:6512:b9a:b0:592:fad3:9d02 with SMTP id
- 2adb3069b0e04-5943d754a93mr476887e87.22.1762325085921; Tue, 04 Nov 2025
- 22:44:45 -0800 (PST)
+        d=1e100.net; s=20230601; t=1762354876; x=1762959676;
+        h=content-transfer-encoding:mime-version:references:in-reply-to:from
+         :subject:cc:to:message-id:date:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=J/9wQ+QLv1LipY2KGPvcEfKIp32ghzdO2uLU18Rtzog=;
+        b=s8msKBXGcPhz0vyj4CBN7uVBlrX3Jaf6/VX6pDq6606NgpbqvuboIwJaoOLcRnGFkA
+         JwY/IWd+YG6SHLoxAUoEZxb0HCGaiWRkwimgf1CIeEEArEuqd/PmQ+LsmZVXmIM9nN6m
+         P6PiL2Zk5QxqNeYM7jP6G5ZZkYxAeJyJHpGMihp0cX2T2bxEvyPXW1V0fy9tXXUhHqNb
+         elTm74TyMrv32neI/lZt+8m8yDS1ZIgvCN8xcAfxEzayFPjyfFcqkb2pNR8UYJYIyUEZ
+         +6xDpghL1b583rbLO4enDKhPmrirBmtEeV5S9O5Znu6ypwT9eKj+vsN5KtD5lZSs8riy
+         Vseg==
+X-Forwarded-Encrypted: i=1; AJvYcCX+zu8C/wh+cCJ0OGAmVMD3GO5eTLwmJFGrvaz1RqnpwiKUot8C5nbjFVhfc6o/SOV5PFnFo6pSKiRiUA==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yy0jTJxwSAnVqcgidWRjNoyvmi4Qm5yMNIKfukkTezuzMkTSPV0
+	KzTkIO+sjOGGMPKq75UG2vj/6A/CV79IeP2i0YySsit9vrbkTViSDqW2
+X-Gm-Gg: ASbGncvSVDbGhPHUCSRZQyd6JX35luYk38PJQXGGA1ps5qVWjoetZ/VcJjrFXNs/4qU
+	SJjEMNXEel5lo8g45K54qWzfTn6F9r5fSCPXDF8i/6M1XvEvAtjj0G8mAXQOtGF4rCWwJ/kDWPN
+	4e55gLaQQwyQTVcLlMvRZ27bUhEgpSuKh02qvyAi3BVxcFvraev7BggPedq76Z0i+oD4/bRe7OX
+	IdCf/JnJ859qmJWTZxUh6cgfurZ3F+BpeN1ZNYlVom7eyjtBi9at/pfytZuewlnCIbWtDsDGniq
+	Y6UY1aM4/RtIqxs2yQmo3YS3GbMhhg1Y+k5kPrcTJ8/tzzVZi93lhOl1gdZYacffZjWEocfvq2L
+	98bJ0Uvh9sFaS7EODM59E6l2OhmA+XPWutBSBkFPGSnurR+DCnj8CX+/GGh0k2Ad0qZs=
+X-Google-Smtp-Source: AGHT+IFxF2ravXAqKMNI4wFCi3+ALhZa7OTXOmRJeppwpOE9OolRY2a2K3VYHVcoVsv9syqzdGoxqA==
+X-Received: by 2002:a05:6a00:80f:b0:7a2:7cc3:c4f0 with SMTP id d2e1a72fcca58-7ae1cc60d39mr4571411b3a.1.1762354873430;
+        Wed, 05 Nov 2025 07:01:13 -0800 (PST)
+Received: from localhost ([240f:3d:c6f9:1:392e:ad68:8d70:58d3])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-7acd324680asm6693502b3a.1.2025.11.05.07.01.11
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 05 Nov 2025 07:01:12 -0800 (PST)
+Date: Thu, 06 Nov 2025 00:01:10 +0900 (JST)
+Message-Id: <20251106.000110.54762674.hdk1983@gmail.com>
+To: konishi.ryusuke@gmail.com
+Cc: christopher@gmerlin.de, linux-nilfs@vger.kernel.org
+Subject: Re: nilfs_readdir: bad page in #
+From: Hideki EIRAKU <hdk1983@gmail.com>
+In-Reply-To: <CAKFNMonYLKSikthtoGP9z6Loetu0LxrUsGC6vMSAwaCPE6muqQ@mail.gmail.com>
+References: <CAKFNMonRtuknO7G6p-eOuY+WgSQQGsYOWrDdbO2Zh1mBsGp3RA@mail.gmail.com>
+	<aQoHEXBY9tusAkQ9@merari.gmerlin.de>
+	<CAKFNMonYLKSikthtoGP9z6Loetu0LxrUsGC6vMSAwaCPE6muqQ@mail.gmail.com>
+X-Mailer: Mew version 6.8 on Emacs 28.2
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-References: <73c75a4192c45e9c8b5054e0ac67f586a8c41589.camel@dubeyko.com>
- <CAKFNMomaK8UYcgjvx_Pp09P7OU25th2UBo+gAigZidcyTOQg3w@mail.gmail.com> <a5bf62ed31574f647fc34ad63af7fda8dc17622d.camel@dubeyko.com>
-In-Reply-To: <a5bf62ed31574f647fc34ad63af7fda8dc17622d.camel@dubeyko.com>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 5 Nov 2025 15:44:29 +0900
-X-Gm-Features: AWmQ_bkdG-o58SDDi7mTmXBMTbpmo6kXQJkjGLJ1QS-mE39PGGpfvl7ZEQhAzyE
-Message-ID: <CAKFNMonZ=pgnHEOEWey_t2Ycd98nfMAAaSm9wDAXv-MEsKYc5w@mail.gmail.com>
-Subject: Re: [RFC] Sending NILFS2 patches into upstream
-To: Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Subject: Re: nilfs_readdir: bad page in #
+Date: Wed, 5 Nov 2025 00:28:54 +0900
 
-Hi Viacheslav,
+> It's becoming more likely that what I feared is occurring.
+> I suspect that an issue (probably a regression) that shouldn't occur
+> during normal operation has occurred.
 
-On Wed, Nov 5, 2025 at 5:10=E2=80=AFAM Viacheslav Dubeyko wrote:
->
-> Hi Ryusuke,
->
-> On Tue, 2025-11-04 at 19:41 +0900, Ryusuke Konishi wrote:
-> > On Tue, Nov 4, 2025 at 5:37=E2=80=AFAM Viacheslav Dubeyko wrote:
-> > >
-> > > Hi Ryusuke,
-> > >
-> > > Currently, you ask Andrew Morton of sending NILFS2 patches into
-> > > upstream. But Andrew is busy and it makes the whole workflow
-> > > complicated and unpredictable.
-> > >
-> > > I am sending HFS/HFS+ patches to upstream. So, I can create the
-> > > dedicated NILFS2 kernel tree on kernel.org and I can send NILFS2
-> > > patches upstream. I believe that it can make the whole patch
-> > > management
-> > > workflow more flexible and predictable. Also, additional maintainer
-> > > is
-> > > better than to have only one.
-> > >
-> > > We already had some discussion privately. So, let's continue the
-> > > discussion in the email list. What do you think?
-> > >
-> > > Thanks,
-> > > Slava.
-> >
-> > Hi Viacheslav,
-> >
-> > Yes, thanks for the suggestion.
-> >
-> > As I replied to you privately earlier, I'd welcome your help both
-> > with
-> > upstreaming and setting up the git tree on kernel.org.
-> >
-> > First, I'll start by adding you as a maintainer.
-> > To do this, I'd like to send a patch with changes to the maintainers
-> > file to Andrew.
->
-> Sounds good! Probably, I can create the NILFS2 kernel tree on
-> kernel.org at first. And, then this patch can be sent with adding the
-> link to this kernel tree into MAINTAINERS file.
+I have seen similar errors since last year with a kernel provided by
+Debian 12 as follows:
 
-Yes, it's OK to set up a git repository first.
-In that case, we will only need to make the changes to the MAINTAINERS
-file once, so I'll send one patch for the next merge window.
+6.1.0-17-686-pae: 2024-06-15T17:57:31.618788+09:00 nojima kernel: [13858689.003220] NILFS error (device sdb2): nilfs_readdir: bad page in #114046
+6.1.0-21-686-pae: 2024-07-15T17:02:30.630090+09:00 nojima kernel: [1915188.018182] NILFS error (device sdb2): nilfs_readdir: bad page in #618331
+6.1.0-26-686-pae: 2024-11-09T21:44:58.562985+09:00 nojima kernel: [307159.828834] NILFS error (device sdb2): nilfs_readdir: bad page in #884
+6.1.0-34-686-pae: 2025-06-04T21:58:36.641306+09:00 nojima kernel: [2953327.992010] NILFS error (device dm-0): nilfs_readdir: bad page in #29039
 
-Not only do we add an M: field and switch the T: field, but the S:
-field in the MAINTAINERS file should also be updated to reflect the
-current status, so I'll make these changes all at once.
+When I saw these errors, I thought it might be caused by the SSD
+issue, because the sdb2 drive is data storage (since mainly used as
+read-only, sometimes write, but many sectors are rarely accessed), and
+the dm-0 drive is too old (used as root fs and NILFS home directory
+since 2011 & Power_On_Hours is >120k).  However, if these were caused
+by software bugs, the above versions might be good hints to find
+whether recent regression or not.
 
-Please let me know where the repository is once you've set it up.
+The kernel package information including changelog is available at
+Debian web site, like
+https://packages.debian.org/bookworm/linux-image-6.1.0-34-686 .
 
-> >
-> > Currently, bug fix patches and patches for the next merge window are
-> > being sent to Andrew, so to avoid confusion, I think it would be best
-> > to switch the upstreaming path after the next merge window is over.
-> >
-> > I'd like patches after the next merge window to be upstreamed via
-> > you.
-> > What do you think about this timing?
-> >
-> > As for switching the git repository in the MAINTAINERS file, how
-> > about
-> > after 6.19-rc1, again to avoid confusion?
->
-> Yes, makes sense. I am having the same in mind. Because, anyway,
-> preparing the whole workflow will require some time.
->
-> >
-> > Next, as for upstreaming, one option is for you to directly pick up
-> > patches sent to this mailing list, and I can review and test them.
-> > However, I think it's better to change the maintenance flow
-> > gradually,
-> > so initially I would like to pick up patches, add my Signed-of-by
-> > tag,
-> > and complement them with appropriate tags such as Fixes or Cc:
-> > stable.
-> >
-> > To do this, I think it would be best to relay patches or their series
-> > to the repository you set up on kernel.org via my current GitHub
-> > repository.
-> >
-> > In practice, I will push the collected patches, signed, with tags
-> > like
-> > fixes-6.19-<serial number> or for-6.20-<serial number> to my current
-> > GitHub repository, so please cherry pick them to receive them
-> > initially.
->
-> I assume that, currently, NILFS2 hasn't active development and to send
-> patches for the first merge window in the cycle (for-6.20-rc1, for
-> example) could be completely enough.
->
-> >
-> > Patches with tags starting with fixes- prefix are intended to be sent
-> > as bug fixes in that cycle, while patches with tags starting with
-> > for-<version number>- prefix are intended to be sent for the merge
-> > window of the next cycle.
-> > It would be ideal if I could automate the notification of pushes, but
-> > initially I will send you an email.
->
-> Makes sense. We can use this model of operations.
->
-> >
-> > Next, regarding the operation of the repository to be set up on
-> > kernel.org, I think you should create a main branch of the nilfs2
-> > project to send pull requests to Linus.
-> >
-> > I haven't created a main branch for the nilfs2 project so far, but I
-> > think it's better to have one when collaborating.
-> >
-> > In this regard, how do you maintain the HFS/HFS+ tree?
->
-> So, I have two branches for-next and for-linux. I am resetting it to
-> the last rc1 tag. And, then, I am collecting patches in the for-next
-> branch at first by means of b4 am <MSG ID> + git am -s <mbox file>.
-> When I have enough patches for a merge window, then I execute these
-> steps:
->
-> $ git checkout for-linus
-> $ git rebase for-next
-> $ echo -e "hfs updates for v6.18\n" > ../hfs-v6.18-changes.txt
-> $ git log --pretty=3Dformat:"- %s" v6.17-rc1..HEAD >> ../hfs-v6.18-
-> changes.txt
-> $ git tag -s hfs-v6.18-tag1 for-linus # (paste the contents of "hfs-
-> v6.18-changes.txt" here)
-> $ git push origin --all
-> $ git push origin --tags
-> $ git request-pull master
-> git://git.kernel.org/pub/scm/linux/kernel/git/vdubeyko/hfs.git hfs-
-> v6.18-tag1 > ../hfs-v6.18-pull-request.txt
-> $ git branch for-v6.18
-> $ git push origin --all
-> $ git push origin --tags
->
-> Finally, I am sending hfs-v6.18-pull-request.txt by email as pull
-> request.
->
-> So, I could have the same two branches for-next and for-linux for the
-> case of NILFS2. The for-next branch could receive patches from github,
-> the rest steps could be the same. I simply need to elaborate the
-> steps/commands to cherry pick the patches from github's repository into
-> the for-next branch.
-
-Thanks for the detailed explanation of the steps ;)
-It's almost exactly what I used to do a long time ago.
-
-Yes, in that case, I don't think there's any need to change the
-method, so please operate the nilfs2 upstreaming tree in the same way
-- as before, let's exchange patches without creating a main branch for
-the project.
-
-Thanks,
-Ryusuke Konishi
+Regards,
+Hideki EIRAKU
