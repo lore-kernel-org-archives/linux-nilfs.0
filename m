@@ -1,210 +1,249 @@
-Received: from mail-yw1-f177.google.com (mail-yw1-f177.google.com [209.85.128.177])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from flow-a5-smtp.messagingengine.com (flow-a5-smtp.messagingengine.com [103.168.172.140])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9D412D7DE8
-	for <linux-nilfs@vger.kernel.org>; Thu,  6 Nov 2025 19:33:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C23A33993;
+	Fri,  7 Nov 2025 00:01:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.168.172.140
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762457635; cv=none; b=BRduuQao1uOH/FmNoILcrp3sUMrC/bsClKTq+a88wuUz/zx2Rr2Yww2h0h0YidDTbp1JZ1hOphIIyqsxQoU4TVInDloyYEFRTF/7vHuv0UvhR3xEaWiSVS9LZvEJS8eT7GW7qc+L0j0RywgCNoKpYvIxc7W0yREUvXUX3XY4z1Q=
+	t=1762473681; cv=none; b=ufJ4zqM+wyIPsjRK193FvrNokGG8H5JotQCaEz+5/ywGO0gzCbAKdeXXS87qBajmt7/nSDGn52hFA2/0C4NSQD5WZQ3FY1D2zwrkGJ2e58HdCXT3JVihuupOidW4o11gd7t94HiSh/ADjaY6BOHWPJtd/MtYyP+Kta8ZdkjZ8ts=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762457635; c=relaxed/simple;
-	bh=4EBJSSA67DveEw/Z7DWhSxlfza5nIkff5O/yMyGngyA=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=WLOC1uuJhMi6c8H+9EDlodUmJJFllDIifQmOHItp2WvDQEdFt30tdBq6ahB2aYQubKfI80Pk0kz9ItATfR0Ul682jWBbKFl6WebSmTHbyTdVJGYQMs8pgQ34qOGshgvz0FYzeX/82oqYScNxd06McgyxnOiv1kmBm2eXJHItZrc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20230601.gappssmtp.com header.i=@dubeyko-com.20230601.gappssmtp.com header.b=syGn/4Jt; arc=none smtp.client-ip=209.85.128.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
+	s=arc-20240116; t=1762473681; c=relaxed/simple;
+	bh=MufCujU/0LsEsdoh25mDaMBAKJ5uFyL9+gDf2+vBd+0=;
+	h=Content-Type:MIME-Version:From:To:Cc:Subject:In-reply-to:
+	 References:Date:Message-id; b=oHYXEcTSYoHyVkX72EIqQp/P5StWGobo798vrgPKFkPEkyNRL5ulqc34y95dBzU5Q70jyjXpa6GEl3JMrRYy72FKDLvfRAtsDuZPNxrlAQyxUhrdj6GtCfXZaxIIc/Z6SGzkmAFCGOCwEtUPUkJZUwttL8x470KeSzTiJxH2JMk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ownmail.net; spf=pass smtp.mailfrom=ownmail.net; dkim=pass (2048-bit key) header.d=ownmail.net header.i=@ownmail.net header.b=WZYAC5pt; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=Psg2gNos; arc=none smtp.client-ip=103.168.172.140
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ownmail.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ownmail.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20230601.gappssmtp.com header.i=@dubeyko-com.20230601.gappssmtp.com header.b="syGn/4Jt"
-Received: by mail-yw1-f177.google.com with SMTP id 00721157ae682-71d6014810fso15177b3.0
-        for <linux-nilfs@vger.kernel.org>; Thu, 06 Nov 2025 11:33:52 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20230601.gappssmtp.com; s=20230601; t=1762457632; x=1763062432; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=moGTcsgwbwjaNcZHrUXCpdZhNHUnzeQB21HzW/CJGiw=;
-        b=syGn/4JtvUaVDtULbOOm1mM6m/BoSWQU5rujsOKB3YTC6RHVzQTyWgDbLXuUeWhSIu
-         hDPqJAr0G63GK8zMXISi8fBjXexKEd401I+IBw84dX+NSoFEaFtXuIy5d1f+HyiwCsft
-         cSjtfwwJWjdHkfCxdMDw+qH+0uemANLxVdhbyo0z1rIIjaiVQIa7ucwV5QqAqw+K2DZV
-         3Q4NthKt3uaqdo90rilM5MHWB6nLB0f6Wt1ipZnaRUOSKXMTpkGJTxPXz3gwG+X7nk9P
-         /XETnij53zbQv5AN9A1foMAOeHKWYM7SrYi654kh/KXrfi/cHM/xyV1V+xRd+eVKLEEg
-         1n8A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762457632; x=1763062432;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=moGTcsgwbwjaNcZHrUXCpdZhNHUnzeQB21HzW/CJGiw=;
-        b=FcdCrd1jU1mBB7oAtWN8gm8RUPaf8syaaa8Sjrsi6S4QcZUaqI21cCCC3IIlqXeekX
-         1xEG5aFsRtB6JADFh848goNgTO7JYNIMzWBYM4EdN8t87sVMgYBqUY9zETKRJvwSGUyS
-         agaLZpPZGb6uLv4vw9DyfmSYzZAjDX0it8vCXL0ppuQsRBEy21AMZBKNzxm4mO7ZNcVL
-         fWRhEA0a4OeBgd9kpyfiD939tDVD4/FcnJs28SJWtSjaCxv8I0E5Jy0nJ4eTVk6bZR1P
-         Xw9qnamqZVNwASQrp3nnbFg8yicSHWCNfKS97Ej9eU1VXytSLpxEzzXhPbZrxBctE/TU
-         6VsQ==
-X-Gm-Message-State: AOJu0Yzaw+SIvvyIt6nODmVE7/GgoF1heN37ckbFukt2DdKN7vKjLNey
-	Jtjt5iicjk0yonzBJ3j9/gEkPYl0IcpoPrwidQVVmnRCONeoYi29ASJoPUpgZzpqI47sWuRHRpB
-	UxYJI
-X-Gm-Gg: ASbGncuZligIvPWriHv03RIdPNcVX15f51ZDmvVi9nO7oawGZO9gLr6WPOWbETeW4At
-	DvSSv/mqLrX/SzcN2boX4Wn4MsAOtXWd9WfPeqMzAv0ApAwrtOf8INWrGc62B1807iWDGSNGza1
-	FrFxI94yEY2U+OvWety84fAPmH00UMr8dHYXeXKiskn2S/Eh3iDbcFSCMZWtK1PvjaphX8ls5Dx
-	AuGC/6pmoUfMkM2eibcrrThmYn8DPdtXslxWKxLjUiqjciXnqv8v5Ui5FNDCrFq9t7qQYsnQAuD
-	p7beLGOur62VdshJJ+RHWBEjvhr3zYADc5ZYlWio92wwBp2FrSo+NAKEpdU0qE1CFSsmUvVpQaU
-	wOXh08cQX3MCI4Kxu6eNZ7ug1ir/ntyhLImDw33uO/MLIySBaY7Y02ePySE72KiCOMf3s83LXWc
-	OzP4qv9PjEqd9Rdz2gzs/kmZ8=
-X-Google-Smtp-Source: AGHT+IFgzIlrJqFaWYt8jdo0R0Cb6bVuKbdo+hYDNu7IFGFqab6LsyjwCDPDP/clhDb/5blBmQRhDQ==
-X-Received: by 2002:a05:690c:5c02:b0:786:1e02:632e with SMTP id 00721157ae682-787c53354dbmr3885347b3.29.1762457631729;
-        Thu, 06 Nov 2025 11:33:51 -0800 (PST)
-Received: from pop-os.attlocal.net ([2600:1700:6476:1430:383a:1db6:8e72:6e61])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-787b159896bsm10661487b3.32.2025.11.06.11.33.50
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 06 Nov 2025 11:33:51 -0800 (PST)
-Message-ID: <0850ad95f58a73a39e190dd4e450302158e97b37.camel@dubeyko.com>
-Subject: Re: [RFC] Sending NILFS2 patches into upstream
-From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: linux-nilfs@vger.kernel.org
-Date: Thu, 06 Nov 2025 11:33:49 -0800
-In-Reply-To: <CAKFNMonZ=pgnHEOEWey_t2Ycd98nfMAAaSm9wDAXv-MEsKYc5w@mail.gmail.com>
-References: <73c75a4192c45e9c8b5054e0ac67f586a8c41589.camel@dubeyko.com>
-	 <CAKFNMomaK8UYcgjvx_Pp09P7OU25th2UBo+gAigZidcyTOQg3w@mail.gmail.com>
-	 <a5bf62ed31574f647fc34ad63af7fda8dc17622d.camel@dubeyko.com>
-	 <CAKFNMonZ=pgnHEOEWey_t2Ycd98nfMAAaSm9wDAXv-MEsKYc5w@mail.gmail.com>
-Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
+	dkim=pass (2048-bit key) header.d=ownmail.net header.i=@ownmail.net header.b="WZYAC5pt";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="Psg2gNos"
+Received: from phl-compute-12.internal (phl-compute-12.internal [10.202.2.52])
+	by mailflow.phl.internal (Postfix) with ESMTP id 2F76A13801BB;
+	Thu,  6 Nov 2025 19:01:16 -0500 (EST)
+Received: from phl-mailfrontend-01 ([10.202.2.162])
+  by phl-compute-12.internal (MEProxy); Thu, 06 Nov 2025 19:01:16 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ownmail.net; h=
+	cc:cc:content-transfer-encoding:content-type:content-type:date
+	:date:from:from:in-reply-to:in-reply-to:message-id:mime-version
+	:references:reply-to:reply-to:subject:subject:to:to; s=fm3; t=
+	1762473676; x=1762480876; bh=H6fp6wT7I155+JjI5U+YS+I+wpfi8UjlpY4
+	LU8fjdU4=; b=WZYAC5ptT+JI+E3LCYQDPMrHgn2+EeezTwSX9Fj81LnO57sEIW0
+	r5bog5i33AtRsNThYOW5jDpkHJo5LmpOQU7UBC/WI2CsBHqkVpPTyHV/ApxUM1tN
+	z6dVSfEJthkopAMT44s7CyEjRA2sDrA7Y2ef+eMrFuZp33UeziEFvqR18wUswgoZ
+	7iPlUWWsOUPV/ZTTFBfyHToZxwjR9SvGXXZHsmi76QwHLy2cwbWHeeTpiMc4d1Bx
+	XeBUu2V3z1ClTvl5FdR+kiB+ei1mybka1yZ1GjCONTkXDJfd+mNjp5j/C8/VHSTP
+	dThaFVWL2uE50jq2dsohAmGrZdbMqVO7Ang==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+	messagingengine.com; h=cc:cc:content-transfer-encoding
+	:content-type:content-type:date:date:feedback-id:feedback-id
+	:from:from:in-reply-to:in-reply-to:message-id:mime-version
+	:references:reply-to:reply-to:subject:subject:to:to:x-me-proxy
+	:x-me-sender:x-me-sender:x-sasl-enc; s=fm3; t=1762473676; x=
+	1762480876; bh=H6fp6wT7I155+JjI5U+YS+I+wpfi8UjlpY4LU8fjdU4=; b=P
+	sg2gNosOUgNreOPGLlVE9k8r0A93bFTvKl0A1YiFCaR0/yxDdKMWNofRmX2pbv2C
+	pRquqzDxvSlnoOFKUo3q0Ir6NiXbOSxcJH8T5/d9/oXcWZsBYNknHCW+NvYGKU2G
+	Ni1/LdQGu7Us7ontcePjlATrS/pgRVzjGEEX7HanmFiC2g+ePTDJ5SSAtpJBah0H
+	UWRXuHQQCAsLEu8BLIO90FsUNkSBOy8aoz2K3RYVbczfmOyGIUeyWzmqDvAPkDRA
+	jQU6SMudoXVNKkegC9Kaz3mNZdYl5nPuZwKwE6TAABXrWOiDglM1NlGb8+vPxFje
+	mse7RGNm/dK9IXvzGfidw==
+X-ME-Sender: <xms:xDYNaRhNbUJHsahPPmb6piowRnF47nS9W-BDbBUWZMioGCLB0QKE0Q>
+    <xme:xDYNadGCoPUcs45mlm9G-M-v6BypV59NlC8i5D0rXfDdqG1vicJvxUwSAeEgzm-AW
+    mM9E_dg4ffodJEGnHgTyJ5KyY9-2grnnN8X99UhFArcj-pfDw>
+X-ME-Received: <xmr:xDYNaZhYRnJe2Zwy43UTfxOwR_mAMlSeo2ztdDGjHNPtTGiDI9p-9jO_eGsbdcJ0bT11eVgdtj8wsq09LuBid3ldax93JTUA9nFc7WrB4ws3>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeeffedrtdeggddukeekudeiucetufdoteggodetrf
+    dotffvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfurfetoffkrfgpnffqhgenuceu
+    rghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmnecujf
+    gurheptgfgggfhvfevufgjfhffkfhrsehtqhertddttdejnecuhfhrohhmpefpvghilheu
+    rhhofihnuceonhgvihhlsgesohifnhhmrghilhdrnhgvtheqnecuggftrfgrthhtvghrnh
+    epleejtdefgeeukeeiteduveehudevfeffvedutefgteduhfegvdfgtdeigeeuudejnecu
+    vehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomhepnhgvihhlsg
+    esohifnhhmrghilhdrnhgvthdpnhgspghrtghpthhtohepleegpdhmohguvgepshhmthhp
+    ohhuthdprhgtphhtthhopehvihhrohesiigvnhhivhdrlhhinhhugidrohhrghdruhhkpd
+    hrtghpthhtohepfhhrrghnkhdrlhhisehvihhvohdrtghomhdprhgtphhtthhopehlihhn
+    uhigqdigfhhssehvghgvrhdrkhgvrhhnvghlrdhorhhgpdhrtghpthhtoheplhhinhhugi
+    dquhhnihhonhhfshesvhhgvghrrdhkvghrnhgvlhdrohhrghdprhgtphhtthhopehlihhn
+    uhigqdhnihhlfhhssehvghgvrhdrkhgvrhhnvghlrdhorhhgpdhrtghpthhtoheplhhinh
+    hugidqnhhfshesvhhgvghrrdhkvghrnhgvlhdrohhrghdprhgtphhtthhopehlihhnuhig
+    qdhkvghrnhgvlhesvhhgvghrrdhkvghrnhgvlhdrohhrghdprhgtphhtthhopehlihhnuh
+    igqdhhrghruggvnhhinhhgsehvghgvrhdrkhgvrhhnvghlrdhorhhgpdhrtghpthhtohep
+    lhhinhhugidqfhhsuggvvhgvlhesvhhgvghrrdhkvghrnhgvlhdrohhrgh
+X-ME-Proxy: <xmx:xDYNaRZM3kLhMQrgyC03y_mvDTyKIhHr-UZRyaVoDw1bUdd3TO5KWQ>
+    <xmx:xDYNab6BMLI1rNIb697RuBsl1xbiAOh3-jJjQLerAQCMMocsAIIZ6A>
+    <xmx:xDYNaWzpKwiCJssErWAKaC5Omh24WDMdd_ESMwy-1QKK0c3T8HNikg>
+    <xmx:xDYNadOOkUDnvT6bORX3tFjgvG8jH6RVTiJmdbw7J549hUUGJI3E9w>
+    <xmx:zDYNaZmP4HdGrgNN2fuf1yLCRS5MEi7pUT3ZiXhJ138U_-MYPTZPl43i>
+Feedback-ID: iab3e480c:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Thu,
+ 6 Nov 2025 19:00:45 -0500 (EST)
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.1 (by Flathub.org) 
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+From: NeilBrown <neilb@ownmail.net>
+To: "Jeff Layton" <jlayton@kernel.org>
+Cc: "Eric Van Hensbergen" <ericvh@kernel.org>,
+ "Latchesar Ionkov" <lucho@ionkov.net>,
+ "Dominique Martinet" <asmadeus@codewreck.org>,
+ "Christian Schoenebeck" <linux_oss@crudebyte.com>,
+ "David Sterba" <dsterba@suse.com>, "David Howells" <dhowells@redhat.com>,
+ "Marc Dionne" <marc.dionne@auristor.com>,
+ "Alexander Viro" <viro@zeniv.linux.org.uk>,
+ "Christian Brauner" <brauner@kernel.org>, "Jan Kara" <jack@suse.cz>,
+ "Tigran A. Aivazian" <aivazian.tigran@gmail.com>,
+ "Chris Mason" <clm@fb.com>, "Xiubo Li" <xiubli@redhat.com>,
+ "Ilya Dryomov" <idryomov@gmail.com>, "Jan Harkes" <jaharkes@cs.cmu.edu>,
+ coda@cs.cmu.edu, "Tyler Hicks" <code@tyhicks.com>,
+ "Jeremy Kerr" <jk@ozlabs.org>, "Ard Biesheuvel" <ardb@kernel.org>,
+ "Namjae Jeon" <linkinjeon@kernel.org>,
+ "Sungjong Seo" <sj1557.seo@samsung.com>,
+ "Yuezhang Mo" <yuezhang.mo@sony.com>, "Theodore Ts'o" <tytso@mit.edu>,
+ "Andreas Dilger" <adilger.kernel@dilger.ca>,
+ "Jaegeuk Kim" <jaegeuk@kernel.org>, "Chao Yu" <chao@kernel.org>,
+ "OGAWA Hirofumi" <hirofumi@mail.parknet.co.jp>,
+ "Miklos Szeredi" <miklos@szeredi.hu>,
+ "Andreas Gruenbacher" <agruenba@redhat.com>,
+ "Viacheslav Dubeyko" <slava@dubeyko.com>,
+ "John Paul Adrian Glaubitz" <glaubitz@physik.fu-berlin.de>,
+ "Yangtao Li" <frank.li@vivo.com>, "Richard Weinberger" <richard@nod.at>,
+ "Anton Ivanov" <anton.ivanov@cambridgegreys.com>,
+ "Johannes Berg" <johannes@sipsolutions.net>,
+ "Mikulas Patocka" <mikulas@artax.karlin.mff.cuni.cz>,
+ "Muchun Song" <muchun.song@linux.dev>,
+ "Oscar Salvador" <osalvador@suse.de>,
+ "David Hildenbrand" <david@redhat.com>,
+ "David Woodhouse" <dwmw2@infradead.org>,
+ "Dave Kleikamp" <shaggy@kernel.org>,
+ "Trond Myklebust" <trondmy@kernel.org>,
+ "Anna Schumaker" <anna@kernel.org>,
+ "Ryusuke Konishi" <konishi.ryusuke@gmail.com>,
+ "Konstantin Komarov" <almaz.alexandrovich@paragon-software.com>,
+ "Mark Fasheh" <mark@fasheh.com>, "Joel Becker" <jlbec@evilplan.org>,
+ "Joseph Qi" <joseph.qi@linux.alibaba.com>,
+ "Bob Copeland" <me@bobcopeland.com>,
+ "Mike Marshall" <hubcap@omnibond.com>,
+ "Martin Brandenburg" <martin@omnibond.com>,
+ "Amir Goldstein" <amir73il@gmail.com>,
+ "Steve French" <sfrench@samba.org>, "Paulo Alcantara" <pc@manguebit.org>,
+ "Ronnie Sahlberg" <ronniesahlberg@gmail.com>,
+ "Shyam Prasad N" <sprasad@microsoft.com>, "Tom Talpey" <tom@talpey.com>,
+ "Bharath SM" <bharathsm@microsoft.com>,
+ "Zhihao Cheng" <chengzhihao1@huawei.com>,
+ "Hans de Goede" <hansg@kernel.org>, "Carlos Maiolino" <cem@kernel.org>,
+ "Hugh Dickins" <hughd@google.com>,
+ "Baolin Wang" <baolin.wang@linux.alibaba.com>,
+ "Andrew Morton" <akpm@linux-foundation.org>,
+ "Kees Cook" <kees@kernel.org>,
+ "Gustavo A. R. Silva" <gustavoars@kernel.org>,
+ linux-kernel@vger.kernel.org, v9fs@lists.linux.dev,
+ linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org,
+ linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org,
+ codalist@coda.cs.cmu.edu, ecryptfs@vger.kernel.org,
+ linux-efi@vger.kernel.org, linux-ext4@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, gfs2@lists.linux.dev,
+ linux-um@lists.infradead.org, linux-mm@kvack.org,
+ linux-mtd@lists.infradead.org, jfs-discussion@lists.sourceforge.net,
+ linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org,
+ ntfs3@lists.linux.dev, ocfs2-devel@lists.linux.dev,
+ linux-karma-devel@lists.sourceforge.net, devel@lists.orangefs.org,
+ linux-unionfs@vger.kernel.org, linux-cifs@vger.kernel.org,
+ samba-technical@lists.samba.org, linux-xfs@vger.kernel.org,
+ linux-hardening@vger.kernel.org
+Subject:
+ Re: [PATCH] vfs: remove the excl argument from the ->create() inode_operation
+In-reply-to: <f5927a9bb985b9ad241bc5f9fc32acfd35340222.camel@kernel.org>
+References: <20251105-create-excl-v1-1-a4cce035cc55@kernel.org>,
+ <176237780417.634289.15818324160940255011@noble.neil.brown.name>,
+ <6758176514cdd6e2ceacb3bd0e4d63fb8784b7c6.camel@kernel.org>,
+ <f5927a9bb985b9ad241bc5f9fc32acfd35340222.camel@kernel.org>
+Date: Fri, 07 Nov 2025 11:00:34 +1100
+Message-id: <176247363419.634289.473957828516111884@noble.neil.brown.name>
+Reply-To: NeilBrown <neil@brown.name>
 
-Hi Ryusuke,
-
-On Wed, 2025-11-05 at 15:44 +0900, Ryusuke Konishi wrote:
-> Hi Viacheslav,
->=20
-> On Wed, Nov 5, 2025 at 5:10=E2=80=AFAM Viacheslav Dubeyko wrote:
-> >=20
-> > Hi Ryusuke,
-> >=20
-> > On Tue, 2025-11-04 at 19:41 +0900, Ryusuke Konishi wrote:
-> > > On Tue, Nov 4, 2025 at 5:37=E2=80=AFAM Viacheslav Dubeyko wrote:
-> > > >=20
-> > > > Hi Ryusuke,
-> > > >=20
-> > > > Currently, you ask Andrew Morton of sending NILFS2 patches into
-> > > > upstream. But Andrew is busy and it makes the whole workflow
-> > > > complicated and unpredictable.
-> > > >=20
-> > > > I am sending HFS/HFS+ patches to upstream. So, I can create the
-> > > > dedicated NILFS2 kernel tree on kernel.org and I can send
-> > > > NILFS2
-> > > > patches upstream. I believe that it can make the whole patch
-> > > > management
-> > > > workflow more flexible and predictable. Also, additional
-> > > > maintainer
-> > > > is
-> > > > better than to have only one.
-> > > >=20
-> > > > We already had some discussion privately. So, let's continue
-> > > > the
-> > > > discussion in the email list. What do you think?
-> > > >=20
-> > > > Thanks,
-> > > > Slava.
+On Fri, 07 Nov 2025, Jeff Layton wrote:
+> On Thu, 2025-11-06 at 07:07 -0500, Jeff Layton wrote:
+> > On Thu, 2025-11-06 at 08:23 +1100, NeilBrown wrote:
+> > > On Thu, 06 Nov 2025, Jeff Layton wrote:
+> > > > Since ce8644fcadc5 ("lookup_open(): expand the call of vfs_create()"),
+> > > > the "excl" argument to the ->create() inode_operation is always set to
+> > > > true. Remove it, and fix up all of the create implementations.
 > > >=20
-> > > Hi Viacheslav,
+> > > nonono
 > > >=20
-> > > Yes, thanks for the suggestion.
 > > >=20
-> > > As I replied to you privately earlier, I'd welcome your help both
-> > > with
-> > > upstreaming and setting up the git tree on kernel.org.
+> > > > @@ -3802,7 +3802,7 @@ static struct dentry *lookup_open(struct nameid=
+ata *nd, struct file *file,
+> > > >  		}
+> > > > =20
+> > > >  		error =3D dir_inode->i_op->create(idmap, dir_inode, dentry,
+> > > > -						mode, open_flag & O_EXCL);
+> > > > +						mode);
 > > >=20
-> > > First, I'll start by adding you as a maintainer.
-> > > To do this, I'd like to send a patch with changes to the
-> > > maintainers
-> > > file to Andrew.
+> > > "open_flag & O_EXCL" is not the same as "true".
+> > >=20
+> > > It is true that "all calls to vfs_create() pass true for 'excl'"
+> > > The same is NOT true for inode_operations.create.
+> > >=20
 > >=20
-> > Sounds good! Probably, I can create the NILFS2 kernel tree on
-> > kernel.org at first. And, then this patch can be sent with adding
-> > the
-> > link to this kernel tree into MAINTAINERS file.
->=20
-> Yes, it's OK to set up a git repository first.
-> In that case, we will only need to make the changes to the
-> MAINTAINERS
-> file once, so I'll send one patch for the next merge window.
->=20
-> Not only do we add an M: field and switch the T: field, but the S:
-> field in the MAINTAINERS file should also be updated to reflect the
-> current status, so I'll make these changes all at once.
->=20
-> Please let me know where the repository is once you've set it up.
->=20
+> > I don't think this is a problem, actually:
 > >=20
+> > Almost all of the existing ->create() operations ignore the "excl"
+> > bool. There are only two that I found that do not: NFS and GFS2. Both
+> > of those have an ->atomic_open() operation though, so lookup_open()
+> > will never call ->create() for those filesystems. This means that -
+> > > create() _is_ always called with excl =3D=3D true.
+>=20
+> How about this for a revised changelog, which makes the above clear:
+>=20
+>     vfs: remove the excl argument from the ->create() inode_operation
+>    =20
+>     Since ce8644fcadc5 ("lookup_open(): expand the call of vfs_create()"),
+>     the "excl" argument to the ->create() inode_operation is always set to
+>     true in vfs_create().
+>    =20
+>     There is another call to ->create() in lookup_open() that can set it to
+>     either true or false. All of the ->create() operations in the kernel
+>     ignore the excl argument, except for NFS and GFS2. Both NFS and GFS2
+>     have an ->atomic_open() operation, however so lookup_open() will never
+>     call ->create() on those filesystems.
+>    =20
+>     Remove the "excl" argument from the ->create() operation, and fix up the
+>     filesystems accordingly.
 
-I've created the repository today:
+Thanks, that is a substantial improvement.  I see your point now and I
+think this is a really nice cleanup to make - thanks.
 
-git://git.kernel.org/pub/scm/linux/kernel/git/vdubeyko/nilfs2.git
+I think the commit message could be improved further by leading with the
+detail that is central - that most ->create function ignore 'excl'.
 
-And I've added two branches there:
+ With two exceptions, ->create() methods provided by filesystems ignore
+ the "excl" flag.  Those exception are NFS and GFS2 which both also
+ provide ->atomic_open.
 
-git branch --all
-  for-linus
-* for-next
-  master
-  remotes/origin/HEAD -> origin/master
-  remotes/origin/for-linus
-  remotes/origin/for-next
-  remotes/origin/master
+ excl is always true when ->create is called from vfs_create() (since
+ commit......) so the only time it can be false is when it is called by
+ lookup_open() for filesystems that do not provide ->atomic_open.
+
+ So the excl flag to ->create is either ignored or true.  So we can
+ remove it and change NFS and GFS2 to acts as though it were true.
+
+>=20
+> Maybe we also need some comments or updates to Documentation/ to make
+> it clear that ->create() always implies O_EXCL semantics?
+
+Definitely, something in porting.rst and something in vfs.rst.
+
+I would be worth saying somewhere that if the fs needs to mediate
+non-exclusive creation, it must provide atomic_open().
 
 Thanks,
-Slava.
+NeilBrown
+
+
+> --=20
+> Jeff Layton <jlayton@kernel.org>
+>=20
 
