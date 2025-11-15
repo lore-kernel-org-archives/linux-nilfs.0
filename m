@@ -1,332 +1,249 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFD581A2392
-	for <linux-nilfs@vger.kernel.org>; Fri, 14 Nov 2025 00:19:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=148.163.156.1
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763079556; cv=fail; b=bIpDlNwVQRxh3uYYnS+BOH/aRFpcd3ZKeEDtDN005JAJfM+u4fI3827syrlB+BvuVn7V093wdfL8QUAvfV+SeHP9y/6X3tx2uB3V0YvSrI/VoGgaiiJK/LigOVr8b6i/UESDOwUKYzIbiohzFezCC56m+GpTe1N4Xuu7ei4GlSY=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763079556; c=relaxed/simple;
-	bh=WzB4nmZ9/NA2PnBJdcMbb7olDAyhWMD+O/1dVGns8Ro=;
-	h=From:To:CC:Subject:Date:Message-ID:Content-Type:MIME-Version; b=nGTMOfYhbPxbEn6h6R+wSFxAYI047RRunpUGzEyiYnRY5VDxlid7tHPdKlCe7h5ESjKCrvCtayMpoCM+8V2F0XBRICwtroND2LhO3Ct0PkECYFcUzD//bnZXDPM2gE7jpEJ3J9IVJ67EhsWAVn3Eqg5oo0TD8QwjaEelbGbS3QQ=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ibm.com; spf=pass smtp.mailfrom=ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=jAJK+NMk; arc=fail smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ibm.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6355F29D27D
+	for <linux-nilfs@vger.kernel.org>; Sat, 15 Nov 2025 15:45:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1763221515; cv=none; b=tPY9yiNrpn1GnZGe75Mc8sRD7VJnTVIXBoQxCzhVamaNSo5tFTbvyIJ2Lk5bC97N+thPF9pkamrbW3P2IUWAtjMd4LJdzQiXUOYh+m0cPysa05n3tMRA5c0UUKb53AlyIWaiVWEfY9587h3dMGK6qAtdKRhYO9rZjjYKQOidCLo=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1763221515; c=relaxed/simple;
+	bh=DxmPnCQA6yMWPWscNGakzmFjADmR85Hgnsx+DwSN1HI=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=LQamVLYeNLQFEe5h728RiKJpgTrYpPGo1IHKz/MJO1ANcxyXxwzwzrmTfzeE6psDwOmuW5POFy9nerBaMu6hC7ROjt1+KX0WIbid+zwNYU6X3AsJTRjq4CG39wqStFxtDwOl7tNxHNWSq/xpq/QPNxejj3D0g22iLssUNcTgZAk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SK03FXGi; arc=none smtp.client-ip=209.85.167.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="jAJK+NMk"
-Received: from pps.filterd (m0356517.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 5ADMlgOD023126;
-	Fri, 14 Nov 2025 00:19:13 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-id:content-transfer-encoding:content-type:date:from
-	:message-id:mime-version:subject:to; s=pp1; bh=WzB4nmZ9/NA2PnBJd
-	cMbb7olDAyhWMD+O/1dVGns8Ro=; b=jAJK+NMkYK16ipssds6UvZEzAI5CnTUrP
-	3ZhK3xB0r9kVgQgYUReve6vJsaS25BtJmganaXfGdsc/RYdnEQC3p+nsle3peARw
-	YVZUEvPBjssB8G1sD9xQ7YY2+9Dw7y23GxCkUcdWR6Rw7qJ0yuhYMcee94Hw83lR
-	x5ylwQon8CakENtNsRcVyh4gwGqT9P5CpGJAoRwFC1378cmhJu7pFeHH34tXcI/A
-	RhV3VMWGfSidawajgUlQ7MV0RVfAZSqX1v/QzL/QhIJzcbQATlP1JNaNJ5OtrdvK
-	BdoiImahCKAzuU7izs2rFErlMp6yyajr/B4T3e/UMltt7DCrqJeJg==
-Received: from pps.reinject (localhost [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4adrecr81g-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 14 Nov 2025 00:19:13 +0000 (GMT)
-Received: from m0356517.ppops.net (m0356517.ppops.net [127.0.0.1])
-	by pps.reinject (8.18.1.12/8.18.0.8) with ESMTP id 5AE0JCMG027098;
-	Fri, 14 Nov 2025 00:19:12 GMT
-Received: from sa9pr02cu001.outbound.protection.outlook.com (mail-southcentralusazon11013038.outbound.protection.outlook.com [40.93.196.38])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4adrecr81f-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 14 Nov 2025 00:19:12 +0000 (GMT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=GInqV27OHj7Tv20gba/x3yRRe+2KJyf3mkoZlF09xbo503252q5KPAfJVztp0+pE0kx8Hld753o6YBssdp8E18WuynnTmh9t3RByOz299fcUaPR6j70pz6GkXem+BzQVOcpV0eUiwmlNNzJKPjzFj2EDEvRJGv9dq0KmeVzVuROxuW0J1ySBEK3m22+xlhglOowaDuEnwAV5EM10o/2TsV0amyQB/G8Gs58OKf2wx7hHKXXVF2lS6S+ZBgvqMCXRrAe2ot+YSPgG1oG13FZxW3cxb81UZakwyKqn45XWqiQLHU+wXcip6laTq1FHdkzAhuN8Z/pjZiit6+lILx/Edg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=WzB4nmZ9/NA2PnBJdcMbb7olDAyhWMD+O/1dVGns8Ro=;
- b=REXVowtz1iMXgH7T7+Qm8pnzp5xDau9XMmjRj2unIt3J9EhpRq+UyP3ArrOnINXrsGcdPwacnlFftC7xJoVjRrDf9XbhSjuaCNkfGDcHMRKkNE3e88/RFQ0wsXUs7u/j07gRYKvrMFq4zH++AX88JEleyjO9fMSJTP66g2U1fzoELRTwgBHAcIlLgT9+Wotx36Gw4wOseBWEFeb4EaIw35u4UkphVYxFpd21CMKAT2f1bORJrmOKxeCy/ouArzUlwGekYRJKRbzp3tzed1dX7jrFApFeimT736r7avZ/3T5Dm+B6w95ion+S5OGc3lzzDCA+SnxZyYzz4LZNjJAatg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=ibm.com; dmarc=pass action=none header.from=ibm.com; dkim=pass
- header.d=ibm.com; arc=none
-Received: from SA1PR15MB5819.namprd15.prod.outlook.com (2603:10b6:806:338::8)
- by LV8PR15MB6734.namprd15.prod.outlook.com (2603:10b6:408:259::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9320.17; Fri, 14 Nov
- 2025 00:19:10 +0000
-Received: from SA1PR15MB5819.namprd15.prod.outlook.com
- ([fe80::920c:d2ba:5432:b539]) by SA1PR15MB5819.namprd15.prod.outlook.com
- ([fe80::920c:d2ba:5432:b539%4]) with mapi id 15.20.9320.013; Fri, 14 Nov 2025
- 00:19:10 +0000
-From: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
-To: "konishi.ryusuke@gmail.com" <konishi.ryusuke@gmail.com>
-CC: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>,
-        "slava@dubeyko.com" <slava@dubeyko.com>
-Subject: Status of running xfstests for NILFS2
-Thread-Topic: Status of running xfstests for NILFS2
-Thread-Index: AQHcVPxMvOR0TznASUaKKmt1+Qe6fg==
-Date: Fri, 14 Nov 2025 00:19:10 +0000
-Message-ID: <ad4826a48dba37fee0fa9949bfdeef8747ab8e93.camel@ibm.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: SA1PR15MB5819:EE_|LV8PR15MB6734:EE_
-x-ms-office365-filtering-correlation-id: 043dc60f-32ac-4f9a-059a-08de23136ebc
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam:
- BCL:0;ARA:13230040|1800799024|366016|376014|10070799003|38070700021;
-x-microsoft-antispam-message-info:
- =?utf-8?B?R1hIQytmYWQyZjlNNHc0VTJIQXJSOXpQNTBJejNQVjVsYjdXYU55Y256YWJv?=
- =?utf-8?B?WGZyU2lHbGdQc3JRSHZFUDFGV0Erc2JYZFBaSjhFMGNYOUY1ckhwc0w5QUND?=
- =?utf-8?B?aFJ1ZlVoTFNkOUplZFQyaWc0V01yMXJiK3Q2T2s4czJjSkdTL2FZQzVaV2cx?=
- =?utf-8?B?MzN3SDM3Z2ZVQ3JSQ3gvRUtyWFVkblJpL0FTd015eXRFd3Vrb0ZoaVh3RDBa?=
- =?utf-8?B?R3RjZHZPQk9TVG5Rd0ZwaHZJdkJpbDZ3MHBjS1d6TGJDNUZUK0F3dHo0dkdl?=
- =?utf-8?B?ZGtpaDJDL094bS9GOXlqWFBDbHZZSUFzOU5Pc2pseUplblM5LzJ2Z1p2Uitn?=
- =?utf-8?B?VGlwaXRqL0dpdnNXWjg5d1FQNitCZnNlSUhxZGRWSkxIMENZd1dvWG9KVTFa?=
- =?utf-8?B?cXNHRGZVR21oMm5ZYkJYRUdIQ2VHSitXODhWK3lTTE1NcmFHWmhWN0U0NUsx?=
- =?utf-8?B?MTFsRldTRDJTWTlLRnlaWTYzcHRCNyt2SHYwenc0eTVzMlkzTmwxNXI4VDcz?=
- =?utf-8?B?T0NqSGZ2Rm9pZUplbFJLeDlNR1owNXBkK3lGZE9JdndXVVNMbmNSSVdGcmhh?=
- =?utf-8?B?OVJSM1VmZDNwTXlWTG10YlcvVDlSMG8xL1c4VTB0Wk5JdUZBVTRqdnJYTGVU?=
- =?utf-8?B?b082UVUwaTdieUsyMVJpazVCczRRSTlqSmZobFlPSGtzK0F6YVJsQ0pHM3Fp?=
- =?utf-8?B?cVV1MGJ4Z3RTSnFkU3VQd1FWL3BaNVU3UjNRMGk1cVcxQXpqR1Y3K09KZ2lE?=
- =?utf-8?B?NTdRUzRDNmJFbXlwdWpoVmQrcTNBL0VXbHczK2JkRFJWU01jeFV3N1M2aGpH?=
- =?utf-8?B?Um8vYUZ4cFBKQjNmam5WbFdGblhTTUFrVm1MeXRCck11U2ZqVjNEeUVQUUlB?=
- =?utf-8?B?bFVhdTVTazZ5ZG5nMjhZeDBWMWlXdkc5bUlmamlzeGVUUlFORk5UYk13Z2dP?=
- =?utf-8?B?U00rUHo3UFUvc1A3dXhoYXhla3U0VlJDQ3lhUHFTZVRpY2RMRjBtZlk1dXJ5?=
- =?utf-8?B?cDVhbmRLSmZJMFdackU0WThJWGFLRlJrMStKaVd2eEE3cmdrc052MG5SRkNn?=
- =?utf-8?B?aXB0OWxsM0cyeWRucjRzci9kWE5LY2xFSUduQlFEVXIwZCtNR1VrYkhjUUVH?=
- =?utf-8?B?disvd3RwckRNWE9LTHB4NFRnbktsU3NmRVJyd1Y2MW9wZzZSNHp2UjNLV2dl?=
- =?utf-8?B?djhsdi8yWjdjUURIdnkzWTVURnNTTm9pM25kZkxVd2REZWpLaWRma2lhcmVW?=
- =?utf-8?B?dUp5d1pFODc1bmdZa0JuU0xQZTF5Z1lwWXkzRDdEdUV6TUdlL3Y1QjRTeEI0?=
- =?utf-8?B?YkNGRlV4Z245eWlQK3Y3c1d6N3RadXhzWXdIc0ZRNUlMK08xTG1IK0tyQVZi?=
- =?utf-8?B?blJJY21iV1BmRkhKdHcxOFZ1a1NTbkhQRzNvU29MVUdqNm50SW54N0tVUkt1?=
- =?utf-8?B?Zk1SNTVBWHR3Q2hGczRUNEI1YkdXZ2V5UStqc3ZxdkREdlJadHhJMUxaMFVC?=
- =?utf-8?B?UUJ3bTJiSmQ4bkFxamR1NnZsVTVZL0ZoNkFmdmh2ei8xSzdyT2hUMkRoeDhD?=
- =?utf-8?B?REFjNFl5cUsyZVNhWnpISHg4eFZHZmlCL1NIbG9LWWR6RkhCWENZOE9ONEFj?=
- =?utf-8?B?elZvdjRyMFI0RDVLejVPN1Erem5NaTVVNUtkcW5NZ21RUE5CQUcrMGdEenpn?=
- =?utf-8?B?Wk9raFkwOHB4UlVPQS81OEhmRnpOWWJPODdXSjdvM2k3TmlVbGNCMjM5Y0lB?=
- =?utf-8?B?cVBUL1ZkQm5pc2ZXZmFxZExrdmFnSDl2a3UzZ09BeWJyR3RwSVBwaWg2M3RB?=
- =?utf-8?B?VHpLMGpKbFdsODVFRW1tQk1zb2NnSzZ5VlFvU01Yclo1aDA2S2Z3dnpNaGF6?=
- =?utf-8?B?cFQ1OWlkY1FNSmxsUkFwVExvZlpuc3ltYldDOTY0OVRrbmpkUlhScFRnQmJs?=
- =?utf-8?B?bTdLbDhseWZxNGMzQmdkbDQ2Mi9WcmxUbGhCdVU4NDZQWGZuY3lkVUIvZTlS?=
- =?utf-8?B?KzVRbDNYQmV3PT0=?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SA1PR15MB5819.namprd15.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(366016)(376014)(10070799003)(38070700021);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?d1JMeDZON2JwYk0waWpodjZvaUk5V2lTb2pkM2VKbCtrZW00NWM1SVRkWWVx?=
- =?utf-8?B?YVpWd21xZmFjMWNyZ1EvUWJJOFRTbUdPS3YxZ3RrbHFBRjI1Rkp6U05UbmhB?=
- =?utf-8?B?YzR3RnlYbWt1Wnd1dER5WEVGRkJDck5DckVuSHhNbGZyWWU3Vm5WWW0vOEZ2?=
- =?utf-8?B?S3NwR2hkMVRvem9QUnpxR3dodERQenFpSFY2NWhVU1I5K2pNVkJteU5USjd1?=
- =?utf-8?B?YlFaRkpuT29nNHQ4MGh3YVBoWDVrMWptR2l3SzBRTnBlMTZPRDBqRHBYcTRH?=
- =?utf-8?B?c0lRNFY0VTQxOFNFOUFkL1RUYmlJS25WSlNPalV2c3FIOUtSOVV4ZUpvS2hZ?=
- =?utf-8?B?QXdlUVhLQTA3N0ZVQmJKS2NIQmdEcU1NcTR3R2l4UHRLMVlvWko3RXBadDZS?=
- =?utf-8?B?L2VKY3RlN3VtdVpkN1drZ0FzM3hReXh5RmFqaFpPL3ROaDFKV3ZNRVZrQUVH?=
- =?utf-8?B?aGFaalVacS94VFFPR3ExODNUZmdzUkx3bXJHeU9TT0tlNGYrTHdSZVo2WGxO?=
- =?utf-8?B?QTRjdVhaUlBVVXBydGZyaXo3bzdqSXF4ZmVWOGZxK3JYMDhYMEtPZXpNVjI4?=
- =?utf-8?B?KzNmeXR0dzRPdHp4SzYyZVlnS2tUVGtaZHBSQm1rMWY0UGZQMWoweFhTall0?=
- =?utf-8?B?M1ZVc3l3ZXF3NXVPU2VacG5nVS9KRG0vTHg3MTZxb2lkbldCWmhqa0MxMUtK?=
- =?utf-8?B?NjlJcE9uNmxVWmtOZm0rd0haYjEyU0cwMnlKd3AwYVB3VDlLeWRPMWN4bFoz?=
- =?utf-8?B?OGp4dTl2S3pzbTBWS1Y3bjVTV25zOVZrYVlBZ3BmVkJUVTBFaFQ2RDZhZGhV?=
- =?utf-8?B?UVFoMS9EZ1I5LzdLUzVGandDZ0owT3lpL3dQYWN5bC9DS3R6NnptRWlOZGQw?=
- =?utf-8?B?ODlHWHV1TlQzMWtqYjlKNW9sM3dmSjhMbC8yNVp1WWpFZkF6OUo5eUpkSlF1?=
- =?utf-8?B?YXAzcUlpWkV6bndMcnIrL0dTbGxmZTFNWWpyNEtRa3d2NUcxQkdtQVFjenFT?=
- =?utf-8?B?bE9oaUFTcWZjYW5wZVNCVXAwRnpab1BxRklMaUp2a1RHbGdHT0NMc2wzU2ZE?=
- =?utf-8?B?UjQyajZGV3B1Tnh1MVFrN0UzbTVmSEFIZW11SWhzb09yZXU2ck1tbHNPN1M1?=
- =?utf-8?B?QnI3dzMyaWt5RC9ReStoUmxMMFJjTG53TjNYRGJKaldlNnVnbEh2U1FBTXJD?=
- =?utf-8?B?L1Jja0NTM0QrTnh3cHBVajZDVEpoLzN5c1BRWmU0Z1Bla25vSGhvcDk2djFB?=
- =?utf-8?B?cnBKeUpjR3E1YlJPTXM1Z1ZhMzBrWjB2Yk9hNVFDd3J2K3grNlgvWTVsWEpt?=
- =?utf-8?B?SUtHTzg3bU1yVzVZamcrODJVc01WejRWMmV2aVlHaG9zamxYUVFTeDkrQkNQ?=
- =?utf-8?B?OUdOMEhjSlJ5OThvVWJSZkhxSTN5cUd4d29DbC80cmZ4alRlSE1sQVBTbGcw?=
- =?utf-8?B?cXdqdkpqSGZjb1RWUXVRdnBxR1ZDNzFzUnVabTRnN3IwSXI1S0NWbHI1T2sr?=
- =?utf-8?B?MkZhbW01dDloWGRNa2lpYmVDaVI4SUoxU2tWM1lYNFdJK2JRNzBJeFJuUWNK?=
- =?utf-8?B?RDM0bXBkYVdNSzhVdlZCQWtyN0s4S1c2blVvUlBRMkcrOXFrQ0hMelBIdlR1?=
- =?utf-8?B?OWVPMDZyem1lVnZmcjRndTN2OUk2SnFpVjg5VERXOFJJYmFtdWhQd2ZqQnUv?=
- =?utf-8?B?TFNodDVQQ0hueXJubXFGeFVQQU42UmdCaWlRd2tLUnZIajVobUpLU085SDZa?=
- =?utf-8?B?elc3QTJCUjhKc25mcGxFKzdjNm5jSExYUnlHV3l6cjRSQnl1WEx0L2hJUENn?=
- =?utf-8?B?d3lDTE04dWdvdjNQMHVOK0RFUHVCejFaWTN2MzcvTy8yM1BRVGF0WnBEczFF?=
- =?utf-8?B?V004RlVLb05ZZDhnWGVTNWxpbnB0ZDhYUUlJZlRFbzRmd044SmRKNlNrSjc5?=
- =?utf-8?B?cjV5RFV4OXZUbjhnK1BndGR4MUZNNnZZK2V2cjZ4d0t1ZVZJQkEyWWxCWnB1?=
- =?utf-8?B?SFg0V2hTbTczcGxhT2ZxSThNUGlYd1RYQlJ4MEVCLzRnUnlaVGFnRkczcUVG?=
- =?utf-8?B?aldUV2FjclJ1V3ozSFFYRzJqRnh2RWpZbmV0OHhtTGVuZUpDM1p5QkdyMGU3?=
- =?utf-8?B?ZEExbmhwRjhDY1VrOVV3SmFlUHJqeDFRaGwxU0o4VWFjN2FEWXc4blF4Rklk?=
- =?utf-8?Q?85LQNvocxbAaUGAdlBXXq8o=3D?=
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <AE718B0D95B7BF4FB41740E619625AAD@namprd15.prod.outlook.com>
-Content-Transfer-Encoding: base64
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SK03FXGi"
+Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-59584301f0cso2761790e87.0
+        for <linux-nilfs@vger.kernel.org>; Sat, 15 Nov 2025 07:45:13 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1763221511; x=1763826311; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=nlFRgicySMMdt47wQVwSSNc19frhEf5/ix02n4IjwPs=;
+        b=SK03FXGiApxM2m3TDYyeQ8lvUWZGtkPWSCh+M4YYF5HrFgxwaCdJRyEgVELiYHbZmo
+         BIEw2RIk2vHjMwaRwtX+kDgKpS5707pammicoA5qYwkYKIJ6/24O3Ten+9xFA9zwQODz
+         P1FhiPqix0dMT3ourXm3KFdga4Vvar/VVtADy/WRqhWFxjl24OHennSA2lCDqQv7MfCS
+         XpdqM4nsYaqc9cpWwdiz8EN2C6DEiyFnsLKvAWUILeP3HkYfJS8cpHiz9DhqkgkPk3lx
+         V4d/EKYtRvBnzQwYGy61hupVP7WtXSMKwDfcm7H/nv7IjD475imR2UG7GKeWLZmQ8A+M
+         ByQg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1763221511; x=1763826311;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=nlFRgicySMMdt47wQVwSSNc19frhEf5/ix02n4IjwPs=;
+        b=kcRJkhlTbintJbv5NawFf97ClsXo7t8tUm4B4vO+wB3E2IF6ifJd8bbufE42HE2Cms
+         FKsYH8LBE2s0U4XOjQEbFo59m/K3Nm3iYxwthXKR1quNJQa+8lOC126xR3pfXBCutyug
+         J2Do6Vz5uRf0sjl2lNDBbr56C6A5VVOLs3vIGT1kCprc3hvqmhJ8Ai63jMmA+NSY6Uzy
+         mOVZ4fn+jSAx+G/CN+rhMkJJeEOu0srfkeFU5yEdnQTigju3rUhyrOO40ENfAZVV23lE
+         Mox1R68YcHnc47zlhjgFpb34kbdGluLBemwQuZiKnA+WJSHectWd02c0ZfJMsbUq6eWj
+         YYZg==
+X-Gm-Message-State: AOJu0Yz6KagDDUYMhZJ3mH2XEwlVx0HH8SRNZTq9UPxywbYsMv/6ednT
+	yTdspkGYKPivyIT8pTaKt4f/FLcLgSalEca9An5xObLsGzm+Vl08/v24EaNjaN8mQx3YMGwp68V
+	kINEiPid7PI1fWW6SxGdpHLJDnZj0YCBIhBrv
+X-Gm-Gg: ASbGncu6b8ZxObF1vMKbAaxNp0GiekQNcsth83y9NpZGCKYBoxYUFt6j3P+ceg5fHU/
+	F2kEw4cT8xpKfEH2X9KhtflpzhfA0Geyj+FvWmARlxVL38Iav/5SeQ/b9adIx6b1T6PYcydjqjV
+	6DQrWjMhGdgeV4Twty7N8ctwf3sb+ndc0zZKQms6lHhLKI5JO3+33q6mWVIy8pTs0Ju53BQDRc/
+	fJuhJ97vQ7Zpg54rlSIOhVKOiAAfFtRTzE7hPsDHWdZ7nkhtee5+Xg1DohL1pV0WSVT3UZN
+X-Google-Smtp-Source: AGHT+IG/6XgnIFUzaUNsLmEvqzlrZse06D6vHBtzCl/rNtlFBgY86EimCbXkuB883/WWmtCFsQRHqMAlhp0jDmB6Qak=
+X-Received: by 2002:a05:6512:4028:b0:595:7e73:995c with SMTP id
+ 2adb3069b0e04-59584211dd2mr1914852e87.44.1763221510866; Sat, 15 Nov 2025
+ 07:45:10 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-OriginatorOrg: ibm.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SA1PR15MB5819.namprd15.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 043dc60f-32ac-4f9a-059a-08de23136ebc
-X-MS-Exchange-CrossTenant-originalarrivaltime: 14 Nov 2025 00:19:10.2296
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: fcf67057-50c9-4ad4-98f3-ffca64add9e9
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: C8oj0x/Or/oZntTnjxy+4fToxx7jN0PkcaNGCQOq+HSJGz5Nb4JYTFdeh7cDHXrk2eyo6UT9A5SYe89n36kNoQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: LV8PR15MB6734
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUxMTEzMDE3OSBTYWx0ZWRfXwVB+xUtpBNVY
- 08oKzeD+mKdKFgs2q/fG6Jn8TG/334u63b1xOtzeEZt2ccnFVT5MG0EbMvXsMIPKXskLHsp/NNg
- H/yjFMj80CbS2BhvBqd8fzG2bk9q5fLBm0UEKciW3mfzc1c9MAGg/xlbf3fnZaYiWChLt3C5P0B
- W0wjn2DbMnFq85cexfY3o16NUNPCQGOmShpVAtz33WdHosvedzk1EYQwO8Wa5m48pKyAdbxq7sO
- vONR9F2dL/WOtzGAeURfNx/CDzdojOMKdirac2cifYPDT8CmxhBglULdMcuc4KGJpS1/Y+XzeLq
- POanh+k4VgrY1nPaqgQsXaLYyEkjl0QjYCkWOygZ8SNEI+KYNLcQuhG1P/mZ7DtR1wf+fyCatso
- XcjEstPMZYYYmbYjLfmOioHPDfTnaQ==
-X-Authority-Analysis: v=2.4 cv=E//AZKdl c=1 sm=1 tr=0 ts=69167581 cx=c_pps
- a=iBoLJ+TzW6OYwHE2Vh/RVw==:117 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
- a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10
- a=6UeiqGixMTsA:10 a=VkNPw1HP01LnGYTKEx00:22 a=NEAV23lmAAAA:8 a=VwQbUJbxAAAA:8
- a=1XWaLZrsAAAA:8 a=fsJl2zVN_kort4Zg-GwA:9 a=QEXdDO2ut3YA:10
-X-Proofpoint-GUID: 3jOrVfkO9efGLApZ1qJbPLniSoihfaTZ
-X-Proofpoint-ORIG-GUID: oLaDx5RwE9qYQcV7yiXZRS4Lf9X4FFeN
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1121,Hydra:6.1.9,FMLib:17.12.100.49
- definitions=2025-11-13_07,2025-11-13_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- impostorscore=0 bulkscore=0 adultscore=0 priorityscore=1501
- lowpriorityscore=0 malwarescore=0 clxscore=1011 spamscore=0 phishscore=0
- suspectscore=0 classifier=typeunknown authscore=0 authtc= authcc=
- route=outbound adjust=0 reason=mlx scancount=1 engine=8.19.0-2510240000
- definitions=main-2511130179
+References: <ad4826a48dba37fee0fa9949bfdeef8747ab8e93.camel@ibm.com>
+In-Reply-To: <ad4826a48dba37fee0fa9949bfdeef8747ab8e93.camel@ibm.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Sun, 16 Nov 2025 00:44:54 +0900
+X-Gm-Features: AWmQ_bkEK0pajcFpniakjM4neuCfieYEFkh_jtX6ccpS7KetPLRJ-69_EcH5q7w
+Message-ID: <CAKFNMok6sj9EPgCBSn=3Uc1ze51jbPH69xEXQtFTej3B1JcTLQ@mail.gmail.com>
+Subject: Re: Status of running xfstests for NILFS2
+To: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
+Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "slava@dubeyko.com" <slava@dubeyko.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-SGkgUnl1c3VrZSwNCg0KSSBkaWQgcnVuIHRoZSB4ZnN0ZXN0cyBzdWl0ZSBmb3IgTklMRlMyLiBB
-cyBmYXIgYXMgSSBjYW4gc2VlLCB0aGVyZSBhcmUgMTU2DQpmYWlsZWQgdGVzdHMgYW5kIEkgbmVl
-ZGVkIHRvIGV4Y2x1ZGUgMiB0ZXN0cyBmcm9tIHJ1bm5pbmcuDQoNCnN1ZG8gLi9jaGVjayAtZyBh
-dXRvIC1FIC4vbXlfZXhjbHVkZS50eHQgDQpGU1RZUCAgICAgICAgIC0tIG5pbGZzMg0KUExBVEZP
-Uk0gICAgICAtLSBMaW51eC94ODZfNjQgaGZzcGx1cy10ZXN0aW5nLTAwMDEgNi4xOC4wLXJjMysg
-IzkzIFNNUA0KUFJFRU1QVF9EWU5BTUlDIFdlZCBOb3YgMTIgMTQ6Mzc6NDkgUFNUIDIwMjUNCk1L
-RlNfT1BUSU9OUyAgLS0gL2Rldi9sb29wNTENCk1PVU5UX09QVElPTlMgLS0gL2Rldi9sb29wNTEg
-L21udC9zY3JhdGNoDQoNCjxza2lwcGVkPg0KDQpGYWlsdXJlczogZ2VuZXJpYy8wMDMgZ2VuZXJp
-Yy8wNDAgZ2VuZXJpYy8wNDEgZ2VuZXJpYy8wNjggZ2VuZXJpYy8wNzQNCmdlbmVyaWMvMDc1IGdl
-bmVyaWMvMDc4IGdlbmVyaWMvMDgwIGdlbmVyaWMvMDg2IGdlbmVyaWMvMDkyIGdlbmVyaWMvMDk3
-DQpnZW5lcmljLzA5OSBnZW5lcmljLzEwMCBnZW5lcmljLzEwMyBnZW5lcmljLzEwNSBnZW5lcmlj
-LzEwOSBnZW5lcmljLzExMg0KZ2VuZXJpYy8xMTcgZ2VuZXJpYy8xMjEgZ2VuZXJpYy8xMjIgZ2Vu
-ZXJpYy8xMjQgZ2VuZXJpYy8xMjcgZ2VuZXJpYy8xMjkNCmdlbmVyaWMvMTMxIGdlbmVyaWMvMTM2
-IGdlbmVyaWMvMTc3IGdlbmVyaWMvMTgyIGdlbmVyaWMvMTkyIGdlbmVyaWMvMjE1DQpnZW5lcmlj
-LzIyMSBnZW5lcmljLzIzNyBnZW5lcmljLzI0MSBnZW5lcmljLzI0NSBnZW5lcmljLzI0NiBnZW5l
-cmljLzI0Nw0KZ2VuZXJpYy8yNDggZ2VuZXJpYy8yNDkgZ2VuZXJpYy8yNTEgZ2VuZXJpYy8yNTUg
-Z2VuZXJpYy8yNTcgZ2VuZXJpYy8yNTgNCmdlbmVyaWMvMjYwIGdlbmVyaWMvMjg1IGdlbmVyaWMv
-Mjg2IGdlbmVyaWMvMzA3IGdlbmVyaWMvMzA5IGdlbmVyaWMvMzEwDQpnZW5lcmljLzMxMyBnZW5l
-cmljLzMxNiBnZW5lcmljLzMxOCBnZW5lcmljLzMxOSBnZW5lcmljLzMyMiBnZW5lcmljLzMzNw0K
-Z2VuZXJpYy8zNDggZ2VuZXJpYy8zNjAgZ2VuZXJpYy8zNjMgZ2VuZXJpYy8zNjUgZ2VuZXJpYy8z
-NzUgZ2VuZXJpYy8zNzYNCmdlbmVyaWMvMzc3IGdlbmVyaWMvMzk0IGdlbmVyaWMvNDAzIGdlbmVy
-aWMvNDA0IGdlbmVyaWMvNDA4IGdlbmVyaWMvNDA5DQpnZW5lcmljLzQxMCBnZW5lcmljLzQxMSBn
-ZW5lcmljLzQyMCBnZW5lcmljLzQyNSBnZW5lcmljLzQyOCBnZW5lcmljLzQzMA0KZ2VuZXJpYy80
-MzEgZ2VuZXJpYy80MzIgZ2VuZXJpYy80MzMgZ2VuZXJpYy80MzYgZ2VuZXJpYy80MzcgZ2VuZXJp
-Yy80MzgNCmdlbmVyaWMvNDM5IGdlbmVyaWMvNDQzIGdlbmVyaWMvNDQ0IGdlbmVyaWMvNDQ1IGdl
-bmVyaWMvNDQ4IGdlbmVyaWMvNDY5DQpnZW5lcmljLzQ3MSBnZW5lcmljLzQ3OCBnZW5lcmljLzQ4
-MyBnZW5lcmljLzQ4NCBnZW5lcmljLzQ4NSBnZW5lcmljLzQ4Ng0KZ2VuZXJpYy80ODkgZ2VuZXJp
-Yy80OTAgZ2VuZXJpYy81MDMgZ2VuZXJpYy81MDQgZ2VuZXJpYy81MTAgZ2VuZXJpYy81MTINCmdl
-bmVyaWMvNTE2IGdlbmVyaWMvNTE5IGdlbmVyaWMvNTIzIGdlbmVyaWMvNTI5IGdlbmVyaWMvNTMz
-IGdlbmVyaWMvNTM1DQpnZW5lcmljLzUzNyBnZW5lcmljLzUzOSBnZW5lcmljLzU0NyBnZW5lcmlj
-LzU1MyBnZW5lcmljLzU1NSBnZW5lcmljLzU2Mw0KZ2VuZXJpYy81NjUgZ2VuZXJpYy81NjcgZ2Vu
-ZXJpYy81NjggZ2VuZXJpYy81NzEgZ2VuZXJpYy81ODUgZ2VuZXJpYy81ODkNCmdlbmVyaWMvNTkw
-IGdlbmVyaWMvNjA3IGdlbmVyaWMvNjEwIGdlbmVyaWMvNjExIGdlbmVyaWMvNjE0IGdlbmVyaWMv
-NjE2DQpnZW5lcmljLzYxOCBnZW5lcmljLzYyOSBnZW5lcmljLzYzMSBnZW5lcmljLzYzMiBnZW5l
-cmljLzYzNCBnZW5lcmljLzYzNw0KZ2VuZXJpYy82MzggZ2VuZXJpYy82MzkgZ2VuZXJpYy82NDAg
-Z2VuZXJpYy82NTAgZ2VuZXJpYy82NzYgZ2VuZXJpYy82OTANCmdlbmVyaWMvNjk1IGdlbmVyaWMv
-Njk3IGdlbmVyaWMvNzA0IGdlbmVyaWMvNzA2IGdlbmVyaWMvNzEyIGdlbmVyaWMvNzEzDQpnZW5l
-cmljLzcxNSBnZW5lcmljLzcxOCBnZW5lcmljLzcxOSBnZW5lcmljLzcyMyBnZW5lcmljLzcyNCBn
-ZW5lcmljLzcyNQ0KZ2VuZXJpYy83MjggZ2VuZXJpYy83MzIgZ2VuZXJpYy83MzYgZ2VuZXJpYy83
-MzggZ2VuZXJpYy83NDEgZ2VuZXJpYy83NDINCmdlbmVyaWMvNzQ5IGdlbmVyaWMvNzU0IGdlbmVy
-aWMvNzU4IGdlbmVyaWMvNzU5IGdlbmVyaWMvNzYzIGdlbmVyaWMvNzY0DQpnZW5lcmljLzc3MQ0K
-RmFpbGVkIDE1NiBvZiA3NjcgdGVzdHMNCg0KSSBuZWVkZWQgdG8gZXhjbHVkZSBnZW5lcmljLzc0
-MCBhbmQgZ2VuZXJpYy83NTMuIEkgYW0gbm90IGNvbXBsZXRlbHkgc3VyZSB3aGF0DQppcyB3cm9u
-ZyB3aXRoIGdlbmVyaWMvNzQwIChpdCBjb3VsZCBiZSBnbGl0Y2ggb24gbXkgc2lkZSkuIEJ1dCBn
-ZW5lcmljLzc1MyBmaWxscw0KdGhlIHN5c3RlbSBsb2cgd2l0aCBidW5jaCBvZiBlcnJvcnM6DQoN
-CjIwMjUtMTEtMTJUMTg6MzY6MjQuMTcxNTMzLTA4OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIHJv
-b3Q6IHJ1biB4ZnN0ZXN0DQpnZW5lcmljLzc1Mw0KMjAyNS0xMS0xMlQxODozNjoyNC4xNzU0MzIt
-MDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEga2VybmVsOiBydW4gZnN0ZXN0cw0KZ2VuZXJpYy83
-NTMgYXQgMjAyNS0xMS0xMiAxODozNjoyNA0KMjAyNS0xMS0xMlQxODozNjoyNC4yNDM3NDUtMDg6
-MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEgc3lzdGVtZFsxXTogU3RhcnRlZA0KZnN0ZXN0cy1nZW5l
-cmljLTc1My5zY29wZSAtIC91c3IvYmluL2Jhc2ggLWMgInRlc3QgLXcNCiAvcHJvYy9zZWxmL29v
-bV9zY29yZV9hZGogJiYgZWNobyAyNTAgPiAvcHJvYy9zZWxmL29vbV9zY29yZV9hZGo7IGV4ZWMN
-Ci4vdGVzdHMvZ2VuZXJpYy83NTMiLg0KMjAyNS0xMS0xMlQxODozNjoyNi4wNjgyODgtMDg6MDAg
-aGZzcGx1cy10ZXN0aW5nLTAwMDEga2VybmVsOiBOSUxGUyAoZG0tMCk6DQpzZWdjdG9yZCBzdGFy
-dGluZy4gQ29uc3RydWN0aW9uIGludGVydmFsID0gNSBzZWNvbmQNCnMsIENQIGZyZXF1ZW5jeSA8
-IDMwIHNlY29uZHMNCjIwMjUtMTEtMTJUMTg6MzY6MjYuMDgyMDY3LTA4OjAwIGhmc3BsdXMtdGVz
-dGluZy0wMDAxIG5pbGZzX2NsZWFuZXJkWzc2MzM1NF06DQpzdGFydA0KMjAyNS0xMS0xMlQxODoz
-NjoyNi4wODI5NDktMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEgbmlsZnNfY2xlYW5lcmRbNzYz
-MzU0XToNCnBhdXNlIChjbGVhbiBjaGVjaykNCjIwMjUtMTEtMTJUMTg6MzY6MjguMTExMzIzLTA4
-OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIGtlcm5lbDogQnVmZmVyIEkvTyBlcnJvcg0Kb24gZGV2
-IGRtLTAsIGxvZ2ljYWwgYmxvY2sgMjYyMTQyNCwgYXN5bmMgcGFnZSByDQplYWQNCjIwMjUtMTEt
-MTJUMTg6MzY6MjguMjAzNDUzLTA4OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIGtlcm5lbDogTklM
-RlMgKGRtLTApOiBJL08NCmVycm9yIHdyaXRpbmcgbG9nIChzdGFydC1ibG9ja25yPTE4MjA5LCBi
-bG9jay1jDQpvdW50PTIyMykgaW4gc2VnbWVudCA4DQoyMDI1LTExLTEyVDE4OjM2OjI4LjIwMzQ2
-Ny0wODowMCBoZnNwbHVzLXRlc3RpbmctMDAwMSBrZXJuZWw6IE5JTEZTIChkbS0wKTogSS9PDQpl
-cnJvciB3cml0aW5nIGxvZyAoc3RhcnQtYmxvY2tucj0xODQzMiwgYmxvY2stYw0Kb3VudD0yMDQ4
-KSBpbiBzZWdtZW50IDkNCjIwMjUtMTEtMTJUMTg6MzY6MjguMjAzNDY4LTA4OjAwIGhmc3BsdXMt
-dGVzdGluZy0wMDAxIGtlcm5lbDogTklMRlMgKGRtLTApOiBJL08NCmVycm9yIHdyaXRpbmcgbG9n
-IChzdGFydC1ibG9ja25yPTIwNDgwLCBibG9jay1jDQpvdW50PTEzNjkpIGluIHNlZ21lbnQgMTAN
-CjIwMjUtMTEtMTJUMTg6MzY6MjguMjIxNDQ0LTA4OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIGtl
-cm5lbDogTklMRlMgKGRtLTApOiBJL08NCmVycm9yIHdyaXRpbmcgbG9nIChzdGFydC1ibG9ja25y
-PTE4NDMyLCBibG9jay1jDQpvdW50PTIwNDgpIGluIHNlZ21lbnQgOQ0KMjAyNS0xMS0xMlQxODoz
-NjoyOC4yMjE0NjMtMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEga2VybmVsOiBOSUxGUyAoZG0t
-MCk6IEkvTw0KZXJyb3Igd3JpdGluZyBsb2cgKHN0YXJ0LWJsb2NrbnI9MjQ1NzYsIGJsb2NrLWMN
-Cm91bnQ9MTU5MikgaW4gc2VnbWVudCAxMg0KMjAyNS0xMS0xMlQxODozNjoyOC4yNDg0NDUtMDg6
-MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEga2VybmVsOiBOSUxGUyAoZG0tMCk6IEkvTw0KZXJyb3Ig
-d3JpdGluZyBsb2cgKHN0YXJ0LWJsb2NrbnI9MTg0MzIsIGJsb2NrLWMNCm91bnQ9MjA0OCkgaW4g
-c2VnbWVudCA5DQoyMDI1LTExLTEyVDE4OjM2OjI4LjI0ODQ1OC0wODowMCBoZnNwbHVzLXRlc3Rp
-bmctMDAwMSBrZXJuZWw6IE5JTEZTIChkbS0wKTogSS9PDQplcnJvciB3cml0aW5nIGxvZyAoc3Rh
-cnQtYmxvY2tucj0yODY3MiwgYmxvY2stYw0Kb3VudD0yMDQ4KSBpbiBzZWdtZW50IDE0DQoyMDI1
-LTExLTEyVDE4OjM2OjI4LjI0ODQ1OS0wODowMCBoZnNwbHVzLXRlc3RpbmctMDAwMSBrZXJuZWw6
-IE5JTEZTIChkbS0wKTogSS9PDQplcnJvciB3cml0aW5nIGxvZyAoc3RhcnQtYmxvY2tucj0zMDcy
-MCwgYmxvY2stYw0Kb3VudD00MTYpIGluIHNlZ21lbnQgMTUNCjIwMjUtMTEtMTJUMTg6MzY6Mjgu
-Mjc0NDQ1LTA4OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIGtlcm5lbDogTklMRlMgKGRtLTApOiBJ
-L08NCmVycm9yIHdyaXRpbmcgbG9nIChzdGFydC1ibG9ja25yPTE4NDMyLCBibG9jay1jDQpvdW50
-PTIwNDgpIGluIHNlZ21lbnQgOQ0KMjAyNS0xMS0xMlQxODozNjoyOC4yNzQ0NTktMDg6MDAgaGZz
-cGx1cy10ZXN0aW5nLTAwMDEga2VybmVsOiBOSUxGUyAoZG0tMCk6IEkvTw0KZXJyb3Igd3JpdGlu
-ZyBsb2cgKHN0YXJ0LWJsb2NrbnI9MzQ4MTYsIGJsb2NrLWMNCm91bnQ9MjA0OCkgaW4gc2VnbWVu
-dCAxNw0KMjAyNS0xMS0xMlQxODozNjoyOC4yNzQ0NjAtMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAw
-MDEga2VybmVsOiBOSUxGUyAoZG0tMCk6IEkvTw0KZXJyb3Igd3JpdGluZyBsb2cgKHN0YXJ0LWJs
-b2NrbnI9MzY4NjQsIGJsb2NrLWMNCm91bnQ9NDE3KSBpbiBzZWdtZW50IDE4DQoyMDI1LTExLTEy
-VDE4OjM2OjI4LjMwODk3OC0wODowMCBoZnNwbHVzLXRlc3RpbmctMDAwMSBuaWxmc19jbGVhbmVy
-ZFs3NjMzNTRdOg0Kc2h1dGRvd24NCjIwMjUtMTEtMTJUMTg6MzY6MjguMzIyNDE4LTA4OjAwIGhm
-c3BsdXMtdGVzdGluZy0wMDAxIGtlcm5lbDogTklMRlMgKGRtLTApOiBJL08NCmVycm9yIHdyaXRp
-bmcgbG9nIChzdGFydC1ibG9ja25yPTE4NDMyLCBibG9jay1jDQpvdW50PTIwNDgpIGluIHNlZ21l
-bnQgOQ0KMjAyNS0xMS0xMlQxODozNjoyOC4zMjI0MzMtMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAw
-MDEga2VybmVsOiBOSUxGUyAoZG0tMCk6IEkvTw0KZXJyb3Igd3JpdGluZyBsb2cgKHN0YXJ0LWJs
-b2NrbnI9NDA5NjAsIGJsb2NrLWMNCm91bnQ9MjA0OCkgaW4gc2VnbWVudCAyMA0KMjAyNS0xMS0x
-MlQxODozNjoyOC4zMjI0MzQtMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEga2VybmVsOiBOSUxG
-UyAoZG0tMCk6IEkvTw0KZXJyb3Igd3JpdGluZyBsb2cgKHN0YXJ0LWJsb2NrbnI9NDMwMDgsIGJs
-b2NrLWMNCm91bnQ9NDE4KSBpbiBzZWdtZW50IDIxDQoyMDI1LTExLTEyVDE4OjM2OjI4LjMyMzk3
-MC0wODowMCBoZnNwbHVzLXRlc3RpbmctMDAwMSBzeXN0ZW1kWzFdOiBtbnQtDQpzY3JhdGNoLm1v
-dW50OiBEZWFjdGl2YXRlZCBzdWNjZXNzZnVsbHkuDQoyMDI1LTExLTEyVDE4OjM2OjI4LjM5ODQx
-Mi0wODowMCBoZnNwbHVzLXRlc3RpbmctMDAwMSBrZXJuZWw6IE5JTEZTIChkbS0wKTogSS9PDQpl
-cnJvciB3cml0aW5nIGxvZyAoc3RhcnQtYmxvY2tucj0xODQzMiwgYmxvY2stYw0Kb3VudD0yMDQ4
-KSBpbiBzZWdtZW50IDkNCjIwMjUtMTEtMTJUMTg6MzY6MjguMzk4NDI4LTA4OjAwIGhmc3BsdXMt
-dGVzdGluZy0wMDAxIGtlcm5lbDogTklMRlMgKGRtLTApOiBJL08NCmVycm9yIHdyaXRpbmcgbG9n
-IChzdGFydC1ibG9ja25yPTQ3MTA0LCBibG9jay1jDQpvdW50PTIwNDgpIGluIHNlZ21lbnQgMjMN
-CjIwMjUtMTEtMTJUMTg6MzY6MjguMzk4NDMwLTA4OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIGtl
-cm5lbDogTklMRlMgKGRtLTApOiBJL08NCmVycm9yIHdyaXRpbmcgbG9nIChzdGFydC1ibG9ja25y
-PTQ5MTUyLCBibG9jay1jDQpvdW50PTQxOCkgaW4gc2VnbWVudCAyNA0KDQpJIG5lZWQgdG8gZG91
-YmxlIGNoZWNrIGJ1dCBsaWtld2lzZSBlcnJvciBoYXBwZW5zIG5vdCBvbmx5IGZvciBnZW5lcmlj
-Lzc1MyB0ZXN0LQ0KY2FzZS4gQXMgZmFyIGFzIEkgY2FuIHNlZSwgb3RoZXIgdGVzdC1jYXNlcyBh
-bHNvIHRyaWdnZXJlZCBzdWNoIGlzc3VlLiBCdXQNCm5hbWVseSBnZW5lcmljLzc1MyBoYW5ncyBp
-bmZpbml0ZWx5IHdpdGggc3VjaCBlcnJvciBtZXNzYWdlcy4NCg0KSSBiZWxpZXZlIGl0IG1ha2Vz
-IHNlbnNlIHRvIGFjY291bnQgYWxsIG9mIHRoZXNlIGlzc3VlcyBpbiBzb21lIHRyYWNraW5nIHN5
-c3RlbQ0KYmVmb3JlIHN0YXJ0aW5nIHRvIGZpeCBpdC4gQXJlIHlvdSB1c2luZyBhbnkgdHJhY2tp
-bmcgc3lzdGVtIGZvciBOSUxGUzIgaXNzdWVzPw0KRnJhbmtseSBzcGVha2luZywgSSBhbSB1c2lu
-ZyBnaXRodWIncyB0cmFja2luZyBzeXN0ZW0gZm9yIEhGUy9IRlMrIGlzc3VlcyBbMV0uDQpJdCdz
-IHNpbXBsZSBlbm91Z2ggYnV0IEkgZG9uJ3QgbmVlZCBpbiBtb3JlIGNvbXBsZXggc3lzdGVtIGZv
-ciB0aGlzIHJpZ2h0IG5vdy4NClNvLCB3aGF0IGRvIHlvdSB0aGluayBhYm91dCBzb21lIGJ1ZyB0
-cmFja2luZyBzeXN0ZW0gZm9yIE5JTEZTMj8gDQoNCkFzIGZhciBhcyBJIGNhbiBzZWUsIHN5emJv
-dCBzdGlsbCByZXBvcnRzIGFib3V0IDUgaXNzdWVzIGZvciBOSUxGUzIgWzJdLiBTbywgaXQNCm1h
-a2VzIHNlbnNlIHRvIGFjY291bnQgdGhlc2UgaXNzdWVzIHRvby4NCg0KSSBhbSB3b3JraW5nIG9u
-IEt1bml0LWJhc2VkIHVuaXQtdGVzdHMgZm9yIENlcGhGUywgSEZTL0hGUyssIFNTREZTLiBTbywg
-SQ0KYmVsaWV2ZSB0aGF0IE5JTEZTMiBjb3VsZCBiZW5lZml0IGFsc28gZnJvbSBoYXZpbmcgbGlr
-ZXdpc2UgdW5pdC10ZXN0cy4gSG93IGRvDQp5b3UgZmVlbCBhYm91dCBpdD8NCg0KSSBhbSBnb2lu
-ZyB0byBhdHRlbmQgTFBDIDIwMjUgaW4gVG9reW8gKERlY2VtYmVyIDExIC0gMTMsIDIwMjUpLiBB
-bmQgSSBhbQ0KcGxhbm5pbmcgdG8gaGF2ZSAyIGZyZWUgZGF5cyBiZWZvcmUgY29uZmVyZW5jZSBz
-dGFydC4gQXJlIHlvdSBwbGFubmluZyB0byBhdHRlbmQNCkxQQyAyMDI1Pw0KDQpUaGFua3MsDQpT
-bGF2YS4NCg0KWzFdIGh0dHBzOi8vZ2l0aHViLmNvbS9oZnMtbGludXgta2VybmVsL2hmcy1saW51
-eC1rZXJuZWwvaXNzdWVzDQpbMl0NCmh0dHBzOi8vbG9yZS5rZXJuZWwub3JnL2xpbnV4LW5pbGZz
-LzY5MTFhZDMwLmE3MGEwMjIwLjIyZjI2MC4wMGRiLkdBRUBnb29nbGUuY29tL1QvI3UNCg==
+Hi Viacheslav,
+
+On Fri, Nov 14, 2025 at 9:19=E2=80=AFAM Viacheslav Dubeyko wrote:
+>
+> Hi Ryusuke,
+>
+> I did run the xfstests suite for NILFS2. As far as I can see, there are 1=
+56
+> failed tests and I needed to exclude 2 tests from running.
+>
+> sudo ./check -g auto -E ./my_exclude.txt
+> FSTYP         -- nilfs2
+> PLATFORM      -- Linux/x86_64 hfsplus-testing-0001 6.18.0-rc3+ #93 SMP
+> PREEMPT_DYNAMIC Wed Nov 12 14:37:49 PST 2025
+> MKFS_OPTIONS  -- /dev/loop51
+> MOUNT_OPTIONS -- /dev/loop51 /mnt/scratch
+>
+> <skipped>
+>
+> Failures: generic/003 generic/040 generic/041 generic/068 generic/074
+> generic/075 generic/078 generic/080 generic/086 generic/092 generic/097
+> generic/099 generic/100 generic/103 generic/105 generic/109 generic/112
+> generic/117 generic/121 generic/122 generic/124 generic/127 generic/129
+> generic/131 generic/136 generic/177 generic/182 generic/192 generic/215
+> generic/221 generic/237 generic/241 generic/245 generic/246 generic/247
+> generic/248 generic/249 generic/251 generic/255 generic/257 generic/258
+> generic/260 generic/285 generic/286 generic/307 generic/309 generic/310
+> generic/313 generic/316 generic/318 generic/319 generic/322 generic/337
+> generic/348 generic/360 generic/363 generic/365 generic/375 generic/376
+> generic/377 generic/394 generic/403 generic/404 generic/408 generic/409
+> generic/410 generic/411 generic/420 generic/425 generic/428 generic/430
+> generic/431 generic/432 generic/433 generic/436 generic/437 generic/438
+> generic/439 generic/443 generic/444 generic/445 generic/448 generic/469
+> generic/471 generic/478 generic/483 generic/484 generic/485 generic/486
+> generic/489 generic/490 generic/503 generic/504 generic/510 generic/512
+> generic/516 generic/519 generic/523 generic/529 generic/533 generic/535
+> generic/537 generic/539 generic/547 generic/553 generic/555 generic/563
+> generic/565 generic/567 generic/568 generic/571 generic/585 generic/589
+> generic/590 generic/607 generic/610 generic/611 generic/614 generic/616
+> generic/618 generic/629 generic/631 generic/632 generic/634 generic/637
+> generic/638 generic/639 generic/640 generic/650 generic/676 generic/690
+> generic/695 generic/697 generic/704 generic/706 generic/712 generic/713
+> generic/715 generic/718 generic/719 generic/723 generic/724 generic/725
+> generic/728 generic/732 generic/736 generic/738 generic/741 generic/742
+> generic/749 generic/754 generic/758 generic/759 generic/763 generic/764
+> generic/771
+> Failed 156 of 767 tests
+>
+> I needed to exclude generic/740 and generic/753. I am not completely sure=
+ what
+> is wrong with generic/740 (it could be glitch on my side). But generic/75=
+3 fills
+> the system log with bunch of errors:
+>
+> 2025-11-12T18:36:24.171533-08:00 hfsplus-testing-0001 root: run xfstest
+> generic/753
+> 2025-11-12T18:36:24.175432-08:00 hfsplus-testing-0001 kernel: run fstests
+> generic/753 at 2025-11-12 18:36:24
+> 2025-11-12T18:36:24.243745-08:00 hfsplus-testing-0001 systemd[1]: Started
+> fstests-generic-753.scope - /usr/bin/bash -c "test -w
+>  /proc/self/oom_score_adj && echo 250 > /proc/self/oom_score_adj; exec
+> ./tests/generic/753".
+> 2025-11-12T18:36:26.068288-08:00 hfsplus-testing-0001 kernel: NILFS (dm-0=
+):
+> segctord starting. Construction interval =3D 5 second
+> s, CP frequency < 30 seconds
+> 2025-11-12T18:36:26.082067-08:00 hfsplus-testing-0001 nilfs_cleanerd[7633=
+54]:
+> start
+> 2025-11-12T18:36:26.082949-08:00 hfsplus-testing-0001 nilfs_cleanerd[7633=
+54]:
+> pause (clean check)
+> 2025-11-12T18:36:28.111323-08:00 hfsplus-testing-0001 kernel: Buffer I/O =
+error
+> on dev dm-0, logical block 2621424, async page r
+> ead
+...
+> 2025-11-12T18:36:28.398430-08:00 hfsplus-testing-0001 kernel: NILFS (dm-0=
+): I/O
+> error writing log (start-blocknr=3D49152, block-c
+> ount=3D418) in segment 24
+>
+> I need to double check but likewise error happens not only for generic/75=
+3 test-
+> case. As far as I can see, other test-cases also triggered such issue. Bu=
+t
+> namely generic/753 hangs infinitely with such error messages.
+
+Okay, I'll take a look at xfstests/753 and related tests.
+To be honest, I've been busy lately and haven't had much time, but I
+hope to have some time after Tuesday.
+
+> I believe it makes sense to account all of these issues in some tracking =
+system
+> before starting to fix it. Are you using any tracking system for NILFS2 i=
+ssues?
+> Frankly speaking, I am using github's tracking system for HFS/HFS+ issues=
+ [1].
+> It's simple enough but I don't need in more complex system for this right=
+ now.
+> So, what do you think about some bug tracking system for NILFS2?
+
+We don't have a central BTS that we operate. We did have one during
+development, but it wasn't open and is no longer usable.
+So we either use a mailing list or syzbot, and although I don't
+particularly want or use it, nilfs-utils' github plays a role in that
+regard.
+
+As for managing issues raised by xfstests, as you say, I agree that a
+proper BTS is needed.
+However, something that is heavily web-dependent like github doesn't
+work well with mailing lists, so I'm honestly not sure if it's a good
+solution for this project, apart from github-based development
+projects.
+
+In this regard, I think syzbot is good, because email exchanges
+naturally become a response history and are easily shared with the
+mailing list.
+Unfortunately, it doesn't cover the entire issue tracking.
+
+If you're going to use github for issue tracking, it would be better
+if it could be set up to be highly compatible with mailing lists.
+What do you think?
+
+Personally, I'd like to see a better issue tracking system that can
+bridge with email-driven workflows, flexibly connect with AI, and
+support OSS activity, but I don't know of anything other than GitHub
+that I think would be suitable.
+
+> As far as I can see, syzbot still reports about 5 issues for NILFS2 [2]. =
+So, it
+> makes sense to account these issues too.
+
+I think it's fine to use it solely for issue management purposes, as
+long as it doesn't result in double management.
+Therefore, I think we should make sure to always jump to syzbot from
+GitHub, etc., as an index, and make good use of syzbot's workflow as
+is.
+
+> I am working on Kunit-based unit-tests for CephFS, HFS/HFS+, SSDFS. So, I
+> believe that NILFS2 could benefit also from having likewise unit-tests. H=
+ow do
+> you feel about it?
+
+As for using Kunit, I'm not sure how to effectively extract unit tests
+while avoiding I/O and page caching.
+Rather, what parts of HFS/HFS+ do you extract and write tests for?
+
+>
+> I am going to attend LPC 2025 in Tokyo (December 11 - 13, 2025). And I am
+> planning to have 2 free days before conference start. Are you planning to=
+ attend
+> LPC 2025?
+
+I'm not participating. But welcome to Japan ;)
+
+It might have been a good opportunity to meet you. However, since I'm
+not a native speaker, I honestly find email communication more
+efficient than face-to-face communication.
+Also, while it's not a health issue, personal circumstances have been
+making it difficult for me to move around freely recently.
+
+Well, it's not like I can't come at all, so if you still want to have
+a face-to-face discussion for the future, please let me know via
+private message.
+
+Thanks,
+Ryusuke Konishi
+
+> Thanks,
+> Slava.
+>
+> [1] https://github.com/hfs-linux-kernel/hfs-linux-kernel/issues
+> [2]
+> https://lore.kernel.org/linux-nilfs/6911ad30.a70a0220.22f260.00db.GAE@goo=
+gle.com/T/#u
