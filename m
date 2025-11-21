@@ -1,362 +1,288 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B86512DC79C
-	for <linux-nilfs@vger.kernel.org>; Tue, 18 Nov 2025 23:23:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=148.163.156.1
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763508211; cv=fail; b=q8mvqpRwRTW/ytr8BpvKRsom+9KCN+mBfFfoZp32EGxrjTjgLiqVq5tfMED+5qcRdxb22jWAlrulS9BZKIKKo6cXtJlKGZkCJouGNxDooCdrl+eO5sgu//1e7guFnQbs07Qn0AgihslS7dYJ+Z5Z8mT3gVBr+3qUTrRxdCqy4m0=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763508211; c=relaxed/simple;
-	bh=RDZbbrn5K3BQkpUabQzmHJVTifuQ1A3pRcTK/fgnHeI=;
-	h=From:To:CC:Date:Message-ID:References:In-Reply-To:Content-Type:
-	 MIME-Version:Subject; b=RuCJT6EzzNAPeWA8+983RKD/KPIFDJL+OFYEIlo1WyU4Co/PrSh6CD/mTzX5Q0YsVIUfN6T5P0njWOidJ9fwOlld7z+PUYx7PcwmeQnvapsJaQwNd8o+7hcID9vvGEqPZ3jbrvCebJiESaqwajJmM4ifOpwarnAxb9TbuMop1vo=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ibm.com; spf=pass smtp.mailfrom=ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=GlJrUQ2L; arc=fail smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ibm.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3C3F2609FD
+	for <linux-nilfs@vger.kernel.org>; Fri, 21 Nov 2025 14:18:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.43
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1763734694; cv=none; b=caGpEMRZ3k5C287MxbxlQQuU4tghWVClf0jzLV1AIp0eaNfR19YJ7SOqzhT11GSpef+LpaZVwHyB+d1j9ldcTahe2ef0OQ0rJkaTlo6OhdzGDEF4QmPp+hDbleC54HfkNW0saYT8s7MihoDpLZu+LhOUIFQ58L3Z2tT60HWdbnk=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1763734694; c=relaxed/simple;
+	bh=bvbUKL/SJamLcjrBNBdi6PCEUoIlJwxSWc4qKvr0CWw=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=gW4JyMSRKz6QHG/RSTrLpEUgD3Ky9k0wbsvEhGnKGvylIfgCHlCxL2NsW5FX6oGci8EUbefu7P9oqkB/eIA1k2ywx5+GLzoNJuYZGUg20rRqc05tHnItpzB9ddzDEZ1iil6KqqrbdYOSsmNJXxpCRTGMF9BDXWPSvQ1qxNfsmIU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CQKowFd+; arc=none smtp.client-ip=209.85.167.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="GlJrUQ2L"
-Received: from pps.filterd (m0356517.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 5AIFuZoY007805;
-	Tue, 18 Nov 2025 23:23:28 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-id:content-transfer-encoding:content-type:date:from
-	:in-reply-to:message-id:mime-version:references:subject:to; s=
-	pp1; bh=RDZbbrn5K3BQkpUabQzmHJVTifuQ1A3pRcTK/fgnHeI=; b=GlJrUQ2L
-	jAHCmnqU8G0R6f5r13J4sO6liOxW8wdF+IKa7mXKsleL2FZp9MBgZMKyD6ht+mTx
-	F59YSs++oXSeDG0iTy2s3oUT/ixvqlDpIaVG2SCYACF/zQHO8XU8IFljpqYzsMVt
-	/GdHyzWR20q9QCvPLMX1PzH21csbP1Sh+Dj/Q4U/tOhYXa10xVOdbRI/Ltm8q0XE
-	Kg7ZEiPCt+ZUqwg0OtlcZTGQlKd6SZtnhFd1YglMsJhTzskrG4tdF5xkFfIqNFML
-	ogLIhsfxdEzaL4dTLrC39jGzstKxQK/V7na8iq54e8Q2UFRdtKM17+f1vnnPLPka
-	7eNpoUdeJiQOpA==
-Received: from pps.reinject (localhost [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4aejjw5ptt-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 18 Nov 2025 23:23:28 +0000 (GMT)
-Received: from m0356517.ppops.net (m0356517.ppops.net [127.0.0.1])
-	by pps.reinject (8.18.1.12/8.18.0.8) with ESMTP id 5AINLXR7026891;
-	Tue, 18 Nov 2025 23:23:27 GMT
-Received: from bl2pr02cu003.outbound.protection.outlook.com (mail-eastusazon11011050.outbound.protection.outlook.com [52.101.52.50])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4aejjw5pts-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 18 Nov 2025 23:23:27 +0000 (GMT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=frjDA2UiTYDYjR15rqt+2pc10hwxgKI03kpD5IwULOusBcjKQXHGh+ag8GOTX2qELdVspGgcLATNgVgwNvNfg+2BzNk2Han4+NySJzLyp0oLlc6jconDcB2ZrZ6h8WlzWyssr4TMajHBf5lhBE7+qCHfk5QNoo9cVh9dv6L2eFq4Qr8sH47t6N0KQ40Jfu+LeCw2NHxRY+0Rr29t2x6hZdmDlodsZBI2tNZ9vMkWMqt2qYYVXwmm2OSb1z3K8h6+IIXgNUR3ufV5yyUuyTYCESXFCrX41RnMrwxDU3z1ehVJVMnQ+73FtuxaGF61Q3rI5UiFzUw3XNU+Oaj+woG/4A==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=RDZbbrn5K3BQkpUabQzmHJVTifuQ1A3pRcTK/fgnHeI=;
- b=bcm+MvCG8RECNi/dV6JxWWzyZJnOckUE/Mi0Tsg3o4W8M+yzY9u745uoyZAVPV6y2UZO6sPnaw4tuj3ATn7RLP3c/oEvLDjWHhAHX3FoNj9X4X59pcVDYkh5/N2B6e+lUp5YU+U5w2ZkBc2uKcFlWOGM3Pf68Bdi2SJ6ZwkACgddQ5qXEIQpmwPvQsJEIRyZ/nhLcxOU/vFSJlapDb3DgBKg2KWRHH0Y6WDug/wOrT6cT9eQk/wq8ynQtQb4WBok4Qd6jpVuChXcNmFHtJ7wsARpuM6vkCoqQaFCDJCYPapv1LAKiXEEh3i/BIlK/P2m7oKMtbFEeqAIR3wuWbhocg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=ibm.com; dmarc=pass action=none header.from=ibm.com; dkim=pass
- header.d=ibm.com; arc=none
-Received: from SA1PR15MB5819.namprd15.prod.outlook.com (2603:10b6:806:338::8)
- by SA3PR15MB6196.namprd15.prod.outlook.com (2603:10b6:806:301::7) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9320.22; Tue, 18 Nov
- 2025 23:23:25 +0000
-Received: from SA1PR15MB5819.namprd15.prod.outlook.com
- ([fe80::920c:d2ba:5432:b539]) by SA1PR15MB5819.namprd15.prod.outlook.com
- ([fe80::920c:d2ba:5432:b539%4]) with mapi id 15.20.9343.009; Tue, 18 Nov 2025
- 23:23:25 +0000
-From: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
-To: "konishi.ryusuke@gmail.com" <konishi.ryusuke@gmail.com>
-CC: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>,
-        "slava@dubeyko.com" <slava@dubeyko.com>
-Thread-Topic: [EXTERNAL] Re: Status of running xfstests for NILFS2
-Thread-Index: AQHcVPxMvOR0TznASUaKKmt1+Qe6frTz45oAgAU3GQA=
-Date: Tue, 18 Nov 2025 23:23:25 +0000
-Message-ID: <66926bf9a9cb9488dd5f8fe9493d366fb3fd7e66.camel@ibm.com>
-References: <ad4826a48dba37fee0fa9949bfdeef8747ab8e93.camel@ibm.com>
-	 <CAKFNMok6sj9EPgCBSn=3Uc1ze51jbPH69xEXQtFTej3B1JcTLQ@mail.gmail.com>
-In-Reply-To:
- <CAKFNMok6sj9EPgCBSn=3Uc1ze51jbPH69xEXQtFTej3B1JcTLQ@mail.gmail.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: SA1PR15MB5819:EE_|SA3PR15MB6196:EE_
-x-ms-office365-filtering-correlation-id: fdb26a8f-0618-4a1c-6930-08de26f978f7
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam:
- BCL:0;ARA:13230040|10070799003|376014|1800799024|366016|38070700021;
-x-microsoft-antispam-message-info:
- =?utf-8?B?aml4aWg4MHhvdC9JWGtIMDBiTWltUTl2Tzc0ekVFeWtZcjVzMnh2N1RHMGpo?=
- =?utf-8?B?dDluRVlPUlRyUGp1NTc4RGczZDYzbm1uMDBMZFdTR1dNSXZSeGFwM2NVZjk2?=
- =?utf-8?B?bEtOWCtxa0JmYXQ4MUJZN3hlZlA3QzM5UGt2OUg2RUJRUHhhcjlyc2h4Qkpp?=
- =?utf-8?B?dURLZ0hjL3EwcG04TmZsdWZkYzVXdmdTUWx1LzRveDRBcm5ZczN6OGlBVDg4?=
- =?utf-8?B?Qi93d21NZCtoS3I1OVVJUkpiSU9qcXZlQjdURm84N3g3bXBocy9seVdlbTdI?=
- =?utf-8?B?RnlBY2dPeWdDTHcyQ25aRis5OGJoQ0VIUmFIblVSUFlIUE1OZEZBRGM1YWo0?=
- =?utf-8?B?UDRuQk5ObllpdTBkZlRZbzk3V1BwZEs2djBlQXNsVHBxNEVGQ3ZBcE01bHdH?=
- =?utf-8?B?UlozK1JIQVQ5STQrL1ZRd2dJVEs0NGZuS0ZvR29MODBORTRUZGV3cGp1czQr?=
- =?utf-8?B?SWpJL1RYU2tkcWt5ZWhWa3k1a1k2ZlkzKzRlR1IwR1BVcys5WnJqRFJRVENO?=
- =?utf-8?B?R21JcUVQOUpscERvRTNsajE4ZkU2MWx5R3V4akcxcVdRTDYraEJ4WnFoZWVj?=
- =?utf-8?B?U0p3N2o4VFN5NlV0UzhGQlJ6VTN3VzIxeGkxVlJrQ2grUERLOTVLZTFTZUdH?=
- =?utf-8?B?ZXFUZkx0YzZ0RnNJbFVRaDk5QnN6a0tmeTV5bEFWc20yMHE4dWlTVzY1eTB2?=
- =?utf-8?B?b21lVlFmQ216UzFjUXZqUDU1MVhvNHNsTG84ZFA4VUFUMWNmYi9xazZnV2x5?=
- =?utf-8?B?Z1ZFTUhGTmFCM3hnZkFBb0wzemVaU1FSNVJQK3ZtbnpZODdkMFNGcFNXL3Rj?=
- =?utf-8?B?MDNxa3JoZHlFYyt2Q1VlUFE4VTFvQ1BRQiszYTBVc2Z1Y3c0ZUF4RklzWU5L?=
- =?utf-8?B?TSt2VWxEN21Vc2Y3QXdkdjdEZ2x4OCtXa3RzYmdSQ1U3R1UwN2RucGJobkRz?=
- =?utf-8?B?cGtwSGpkRWZoRjZOSU5UUHk5cmoxbHFIcUxLQ3Npdkt3dEtMWG9NSUxwN3Bm?=
- =?utf-8?B?a0lvYklDZFF0WVVjcVREMVo3dHZQUWxmVXQ2UEorRlh4cW5senI4MjdYczBV?=
- =?utf-8?B?VmZ6Rjd4VnRrY3pPWEFCUUxBdzN4ZmJDNDVtZHlDeVA4WVM1Mm9wNjVacThy?=
- =?utf-8?B?THlsYzY1dVZ2VWJteUV5SHFRQUJqQ2V4N2xyTDdRbmVOTXlPbjI5OThYbHhU?=
- =?utf-8?B?OWNUaEEvTHArVjhoRlQzU0NDbE9HVHpvNmR0NVRuWG5idFlzTXp1U1E0S3d6?=
- =?utf-8?B?VUlUdm5iem5SZnExazVxQm9aUDl1VGtFR05PYWFzUVlzK01oL3dXbVV0SzUv?=
- =?utf-8?B?ZXZOK29tQVpPTnptcStOZGw3OGpFOHlQaHBEUkFHblB1a1FZWHV2U2d0YUtE?=
- =?utf-8?B?YndDTUJPS1JLTmhRWmNHcEVVQ1d3L2xwaXRCdkJNN0F4RXN6WjNiZlR5cXpH?=
- =?utf-8?B?VXhpNzFFMWFuSWFITTdXYTJLMFBmVk5VQXBpa3dDYnhVQ2dnWHZWT2JoS1dy?=
- =?utf-8?B?dkc3Vi9sZ21FbnB1eDREcFlwVEpHNWVnWXplUlZlUU1NSFVOaUJDdzJSa0FY?=
- =?utf-8?B?YXp3YmZtcGY2aXJDekI1NUt3bDV4eEpLTWNidXU3ZzhNQWNBeVZYeTErWDZx?=
- =?utf-8?B?cVVreS83MnNKZEtjcjBrdnhJb25rcTVGWjg1K1JWVjhwQ012WDc2MkcwTDN0?=
- =?utf-8?B?dmxha2FpNVlydkI4TzNVWjd3aUU3U2RRdEtRZDN5OUtpMzFIYXhJci95bXBt?=
- =?utf-8?B?VTFraDlMKytJeHY5U1hWdlhNK1BQalp4ekpwTHYzOFFTMXV6VDY1NUx0VmRn?=
- =?utf-8?B?YUdHUTNJRkRML3I4L1ZDOHFPdXJQOWtMVWRzOFNjWnJ5ZDBqMi9SNW5LMkZx?=
- =?utf-8?B?SjZQVW50OVVtY1RDTitmekZsUytiRFhXSFQvQXp6TjNJeVNZeDY1eDlhbm5P?=
- =?utf-8?B?VWgzYnR4ZDJQbTdQNlR5ZC81V3lDdjVUeWRpUno3ZUhsVTI1bzN0V3RSMWR2?=
- =?utf-8?B?WlBQUlhSTms1RW05Z3Q3WmRqTTVoRnBJcXVyVWNMVFZOVmI5Tzk4NjNpZlkw?=
- =?utf-8?Q?+TwxG0?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SA1PR15MB5819.namprd15.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(10070799003)(376014)(1800799024)(366016)(38070700021);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?SE5BeWNsekxvL1hoZzQ1dzZnVkoyQmpWclBDMzRXOEFVRERVUG9Bek1KVWZ2?=
- =?utf-8?B?ZG13RWVxT2FnL0R5QUc1bTk2NWRjc1d5bnlNMTM2c2hLa0p0U3BoZVJCS0Jr?=
- =?utf-8?B?UVd1UlJxRXBUSHA2U0x2cUhpck1oZnFyeVJmMWYrZ2Z4U3EwREwzNldmNHlF?=
- =?utf-8?B?WGpISExKdkZEbUllREpzK2s0V0NKOWpHUUkrS0JGZU14dVFWZ1o0N2dwSis0?=
- =?utf-8?B?ZUloK04wcnRKSEo1VzJ2QldPd2RWZ0xSclJYd0pOL2FhZS9lWWU2ZWdYMThI?=
- =?utf-8?B?bFZvc1YxcGVURU1wVHJLNkN2R2N5YVZoMXQ5U1RVazFPNnd6eWltOVdEVDNX?=
- =?utf-8?B?QmdUNUVMaFV4RFUrcENyU0RLcGdpLzBhdHc1T3p5RGc4cHNvWFBGaWtaM1BC?=
- =?utf-8?B?SEdIZXlzejR5a09CS2RHUFJRdXNPK1M3QngydnpEanExdmFCT2lsQU5WdGVE?=
- =?utf-8?B?SFZqVGd0ay9aSTBPL1g2dUYzZGNBMVRiNVp4bXhHMTB3UnBQVFNzYWJRWDBF?=
- =?utf-8?B?T2NmTWJBN0hyaityM2tRMnR4RFBWWCtINVNlUTVDUkQwcUp1ckljaTMzak1i?=
- =?utf-8?B?RlZ0QnJWQUp3bVZOcXpPK1FZK1UrbXc4dFVDTXRxcGk2TXBDS2pqcEYra1Ri?=
- =?utf-8?B?R0dXaW5QdUZKaC8ycm83QnFoaE04ditsNVROVkw3aGJVWTgrUTFiaXRRb3dL?=
- =?utf-8?B?Sm1HWXdpVEtBbFIzU2ovTERTNTRIdlVjVmREUzlwRUxkUEhHOWRHU2tvOTZz?=
- =?utf-8?B?bTBNWXIxMVNsTWFKZDJMT2hId0gvdFM5YWFYcGYvaVpWUFhqZ0xOZmZiQWNH?=
- =?utf-8?B?R01kMzdNNTdOdEhqS1VZMnBaTTY3UE96Nm41eTE0blpQVWpnTk5Wa1lqZkdR?=
- =?utf-8?B?SkorODhXZ2J4RU8ra1NJSlVMY0ZuMkxreURMdW80cGRHeHNtNXBiVEhYc2Vt?=
- =?utf-8?B?ekFxL3FldGhHNVlTZUUvcFUwTHJQRDhkQ2VXait0T2xjMkVkV1VVY1FBbHRu?=
- =?utf-8?B?cUlLek5EeVp5SXBTZ3F4cU13K1NtT2VBVWxFUlRXbDdqMU1OQ1BFWWxoV01t?=
- =?utf-8?B?U3hKbWF3bk1zeC9UbWErb292SVgwZFREbnlMQXdHZWlVWFRnNURXOWVROXNi?=
- =?utf-8?B?NG1yd2o3M0JEaUcycmU4NkVQSThDMG5wSzZXb3drTkZ6dlcwYTNvOHVIYkRx?=
- =?utf-8?B?b29Xd25FM1Z0czBLWFBWZ29jeW5jK1RJeWM0ZTcyNXBhcm50blNOMHJJUDIz?=
- =?utf-8?B?RjUraVF2VlBad0tyWFN0RFU3aDIzeGQzeXZpK2ZDMDlPc2RwcUV3c0xRbUth?=
- =?utf-8?B?bEQ1OG9HVUsyRmh1RlVhcDdYRWo5Y2JFdkxzUVgzYmhEZVZmUkxHaElhVVRq?=
- =?utf-8?B?KzhONnphV1k3YjZWSXJ1NG1sME83eElQQjlGdkswVFZuWUZHZjdFZzZEcm1W?=
- =?utf-8?B?MkRTbDI2cmlnNzU1VTdxYURkYW9IYTgzNXNSOXBGMC8yZmxINk1KWU13SFpF?=
- =?utf-8?B?L25teStrRnFmWUlDYkRLSUdXQ3JZZ1R4VmNFR3U1RThPWDQyd29JTkdCTk9R?=
- =?utf-8?B?RTBFQWRyQTJIanM0d05jSktFeThuampvUXpaa0FhL2RzaVZBbWRCNlBZN0pm?=
- =?utf-8?B?NzE4c2VRQ0c3TTBnaFE1S3AwaE95aGEvZnl4Z2FsdEl3dnBWai9CelZkTHFt?=
- =?utf-8?B?aU1QeFNSNWc0MkdpOGVQanBxZUxQbktPSVBuRy9qQXE5S1pnN0VZYkhONDQw?=
- =?utf-8?B?ZDZTSjZDdzhhaUNLWlk2MXBoOHdqaXJBTllSQTBVS0ROWGZsK0ZFU2NSdlB4?=
- =?utf-8?B?cjZsbXk4Sm9JamFpVHRmMHhRTUlkT2Y5Q09DM3d1UjF2MENacXFnQ0FBbzRr?=
- =?utf-8?B?MjUrWUxCTjhEcjh6SDlOYXBWZllFNmFiNENjaTZZUFQ5SGhJMVRnMTFiS3dF?=
- =?utf-8?B?UGZVZnRQQ081VnczOVVoK1Q1R3NIeVZvR1A3ajM2a3lhb2EydUJxYnBTcUlV?=
- =?utf-8?B?SXRVeUpjRDh3L1J1RlpKeUVaMUlHNFdqeVRMVkRVeVhXMHBmaTEyVHVsbnRy?=
- =?utf-8?B?VXpWdUFHbGpjSVB5RnZQa0F2cDMwd2RWVDBkNzJPMHM1RXhoV2JPSzU1amFv?=
- =?utf-8?B?amNuWUZGZStLeEJhQXRsSXBYL3dFR0ZKUVN6c1h6Nm52RjB6enV2SlNLSmpt?=
- =?utf-8?Q?CgDZc9BjFMeBgNg0Ncy+uwM=3D?=
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <0430B44F86BA49469518A39266864908@namprd15.prod.outlook.com>
-Content-Transfer-Encoding: base64
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CQKowFd+"
+Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-5943b62c47dso2110566e87.1
+        for <linux-nilfs@vger.kernel.org>; Fri, 21 Nov 2025 06:18:12 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1763734691; x=1764339491; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=9BoZPgtcIiGo0EOAiP6wWt+zzx0lMzwALnG5TKpmUO0=;
+        b=CQKowFd+C+nc9EW7cDhtN0O5zA7zJEpU1rVCvQLiSO2BaKxGiXi1qMhsjs6mPkGZls
+         qJjf5+dwok19kCMMKrUNrg3xoY25MIQ6Fzwpc6QIHlmS6rXnl1fJ2UWuZf8NnXFEu/FA
+         wyTIy2GrUX2EJ+0nEzZgFuOhT+6joL44GG1a8tYtiNkWPAshPAou0W3SGb1yQhAcM4OE
+         cP1sP84PaMJ3OLgR5h3ds8vIUFgjmee37DNOpTXz9KXyvuxVkFC+w/6C/LMvJUKgbLBr
+         +3fHLQLwX8BPvHKtXLE17q5mpTrnMKbL35gDpn7OHufRqPjvMyxm9Ljko2Ws8aPHwQgb
+         BdCQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1763734691; x=1764339491;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=9BoZPgtcIiGo0EOAiP6wWt+zzx0lMzwALnG5TKpmUO0=;
+        b=UPIMVSe/ljhf/bVUTdB6wHVhCjCl2sgJ6UcRMKu5xRK9kX9EE6wJx8OkHtubCGs59t
+         e1takCXNQRBD3GCQKFq9qA+Gu+WJE+PmgXMnXNj1KgMpRd8+FmTCJRvFcfN7gDvdQz6t
+         jN/QfSCdbMWQmxNL0u5LWZLcgqUAYDaL/dm/VxCIiNKxzq/4Aa1Yqxh8JCzXZbIt5IUN
+         sf21JttVguDYcoo028Qc74C1wfyJGFwcG4d7v81rug+Cm29/2y+Zrzn4+OBPp0ETcF1h
+         qajX1Bf7TuRf3hvpMD3++W/U8Vojm/bsoytWJqWE6Jsxa6vrQxIuWc0h+RLBf+xfLLt/
+         IS8g==
+X-Gm-Message-State: AOJu0Yw6LPlJotD7/PcMuKOof+o1ofDtpH83thRquR8w6tVyMCuKCbBy
+	4W+doDpbB5dP/0tDv2Hnc8ZbI6i+YMttmdOOzoPZPFpfdkZNV/pG7z1dlcueKsEWnitKUywR0dk
+	OM2ipLJ1/+uuFKinh3UJ5QI4ImxpmLj8=
+X-Gm-Gg: ASbGncvaM1uXgdp4IulV/zZQHsWYOyr/4nr1kCX8xjTC3wPpOKHZ2s4NZ3lPQonpAro
+	cE934+TKveQCy1qbWHqK8J97iGCqmvkytZ6UNWqclP8n4i0Kmaj4zQkBBkW946WByrduCg7IpEt
+	jzMyHqMxLraONDfWr6IxtOddmDeqZnhdi40lVjyVn7cRfjcgQ+cMjc0PttEczT+NC2GaZieKWzW
+	oNBZp9eA3vBiYK/cPfx8u22YwQT/VSOrAPdTs6/janLBXSB/J92M/jR39AWyfIXlh3jDvZh
+X-Google-Smtp-Source: AGHT+IHtdDubz7pqVYObzU4xojBa3nnnaIL2hwCqAR+vXcassmT3B4hu1Tzbxhu/rBPZojkq2XWPDzuoYRnIbMc+47g=
+X-Received: by 2002:a05:6512:b17:b0:595:8200:9f77 with SMTP id
+ 2adb3069b0e04-596a3ea7ca9mr839791e87.12.1763734690360; Fri, 21 Nov 2025
+ 06:18:10 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-OriginatorOrg: ibm.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SA1PR15MB5819.namprd15.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: fdb26a8f-0618-4a1c-6930-08de26f978f7
-X-MS-Exchange-CrossTenant-originalarrivaltime: 18 Nov 2025 23:23:25.0534
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: fcf67057-50c9-4ad4-98f3-ffca64add9e9
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: UYc3yIy2zmd2cgHXRBd436oi1fob/4AVwQ811lzHjP9yFFoy2hqr4qit/Wglcf41Uz2PPm2DgjLkHZ6eXkSPXg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA3PR15MB6196
-X-Authority-Analysis: v=2.4 cv=BanVE7t2 c=1 sm=1 tr=0 ts=691cfff0 cx=c_pps
- a=Vy3FhvgG8Thl4oebyZnGOA==:117 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
- a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10
- a=6UeiqGixMTsA:10 a=VkNPw1HP01LnGYTKEx00:22 a=dyeucny8ch5ZvgVOsPMA:9
- a=QEXdDO2ut3YA:10
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUxMTE1MDAzMiBTYWx0ZWRfX5AL/2pHElkyC
- Qa59i/IPFM2Pbt5KBwUY1KQ9fM1So/8AcXQUeJHI1J5BmpfyXkBXvVHHpuCBU+E/p2+F+PbJ4ib
- 7YGS2N9ikxQwmVEaXQcUPaXEZTZztIyQiPZVDX91MV+wvznJB1V2wBHbT8jqg+CiVhRZ5FDh0Yl
- zFdSIubxtcbXVvYCl3HoZ9HkK+i5wb+KaU7/8T3E6iLcfRMBWSJelXUfHOohjkxPxvEPPmstDs/
- x3Pg8bXlRXarX0Ig+ftkoC3wnrlMl2ghVA1m/8o/+HkPeWB0B20ZNFYZOpoD6D60nlI55+bimjR
- JudZWt3X0RbI6wnciVIF6KsU3roXYTmzLuXSjVPlRjKQ5d0LI7iFPyxtjtdt/kctyfZHgLaDIoX
- H3+icR/7gP2C8B4OsdKh3BJ3429UPw==
-X-Proofpoint-GUID: -slFlen7hIokh3oR6JcPdBLCbig9UyiB
-X-Proofpoint-ORIG-GUID: p7LDedU4CJ6mMvG3kzK5jYTD3A1Dt9_7
-Subject: RE: Status of running xfstests for NILFS2
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1121,Hydra:6.1.9,FMLib:17.12.100.49
- definitions=2025-11-18_04,2025-11-18_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- malwarescore=0 lowpriorityscore=0 suspectscore=0 spamscore=0 impostorscore=0
- priorityscore=1501 clxscore=1015 phishscore=0 bulkscore=0 adultscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.19.0-2510240000 definitions=main-2511150032
+References: <ad4826a48dba37fee0fa9949bfdeef8747ab8e93.camel@ibm.com>
+ <CAKFNMok6sj9EPgCBSn=3Uc1ze51jbPH69xEXQtFTej3B1JcTLQ@mail.gmail.com> <66926bf9a9cb9488dd5f8fe9493d366fb3fd7e66.camel@ibm.com>
+In-Reply-To: <66926bf9a9cb9488dd5f8fe9493d366fb3fd7e66.camel@ibm.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Fri, 21 Nov 2025 23:17:53 +0900
+X-Gm-Features: AWmQ_blkg25feDw8xHHy4tAzv0Js7EhSgYtX-LTxQsjk2J7reLEGyT9KW8Daens
+Message-ID: <CAKFNMokvQpOS6KcyxKjHs9bQ7a6Oi37EaaMD+0Vp3xE6HuYOkA@mail.gmail.com>
+Subject: Re: Status of running xfstests for NILFS2
+To: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
+Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "slava@dubeyko.com" <slava@dubeyko.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-SGkgUnl1c3VrZSwNCg0KT24gU3VuLCAyMDI1LTExLTE2IGF0IDAwOjQ0ICswOTAwLCBSeXVzdWtl
-IEtvbmlzaGkgd3JvdGU6DQo+IEhpIFZpYWNoZXNsYXYsDQo+IA0KPiBPbiBGcmksIE5vdiAxNCwg
-MjAyNSBhdCA5OjE54oCvQU0gVmlhY2hlc2xhdiBEdWJleWtvIHdyb3RlOg0KPiA+IA0KPiA+IEhp
-IFJ5dXN1a2UsDQo+ID4gDQo+ID4gSSBkaWQgcnVuIHRoZSB4ZnN0ZXN0cyBzdWl0ZSBmb3IgTklM
-RlMyLiBBcyBmYXIgYXMgSSBjYW4gc2VlLCB0aGVyZSBhcmUgMTU2DQo+ID4gZmFpbGVkIHRlc3Rz
-IGFuZCBJIG5lZWRlZCB0byBleGNsdWRlIDIgdGVzdHMgZnJvbSBydW5uaW5nLg0KPiA+IA0KPiA+
-IHN1ZG8gLi9jaGVjayAtZyBhdXRvIC1FIC4vbXlfZXhjbHVkZS50eHQNCj4gPiBGU1RZUCAgICAg
-ICAgIC0tIG5pbGZzMg0KPiA+IFBMQVRGT1JNICAgICAgLS0gTGludXgveDg2XzY0IGhmc3BsdXMt
-dGVzdGluZy0wMDAxIDYuMTguMC1yYzMrICM5MyBTTVANCj4gPiBQUkVFTVBUX0RZTkFNSUMgV2Vk
-IE5vdiAxMiAxNDozNzo0OSBQU1QgMjAyNQ0KPiA+IE1LRlNfT1BUSU9OUyAgLS0gL2Rldi9sb29w
-NTENCj4gPiBNT1VOVF9PUFRJT05TIC0tIC9kZXYvbG9vcDUxIC9tbnQvc2NyYXRjaA0KPiA+IA0K
-PiA+IDxza2lwcGVkPg0KPiA+IA0KPiA+IEZhaWx1cmVzOiBnZW5lcmljLzAwMyBnZW5lcmljLzA0
-MCBnZW5lcmljLzA0MSBnZW5lcmljLzA2OCBnZW5lcmljLzA3NA0KPiA+IGdlbmVyaWMvMDc1IGdl
-bmVyaWMvMDc4IGdlbmVyaWMvMDgwIGdlbmVyaWMvMDg2IGdlbmVyaWMvMDkyIGdlbmVyaWMvMDk3
-DQo+ID4gZ2VuZXJpYy8wOTkgZ2VuZXJpYy8xMDAgZ2VuZXJpYy8xMDMgZ2VuZXJpYy8xMDUgZ2Vu
-ZXJpYy8xMDkgZ2VuZXJpYy8xMTINCj4gPiBnZW5lcmljLzExNyBnZW5lcmljLzEyMSBnZW5lcmlj
-LzEyMiBnZW5lcmljLzEyNCBnZW5lcmljLzEyNyBnZW5lcmljLzEyOQ0KPiA+IGdlbmVyaWMvMTMx
-IGdlbmVyaWMvMTM2IGdlbmVyaWMvMTc3IGdlbmVyaWMvMTgyIGdlbmVyaWMvMTkyIGdlbmVyaWMv
-MjE1DQo+ID4gZ2VuZXJpYy8yMjEgZ2VuZXJpYy8yMzcgZ2VuZXJpYy8yNDEgZ2VuZXJpYy8yNDUg
-Z2VuZXJpYy8yNDYgZ2VuZXJpYy8yNDcNCj4gPiBnZW5lcmljLzI0OCBnZW5lcmljLzI0OSBnZW5l
-cmljLzI1MSBnZW5lcmljLzI1NSBnZW5lcmljLzI1NyBnZW5lcmljLzI1OA0KPiA+IGdlbmVyaWMv
-MjYwIGdlbmVyaWMvMjg1IGdlbmVyaWMvMjg2IGdlbmVyaWMvMzA3IGdlbmVyaWMvMzA5IGdlbmVy
-aWMvMzEwDQo+ID4gZ2VuZXJpYy8zMTMgZ2VuZXJpYy8zMTYgZ2VuZXJpYy8zMTggZ2VuZXJpYy8z
-MTkgZ2VuZXJpYy8zMjIgZ2VuZXJpYy8zMzcNCj4gPiBnZW5lcmljLzM0OCBnZW5lcmljLzM2MCBn
-ZW5lcmljLzM2MyBnZW5lcmljLzM2NSBnZW5lcmljLzM3NSBnZW5lcmljLzM3Ng0KPiA+IGdlbmVy
-aWMvMzc3IGdlbmVyaWMvMzk0IGdlbmVyaWMvNDAzIGdlbmVyaWMvNDA0IGdlbmVyaWMvNDA4IGdl
-bmVyaWMvNDA5DQo+ID4gZ2VuZXJpYy80MTAgZ2VuZXJpYy80MTEgZ2VuZXJpYy80MjAgZ2VuZXJp
-Yy80MjUgZ2VuZXJpYy80MjggZ2VuZXJpYy80MzANCj4gPiBnZW5lcmljLzQzMSBnZW5lcmljLzQz
-MiBnZW5lcmljLzQzMyBnZW5lcmljLzQzNiBnZW5lcmljLzQzNyBnZW5lcmljLzQzOA0KPiA+IGdl
-bmVyaWMvNDM5IGdlbmVyaWMvNDQzIGdlbmVyaWMvNDQ0IGdlbmVyaWMvNDQ1IGdlbmVyaWMvNDQ4
-IGdlbmVyaWMvNDY5DQo+ID4gZ2VuZXJpYy80NzEgZ2VuZXJpYy80NzggZ2VuZXJpYy80ODMgZ2Vu
-ZXJpYy80ODQgZ2VuZXJpYy80ODUgZ2VuZXJpYy80ODYNCj4gPiBnZW5lcmljLzQ4OSBnZW5lcmlj
-LzQ5MCBnZW5lcmljLzUwMyBnZW5lcmljLzUwNCBnZW5lcmljLzUxMCBnZW5lcmljLzUxMg0KPiA+
-IGdlbmVyaWMvNTE2IGdlbmVyaWMvNTE5IGdlbmVyaWMvNTIzIGdlbmVyaWMvNTI5IGdlbmVyaWMv
-NTMzIGdlbmVyaWMvNTM1DQo+ID4gZ2VuZXJpYy81MzcgZ2VuZXJpYy81MzkgZ2VuZXJpYy81NDcg
-Z2VuZXJpYy81NTMgZ2VuZXJpYy81NTUgZ2VuZXJpYy81NjMNCj4gPiBnZW5lcmljLzU2NSBnZW5l
-cmljLzU2NyBnZW5lcmljLzU2OCBnZW5lcmljLzU3MSBnZW5lcmljLzU4NSBnZW5lcmljLzU4OQ0K
-PiA+IGdlbmVyaWMvNTkwIGdlbmVyaWMvNjA3IGdlbmVyaWMvNjEwIGdlbmVyaWMvNjExIGdlbmVy
-aWMvNjE0IGdlbmVyaWMvNjE2DQo+ID4gZ2VuZXJpYy82MTggZ2VuZXJpYy82MjkgZ2VuZXJpYy82
-MzEgZ2VuZXJpYy82MzIgZ2VuZXJpYy82MzQgZ2VuZXJpYy82MzcNCj4gPiBnZW5lcmljLzYzOCBn
-ZW5lcmljLzYzOSBnZW5lcmljLzY0MCBnZW5lcmljLzY1MCBnZW5lcmljLzY3NiBnZW5lcmljLzY5
-MA0KPiA+IGdlbmVyaWMvNjk1IGdlbmVyaWMvNjk3IGdlbmVyaWMvNzA0IGdlbmVyaWMvNzA2IGdl
-bmVyaWMvNzEyIGdlbmVyaWMvNzEzDQo+ID4gZ2VuZXJpYy83MTUgZ2VuZXJpYy83MTggZ2VuZXJp
-Yy83MTkgZ2VuZXJpYy83MjMgZ2VuZXJpYy83MjQgZ2VuZXJpYy83MjUNCj4gPiBnZW5lcmljLzcy
-OCBnZW5lcmljLzczMiBnZW5lcmljLzczNiBnZW5lcmljLzczOCBnZW5lcmljLzc0MSBnZW5lcmlj
-Lzc0Mg0KPiA+IGdlbmVyaWMvNzQ5IGdlbmVyaWMvNzU0IGdlbmVyaWMvNzU4IGdlbmVyaWMvNzU5
-IGdlbmVyaWMvNzYzIGdlbmVyaWMvNzY0DQo+ID4gZ2VuZXJpYy83NzENCj4gPiBGYWlsZWQgMTU2
-IG9mIDc2NyB0ZXN0cw0KPiA+IA0KPiA+IEkgbmVlZGVkIHRvIGV4Y2x1ZGUgZ2VuZXJpYy83NDAg
-YW5kIGdlbmVyaWMvNzUzLiBJIGFtIG5vdCBjb21wbGV0ZWx5IHN1cmUgd2hhdA0KPiA+IGlzIHdy
-b25nIHdpdGggZ2VuZXJpYy83NDAgKGl0IGNvdWxkIGJlIGdsaXRjaCBvbiBteSBzaWRlKS4gQnV0
-IGdlbmVyaWMvNzUzIGZpbGxzDQo+ID4gdGhlIHN5c3RlbSBsb2cgd2l0aCBidW5jaCBvZiBlcnJv
-cnM6DQo+ID4gDQo+ID4gMjAyNS0xMS0xMlQxODozNjoyNC4xNzE1MzMtMDg6MDAgaGZzcGx1cy10
-ZXN0aW5nLTAwMDEgcm9vdDogcnVuIHhmc3Rlc3QNCj4gPiBnZW5lcmljLzc1Mw0KPiA+IDIwMjUt
-MTEtMTJUMTg6MzY6MjQuMTc1NDMyLTA4OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIGtlcm5lbDog
-cnVuIGZzdGVzdHMNCj4gPiBnZW5lcmljLzc1MyBhdCAyMDI1LTExLTEyIDE4OjM2OjI0DQo+ID4g
-MjAyNS0xMS0xMlQxODozNjoyNC4yNDM3NDUtMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEgc3lz
-dGVtZFsxXTogU3RhcnRlZA0KPiA+IGZzdGVzdHMtZ2VuZXJpYy03NTMuc2NvcGUgLSAvdXNyL2Jp
-bi9iYXNoIC1jICJ0ZXN0IC13DQo+ID4gIC9wcm9jL3NlbGYvb29tX3Njb3JlX2FkaiAmJiBlY2hv
-IDI1MCA+IC9wcm9jL3NlbGYvb29tX3Njb3JlX2FkajsgZXhlYw0KPiA+IC4vdGVzdHMvZ2VuZXJp
-Yy83NTMiLg0KPiA+IDIwMjUtMTEtMTJUMTg6MzY6MjYuMDY4Mjg4LTA4OjAwIGhmc3BsdXMtdGVz
-dGluZy0wMDAxIGtlcm5lbDogTklMRlMgKGRtLTApOg0KPiA+IHNlZ2N0b3JkIHN0YXJ0aW5nLiBD
-b25zdHJ1Y3Rpb24gaW50ZXJ2YWwgPSA1IHNlY29uZA0KPiA+IHMsIENQIGZyZXF1ZW5jeSA8IDMw
-IHNlY29uZHMNCj4gPiAyMDI1LTExLTEyVDE4OjM2OjI2LjA4MjA2Ny0wODowMCBoZnNwbHVzLXRl
-c3RpbmctMDAwMSBuaWxmc19jbGVhbmVyZFs3NjMzNTRdOg0KPiA+IHN0YXJ0DQo+ID4gMjAyNS0x
-MS0xMlQxODozNjoyNi4wODI5NDktMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEgbmlsZnNfY2xl
-YW5lcmRbNzYzMzU0XToNCj4gPiBwYXVzZSAoY2xlYW4gY2hlY2spDQo+ID4gMjAyNS0xMS0xMlQx
-ODozNjoyOC4xMTEzMjMtMDg6MDAgaGZzcGx1cy10ZXN0aW5nLTAwMDEga2VybmVsOiBCdWZmZXIg
-SS9PIGVycm9yDQo+ID4gb24gZGV2IGRtLTAsIGxvZ2ljYWwgYmxvY2sgMjYyMTQyNCwgYXN5bmMg
-cGFnZSByDQo+ID4gZWFkDQo+IC4uLg0KPiA+IDIwMjUtMTEtMTJUMTg6MzY6MjguMzk4NDMwLTA4
-OjAwIGhmc3BsdXMtdGVzdGluZy0wMDAxIGtlcm5lbDogTklMRlMgKGRtLTApOiBJL08NCj4gPiBl
-cnJvciB3cml0aW5nIGxvZyAoc3RhcnQtYmxvY2tucj00OTE1MiwgYmxvY2stYw0KPiA+IG91bnQ9
-NDE4KSBpbiBzZWdtZW50IDI0DQo+ID4gDQo+ID4gSSBuZWVkIHRvIGRvdWJsZSBjaGVjayBidXQg
-bGlrZXdpc2UgZXJyb3IgaGFwcGVucyBub3Qgb25seSBmb3IgZ2VuZXJpYy83NTMgdGVzdC0NCj4g
-PiBjYXNlLiBBcyBmYXIgYXMgSSBjYW4gc2VlLCBvdGhlciB0ZXN0LWNhc2VzIGFsc28gdHJpZ2dl
-cmVkIHN1Y2ggaXNzdWUuIEJ1dA0KPiA+IG5hbWVseSBnZW5lcmljLzc1MyBoYW5ncyBpbmZpbml0
-ZWx5IHdpdGggc3VjaCBlcnJvciBtZXNzYWdlcy4NCj4gDQo+IE9rYXksIEknbGwgdGFrZSBhIGxv
-b2sgYXQgeGZzdGVzdHMvNzUzIGFuZCByZWxhdGVkIHRlc3RzLg0KPiBUbyBiZSBob25lc3QsIEkn
-dmUgYmVlbiBidXN5IGxhdGVseSBhbmQgaGF2ZW4ndCBoYWQgbXVjaCB0aW1lLCBidXQgSQ0KPiBo
-b3BlIHRvIGhhdmUgc29tZSB0aW1lIGFmdGVyIFR1ZXNkYXkuDQo+IA0KDQpJdCdzIE9LLiBXZSBh
-cmUgbm90IGluIGEgaHVycnkuIEFuZCBpdCdzIGEgbG90IG9mIHRlc3RzIGFyZSBmYWlsaW5nIHJp
-Z2h0IG5vdy4NCg0KPiA+IEkgYmVsaWV2ZSBpdCBtYWtlcyBzZW5zZSB0byBhY2NvdW50IGFsbCBv
-ZiB0aGVzZSBpc3N1ZXMgaW4gc29tZSB0cmFja2luZyBzeXN0ZW0NCj4gPiBiZWZvcmUgc3RhcnRp
-bmcgdG8gZml4IGl0LiBBcmUgeW91IHVzaW5nIGFueSB0cmFja2luZyBzeXN0ZW0gZm9yIE5JTEZT
-MiBpc3N1ZXM/DQo+ID4gRnJhbmtseSBzcGVha2luZywgSSBhbSB1c2luZyBnaXRodWIncyB0cmFj
-a2luZyBzeXN0ZW0gZm9yIEhGUy9IRlMrIGlzc3VlcyBbMV0uDQo+ID4gSXQncyBzaW1wbGUgZW5v
-dWdoIGJ1dCBJIGRvbid0IG5lZWQgaW4gbW9yZSBjb21wbGV4IHN5c3RlbSBmb3IgdGhpcyByaWdo
-dCBub3cuDQo+ID4gU28sIHdoYXQgZG8geW91IHRoaW5rIGFib3V0IHNvbWUgYnVnIHRyYWNraW5n
-IHN5c3RlbSBmb3IgTklMRlMyPw0KPiANCj4gV2UgZG9uJ3QgaGF2ZSBhIGNlbnRyYWwgQlRTIHRo
-YXQgd2Ugb3BlcmF0ZS4gV2UgZGlkIGhhdmUgb25lIGR1cmluZw0KPiBkZXZlbG9wbWVudCwgYnV0
-IGl0IHdhc24ndCBvcGVuIGFuZCBpcyBubyBsb25nZXIgdXNhYmxlLg0KPiBTbyB3ZSBlaXRoZXIg
-dXNlIGEgbWFpbGluZyBsaXN0IG9yIHN5emJvdCwgYW5kIGFsdGhvdWdoIEkgZG9uJ3QNCj4gcGFy
-dGljdWxhcmx5IHdhbnQgb3IgdXNlIGl0LCBuaWxmcy11dGlscycgZ2l0aHViIHBsYXlzIGEgcm9s
-ZSBpbiB0aGF0DQo+IHJlZ2FyZC4NCj4gDQo+IEFzIGZvciBtYW5hZ2luZyBpc3N1ZXMgcmFpc2Vk
-IGJ5IHhmc3Rlc3RzLCBhcyB5b3Ugc2F5LCBJIGFncmVlIHRoYXQgYQ0KPiBwcm9wZXIgQlRTIGlz
-IG5lZWRlZC4NCj4gSG93ZXZlciwgc29tZXRoaW5nIHRoYXQgaXMgaGVhdmlseSB3ZWItZGVwZW5k
-ZW50IGxpa2UgZ2l0aHViIGRvZXNuJ3QNCj4gd29yayB3ZWxsIHdpdGggbWFpbGluZyBsaXN0cywg
-c28gSSdtIGhvbmVzdGx5IG5vdCBzdXJlIGlmIGl0J3MgYSBnb29kDQo+IHNvbHV0aW9uIGZvciB0
-aGlzIHByb2plY3QsIGFwYXJ0IGZyb20gZ2l0aHViLWJhc2VkIGRldmVsb3BtZW50DQo+IHByb2pl
-Y3RzLg0KPiANCj4gSW4gdGhpcyByZWdhcmQsIEkgdGhpbmsgc3l6Ym90IGlzIGdvb2QsIGJlY2F1
-c2UgZW1haWwgZXhjaGFuZ2VzDQo+IG5hdHVyYWxseSBiZWNvbWUgYSByZXNwb25zZSBoaXN0b3J5
-IGFuZCBhcmUgZWFzaWx5IHNoYXJlZCB3aXRoIHRoZQ0KPiBtYWlsaW5nIGxpc3QuDQo+IFVuZm9y
-dHVuYXRlbHksIGl0IGRvZXNuJ3QgY292ZXIgdGhlIGVudGlyZSBpc3N1ZSB0cmFja2luZy4NCj4g
-DQo+IElmIHlvdSdyZSBnb2luZyB0byB1c2UgZ2l0aHViIGZvciBpc3N1ZSB0cmFja2luZywgaXQg
-d291bGQgYmUgYmV0dGVyDQo+IGlmIGl0IGNvdWxkIGJlIHNldCB1cCB0byBiZSBoaWdobHkgY29t
-cGF0aWJsZSB3aXRoIG1haWxpbmcgbGlzdHMuDQo+IFdoYXQgZG8geW91IHRoaW5rPw0KPiANCg0K
-SSBsaWtlIHlvdXIgc3VnZ2VzdGlvbi4gQnV0IHdoYXQgcGFydGljdWxhciBCVFMgY2FuZGlkYXRl
-IGRvIHlvdSBoYXZlIGluIG1pbmQ/DQoNCj4gUGVyc29uYWxseSwgSSdkIGxpa2UgdG8gc2VlIGEg
-YmV0dGVyIGlzc3VlIHRyYWNraW5nIHN5c3RlbSB0aGF0IGNhbg0KPiBicmlkZ2Ugd2l0aCBlbWFp
-bC1kcml2ZW4gd29ya2Zsb3dzLCBmbGV4aWJseSBjb25uZWN0IHdpdGggQUksIGFuZA0KPiBzdXBw
-b3J0IE9TUyBhY3Rpdml0eSwgYnV0IEkgZG9uJ3Qga25vdyBvZiBhbnl0aGluZyBvdGhlciB0aGFu
-IEdpdEh1Yg0KPiB0aGF0IEkgdGhpbmsgd291bGQgYmUgc3VpdGFibGUuDQo+IA0KDQpTbywgdGhp
-cyBpcyBteSB3b3JyeSB0aGF0IHdlIGNvdWxkIG5vdCBmaW5kIGdvb2QgYW5kIGZyZWUgQlRTLiBB
-bmQsIGZpbmFsbHksIHdlDQp3aWxsIG5lZWQgdG8gdXNlIGFueXRoaW5nIG5vdCB2ZXJ5IGdvb2Qg
-YnV0IGFjY2Vzc2libGUgcmlnaHQgbm93LiA6KQ0KDQo+ID4gQXMgZmFyIGFzIEkgY2FuIHNlZSwg
-c3l6Ym90IHN0aWxsIHJlcG9ydHMgYWJvdXQgNSBpc3N1ZXMgZm9yIE5JTEZTMiBbMl0uIFNvLCBp
-dA0KPiA+IG1ha2VzIHNlbnNlIHRvIGFjY291bnQgdGhlc2UgaXNzdWVzIHRvby4NCj4gDQo+IEkg
-dGhpbmsgaXQncyBmaW5lIHRvIHVzZSBpdCBzb2xlbHkgZm9yIGlzc3VlIG1hbmFnZW1lbnQgcHVy
-cG9zZXMsIGFzDQo+IGxvbmcgYXMgaXQgZG9lc24ndCByZXN1bHQgaW4gZG91YmxlIG1hbmFnZW1l
-bnQuDQo+IFRoZXJlZm9yZSwgSSB0aGluayB3ZSBzaG91bGQgbWFrZSBzdXJlIHRvIGFsd2F5cyBq
-dW1wIHRvIHN5emJvdCBmcm9tDQo+IEdpdEh1YiwgZXRjLiwgYXMgYW4gaW5kZXgsIGFuZCBtYWtl
-IGdvb2QgdXNlIG9mIHN5emJvdCdzIHdvcmtmbG93IGFzDQo+IGlzLg0KPiANCg0KSSBhbSBzaW1w
-bHkgdGhpbmtpbmcgdG8gaGF2ZSBzb21lIHRyYWNraW5nIHN5c3RlbSB0aGF0IGNhbiBhY2NvdW50
-IGFsbCBOSUxGUzINCmlzc3Vlcy4gVGhlIHN5emJvdCBoYXMgaXRzIG93biB0cmFja2luZyBzeXN0
-ZW0uIEJ1dCwgZnJvbSBteSBwb2ludCBvZiB2aWV3LCBpdA0KbWFrZXMgc2Vuc2UgdG8gYWNjb3Vu
-dCBzeXpib3QgaXNzdWVzIGxpa2Ugc3ViLWNsYXNzIG9mIGlzc3Vlcy4NCg0KPiA+IEkgYW0gd29y
-a2luZyBvbiBLdW5pdC1iYXNlZCB1bml0LXRlc3RzIGZvciBDZXBoRlMsIEhGUy9IRlMrLCBTU0RG
-Uy4gU28sIEkNCj4gPiBiZWxpZXZlIHRoYXQgTklMRlMyIGNvdWxkIGJlbmVmaXQgYWxzbyBmcm9t
-IGhhdmluZyBsaWtld2lzZSB1bml0LXRlc3RzLiBIb3cgZG8NCj4gPiB5b3UgZmVlbCBhYm91dCBp
-dD8NCj4gDQo+IEFzIGZvciB1c2luZyBLdW5pdCwgSSdtIG5vdCBzdXJlIGhvdyB0byBlZmZlY3Rp
-dmVseSBleHRyYWN0IHVuaXQgdGVzdHMNCj4gd2hpbGUgYXZvaWRpbmcgSS9PIGFuZCBwYWdlIGNh
-Y2hpbmcuDQo+IFJhdGhlciwgd2hhdCBwYXJ0cyBvZiBIRlMvSEZTKyBkbyB5b3UgZXh0cmFjdCBh
-bmQgd3JpdGUgdGVzdHMgZm9yPw0KPiANCg0KVXN1YWxseSwgdW5pdC10ZXN0cyBjaGVjayBjb3Jy
-ZWN0bmVzcyBvZiBmdW5jdGlvbnMnIGxvZ2ljIGluIGlzb2xhdGVkDQplbnZpcm9ubWVudC4gU28s
-IHVuaXQtdGVzdCBsb2dpYyBjYW4gY3JlYXRlIGxvY2FsIGZha2Ugb2JqZWN0KHMpIHRoYXQgd2ls
-bCBub3QNCmludm9sdmUgY29tcGxleCBsb2dpYyBvZiB0aGUgcmVzdCBrZXJuZWwgZnVuY3Rpb25h
-bGl0eS4gTW9zdCBmcmVxdWVudGx5LCBmaWxlDQpzeXN0ZW0gY2FuIGltcGxlbWVudCBtdWx0aXBs
-ZSBpbnRlcm5hbCBwcmltaXRpdmVzIChsaWtlIGJpdG1hcCwgYi10cmVlLCBldGMpLg0KQW5kIHVu
-aXQtdGVzdHMgY2hlY2sgdGhpcyBpbnRlcm5hbCBmdW5jdGlvbmFsaXR5IGxpa2V3aXNlIGl0IGNh
-biBiZSBjYWxsZWQgYnkNCm90aGVyIGZpbGUgc3lzdGVtJ3MgcGFydCBvciBieSBWRlMuIEkndmUg
-Zm91bmQgdGhhdCB1bml0LXRlc3RpbmcgaXMgdmVyeSB1c2VmdWwNCmZyZXF1ZW50bHkuIEl0IGNh
-bm5vdCBkZXRlY3QgYWxsIGJ1Z3MgYnV0IGl0IGNhbiBmaW5kIHNpbXBsZSBidXQgbm90IGFsd2F5
-cw0KdHJpdmlhbCBpc3N1ZXMgaW4gZmlsZSBzeXN0ZW0ncyBjb2RlLg0KDQo+ID4gDQo+ID4gSSBh
-bSBnb2luZyB0byBhdHRlbmQgTFBDIDIwMjUgaW4gVG9reW8gKERlY2VtYmVyIDExIC0gMTMsIDIw
-MjUpLiBBbmQgSSBhbQ0KPiA+IHBsYW5uaW5nIHRvIGhhdmUgMiBmcmVlIGRheXMgYmVmb3JlIGNv
-bmZlcmVuY2Ugc3RhcnQuIEFyZSB5b3UgcGxhbm5pbmcgdG8gYXR0ZW5kDQo+ID4gTFBDIDIwMjU/
-DQo+IA0KPiBJJ20gbm90IHBhcnRpY2lwYXRpbmcuIEJ1dCB3ZWxjb21lIHRvIEphcGFuIDspDQo+
-IA0KDQpUaGFua3MuIDopIEkgaG9wZSBJIHdpbGwgbm90IGJlIGxvc3QgdGhlcmUuIDopDQoNCj4g
-SXQgbWlnaHQgaGF2ZSBiZWVuIGEgZ29vZCBvcHBvcnR1bml0eSB0byBtZWV0IHlvdS4gSG93ZXZl
-ciwgc2luY2UgSSdtDQo+IG5vdCBhIG5hdGl2ZSBzcGVha2VyLCBJIGhvbmVzdGx5IGZpbmQgZW1h
-aWwgY29tbXVuaWNhdGlvbiBtb3JlDQo+IGVmZmljaWVudCB0aGFuIGZhY2UtdG8tZmFjZSBjb21t
-dW5pY2F0aW9uLg0KPiBBbHNvLCB3aGlsZSBpdCdzIG5vdCBhIGhlYWx0aCBpc3N1ZSwgcGVyc29u
-YWwgY2lyY3Vtc3RhbmNlcyBoYXZlIGJlZW4NCj4gbWFraW5nIGl0IGRpZmZpY3VsdCBmb3IgbWUg
-dG8gbW92ZSBhcm91bmQgZnJlZWx5IHJlY2VudGx5Lg0KPiANCj4gV2VsbCwgaXQncyBub3QgbGlr
-ZSBJIGNhbid0IGNvbWUgYXQgYWxsLCBzbyBpZiB5b3Ugc3RpbGwgd2FudCB0byBoYXZlDQo+IGEg
-ZmFjZS10by1mYWNlIGRpc2N1c3Npb24gZm9yIHRoZSBmdXR1cmUsIHBsZWFzZSBsZXQgbWUga25v
-dyB2aWENCj4gcHJpdmF0ZSBtZXNzYWdlLg0KPiANCg0KT0suIEkgc2VlLiBObyBwcm9ibGVtLiA6
-KQ0KDQpUaGFua3MsDQpTbGF2YS4NCg==
+On Wed, Nov 19, 2025 at 8:23=E2=80=AFAM Viacheslav Dubeyko wrote:
+>
+> Hi Ryusuke,
+>
+> On Sun, 2025-11-16 at 00:44 +0900, Ryusuke Konishi wrote:
+> > Hi Viacheslav,
+> >
+> > On Fri, Nov 14, 2025 at 9:19=E2=80=AFAM Viacheslav Dubeyko wrote:
+> > >
+> > > Hi Ryusuke,
+> > >
+> > > I did run the xfstests suite for NILFS2. As far as I can see, there a=
+re 156
+> > > failed tests and I needed to exclude 2 tests from running.
+> > >
+> > > sudo ./check -g auto -E ./my_exclude.txt
+> > > FSTYP         -- nilfs2
+> > > PLATFORM      -- Linux/x86_64 hfsplus-testing-0001 6.18.0-rc3+ #93 SM=
+P
+> > > PREEMPT_DYNAMIC Wed Nov 12 14:37:49 PST 2025
+> > > MKFS_OPTIONS  -- /dev/loop51
+> > > MOUNT_OPTIONS -- /dev/loop51 /mnt/scratch
+> > >
+> > > <skipped>
+> > >
+> > > Failures: generic/003 generic/040 generic/041 generic/068 generic/074
+> > > generic/075 generic/078 generic/080 generic/086 generic/092 generic/0=
+97
+> > > generic/099 generic/100 generic/103 generic/105 generic/109 generic/1=
+12
+> > > generic/117 generic/121 generic/122 generic/124 generic/127 generic/1=
+29
+> > > generic/131 generic/136 generic/177 generic/182 generic/192 generic/2=
+15
+> > > generic/221 generic/237 generic/241 generic/245 generic/246 generic/2=
+47
+> > > generic/248 generic/249 generic/251 generic/255 generic/257 generic/2=
+58
+> > > generic/260 generic/285 generic/286 generic/307 generic/309 generic/3=
+10
+> > > generic/313 generic/316 generic/318 generic/319 generic/322 generic/3=
+37
+> > > generic/348 generic/360 generic/363 generic/365 generic/375 generic/3=
+76
+> > > generic/377 generic/394 generic/403 generic/404 generic/408 generic/4=
+09
+> > > generic/410 generic/411 generic/420 generic/425 generic/428 generic/4=
+30
+> > > generic/431 generic/432 generic/433 generic/436 generic/437 generic/4=
+38
+> > > generic/439 generic/443 generic/444 generic/445 generic/448 generic/4=
+69
+> > > generic/471 generic/478 generic/483 generic/484 generic/485 generic/4=
+86
+> > > generic/489 generic/490 generic/503 generic/504 generic/510 generic/5=
+12
+> > > generic/516 generic/519 generic/523 generic/529 generic/533 generic/5=
+35
+> > > generic/537 generic/539 generic/547 generic/553 generic/555 generic/5=
+63
+> > > generic/565 generic/567 generic/568 generic/571 generic/585 generic/5=
+89
+> > > generic/590 generic/607 generic/610 generic/611 generic/614 generic/6=
+16
+> > > generic/618 generic/629 generic/631 generic/632 generic/634 generic/6=
+37
+> > > generic/638 generic/639 generic/640 generic/650 generic/676 generic/6=
+90
+> > > generic/695 generic/697 generic/704 generic/706 generic/712 generic/7=
+13
+> > > generic/715 generic/718 generic/719 generic/723 generic/724 generic/7=
+25
+> > > generic/728 generic/732 generic/736 generic/738 generic/741 generic/7=
+42
+> > > generic/749 generic/754 generic/758 generic/759 generic/763 generic/7=
+64
+> > > generic/771
+> > > Failed 156 of 767 tests
+> > >
+> > > I needed to exclude generic/740 and generic/753. I am not completely =
+sure what
+> > > is wrong with generic/740 (it could be glitch on my side). But generi=
+c/753 fills
+> > > the system log with bunch of errors:
+> > >
+> > > 2025-11-12T18:36:24.171533-08:00 hfsplus-testing-0001 root: run xfste=
+st
+> > > generic/753
+> > > 2025-11-12T18:36:24.175432-08:00 hfsplus-testing-0001 kernel: run fst=
+ests
+> > > generic/753 at 2025-11-12 18:36:24
+> > > 2025-11-12T18:36:24.243745-08:00 hfsplus-testing-0001 systemd[1]: Sta=
+rted
+> > > fstests-generic-753.scope - /usr/bin/bash -c "test -w
+> > >  /proc/self/oom_score_adj && echo 250 > /proc/self/oom_score_adj; exe=
+c
+> > > ./tests/generic/753".
+> > > 2025-11-12T18:36:26.068288-08:00 hfsplus-testing-0001 kernel: NILFS (=
+dm-0):
+> > > segctord starting. Construction interval =3D 5 second
+> > > s, CP frequency < 30 seconds
+> > > 2025-11-12T18:36:26.082067-08:00 hfsplus-testing-0001 nilfs_cleanerd[=
+763354]:
+> > > start
+> > > 2025-11-12T18:36:26.082949-08:00 hfsplus-testing-0001 nilfs_cleanerd[=
+763354]:
+> > > pause (clean check)
+> > > 2025-11-12T18:36:28.111323-08:00 hfsplus-testing-0001 kernel: Buffer =
+I/O error
+> > > on dev dm-0, logical block 2621424, async page r
+> > > ead
+> > ...
+> > > 2025-11-12T18:36:28.398430-08:00 hfsplus-testing-0001 kernel: NILFS (=
+dm-0): I/O
+> > > error writing log (start-blocknr=3D49152, block-c
+> > > ount=3D418) in segment 24
+> > >
+> > > I need to double check but likewise error happens not only for generi=
+c/753 test-
+> > > case. As far as I can see, other test-cases also triggered such issue=
+. But
+> > > namely generic/753 hangs infinitely with such error messages.
+> >
+> > Okay, I'll take a look at xfstests/753 and related tests.
+> > To be honest, I've been busy lately and haven't had much time, but I
+> > hope to have some time after Tuesday.
+> >
+>
+> It's OK. We are not in a hurry. And it's a lot of tests are failing right=
+ now.
+>
+> > > I believe it makes sense to account all of these issues in some track=
+ing system
+> > > before starting to fix it. Are you using any tracking system for NILF=
+S2 issues?
+> > > Frankly speaking, I am using github's tracking system for HFS/HFS+ is=
+sues [1].
+> > > It's simple enough but I don't need in more complex system for this r=
+ight now.
+> > > So, what do you think about some bug tracking system for NILFS2?
+> >
+> > We don't have a central BTS that we operate. We did have one during
+> > development, but it wasn't open and is no longer usable.
+> > So we either use a mailing list or syzbot, and although I don't
+> > particularly want or use it, nilfs-utils' github plays a role in that
+> > regard.
+> >
+> > As for managing issues raised by xfstests, as you say, I agree that a
+> > proper BTS is needed.
+> > However, something that is heavily web-dependent like github doesn't
+> > work well with mailing lists, so I'm honestly not sure if it's a good
+> > solution for this project, apart from github-based development
+> > projects.
+> >
+> > In this regard, I think syzbot is good, because email exchanges
+> > naturally become a response history and are easily shared with the
+> > mailing list.
+> > Unfortunately, it doesn't cover the entire issue tracking.
+> >
+> > If you're going to use github for issue tracking, it would be better
+> > if it could be set up to be highly compatible with mailing lists.
+> > What do you think?
+> >
+>
+> I like your suggestion. But what particular BTS candidate do you have in =
+mind?
+
+Github comes to mind here.
+When you use GitHub for HFS/HFS+, do you apply any special approach to
+tie it into the mailing-list workflow?
+Or do you treat it as a completely separate tool?
+
+> > Personally, I'd like to see a better issue tracking system that can
+> > bridge with email-driven workflows, flexibly connect with AI, and
+> > support OSS activity, but I don't know of anything other than GitHub
+> > that I think would be suitable.
+> >
+>
+> So, this is my worry that we could not find good and free BTS. And, final=
+ly, we
+> will need to use anything not very good but accessible right now. :)
+
+Yes, that=E2=80=99s probably how it will end up.
+
+> > > As far as I can see, syzbot still reports about 5 issues for NILFS2 [=
+2]. So, it
+> > > makes sense to account these issues too.
+> >
+> > I think it's fine to use it solely for issue management purposes, as
+> > long as it doesn't result in double management.
+> > Therefore, I think we should make sure to always jump to syzbot from
+> > GitHub, etc., as an index, and make good use of syzbot's workflow as
+> > is.
+> >
+>
+> I am simply thinking to have some tracking system that can account all NI=
+LFS2
+> issues. The syzbot has its own tracking system. But, from my point of vie=
+w, it
+> makes sense to account syzbot issues like sub-class of issues.
+
+I don=E2=80=99t think there=E2=80=99s any difference in our thinking.
+
+You mean using GitHub or some other tool to manage the overall set of
+issues, right?
+Issues from syzbot would be handled primarily within syzbot, but we
+would use GitHub or similar as an index alongside other issues.
+That approach sounds good to me.
+
+I'm still looking for good BTS, but it might be quicker to start
+making them on github now.
+
+Thanks,
+Ryusuke Konishi
