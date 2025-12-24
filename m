@@ -1,117 +1,108 @@
-Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
+Received: from mail-yx1-f46.google.com (mail-yx1-f46.google.com [74.125.224.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6ADDD33E7
-	for <linux-nilfs@vger.kernel.org>; Tue, 23 Dec 2025 03:33:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C5BB314D28
+	for <linux-nilfs@vger.kernel.org>; Wed, 24 Dec 2025 00:31:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766460800; cv=none; b=G1qc400KSrdtHsEgv+ky6nRKOAq+FhpqIkV4gONC9e4bAi+Rp7gigCYlN0zbtMsZvUhZ0F7v8Y2FcSQ8BACICE0g4IPgzVZAyk4fv/T8g7b1ULtAn06lZCqHXy6MbxxWiZu4OicgX1Cz6Wcs9sfsbyAQ/TzUpVmKjq9DdAD9lSA=
+	t=1766536295; cv=none; b=QlAAlPWcS1xXfejhRIWbAub6Rtt2MD/OwPMe0Onn34YL1qs0rJRpR/bFt0OZWwufFh2iDXyEvS0Tss+bFnDRD946EF7QkXvZd8O5hIk1bOSpnwsoKT2RE/w8d0hagJiofZhKfQ1h0k5nE9pqbOd0NjqcBTHhdpmYIW9umvr62Gg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766460800; c=relaxed/simple;
-	bh=hFEEyzNykS7UQVVDw0M+ttrkfAWIF5lnWFAp9x+blZo=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=W0mYT9fQ2Li7nc892QT+92tsvPxAMdBWueSr7VY9gsvUd41Yb6xEvE83NNp6M8BnoMG8ImGkr2OV9Un5kRias46fq+ftgTg9F2BOVymhwwbSSRnpvmRdQECkRazO78qQUhhcBOEzSSeDGsou49V2aSFMcZVNv252LhFtVtZrnZQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mPpREear; arc=none smtp.client-ip=209.85.167.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1766536295; c=relaxed/simple;
+	bh=q5gMSiXxK+19YQ5unrApHjloewkL6CM34gTEsVFcHd8=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=aAMSPupyxwASocwsNMYGY7fYoRjExmzqgh27CD/Xg2LdibtC2pmBSbcscwee2y4gqE4Z6ShecGWmi4B29q39GC7vYkEDdVVJjIyDfkpSylAdh4GBQZpjG/3uutvS1Gp7m3NVtla/jYb3mO6H2eXDivHYtc0zid9Ao8Nl1kEBh5k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20230601.gappssmtp.com header.i=@dubeyko-com.20230601.gappssmtp.com header.b=2BQi91xP; arc=none smtp.client-ip=74.125.224.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mPpREear"
-Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-59584301f0cso4989004e87.0
-        for <linux-nilfs@vger.kernel.org>; Mon, 22 Dec 2025 19:33:18 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20230601.gappssmtp.com header.i=@dubeyko-com.20230601.gappssmtp.com header.b="2BQi91xP"
+Received: by mail-yx1-f46.google.com with SMTP id 956f58d0204a3-64467071f9fso4289764d50.0
+        for <linux-nilfs@vger.kernel.org>; Tue, 23 Dec 2025 16:31:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1766460796; x=1767065596; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=TjCTHsOOQrjNzCbe83mBzJpfUE5MLqRpTEw7bUL3Vsw=;
-        b=mPpREearN/JpsHzzHIjd7D4A4FMIjQn8QYM0Hkw9xvy66yIzKsh1pT0mULZWxCvAdh
-         u4HvESiaLgjsXGvygV9FYjzod0RxCkKJF5V6QZ43C4qag7678zE8RKmxgdvUCOeh+9+R
-         C6T5XHx2uKG+JsfFTQhd8Hh8ItlT/2tu3T4WNIbyzAqvmulPob9PTsXEGfriCQuWPkSv
-         72zB49q3jHR5xsoypkg5tptAygpepodXq59WelzTP+CO3E0W5NtWuEkl/7OdxyiOWbR/
-         euyhlPYX2cKHdu+1BcxbwrWuw3Lcgykom+eyeXDTJEKROnsm1PHn5EM0OLKO9Q21hV4p
-         7J9w==
+        d=dubeyko-com.20230601.gappssmtp.com; s=20230601; t=1766536293; x=1767141093; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=L5rDvPECvFaCsu10CL1S5YzrNkaWKW7eAydUhkB1MXQ=;
+        b=2BQi91xPTyJSjdEJZgRXKTyiIg5puizTdWi8m8SwqA7zYhzA5Y3MxnHPSIvUcVDTMV
+         O/QNUomNwj12IEUkYP/oFFuKPXY73/fiB2T+bDzSPqXZPggQl0oK/vwE3qB44HSiNanP
+         asjnvNaw5kM30c9Bh6szwlvXR+79zLY5R3oLMS0DK2z9Qv+aOGzm+ZNZ1yT31mwINk67
+         v7QFHNvy9cJWgNuAUUNtsD3ES8S2UAQoB3dfXFHeGZubMZu2d82//slZTajQ5LGfSP6J
+         5FLwZWJ8uYGaUjQcNrs+O8FDii6kJe7G5Rx7a8BmFcnPXQ5jTI1Z2ps3QpM2H8USUKaC
+         c9fQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766460796; x=1767065596;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=TjCTHsOOQrjNzCbe83mBzJpfUE5MLqRpTEw7bUL3Vsw=;
-        b=oziwkKnZko4V33NigEpDfFZws52kTWBZYoyCPycvrPyHeHp1LvvpNfdf/GTcymj1RK
-         i1A3m+1SgjjWCPCFCUxsF3ZsVI4ATzkpuXmsUZ9GMS6eIHkZTm5wuCzUT5kMe/DO3N0W
-         OdQvIOx5T1Ane16dFXQpa3K8uaC1P0y5sDSzBs5Qb/W8dyLQQwz0zstYbeV+d6RyzhDm
-         uWVARxOdu97IJDnE7DTtDa/PI7uU2wm/jjXE8uSL4F/oV6BrFJ+1dTOpcI+RPy2NVjnx
-         3QYv3Ft/ME8dlzf79n/lh9puumijlz7B/NxQZ5rmHyeWY/+bnf5J4ecQCNU0fS5jdEfM
-         H9LQ==
-X-Gm-Message-State: AOJu0YzaChSVz/OT5sz6Bbhc9dBtLodbvTVVfImGGPaUmDk/0+Eq14LH
-	8Zs8/C++vknOPdhjeIWGPK/e5FrQQv8AgQriKlaUMv8GBgFV9EcA/G04v+uHdh4YRBtGZqtcBzb
-	a9TcsaePLX6qqb/fu9ISiyIekVaGE6JH6hjaBuX0=
-X-Gm-Gg: AY/fxX7/KduEhS0XgQFmMtPQ5sIlJ5M28jebtsLTjJvXDk4SqGxg+3rvq0wjLNq1IfZ
-	d36WJx/NqOesbAkLpFN0YJeOplhyMbKHXvVhkcoDL8P+X6u/ExRdmrVmFU8S6HKMMWi9pRHRZfP
-	EjcnHbQsypEKymthLDDeZjaSTF2b9dn8OAX0KJC2YWgJq3MSUFgUcO2PclpCvRYE8R3/20T29WC
-	6GYEbT/88ngogSB1+1n8qcNrzSxJ2iv2HIb4EpVS2EjwaP9V3PEYYGsnii20r6o6iNB+E2X
-X-Google-Smtp-Source: AGHT+IEksXsBkR5LgK5r120sIzkj7jtCUSGSQPzoc5F33/Ryn3gFDzz+DVKpMZJbG+vCGun+jQZq/22U2Qto0ZjGNn8=
-X-Received: by 2002:a05:6512:2301:b0:59a:1238:2f4b with SMTP id
- 2adb3069b0e04-59a17d57a11mr3628817e87.25.1766460796257; Mon, 22 Dec 2025
- 19:33:16 -0800 (PST)
+        d=1e100.net; s=20230601; t=1766536293; x=1767141093;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=L5rDvPECvFaCsu10CL1S5YzrNkaWKW7eAydUhkB1MXQ=;
+        b=FpIWcDzu0b9z7Dxgk0MC3sWAq9AQippafrEP9zkr5QNHqpynqK0WeDnvsNLvD1i2ai
+         EMp3XSRZxw1jZp/cX2QWG9rQTsFUoaetAJjgCSj6x5izOVw3wlCdr+F1zqR0ij+mu6/T
+         fWNJ52I+EHahs4L2Qn689/zjEbXATnQhYly/BXd7AvKPy1LnExXFpSWUkCvA0+4P56xr
+         m51HcKsbn8dHY/n9hymx89xX90+tRorG7RIIWzPfM6+kLMj/RGipeWITHjSELwuIl1+U
+         MQkxv9eYezuO70CCv69rUeXIBBJP+QDYamWpKXpyc1v4qhf/S1dajzL4kyidt4QbI7FV
+         pSuA==
+X-Forwarded-Encrypted: i=1; AJvYcCVrNLvNhARDMhuBgiH1WrZebfmbuNo1FLIpTI0JyZ0XYGQKnso8r1ri9LgvzJ5y1a7a4BpHc4znaPgEVg==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzK97dAHtwBN5yYd+kV9TIGQFnC4a63iyTiWc0UVLd2/SmcW/66
+	sN+eeRN5rfq2Zemk55Pu8FWKnsgFizfOUbcS5jSHjigAUIgApjIaHZvf+4oWRFxRw0Y=
+X-Gm-Gg: AY/fxX7OOzQyOlaK6r3/5k8jedEarS6b2X3Wkw/77A/F1o9CKnAk3/X0fhyZCnGwLKs
+	q4JzTSuno+FMTcBZpqxT5SQ7HKa8yE993V8/tTlY++i4ckRIYW50988UbbFm4h5klsQvK2xXC1+
+	BvAiqr5tGwD3KHZbEDH+kAIEto5ACXrRanpAl1PAa7EE4pjaV3TKJ8zgdVpNOa1k1AQAeuZEK4m
+	H5U8IG1K5NC/ojCkjLsD0IuIoc3AFYNOAGdMjRMIOlU9WkSadefSRvyl57j8RCAwKZmAl/Qdd2X
+	sBjRJfttYwa6v2Plzmsf+5xvM7iKfBwun/pnAhc6WHcKEXcW0IlfHQV6yOdRdGLBK66GMOsWKoZ
+	0FxlKTyzkO5HWnrhgF9mxIGsyf6WE+EBGoXwQ8ZTthoh1ZlUxYiV3oUQAglkSB/m74dgeoqFSMa
+	aPHhE6PRwQBh66Zehlj8iRMpUXin/srTFol7pSlNgpvl8P52MzuUYFIlyMtS1tkxt0TjDWP2fzR
+	CsTSyp90egx
+X-Google-Smtp-Source: AGHT+IEjLsxjJgm1tNq7go/FJWytc3qikX7hfJ771aCTmb2GXgsRKeoMSeIHBck7CqE/+dxxSKBwnw==
+X-Received: by 2002:a05:690e:2453:b0:641:f5bc:68de with SMTP id 956f58d0204a3-6466a8d7899mr10102913d50.75.1766536293059;
+        Tue, 23 Dec 2025 16:31:33 -0800 (PST)
+Received: from pop-os.attlocal.net ([2600:1700:6476:1430:d3b4:b334:ddb5:458e])
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-6466a8b1758sm7595565d50.4.2025.12.23.16.31.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 23 Dec 2025 16:31:32 -0800 (PST)
+From: Viacheslav Dubeyko <slava@dubeyko.com>
+To: glaubitz@physik.fu-berlin.de,
+	linux-fsdevel@vger.kernel.org,
+	frank.li@vivo.com,
+	fstests@vger.kernel.org,
+	zlang@kernel.org,
+	konishi.ryusuke@gmail.com
+Cc: Slava.Dubeyko@ibm.com,
+	linux-nilfs@vger.kernel.org,
+	Viacheslav Dubeyko <slava@dubeyko.com>
+Subject: [PATCH] xfstests: add HFS/HFS+ and NILFS2 into supported FS table
+Date: Tue, 23 Dec 2025 16:31:21 -0800
+Message-Id: <20251224003120.1137284-1-slava@dubeyko.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20251219180631.27554-1-konishi.ryusuke@gmail.com> <4cb74f51f29a4aaad6cf4bfdcc7c4c61625b6ee0.camel@dubeyko.com>
-In-Reply-To: <4cb74f51f29a4aaad6cf4bfdcc7c4c61625b6ee0.camel@dubeyko.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Tue, 23 Dec 2025 12:32:58 +0900
-X-Gm-Features: AQt7F2oPT8-aAEFOS1iKVCZeIB9AfdGO2C_dCMw3ridHyvM80t4JMvbOhUXqX5A
-Message-ID: <CAKFNMo=9_KAfLLttaYUuD6d9nTmht+T8En15DwxL_6-uaeSb5Q@mail.gmail.com>
-Subject: Re: [PATCH 0/3] nilfs2 fixes on v6.19-rc1
-To: Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Tue, Dec 23, 2025 at 9:16=E2=80=AFAM Viacheslav Dubeyko wrote:
->
-> Hi Ryusuke,
->
-> On Sat, 2025-12-20 at 03:04 +0900, Ryusuke Konishi wrote:
-> > Hi Viacheslav,
-> >
-> > I'm submitting three nilfs2 fixes as a patch series (rather than a
-> > pull request as previously mentioned), so please queue them in your
-> > tree.
-> >
-> > Two of the three involve kernel-doc issues in uapi header files.
-> > These
-> > are suitable for the next cycle.
-> >
-> > The remaining one, which I'm sure you've seen, fixes an issue
-> > recently
-> > reported by syzbot involving the FITRIM ioctl, and is a slightly
-> > higher priority.
-> >
-> > If possible, I'd like you to submit this as a bugfix patch without
-> > waiting for the next release cycle, but if you're limiting your pull
-> > requests to merge windows, feel free to submit it together with ones
-> > for v6.20-rc1 at your convenience.
-> >
->
-> I've applied patches on the tree. Sorry, end of the year as usually
-> "unexpectedly" busy. :) I think that Christmas and New Year time is not
-> the best time to send pull request. Also, I am finishing of creating
-> the tickets for xfstests issues. So, I hope I could start to analyze
-> the issues soon. And, probably, we could have more fixes for the next
-> merge window.
->
-> Thanks,
-> Slava.
+This patch adds HFS/HFS+ and NILFS2 file systems
+into supported FS table with L1 level.
 
-Yes, that's fine.
-It's the end of the year, so please proceed at your convenience.
-If nothing else happens, I'd like to address some of the necessary
-improvements to the NILFS utilities build and focus on  issues around
-rename operations.
+Signed-off-by: Viacheslav Dubeyko <slava@dubeyko.com>
+---
+ README | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-Thanks,
-Ryusuke Konishi
+diff --git a/README b/README
+index 196c79a2..d5a94205 100644
+--- a/README
++++ b/README
+@@ -87,6 +87,10 @@ L4: Active support from the fs list, has lots of own cases.
+ +------------+-------+---------------------------------------------------------+
+ | 9p         |  L1   | N/A                                                     |
+ +------------+-------+---------------------------------------------------------+
++| HFS/HFS+   |  L1   | N/A                                                     |
+++------------+-------+---------------------------------------------------------+
++| NILFS2     |  L1   | N/A                                                     |
+++------------+-------+---------------------------------------------------------+
+ 
+ _______________________
+ BUILDING THE FSQA SUITE
+-- 
+2.43.0
+
