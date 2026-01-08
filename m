@@ -1,195 +1,243 @@
-Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFAB822B5AD
-	for <linux-nilfs@vger.kernel.org>; Thu,  8 Jan 2026 05:47:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCE612C08A1;
+	Thu,  8 Jan 2026 17:13:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767851232; cv=none; b=vDczc6X7/saBEfADKZd+ZOtZOuGmGGrWUzSgdqjv+UBo56ukc57/y/ANXb6vUpiz/YLC2PvHFE/2SNM6/1oD+DtK8G9ySoTd2lkdfJbxq3dXYAVwrG5MVfy2CelNuiiEFHiwJoCaoeb+P8+Ng+PDFWH/ZK1XWCtqAyq2iMSvcHw=
+	t=1767892422; cv=none; b=DzUBiaOkvm1QTwbOsgCYpICHzzuvnFWw6Jux3Et9b0hQ1f+o1DqCHfoEoDUJHB4estBi97w0JyKgBfYj1cE1D/iE7YouSxhvfwRu4wPW+qP/twO3wG4wfUQrkQFB7cl2OO79zgnNloagnmdEn2jOYaZ4U38eCjyoegFt7kM9f8E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767851232; c=relaxed/simple;
-	bh=lBjgvgdP3C4sP1wcyzlr+eGiBUTMmK9t9vBi8n1m+E4=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=f+/6UqigVDDmSeFwRtuAIV0yUouwUTcQQFNu7x0DWFhIxCFTUg+qhvAJi5vb5QeMZNlSIGM9D8Zv9Nf0l+1oIGlm9asZgrz6z24T93KmkswJT5Nk37SpaNXydMZ7h2B83R1si4mOVNYzX7mFDyefglMu2pIlZmo5ct43Fi0/gHk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LI0rfC5T; arc=none smtp.client-ip=209.85.167.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1767892422; c=relaxed/simple;
+	bh=Oo05LcV8B4ObeCq3rrJEiTXLheQXnmVPy6EWKbJpWYY=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=QJazV/oIYNbxi0F3Op9jF+0GoVWN1yJMYQE1t0lZ7HMY5wqOxjfOcFcGUe8+FnGo3mZ43NHfuPGOXsdaUI7YYKO3NoWhcZ084oc8o8bQYdJ+BEd7uN6iUglVsIoaWC9/dkNGHNDC57HNBJI2oY7tFlhls/PxbfOFcYeBLNqhY4U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=sMLaSOnD; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LI0rfC5T"
-Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-59b672f8ec4so2608826e87.1
-        for <linux-nilfs@vger.kernel.org>; Wed, 07 Jan 2026 21:47:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1767851229; x=1768456029; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=SZMCIEo44W4m+PPfA4T39Ozb69dnQvTF8ZniDMfocVc=;
-        b=LI0rfC5TKJF7nRZUOpr2M+v29RVUTjd3f8C2ct3dEdU0E121F0v2Q5iGYijmB+ZrBr
-         agzbuhqkWlMOLugXoOBvY5O0fDC5qaKsHVQQ8GCNnNk0CK7hQYG3eLsplvvwOs/hdv34
-         qCzbZ+DBxLsAAzyt1QH3FvWyLPMjcJdFSpstre1/TXFFYLjW0YCr4/PkUeCuuwLyYzqE
-         4NCYckOxnnTEaWHLFUgvsXdcU9Eyzo2Je2N6cRJFMgAG8Q8Kj215T3REovFIXsKXMAFY
-         +sMTjEFvINBoImUygb/0QY93wRhEeugAdfAoQYtx3/dfySBGoYC6t6+aKNPHjV84b1VF
-         8d0Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1767851229; x=1768456029;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=SZMCIEo44W4m+PPfA4T39Ozb69dnQvTF8ZniDMfocVc=;
-        b=ayUMVhD47vQlE8T1QXWqdBdnqgLqfusneg4cKeJNd3vis+a4LnEyJ0liIVVyYUA1ot
-         OBYSw8P/Wzp6Fd0I5izEdEm9Os8a6j1Fl8+62Mqp9Lubj0n18UdZdLn1XfJdGk5qstGV
-         zkkl28zl1rosYbaShxAyFWm8JdFossa1JUnzI2kyE5zVcmCVeAA9/W21OqIXa3USLsSk
-         FMBsmqms8YhotnziEi9igQKA7emGSJVm9kdMMKv7d/EATca/IiP3BFJfb6P0ZueYi+uY
-         3evXeGQIIrmZSHE39mKbAdr/tKb2XNDZ5wOfF3VQ+/Wm9ZmQI0mDqGsalg5Gj8J6R619
-         l/jw==
-X-Gm-Message-State: AOJu0YwzyThKBxGCD4K9suozfSkuiR5QrhNK301MLLL57WpKXwyLyTxm
-	/HXHjT3EA8KCYsgiESoV1GggqiJMFmJu5abhY0DZUSax81MAdPVIxCsR1A6vgMCEuGv9O6lnTsB
-	J57PyzYkHEjTgVFGDLHUW73gM3DYkdILnOKU7grg=
-X-Gm-Gg: AY/fxX6WaurajDSuFN7iSmkfnB2gMegZAS+1XeAuYuURjn6E1CDHasM6zirl3qSWQUv
-	+sRtrUWe0VPnICFlGUar43pNibLnZJd++H/OPhr3ZFLhMAPRU06AkUe+UVB2lCSdjz3trNMQeXq
-	PrAaqlTnH2MAr/ctvkXx3NbOq1b5BqSoXxtfo4EPpEramPCYobzrVA+05q4mTY0Hh98JyVN6k6x
-	OJq9VSijFdED37TsFvbXwTJLClDDI2FKtpgIop/S6pZE6l9+pqlcL7GT2J9KYFhMPPAEmr4
-X-Google-Smtp-Source: AGHT+IEQmMlUw0xevtXwywjYb0Kwnzr5Hgu4I9ag9XLL43RmKJhbtZC9Ba/81hUagIYU2N5CNLurce+oGYBI8TwkcKE=
-X-Received: by 2002:a05:6512:3b94:b0:598:e4ca:8175 with SMTP id
- 2adb3069b0e04-59b6f03d651mr1558756e87.45.1767851228768; Wed, 07 Jan 2026
- 21:47:08 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="sMLaSOnD"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DE2D4C116C6;
+	Thu,  8 Jan 2026 17:13:34 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1767892422;
+	bh=Oo05LcV8B4ObeCq3rrJEiTXLheQXnmVPy6EWKbJpWYY=;
+	h=From:Subject:Date:To:Cc:From;
+	b=sMLaSOnD+Lb34DqAv4+l1KIbr+z8ayCyntGOlgw1db2MmJQhOdIkWIrWeRcdIdKWS
+	 S/zZ1aldQOEJt+M4gNNpgwr8njA+kY57ueYyzw69x62DB2y8ZdsNP0n7O2v8cGXFpi
+	 Rqu92gjEkqK5VGOhWZChnPJ4VjzfqdTkQ5Pb550IY/fptv7JSzPczGvy4XqdhjJ5sA
+	 l0a72cVjGZa+Jo45PjkXSM0qO0LbjExULNMK8lG/BaoQzQWxdDW9x19wy15yv5tDSd
+	 cgmarBCaj12d1puK7fN4kFXY72IDiwfR7r7m0gQbOzLxetlMXGRug7hJ9c8PA8IU9d
+	 DvLLUdQgizFew==
+From: Jeff Layton <jlayton@kernel.org>
+Subject: [PATCH 00/24] vfs: require filesystems to explicitly opt-in to
+ lease support
+Date: Thu, 08 Jan 2026 12:12:55 -0500
+Message-Id: <20260108-setlease-6-20-v1-0-ea4dec9b67fa@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <93c5c0a639a31958876739641fae9989afe8bb26.camel@ibm.com>
-In-Reply-To: <93c5c0a639a31958876739641fae9989afe8bb26.camel@ibm.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 8 Jan 2026 14:46:52 +0900
-X-Gm-Features: AQt7F2qsWP0nVISpYsUx3Uzo6__Ap6sLq6bi8NPc7lAosw_Ld7s6TODTbW2j90E
-Message-ID: <CAKFNMo=a+gB+SUhWGO+J_2t7TOgzfwYBsJLF61UGEfWej-yLrA@mail.gmail.com>
-Subject: Re: [RFC] generic/003 xfstests failure details
-To: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
-Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "slava@dubeyko.com" <slava@dubeyko.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAAAAAAAC/x3MwQpAQBRG4VfRXbs1pmY0XkUWgx+3hOZKSt7dZ
+ PktznlIkQRKTfFQwiUq+5ZRlQUNS9xmsIzZZI31pjI1K84VUcGerWEbAnrngxtcpNwcCZPc/6/
+ t3vcDWdlQRF8AAAA=
+X-Change-ID: 20260107-setlease-6-20-299eb5695c5a
+To: Luis de Bethencourt <luisbg@kernel.org>, 
+ Salah Triki <salah.triki@gmail.com>, Nicolas Pitre <nico@fluxnic.net>, 
+ Christoph Hellwig <hch@infradead.org>, Jan Kara <jack@suse.cz>, 
+ Anders Larsen <al@alarsen.net>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+ Christian Brauner <brauner@kernel.org>, David Sterba <dsterba@suse.com>, 
+ Chris Mason <clm@fb.com>, Gao Xiang <xiang@kernel.org>, 
+ Chao Yu <chao@kernel.org>, Yue Hu <zbestahu@gmail.com>, 
+ Jeffle Xu <jefflexu@linux.alibaba.com>, 
+ Sandeep Dhavale <dhavale@google.com>, Hongbo Li <lihongbo22@huawei.com>, 
+ Chunhai Guo <guochunhai@vivo.com>, Jan Kara <jack@suse.com>, 
+ Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, 
+ Jaegeuk Kim <jaegeuk@kernel.org>, 
+ OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, 
+ David Woodhouse <dwmw2@infradead.org>, Richard Weinberger <richard@nod.at>, 
+ Dave Kleikamp <shaggy@kernel.org>, 
+ Ryusuke Konishi <konishi.ryusuke@gmail.com>, 
+ Viacheslav Dubeyko <slava@dubeyko.com>, 
+ Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
+ Mark Fasheh <mark@fasheh.com>, Joel Becker <jlbec@evilplan.org>, 
+ Joseph Qi <joseph.qi@linux.alibaba.com>, 
+ Mike Marshall <hubcap@omnibond.com>, 
+ Martin Brandenburg <martin@omnibond.com>, 
+ Miklos Szeredi <miklos@szeredi.hu>, Amir Goldstein <amir73il@gmail.com>, 
+ Phillip Lougher <phillip@squashfs.org.uk>, Carlos Maiolino <cem@kernel.org>, 
+ Hugh Dickins <hughd@google.com>, 
+ Baolin Wang <baolin.wang@linux.alibaba.com>, 
+ Andrew Morton <akpm@linux-foundation.org>, 
+ Namjae Jeon <linkinjeon@kernel.org>, Sungjong Seo <sj1557.seo@samsung.com>, 
+ Yuezhang Mo <yuezhang.mo@sony.com>, Chuck Lever <chuck.lever@oracle.com>, 
+ Alexander Aring <alex.aring@gmail.com>, 
+ Andreas Gruenbacher <agruenba@redhat.com>, Jonathan Corbet <corbet@lwn.net>, 
+ "Matthew Wilcox (Oracle)" <willy@infradead.org>, 
+ Eric Van Hensbergen <ericvh@kernel.org>, 
+ Latchesar Ionkov <lucho@ionkov.net>, 
+ Dominique Martinet <asmadeus@codewreck.org>, 
+ Christian Schoenebeck <linux_oss@crudebyte.com>, 
+ Xiubo Li <xiubli@redhat.com>, Ilya Dryomov <idryomov@gmail.com>, 
+ Trond Myklebust <trondmy@kernel.org>, Anna Schumaker <anna@kernel.org>, 
+ Steve French <sfrench@samba.org>, Paulo Alcantara <pc@manguebit.org>, 
+ Ronnie Sahlberg <ronniesahlberg@gmail.com>, 
+ Shyam Prasad N <sprasad@microsoft.com>, Tom Talpey <tom@talpey.com>, 
+ Bharath SM <bharathsm@microsoft.com>, Hans de Goede <hansg@kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+ linux-btrfs@vger.kernel.org, linux-erofs@lists.ozlabs.org, 
+ linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, 
+ linux-mtd@lists.infradead.org, jfs-discussion@lists.sourceforge.net, 
+ linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev, 
+ ocfs2-devel@lists.linux.dev, devel@lists.orangefs.org, 
+ linux-unionfs@vger.kernel.org, linux-xfs@vger.kernel.org, 
+ linux-mm@kvack.org, gfs2@lists.linux.dev, linux-doc@vger.kernel.org, 
+ v9fs@lists.linux.dev, ceph-devel@vger.kernel.org, linux-nfs@vger.kernel.org, 
+ linux-cifs@vger.kernel.org, samba-technical@lists.samba.org, 
+ Jeff Layton <jlayton@kernel.org>
+X-Mailer: b4 0.14.2
+X-Developer-Signature: v=1; a=openpgp-sha256; l=5826; i=jlayton@kernel.org;
+ h=from:subject:message-id; bh=Oo05LcV8B4ObeCq3rrJEiTXLheQXnmVPy6EWKbJpWYY=;
+ b=owEBbQKS/ZANAwAKAQAOaEEZVoIVAcsmYgBpX+WzBv3HT+d1Fmmb4WJNh3VjXhmOx5cl7E+0X
+ 98Wl1lzspuJAjMEAAEKAB0WIQRLwNeyRHGyoYTq9dMADmhBGVaCFQUCaV/lswAKCRAADmhBGVaC
+ FYaFD/49dAmx6k9hJ/TPfTiX5MGWuIm/Bb6hiQ3wYU8z7D5mM7bDA0JzI4uNC4IC4k7DtSaeW+t
+ HW0GXcfmOc/2RNtvIURgrbNIKtr02nzAYWch3n94PXAZNhcygbpjjekIxTTpfmIp6Q3JR0VXmgj
+ FPOGz1G9+W5jTp8JkJCS7rK3QI1nR+/TS195gfflVDsyGMEA252ZaGAWOXQucH8aMmL3SmL4Sw3
+ SQIvSgZPcin8ppqmJM+SMqpJjims+KsIvBeiZ5RAX2koRTuCEpaimiM9mi7uvZTjn9qDUXstfCl
+ j6vVSQyDrhB6qaSgIjGD31+J/UHY4GmSW7EXpo9hwYld6pajZ7JmgvQYyorZSADZQ1buPawi578
+ 2S+AKCmbogE/0eu1rDPfSf7+pgKL0PHCFCUHmNfl5kyVzMdQ5fEfhZa0HY103UgMpyn9CWEA426
+ pzh9DY5Q7TVq+/Ml0m/iauvJ1NRfOvo1XZ6qodWqnFZEO7/lzreoUi45cpyDZzLiSQuca/VsCjV
+ 6m4pCflt/f0Ao2+yx3/gP9YDsugBwKA59y5BZvauge564wraKaWFFPDoPNSNY9aww3L7L1579eX
+ mhWasindF/bS2ZuJ3k3obfEbzGrzZnRus+vFi5LvzlZIlOMMPaJ/pY9IJPoJjhxxacuSawLXV7W
+ 2iGXbdzTGfcW99w==
+X-Developer-Key: i=jlayton@kernel.org; a=openpgp;
+ fpr=4BC0D7B24471B2A184EAF5D3000E684119568215
 
-On Thu, Jan 8, 2026 at 1:04=E2=80=AFPM Viacheslav Dubeyko wrote:
->
-> Hi Ryusuke,
->
-> As far as I can see, this test is trying to check the access time (atime)=
- after
-> every touch. And it expects to see the difference between atime and ctime=
-. But
-> it cannot see the difference:
->
-> sudo touch ./001.txt
-> sudo stat ./001.txt
->   File: ./001.txt
->   Size: 0               Blocks: 0          IO Block: 4096   regular empty=
- file
-> Device: 7,50    Inode: 12          Links: 1
-> Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
-> Access: 2026-01-06 16:23:18.315637313 -0800
-> Modify: 2026-01-06 16:23:18.315637313 -0800
-> Change: 2026-01-06 16:23:18.315637313 -0800
->  Birth: -
->
-> sudo touch ./001.txt
-> sudo stat ./001.txt
->   File: ./001.txt
->   Size: 0               Blocks: 0          IO Block: 4096   regular empty=
- file
-> Device: 7,50    Inode: 12          Links: 1
-> Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
-> Access: 2026-01-06 16:23:44.535933843 -0800
-> Modify: 2026-01-06 16:23:44.535933843 -0800
-> Change: 2026-01-06 16:23:44.535933843 -0800
->  Birth: -
->
-> Moreover, NILFS2 hasn't atime support in on-disk layout [1]:
->
-> struct nilfs_inode {
->         __le64  i_blocks;
->         __le64  i_size;
->         __le64  i_ctime;
->         __le64  i_mtime;
->         __le32  i_ctime_nsec;
->         __le32  i_mtime_nsec;
->         __le32  i_uid;
->         __le32  i_gid;
->         __le16  i_mode;
->         __le16  i_links_count;
->         __le32  i_flags;
->         __le64  i_bmap[NILFS_INODE_BMAP_SIZE];
-> #define i_device_code   i_bmap[0]
->         __le64  i_xattr;
->         __le32  i_generation;
->         __le32  i_pad;
-> };
->
-> Current implementation does such trick [2]:
->
-> int nilfs_read_inode_common(struct inode *inode,
->                             struct nilfs_inode *raw_inode)
-> {
-> <skipped>
->         inode_set_atime(inode, le64_to_cpu(raw_inode->i_mtime),
->                         le32_to_cpu(raw_inode->i_mtime_nsec));
->         inode_set_ctime(inode, le64_to_cpu(raw_inode->i_ctime),
->                         le32_to_cpu(raw_inode->i_ctime_nsec));
->         inode_set_mtime(inode, le64_to_cpu(raw_inode->i_mtime),
->                         le32_to_cpu(raw_inode->i_mtime_nsec));
-> <skipped>
-> }
->
-> I think we can use i_xattr and i_pad fields of struct nilfs_inode to impl=
-ement
-> atime support. NILFS2 hasn't xattrs support and, anyway, i_xattr is not e=
-nough
-> to implement this support.
->
-> What do you think?
+Yesterday, I sent patches to fix how directory delegation support is
+handled on filesystems where the should be disabled [1]. That set is
+appropriate for v6.19. For v7.0, I want to make lease support be more
+opt-in, rather than opt-out:
 
-What do you think is the appropriate goal for atime support?
+For historical reasons, when ->setlease() file_operation is set to NULL,
+the default is to use the kernel-internal lease implementation. This
+means that if you want to disable them, you need to explicitly set the
+->setlease() file_operation to simple_nosetlease() or the equivalent.
 
-The Linux kernel has multiple support levels for atime, including
-lazytime, relatime, noatime, and nodiratime.
-For an append-only filesystem like nilfs2, supporting strict atime
-would likely result in a disk-full error due to inode writes.
+This has caused a number of problems over the years as some filesystems
+have inadvertantly allowed leases to be acquired simply by having left
+it set to NULL. It would be better if filesystems had to opt-in to lease
+support, particularly with the advent of directory delegations.
 
-Therefore, regardless of the implementation method, some kind of
-constraint must be imposed.
+This series has sets the ->setlease() operation in a pile of existing
+local filesystems to generic_setlease() and then changes
+kernel_setlease() to return -EINVAL when the setlease() operation is not
+set.
 
-Personally, I think the limit is two options: noatime, relatime, or
-three options, including lazytime (where inode writes occur when
-evictions occur).
+With this change, new filesystems will need to explicitly set the
+->setlease() operations in order to provide lease and delegation
+support.
 
-What level of atime support is required for this test and other tests?
-(Is it simply a matter of decision?)
+I mainly focused on filesystems that are NFS exportable, since NFS and
+SMB are the main users of file leases, and they tend to end up exporting
+the same filesystem types. Let me know if I've missed any.
 
-Regarding the atime implementation, it was originally intended to be
-stored in a separate metadata file called the atime file.  Because of
-its limited fields, it is a trade-off with xattr support.
-A decision must be made to either move it to another metadata file or
-expand the inode size.
+[1]: https://lore.kernel.org/linux-fsdevel/20260107-setlease-6-19-v1-0-85f034abcc57@kernel.org/
 
-Regarding this, I agree with you that it would be better to ignore
-past assumptions, assign the remaining fields (i_xattr, i_pad) to
-atime, and implement xattr so that the sweet spot of the xattr size
-fits inline, by expanding the inode size to 256 bytes.
+Signed-off-by: Jeff Layton <jlayton@kernel.org>
+---
+Jeff Layton (24):
+      fs: add setlease to generic_ro_fops and read-only filesystem directory operations
+      affs: add setlease file operation
+      btrfs: add setlease file operation
+      erofs: add setlease file operation
+      ext2: add setlease file operation
+      ext4: add setlease file operation
+      exfat: add setlease file operation
+      f2fs: add setlease file operation
+      fat: add setlease file operation
+      gfs2: add a setlease file operation
+      jffs2: add setlease file operation
+      jfs: add setlease file operation
+      nilfs2: add setlease file operation
+      ntfs3: add setlease file operation
+      ocfs2: add setlease file operation
+      orangefs: add setlease file operation
+      overlayfs: add setlease file operation
+      squashfs: add setlease file operation
+      tmpfs: add setlease file operation
+      udf: add setlease file operation
+      ufs: add setlease file operation
+      xfs: add setlease file operation
+      filelock: default to returning -EINVAL when ->setlease operation is NULL
+      fs: remove simple_nosetlease()
 
-In any case, the above fields cannot be consumed unless the
-implementation policy for xattrs is decided.
+ Documentation/filesystems/porting.rst |  9 +++++++++
+ Documentation/filesystems/vfs.rst     |  9 ++++++---
+ fs/9p/vfs_dir.c                       |  2 --
+ fs/9p/vfs_file.c                      |  2 --
+ fs/affs/dir.c                         |  2 ++
+ fs/affs/file.c                        |  2 ++
+ fs/befs/linuxvfs.c                    |  2 ++
+ fs/btrfs/file.c                       |  2 ++
+ fs/btrfs/inode.c                      |  2 ++
+ fs/ceph/dir.c                         |  2 --
+ fs/ceph/file.c                        |  1 -
+ fs/cramfs/inode.c                     |  2 ++
+ fs/efs/dir.c                          |  2 ++
+ fs/erofs/data.c                       |  2 ++
+ fs/erofs/dir.c                        |  2 ++
+ fs/exfat/dir.c                        |  2 ++
+ fs/exfat/file.c                       |  2 ++
+ fs/ext2/dir.c                         |  2 ++
+ fs/ext2/file.c                        |  2 ++
+ fs/ext4/dir.c                         |  2 ++
+ fs/ext4/file.c                        |  2 ++
+ fs/f2fs/dir.c                         |  2 ++
+ fs/f2fs/file.c                        |  2 ++
+ fs/fat/dir.c                          |  2 ++
+ fs/fat/file.c                         |  2 ++
+ fs/freevxfs/vxfs_lookup.c             |  2 ++
+ fs/fuse/dir.c                         |  1 -
+ fs/gfs2/file.c                        |  3 +--
+ fs/isofs/dir.c                        |  2 ++
+ fs/jffs2/dir.c                        |  2 ++
+ fs/jffs2/file.c                       |  2 ++
+ fs/jfs/file.c                         |  2 ++
+ fs/jfs/namei.c                        |  2 ++
+ fs/libfs.c                            | 20 ++------------------
+ fs/locks.c                            |  3 +--
+ fs/nfs/dir.c                          |  1 -
+ fs/nfs/file.c                         |  1 -
+ fs/nilfs2/dir.c                       |  3 ++-
+ fs/nilfs2/file.c                      |  2 ++
+ fs/ntfs3/dir.c                        |  3 +++
+ fs/ntfs3/file.c                       |  3 +++
+ fs/ocfs2/file.c                       |  5 +++++
+ fs/orangefs/dir.c                     |  4 +++-
+ fs/orangefs/file.c                    |  1 +
+ fs/overlayfs/file.c                   |  2 ++
+ fs/overlayfs/readdir.c                |  2 ++
+ fs/qnx4/dir.c                         |  2 ++
+ fs/qnx6/dir.c                         |  2 ++
+ fs/read_write.c                       |  2 ++
+ fs/smb/client/cifsfs.c                |  1 -
+ fs/squashfs/dir.c                     |  2 ++
+ fs/squashfs/file.c                    |  4 +++-
+ fs/udf/dir.c                          |  2 ++
+ fs/udf/file.c                         |  2 ++
+ fs/ufs/dir.c                          |  2 ++
+ fs/ufs/file.c                         |  2 ++
+ fs/vboxsf/dir.c                       |  1 -
+ fs/vboxsf/file.c                      |  1 -
+ fs/xfs/xfs_file.c                     |  3 +++
+ include/linux/fs.h                    |  1 -
+ mm/shmem.c                            |  2 ++
+ 61 files changed, 116 insertions(+), 42 deletions(-)
+---
+base-commit: 731ce71a6c8adb8b8f873643beacaeedc1564500
+change-id: 20260107-setlease-6-20-299eb5695c5a
 
-Thanks,
-Ryusuke Konishi
+Best regards,
+-- 
+Jeff Layton <jlayton@kernel.org>
 
->
-> Thanks,
-> Slava.
->
-> [1]
-> https://elixir.bootlin.com/linux/v6.19-rc4/source/include/uapi/linux/nilf=
-s2_ondisk.h#L37
-> [2] https://elixir.bootlin.com/linux/v6.19-rc4/source/fs/nilfs2/inode.c#L=
-413
->
