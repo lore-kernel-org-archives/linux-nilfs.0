@@ -1,411 +1,389 @@
-Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f52.google.com (mail-lf1-f52.google.com [209.85.167.52])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CFF5F21CC5C
-	for <linux-nilfs@vger.kernel.org>; Tue, 13 Jan 2026 00:20:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=148.163.158.5
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768263659; cv=fail; b=PigjWnclbe0m3GDWZtQdw/sIU40FT+bro84o0mI1bbRLftqQv7843RehZaMqlfFbISwwXmuG+eVTOZq12ZNHHyVf23srcmKoNGLHJ3KTGDv5vjIwUTArXvzHau4BkOnO5K1rZpulGo0OW3sjuk4F92jtCPfrCJdr98EBEcddlKM=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768263659; c=relaxed/simple;
-	bh=7YYwHFRfHd4Tvy+IlBdokj8wv0WWQVRxYZDFhiRfxFA=;
-	h=From:To:CC:Date:Message-ID:References:In-Reply-To:Content-Type:
-	 MIME-Version:Subject; b=f/0oyMK6Wvhy0OVaUfkuuuMbUiBZOqIf/70YGJ5HopKqAnysGsnVgTFySd6m3AowWZu60/4bhz3rboyBtX8d+XvBNC6Smohf2UMa2NZvq8IgJg8Dk8vuMoDf/5zFPQXusNiDkYUtsiHKp1VOZlYQKgElCf0WfL4mgfZkUp3IlC0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ibm.com; spf=pass smtp.mailfrom=ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=Gh726ETR; arc=fail smtp.client-ip=148.163.158.5
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ibm.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F9EB18FC80
+	for <linux-nilfs@vger.kernel.org>; Tue, 13 Jan 2026 01:31:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.52
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1768267904; cv=none; b=ph1iNeVCPI+Y0I+RX85DihoL1VTxB/gAyXzPUq96ENECK61erm43wDRXxebGZ5OkfL+mTYOVa18OZLGgZeR7n+JQfidc47TVUlIiAKaj/j2MhrAvRnRcCr5rVuOcIkkFXVtFK11SHJdfNdv/BxPXcomOE8MiCQRzG+D5XpuM4p0=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1768267904; c=relaxed/simple;
+	bh=n7UWN+KqmnrFw9UtmqTif3SSWS47gvp2WwDx1go8+sA=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=gRZA5oPqJDyOQwGQJGkXzOqs6I1huCO0pvN9BFYMsuYJg5lmwSKUmd/kV4DMWjlDMOpq3rH7R5QocT3eSaUWaSQVtgKuk3pRjgKJhwKTzUKqIUV6D087Yryhb5dTWmXPxV5ptw9DnII+42rlfMKMPa4R46/alYhWqFZ/djTS3rU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JnFuZWeu; arc=none smtp.client-ip=209.85.167.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="Gh726ETR"
-Received: from pps.filterd (m0360072.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 60CFc901028413;
-	Tue, 13 Jan 2026 00:20:56 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-id:content-transfer-encoding:content-type:date:from
-	:in-reply-to:message-id:mime-version:references:subject:to; s=
-	pp1; bh=7YYwHFRfHd4Tvy+IlBdokj8wv0WWQVRxYZDFhiRfxFA=; b=Gh726ETR
-	V6t4MxGgNlvcOFftfSjq5TdcOYlYmbxxKBwd+v/xvgHjXtlFZlhjhFIWtNYeSTS8
-	x2j5cQysayBeCUvb9zxUM6MFxDY/II1nPJT9Dno371V5eMaK8eb4xq8BTjQjoc+N
-	CDfCA1Y99LX1A8odFQNeMjV2jNkFpIu7wBPO0zhzvcE5QohYuaXG4m1N64jflqBh
-	/+/XXZTF/RsgD+tKzVBCcCnVD8XrLq0ReVBQKAu2d1hdj23ePxKj3E6g+Ly1r6zR
-	WcgxIgpnbLFVtLEXqUuEvPPd6kMxDKeUqYBWyY+EPfao/oV+S6I9KVLYdrUY3X4W
-	2SJm2BgdnfT8KQ==
-Received: from pps.reinject (localhost [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4bkedssh7r-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 13 Jan 2026 00:20:56 +0000 (GMT)
-Received: from m0360072.ppops.net (m0360072.ppops.net [127.0.0.1])
-	by pps.reinject (8.18.1.12/8.18.0.8) with ESMTP id 60D0Ktfc007063;
-	Tue, 13 Jan 2026 00:20:55 GMT
-Received: from bl0pr03cu003.outbound.protection.outlook.com (mail-eastusazon11012036.outbound.protection.outlook.com [52.101.53.36])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4bkedssh7q-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 13 Jan 2026 00:20:55 +0000 (GMT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=NPOTgDAdwf+spxDtVMFdOo0DipHwpR44kbNG1+/eoHlbQhFNqjVF34qlKcJ95A3T8msQUMAm3ojQXjRHTI4Lmg4VEtDk5eneGjUdLyINZZvb/qNhGMw+CDBPmPrJBSWLs7tDjFUDlig8wxpUOm0QwyRhxsVghDL/quj1rHKqM0VP40PYSjZ6dAK+WnZo/5JlagAUyltjTaLOfHm99aC7GsiB2NE443uOnygCCOi4pnH394LY7qxrfp9zj7099A5gaWjtNLwihC5P0k4mhgAoy4LUHSpaiaI4DwnK5CdVHJ1py+HFUwKDDa0I2u48PCrHiJeZQh/ieR0LASqtWXnQnQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=7YYwHFRfHd4Tvy+IlBdokj8wv0WWQVRxYZDFhiRfxFA=;
- b=ZafcwqNBByK8eM7u7vGRiGPaF6xBKNbyePJ0QQLKp9GXnn92Mm3bFWprb9GBCFSltjvrtvmjRidlbEx5iQ0mn49guXwtYktD6O7HE4tN8aeU+KeXisKwiryzEZOkdE7lN8Mp/eHtixhm+5wpWLM8ej5LwNT/eO7qHWpjGIg06ZkY+OK0QKc94PTYq6GaPx9UnRh6y11Bans/jDmHMg/p2nGDFaZe0+pGCpregy+Nrpio4W+QEjmtTKKiDrJPjSxMsuVGWTeRt+W+Ul8BDHn9qG7+9476uOlL4N9bwD6p+Gr39yi/gwhw2ZlARWEUPW8r1uDYLAL8Km4xYnjjs1BCFA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=ibm.com; dmarc=pass action=none header.from=ibm.com; dkim=pass
- header.d=ibm.com; arc=none
-Received: from SA1PR15MB5819.namprd15.prod.outlook.com (2603:10b6:806:338::8)
- by DS0PR15MB6357.namprd15.prod.outlook.com (2603:10b6:8:f9::16) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9499.7; Tue, 13 Jan
- 2026 00:20:53 +0000
-Received: from SA1PR15MB5819.namprd15.prod.outlook.com
- ([fe80::920c:d2ba:5432:b539]) by SA1PR15MB5819.namprd15.prod.outlook.com
- ([fe80::920c:d2ba:5432:b539%4]) with mapi id 15.20.9499.003; Tue, 13 Jan 2026
- 00:20:53 +0000
-From: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
-To: "konishi.ryusuke@gmail.com" <konishi.ryusuke@gmail.com>
-CC: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>,
-        "slava@dubeyko.com" <slava@dubeyko.com>
-Thread-Topic: [EXTERNAL] Re: [RFC] generic/003 xfstests failure details
-Thread-Index: AQHcgFPOFYKtpyPNIku2OF7ix7+eSrVHw7kAgAE6ZICAAQzHgIAFOWcA
-Date: Tue, 13 Jan 2026 00:20:53 +0000
-Message-ID: <4f1af0d0b9d867e8baf964d033452f86ccc27c08.camel@ibm.com>
-References: <93c5c0a639a31958876739641fae9989afe8bb26.camel@ibm.com>
-	 <CAKFNMo=a+gB+SUhWGO+J_2t7TOgzfwYBsJLF61UGEfWej-yLrA@mail.gmail.com>
-	 <d7bb64793d0990cc4b441c7a55e30b87b13dd4aa.camel@ibm.com>
-	 <CAKFNMo=scKgYNobap44HQb+cuy7tquQUnNOSnzwGQB=W-gotpQ@mail.gmail.com>
-In-Reply-To:
- <CAKFNMo=scKgYNobap44HQb+cuy7tquQUnNOSnzwGQB=W-gotpQ@mail.gmail.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: SA1PR15MB5819:EE_|DS0PR15MB6357:EE_
-x-ms-office365-filtering-correlation-id: 93f6c3fc-4a0c-48f3-4112-08de52399d20
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0;ARA:13230040|1800799024|376014|366016|38070700021;
-x-microsoft-antispam-message-info:
- =?utf-8?B?Z05RMXhxMkZ2c3IwV3FKZjk1cDFKeTJjUjFpajBseE9yMnV2NVdIOGxxV292?=
- =?utf-8?B?MFc0S01oSXNYVGt5MDhKWkNvV0pXdG95RGxFR2ZNc28yandxdTZ1Uzh2citR?=
- =?utf-8?B?cERsQlJwdzNlR1BvNXZMQ3B6MTRXdi95WVUzejRjc1plZGdOM25vZUlYdGZl?=
- =?utf-8?B?R1R5dWMweGF0a2NIanBaWFdack44OC9IajAwMFg4dTQ4aGRUSCtIbnJVdjNp?=
- =?utf-8?B?K2U5NllZUjluS0ZiQlpGUkNUdW9XUlhIM3dISFFvS2Z6Tkk3QzFNUW1FNE9H?=
- =?utf-8?B?aWkyTmM3dVFQNmJuMGlsdEptQU1QY1JDTXllZUdWRDVUOHdCd0xOb0JvcFNQ?=
- =?utf-8?B?UnoveTZGdlhCK1QwTVFZTk5kVnJJaGFnMTJBUnFac1RNaHk5dlA2QTRBaWhj?=
- =?utf-8?B?Y205MFR4a2kzSVBXQi9YS0JVb1I1QUhCUGt1RkVUTDJBZGUyYVRmOWFNc2dD?=
- =?utf-8?B?TG5kcGZsTjNIb1lLb0RhSWpGV3FaSnluemw5RjltWFFEOXp4MU0ybzFaOFBx?=
- =?utf-8?B?S2VCcWc2WGptcXR3R1FsT1N6eGprTDNCSW5OWFZIZHM4cnp6a1RjMmNBeDdh?=
- =?utf-8?B?aTAxRzlURzcrNnVJS2FOVlNTaSs4aFp4U05VeEtYeC9JTWp5Qnl1b3J6N1NN?=
- =?utf-8?B?MlNrTmJPcHFUMW4xZndZZzZzZXIrOWE0bVU2bDJGa3lydnVKS2w2RVArd045?=
- =?utf-8?B?dnF4TXJwMzc2TmM1WmdITW9LNUpLTEZsZUhZSkNoNDczbHpwajRHQi92VHl6?=
- =?utf-8?B?ZW0vNnJWY0pTeTI4bjcwaEZUYTRxeFRuQTAzMVN4VkJlbFdVczNKQ3B0V3Bu?=
- =?utf-8?B?Vi9lbGZBWlMwVWxvSVBibEFMMkFvWG5RUHVvNG5zeVNCeGY2UWtCeU1ud1JL?=
- =?utf-8?B?R2UzbEEwbXRib2QrckxjcWhQendCTURiY0tJUU9kdzhHUG5YZDkvMmZOYnV3?=
- =?utf-8?B?SVU2Vmpld20xL0I5WmF3RHRZb2kyOXhRL1c0bWdqT3o4eGkvNE1IakQ2bUdO?=
- =?utf-8?B?T0Q2Tnk2c2lEK1RMWE82SU1RT1J5ZU5tVC9ucmVmTm40Rk95SHdoWFpzM25C?=
- =?utf-8?B?LzFGMDc2Um9jdVJNK1hrdHV0SWczWGd5TElFSDQyNHRmTU5iTWNMQ2RZQ0VW?=
- =?utf-8?B?ekRCbHh1NEhUQkVhZnVOUk5rK21OdEV4bnF4cW5Mb2dKbG9MZ2dXZUpFNXlH?=
- =?utf-8?B?V254ZjNqZkl4Yjc5M3ZoWE1ITnUyUFEySUxqc2dIOWNUUmNzMS83ZHowRSth?=
- =?utf-8?B?VHd5OEpCdlRhL3VsSXl3YVhHeUl3cE0wRG96L2ZtVHBYNlAySldCN21hOVND?=
- =?utf-8?B?L1BNOWZwUEFVUHI4cGs5RXZUcU5pWG5aMU0yNUhwZUE3OGhuUlliQytubXBN?=
- =?utf-8?B?bU92ZlZVVDlVRG5WaWdEL2phL3NuZjk4R0pZQVpKR3NJM0ZoMEpOMThTUG9C?=
- =?utf-8?B?L3hEVzJzSmxjVUJ4TXg4UDJidkRLZ0xKUzZ1YXJ0eVpPLy9FNjh2NjVqUCt5?=
- =?utf-8?B?QzVxeGd2bllRTWZnSEg4azhxeXFhNWxLNHVET3JhajhUdU5RczJPVmd2c256?=
- =?utf-8?B?TmVRQmxVVHg2RlFpbkZNNS82MFRpVlBLQ0xUdnFObHpmakVTd1VCajhTTEVX?=
- =?utf-8?B?dDM1RVg0c1h6WmJLTWxRQnBNVFZaWnVvZWI2S3ZOQWVLSTdDMGpvdWJ6dFoy?=
- =?utf-8?B?NXZMRUFuS3hCNTlIanVRbGwvaGNHbll5WjdKdDFydVdXeWZKcEUxTUt2Z3hM?=
- =?utf-8?B?bnN6ZVpaUW41dXJDUnZ0ODJpYzFuT3ZYTkxFVkFWRUx6OC82ekJ6dnZhQnJq?=
- =?utf-8?B?MEZ0bEQxU2dhNk4vMWdnOEF2a0hveFdvdUZRVjhPYTJybkhKYkpjMEkxZmZm?=
- =?utf-8?B?dElpS3R5bHkrVmJrVkkyRUJFa09UL3FJdE5EaEdjRzBGSzY3Z0NaR3FWN0lY?=
- =?utf-8?B?aHpBdmFuKzVJMzF6M21zSzhkbnVmZjdSenM2dGZIM2NxeFVQRW9lamFZVEkz?=
- =?utf-8?B?VEhjZWFEWlpjMkFkY1JId3Uxc1dkV0tWVWN5VVViTmFWdmxGSFFDNGlqVDBH?=
- =?utf-8?Q?vy5EZk?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SA1PR15MB5819.namprd15.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(376014)(366016)(38070700021);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?T1BIMUlrUlBQbGEzSzNLRVFhdzZWMzFndTIvUnFDeFVUVk85NHBML0VXUTJJ?=
- =?utf-8?B?SncrZlhBUWNYYlFtM2lLdlJ4Nkc3QzJ3K001VXdic0hJMnNDN1NvdTA4Nkdo?=
- =?utf-8?B?bmtEdGFaOHdueDExY3RZYUNzaytHa094UDhhTlBCSzJMd0w1eHdJRXNnNmhJ?=
- =?utf-8?B?WkRzWlFuYU5Fblc3NUlIMEZOYy9zU29VME82b240ZDJId09adkFsTFMwYTNz?=
- =?utf-8?B?RGVDeW9CdjNoNTVCT2ladGRkZEMrWmJNNWYrWFdEUEpDSmhkZldXQXdXdWRP?=
- =?utf-8?B?eXNHL3A5NEQzUXJDdTMvNExQRDNDenFtL1dZUE14bWlVM2J5ZEpMcjZWQVM2?=
- =?utf-8?B?RnRKNUg2bW41NGxrMlJrTzRnN1Jud281WU1GamJnY3lSV3hqMUpGY2J2MGlZ?=
- =?utf-8?B?MFVHUG9nZWx5bVBQblRoWUZTTWprUS92QVY2dkFaYXpVdnNPOFhZSEVwVkJI?=
- =?utf-8?B?bXhIZVp5alkrTGRQeEJ4Rjk5SnF3a3NwVHZaMkxUMlFVdWZVU0NhbWhWWmpP?=
- =?utf-8?B?aDBULy9VNXpibEcvMXVkeSt5eTAvUUpXWXRFUHZTVitGMUpHZ08xaUxUbm8w?=
- =?utf-8?B?QzUvRkh0K0xtTklMNVZjKzd4WElNaEZmTmEvTHc1Z1FlbDY3WDZObGRFVy8x?=
- =?utf-8?B?cGtWMFRUeG1EOWtidTZPdGhPWlVVNHNiOFkvK2ZyRWo4QzBob0hUMFNGZmQ4?=
- =?utf-8?B?cHBGMUhxQ1UycVFtMk8vQm1YVFNTdDlKM044a2pRMHM0WmlPdFpKa2VPQldw?=
- =?utf-8?B?UFJ6MlZ6amZMRmFWaVZhY0xmems2S0NZZGhNdVVlY1lCdExVaEtaa2dBTktW?=
- =?utf-8?B?Y2VGYzBFSXpFU1BnN2crQjZIQTZOUHM4VGprSjVQbGtvZndyZ25PdXZIbHk2?=
- =?utf-8?B?Z3VRRHUvTVVCVk5DdEF2cmNsVm5jSWtYUEhZNUtXT0dzVktjS2JXdFBaTFhU?=
- =?utf-8?B?WGtsMUFvRVY3aEFVZmd3MC83aURRdUljWDJZc3h0ajNQL3drTUlOV1RFY1ll?=
- =?utf-8?B?SjI0UWl5QUhnckVuaW1QeHJJU1MrMy9tQnFVTGxVVTM3WHFQRlBuazR1MGc1?=
- =?utf-8?B?aW5yTXRKR25zV0VkeC9KbnBYQ0xkVnJZbEs2dWs5WE0yT2JrUEJFRHhaMGEr?=
- =?utf-8?B?YWpVMjNEek42TE11bDB4bmRSQzkxSFNWQzJaTHdGdmVseS82aTlQUm5YYnFj?=
- =?utf-8?B?cG5Ldk9qL1JIbEpURkp2d1BHTWV0VzJQeUZWZ2JQZGtvZnRrMnhLbGszRk5Y?=
- =?utf-8?B?TEFRTmxZcWQzQTk3cDVCeWp3cHhSUXFhV2xMb1RqTXQwNkpCNExNQ3lZbDFx?=
- =?utf-8?B?bE1wWW4rK0ZiaUdZY3R6Qzd5S2NtTEZSQUhod3FTZHRRNm1ET0hlMHh3RWIx?=
- =?utf-8?B?UTExUGQwMEkxQkhqV1l5YitRdmY3Z3JhUnh5MlpadmxBdUFHTmR1V3BtU1Nt?=
- =?utf-8?B?THBkdGNVQ0VITnpSZFJHVDJaMmllOU50aW52WGRDNllWS2lMU0d0Z0VZcjEr?=
- =?utf-8?B?ZnlxSzloRTNnZzBsclBKeTJMV1VyNFF1dkh3ODZRbkxac2h4YktyN2dsMnIw?=
- =?utf-8?B?dzJHbGJNcmRqSlRId2RZNC9hOUs2a0g3MURYR2xhVkFwUGZQQStLWnZPNzBX?=
- =?utf-8?B?WUdpWEZ2RDNrNHdLdTRyMW1lTEVtY1BnNU5EVFYwMWxMME5TeUV4N3p1Y2Nj?=
- =?utf-8?B?bWd0eUFiVjdvL0Z4dUdNOEEwM3doSXVPRXU1Z1dKdTVlOWx2MExYR3lFNHhL?=
- =?utf-8?B?K0Z1bjFsYTZ4M2s0akQ5bUZQR3hSL3dpUm5nV3B1Z3JxYmNYbGltVkRyS0tB?=
- =?utf-8?B?SHZaV2tBQlRDRmI0N2N5S1lxeVBNUmxWc0lWUTVhaWlHakdSRllpazBQV3M3?=
- =?utf-8?B?QlVOUktWTE1WdlE4ekNESzVTVEdlMm5XVTNRUGxiNGl4SzRCQ1BmSmxmNzBn?=
- =?utf-8?B?OFk2OUF3SlZtZUhOaVgzZnlIRWp1a0MzWmZBT3Jhb0YwVEQyZ1ZHL2pZQml1?=
- =?utf-8?B?WlJWZW1jOVdyaWJHRjRKTkRzM0FvUDNYdzNNYkJFZHZNSFlvWWlUcUpBbGFm?=
- =?utf-8?B?ak91V3lHa0trYksvYklpN0VCRGVKdmx5YThPYWo2QnRjclVFWFM5VThtUjhn?=
- =?utf-8?B?QkFNWCt6Szd6ZVpwQ1VSUy9JVktFZlNSWTdyNjBaU2h6TFdwaU81ZTY1NDZi?=
- =?utf-8?B?dnI3SktiRGJrbGlHU0c2d1M1dXd2S2FYazRIcW9LL1pLRXVyRXBkV2MwYTJ3?=
- =?utf-8?B?VkVFWi9FRDV1UlJVN3F4S3UwVnIrSlhLcHZrbFR3K1VIVUxKQjVTdXdzNWJw?=
- =?utf-8?B?NXdmRklZa3Q1aFFzN3JLVkJJT2VDOFZxVHdqT3NQc2NRcXMycUtLdz09?=
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <305FA6A1965C8B49924C4A5C9F71A3E3@namprd15.prod.outlook.com>
-Content-Transfer-Encoding: base64
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JnFuZWeu"
+Received: by mail-lf1-f52.google.com with SMTP id 2adb3069b0e04-59b6df3d6b4so7089047e87.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 12 Jan 2026 17:31:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1768267900; x=1768872700; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=2X+XpBTAaBenXXZPooJkNunaNNFLF/l+efpCeAcf9m0=;
+        b=JnFuZWeueePuBxBHhnnsJYWXrNzp6XGjg7ASu2Nfd0WMIQyiH0o+O6WZByrI3+ccPI
+         Wlu5+EwEehDpbwTyo6ysu6I5Jq/8uV8lRaSsFgXQEoHPWv86d3udaThpcIq3vtymwUSB
+         MHs+CytPRjUij1Ekc6LukI3CyPJxxkixM+NO/VCo3zGnx87kwnEnqBNewQg/D8eKHHzW
+         1oJMvsqhouV4tJ0qyoqgFugSZrdVWLkCKZM6PARXleipLAQflSvV3LIZeaetbiI3QED4
+         Sa/U0m0Jzld4tY7pOz70yK+X9e//EXjGDO8pZdkVSgKnak1gb86BFHdISWnFHt2KtiOi
+         1JzQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1768267900; x=1768872700;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=2X+XpBTAaBenXXZPooJkNunaNNFLF/l+efpCeAcf9m0=;
+        b=QQuPbTWwjtoFRqb9vQ8+c2Y2xOzdyZyfDB1TmebwzCNDf4v1aGlQVAiEqlAVF02vLJ
+         S0joyVt0Z3TyUKI723szpGm+op/n0fMW9mxMP8Ad5pL+U2fNAmYUaBq3JT7SSmwUcj3c
+         8spboy1tZ7gC+y8XCm4Ed65UYV/tNaYqTYaby1aZTYI3J0SmQYMEi/6NT0xIOFQ+99jY
+         6jcNRVN9zYE0thioMXASDrgLDW2Iun7T6kI5cdwftGhm+H9g4Cp3WuipnXZMhJxdXLmM
+         yOWVmb2/WwZJj5iC8PyZNjmU6iSz2GM+YPjcvoTf+H7YsID7dznsD3gFC+9AdrjFGnIN
+         DpBg==
+X-Gm-Message-State: AOJu0YwbIe++X2dvY6a21fXNxOPc6Lmo+3xfvL4t8+/On29S/eTJx6/2
+	29HUxrBERkVykaVIWJfs6Ja/PQO2FHkWUDTClY1guYwzQGh81lNO8yNP+EFkZpq61VduEaxJrsJ
+	eZeT245BRb0v+O6+mNNXBhBGDYiaXeO4=
+X-Gm-Gg: AY/fxX7OXWEeVPHaQNhoMLxeOiZ1JXjjpHhC+aXJx3C4iWhZuGK9pNjUjGq4z3cgCQQ
+	1RwpAKyw/4oPHUUMizROfbZwUydeTeOpAaYGHfEAGimg5Dk18Y8CCtOBf+p1E7EuYfoMTtfqxdb
+	6/TKT2y0tNGJ5r+buaIT7E9hWiT+EdZ4aqXanWuJH7+6LVyTp8Bi7EEoYl5SkCcEQlVLQoKlBIk
+	qOM/TOD3OGV11DHBl3yrpQEvQkcehx5JoQa4zUoJ1ENzdc4G/ybChHE/zaVizk+z6hcFiVj4poq
+	wNOl7dQ=
+X-Google-Smtp-Source: AGHT+IFSYZ1vv1I/44nyGiVPpzv192vC3U3x3yNj3JwdRt4REcNnO/HlnBIq13d9TYFKhSJUfVShoIJR9vvQgmIN8QM=
+X-Received: by 2002:a05:6512:3c88:b0:59b:7d3a:2a26 with SMTP id
+ 2adb3069b0e04-59b7d3a2c31mr3735059e87.44.1768267899748; Mon, 12 Jan 2026
+ 17:31:39 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-OriginatorOrg: ibm.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SA1PR15MB5819.namprd15.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 93f6c3fc-4a0c-48f3-4112-08de52399d20
-X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Jan 2026 00:20:53.5767
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: fcf67057-50c9-4ad4-98f3-ffca64add9e9
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 7s+pxRC3/Jnwrh/sz3wnrnGQNRU5xHtqgZdtIZUMwneROjgjV99r9IbL9OIkQHpT11ub9vzRtlSGJGIohsaYQA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS0PR15MB6357
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMTEzMDAwMSBTYWx0ZWRfX+x/HPA6Z4r2e
- Tsab7SeGoFaJOQMvWsLH/A8nb1QqtNy+E2qexF1whqbzaX2tVKHbytGZVh9dUqtyrmSxJ4w0sWB
- jIwP0jAgu/yyhS5Aokp0f07DZKCf4VLTL2Aoy6UiEE1iTJIkCxEiAzZU+kvIXOXLQhA+ZSuVKjh
- vWxtaHz/gPBcPtxiJFBl840MH23u4HDO93Gb0NABrPUhYP9TzMOCwmX0Oq6fDP8xVKPXPdJm0/O
- aeWpciZKvAlI0/v3Dz9Lxo/lP74ACrAimxyNRck9kSJiT+SWUXG2XA02ge3MmqWnazQ0fUpjdIh
- KOch7dTzs8hHZEJpa8YuvQwzOZ7rJlxe3q+os1CB01eSxBA961yUgL9LXagutxLOKkaxBJpyqzC
- d0FtMFfP6FJ8VepPVVMEtdGsot7JjxYOSAsDYMpm7y48ymxlQpkSYOHCnfhV/oua2jWmFgfhVT4
- 37NhU0vOBfLeIZyitpw==
-X-Proofpoint-GUID: q72nOyMTBfyw-4s7ySV_DGqp2z88dZ1j
-X-Authority-Analysis: v=2.4 cv=WLJyn3sR c=1 sm=1 tr=0 ts=69658fe8 cx=c_pps
- a=9fgoEbmtC9fw8tSBsklw+g==:117 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
- a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10
- a=vUbySO9Y5rIA:10 a=VkNPw1HP01LnGYTKEx00:22 a=ed5vTmusyanRWmgw7MoA:9
- a=QEXdDO2ut3YA:10
-X-Proofpoint-ORIG-GUID: kgXcIwVkF_hC9UAfO6PvzM0F4XdDXy8Z
-Subject: RE: [RFC] generic/003 xfstests failure details
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1121,Hydra:6.1.9,FMLib:17.12.100.49
- definitions=2026-01-12_07,2026-01-09_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- spamscore=0 adultscore=0 malwarescore=0 phishscore=0 suspectscore=0
- priorityscore=1501 bulkscore=0 clxscore=1011 impostorscore=0
- lowpriorityscore=0 classifier=typeunknown authscore=0 authtc= authcc=
- route=outbound adjust=0 reason=mlx scancount=1 engine=8.19.0-2512120000
- definitions=main-2601130001
+References: <93c5c0a639a31958876739641fae9989afe8bb26.camel@ibm.com>
+ <CAKFNMo=a+gB+SUhWGO+J_2t7TOgzfwYBsJLF61UGEfWej-yLrA@mail.gmail.com>
+ <d7bb64793d0990cc4b441c7a55e30b87b13dd4aa.camel@ibm.com> <CAKFNMo=scKgYNobap44HQb+cuy7tquQUnNOSnzwGQB=W-gotpQ@mail.gmail.com>
+ <4f1af0d0b9d867e8baf964d033452f86ccc27c08.camel@ibm.com>
+In-Reply-To: <4f1af0d0b9d867e8baf964d033452f86ccc27c08.camel@ibm.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Tue, 13 Jan 2026 10:31:23 +0900
+X-Gm-Features: AZwV_Qib_cFlFazJMJOZcvFAk5AohfMkGCtpXDpqx2R43Wk7pljqW_5qplhRIro
+Message-ID: <CAKFNMokM7=3wdqdcWWLgBkDK-H=mgfHyd3z61TYT8WxBUC_X9g@mail.gmail.com>
+Subject: Re: [RFC] generic/003 xfstests failure details
+To: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
+Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "slava@dubeyko.com" <slava@dubeyko.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-SGkgUnl1c3VrZSwNCg0KT24gU2F0LCAyMDI2LTAxLTEwIGF0IDAxOjM0ICswOTAwLCBSeXVzdWtl
-IEtvbmlzaGkgd3JvdGU6DQo+IEhpIFZpYWNoZXNsYXYsDQo+IA0KPiBPbiBGcmksIEphbiA5LCAy
-MDI2IGF0IDk6MzLigK9BTSBWaWFjaGVzbGF2IER1YmV5a28gd3JvdGU6DQo+ID4gDQo+ID4gT24g
-VGh1LCAyMDI2LTAxLTA4IGF0IDE0OjQ2ICswOTAwLCBSeXVzdWtlIEtvbmlzaGkgd3JvdGU6DQo+
-ID4gPiBPbiBUaHUsIEphbiA4LCAyMDI2IGF0IDE6MDTigK9QTSBWaWFjaGVzbGF2IER1YmV5a28g
-d3JvdGU6DQo+ID4gPiA+IA0KPiA+ID4gPiBIaSBSeXVzdWtlLA0KPiA+ID4gPiANCj4gPiA+ID4g
-QXMgZmFyIGFzIEkgY2FuIHNlZSwgdGhpcyB0ZXN0IGlzIHRyeWluZyB0byBjaGVjayB0aGUgYWNj
-ZXNzIHRpbWUgKGF0aW1lKSBhZnRlcg0KPiA+ID4gPiBldmVyeSB0b3VjaC4gQW5kIGl0IGV4cGVj
-dHMgdG8gc2VlIHRoZSBkaWZmZXJlbmNlIGJldHdlZW4gYXRpbWUgYW5kIGN0aW1lLiBCdXQNCj4g
-PiA+ID4gaXQgY2Fubm90IHNlZSB0aGUgZGlmZmVyZW5jZToNCj4gPiA+ID4gDQo+ID4gPiA+IHN1
-ZG8gdG91Y2ggLi8wMDEudHh0DQo+ID4gPiA+IHN1ZG8gc3RhdCAuLzAwMS50eHQNCj4gPiA+ID4g
-ICBGaWxlOiAuLzAwMS50eHQNCj4gPiA+ID4gICBTaXplOiAwICAgICAgICAgICAgICAgQmxvY2tz
-OiAwICAgICAgICAgIElPIEJsb2NrOiA0MDk2ICAgcmVndWxhciBlbXB0eSBmaWxlDQo+ID4gPiA+
-IERldmljZTogNyw1MCAgICBJbm9kZTogMTIgICAgICAgICAgTGlua3M6IDENCj4gPiA+ID4gQWNj
-ZXNzOiAoMDY0NC8tcnctci0tci0tKSAgVWlkOiAoICAgIDAvICAgIHJvb3QpICAgR2lkOiAoICAg
-IDAvICAgIHJvb3QpDQo+ID4gPiA+IEFjY2VzczogMjAyNi0wMS0wNiAxNjoyMzoxOC4zMTU2Mzcz
-MTMgLTA4MDANCj4gPiA+ID4gTW9kaWZ5OiAyMDI2LTAxLTA2IDE2OjIzOjE4LjMxNTYzNzMxMyAt
-MDgwMA0KPiA+ID4gPiBDaGFuZ2U6IDIwMjYtMDEtMDYgMTY6MjM6MTguMzE1NjM3MzEzIC0wODAw
-DQo+ID4gPiA+ICBCaXJ0aDogLQ0KPiA+ID4gPiANCj4gPiA+ID4gc3VkbyB0b3VjaCAuLzAwMS50
-eHQNCj4gPiA+ID4gc3VkbyBzdGF0IC4vMDAxLnR4dA0KPiA+ID4gPiAgIEZpbGU6IC4vMDAxLnR4
-dA0KPiA+ID4gPiAgIFNpemU6IDAgICAgICAgICAgICAgICBCbG9ja3M6IDAgICAgICAgICAgSU8g
-QmxvY2s6IDQwOTYgICByZWd1bGFyIGVtcHR5IGZpbGUNCj4gPiA+ID4gRGV2aWNlOiA3LDUwICAg
-IElub2RlOiAxMiAgICAgICAgICBMaW5rczogMQ0KPiA+ID4gPiBBY2Nlc3M6ICgwNjQ0Ly1ydy1y
-LS1yLS0pICBVaWQ6ICggICAgMC8gICAgcm9vdCkgICBHaWQ6ICggICAgMC8gICAgcm9vdCkNCj4g
-PiA+ID4gQWNjZXNzOiAyMDI2LTAxLTA2IDE2OjIzOjQ0LjUzNTkzMzg0MyAtMDgwMA0KPiA+ID4g
-PiBNb2RpZnk6IDIwMjYtMDEtMDYgMTY6MjM6NDQuNTM1OTMzODQzIC0wODAwDQo+ID4gPiA+IENo
-YW5nZTogMjAyNi0wMS0wNiAxNjoyMzo0NC41MzU5MzM4NDMgLTA4MDANCj4gPiA+ID4gIEJpcnRo
-OiAtDQo+ID4gPiA+IA0KPiA+ID4gPiBNb3Jlb3ZlciwgTklMRlMyIGhhc24ndCBhdGltZSBzdXBw
-b3J0IGluIG9uLWRpc2sgbGF5b3V0IFsxXToNCj4gPiA+ID4gDQo+ID4gPiA+IHN0cnVjdCBuaWxm
-c19pbm9kZSB7DQo+ID4gPiA+ICAgICAgICAgX19sZTY0ICBpX2Jsb2NrczsNCj4gPiA+ID4gICAg
-ICAgICBfX2xlNjQgIGlfc2l6ZTsNCj4gPiA+ID4gICAgICAgICBfX2xlNjQgIGlfY3RpbWU7DQo+
-ID4gPiA+ICAgICAgICAgX19sZTY0ICBpX210aW1lOw0KPiA+ID4gPiAgICAgICAgIF9fbGUzMiAg
-aV9jdGltZV9uc2VjOw0KPiA+ID4gPiAgICAgICAgIF9fbGUzMiAgaV9tdGltZV9uc2VjOw0KPiA+
-ID4gPiAgICAgICAgIF9fbGUzMiAgaV91aWQ7DQo+ID4gPiA+ICAgICAgICAgX19sZTMyICBpX2dp
-ZDsNCj4gPiA+ID4gICAgICAgICBfX2xlMTYgIGlfbW9kZTsNCj4gPiA+ID4gICAgICAgICBfX2xl
-MTYgIGlfbGlua3NfY291bnQ7DQo+ID4gPiA+ICAgICAgICAgX19sZTMyICBpX2ZsYWdzOw0KPiA+
-ID4gPiAgICAgICAgIF9fbGU2NCAgaV9ibWFwW05JTEZTX0lOT0RFX0JNQVBfU0laRV07DQo+ID4g
-PiA+ICNkZWZpbmUgaV9kZXZpY2VfY29kZSAgIGlfYm1hcFswXQ0KPiA+ID4gPiAgICAgICAgIF9f
-bGU2NCAgaV94YXR0cjsNCj4gPiA+ID4gICAgICAgICBfX2xlMzIgIGlfZ2VuZXJhdGlvbjsNCj4g
-PiA+ID4gICAgICAgICBfX2xlMzIgIGlfcGFkOw0KPiA+ID4gPiB9Ow0KPiA+ID4gPiANCj4gPiA+
-ID4gQ3VycmVudCBpbXBsZW1lbnRhdGlvbiBkb2VzIHN1Y2ggdHJpY2sgWzJdOg0KPiA+ID4gPiAN
-Cj4gPiA+ID4gaW50IG5pbGZzX3JlYWRfaW5vZGVfY29tbW9uKHN0cnVjdCBpbm9kZSAqaW5vZGUs
-DQo+ID4gPiA+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzdHJ1Y3QgbmlsZnNfaW5vZGUg
-KnJhd19pbm9kZSkNCj4gPiA+ID4gew0KPiA+ID4gPiA8c2tpcHBlZD4NCj4gPiA+ID4gICAgICAg
-ICBpbm9kZV9zZXRfYXRpbWUoaW5vZGUsIGxlNjRfdG9fY3B1KHJhd19pbm9kZS0+aV9tdGltZSks
-DQo+ID4gPiA+ICAgICAgICAgICAgICAgICAgICAgICAgIGxlMzJfdG9fY3B1KHJhd19pbm9kZS0+
-aV9tdGltZV9uc2VjKSk7DQo+ID4gPiA+ICAgICAgICAgaW5vZGVfc2V0X2N0aW1lKGlub2RlLCBs
-ZTY0X3RvX2NwdShyYXdfaW5vZGUtPmlfY3RpbWUpLA0KPiA+ID4gPiAgICAgICAgICAgICAgICAg
-ICAgICAgICBsZTMyX3RvX2NwdShyYXdfaW5vZGUtPmlfY3RpbWVfbnNlYykpOw0KPiA+ID4gPiAg
-ICAgICAgIGlub2RlX3NldF9tdGltZShpbm9kZSwgbGU2NF90b19jcHUocmF3X2lub2RlLT5pX210
-aW1lKSwNCj4gPiA+ID4gICAgICAgICAgICAgICAgICAgICAgICAgbGUzMl90b19jcHUocmF3X2lu
-b2RlLT5pX210aW1lX25zZWMpKTsNCj4gPiA+ID4gPHNraXBwZWQ+DQo+ID4gPiA+IH0NCj4gPiA+
-ID4gDQo+ID4gPiA+IEkgdGhpbmsgd2UgY2FuIHVzZSBpX3hhdHRyIGFuZCBpX3BhZCBmaWVsZHMg
-b2Ygc3RydWN0IG5pbGZzX2lub2RlIHRvIGltcGxlbWVudA0KPiA+ID4gPiBhdGltZSBzdXBwb3J0
-LiBOSUxGUzIgaGFzbid0IHhhdHRycyBzdXBwb3J0IGFuZCwgYW55d2F5LCBpX3hhdHRyIGlzIG5v
-dCBlbm91Z2gNCj4gPiA+ID4gdG8gaW1wbGVtZW50IHRoaXMgc3VwcG9ydC4NCj4gPiA+ID4gDQo+
-ID4gPiA+IFdoYXQgZG8geW91IHRoaW5rPw0KPiA+ID4gDQo+ID4gPiBXaGF0IGRvIHlvdSB0aGlu
-ayBpcyB0aGUgYXBwcm9wcmlhdGUgZ29hbCBmb3IgYXRpbWUgc3VwcG9ydD8NCj4gPiA+IA0KPiA+
-ID4gVGhlIExpbnV4IGtlcm5lbCBoYXMgbXVsdGlwbGUgc3VwcG9ydCBsZXZlbHMgZm9yIGF0aW1l
-LCBpbmNsdWRpbmcNCj4gPiA+IGxhenl0aW1lLCByZWxhdGltZSwgbm9hdGltZSwgYW5kIG5vZGly
-YXRpbWUuDQo+ID4gPiBGb3IgYW4gYXBwZW5kLW9ubHkgZmlsZXN5c3RlbSBsaWtlIG5pbGZzMiwg
-c3VwcG9ydGluZyBzdHJpY3QgYXRpbWUNCj4gPiA+IHdvdWxkIGxpa2VseSByZXN1bHQgaW4gYSBk
-aXNrLWZ1bGwgZXJyb3IgZHVlIHRvIGlub2RlIHdyaXRlcy4NCj4gPiA+IA0KPiA+IA0KPiA+IFRo
-ZSBsYXp5dGltZSwgcmVsYXRpbWUsIG5vYXRpbWUsIGFuZCBub2RpcmF0aW1lIGFyZSBtb3VudCBv
-cHRpb25zIGFuZCBpdCBpcyB1cA0KPiA+IHRvIGVuZC11c2VyIHdoaWNoIHBhcnRpY3VsYXIgbW91
-bnQgb3B0aW9uKHMpIHNob3VsZCBiZSB1c2VkLiBGcmFua2x5IHNwZWFraW5nLCBJDQo+ID4gZG9u
-J3Qgc2VlIHRoZSBwcm9ibGVtIHdpdGggYW55IGF0aW1lIHN1cHBvcnQgZm9yIHRoZSBjYXNlIG9m
-IGFwcGVuZC1vbmx5DQo+ID4gZmlsZXN5c3RlbS4gQmVjYXVzZSwgR0Mgc3Vic3lzdGVtIHNob3Vs
-ZCBndWFyYW50ZWUgcHJvcGVyIGZyYWN0aW9uIG9mIHNlZ21lbnRzDQo+ID4gY2xlYW5pbmcgb3Bl
-cmF0aW9ucy4gSXQncyBhbm90aGVyIHBvaW50IGhvdyBzaWduaWZpY2FudCB3aWxsIGJlIHRoZSB3
-cml0ZQ0KPiA+IGFtcGxpZmljYXRpb24gZm9yIHJlbGF0aW1lIG1vdW50IG9wdGlvbiwgZm9yIGV4
-YW1wbGUuIEJ1dCB1c2VycyBvZiBMRlMgZmlsZQ0KPiA+IHN5c3RlbXMgdXN1YWxseSBrbm93IHdo
-aWNoIGF0aW1lIHJlbGF0ZWQgb3B0aW9ucyBzaG91bGQgYmUgdXNlZCBmb3IgdGhlaXINCj4gPiB3
-b3JrbG9hZHMuDQo+IA0KPiBMb2dpY2FsbHksIGluIHRoZSBjYXNlIG9mIHN0YW5kYXJkIExGUywg
-SSB0aGluayBpdCdzIGNvcnJlY3QgdGhhdCBHQw0KPiByZWR1Y2VzIGlzc3VlcyBjYXVzZWQgYnkg
-YXRpbWUgdXBkYXRlIHdyaXRlcyB0byB3b3JrbG9hZCBpc3N1ZXMgcmF0aGVyDQo+IHRoYW4gZGlz
-ayB1c2FnZSBpc3N1ZXMuDQo+IA0KPiBIb3dldmVyLCBOSUxGUyBhbHNvIGhhcyB0aGUgcHJvcGVy
-dHkgb2YgYmVpbmcgYSBmaWxlc3lzdGVtIHRoYXQgc3RvcmVzDQo+IHBhc3QgZGF0YSBhbmQgbWV0
-YWRhdGEuIEZvciBleGFtcGxlLCBieSBkZWZhdWx0LCB1cGRhdGVzIChjaGVja3BvaW50cykNCj4g
-d2l0aGluIHRoZSBsYXN0IGhvdXIgYXJlIHByb3RlY3RlZC4NCj4gDQo+IFRoZXJlZm9yZSwgZXZl
-biB3aXRoIEdDLCB0aGVyZSBpcyBhIHBvc3NpYmlsaXR5IG9mIGRpc2sgdXNhZ2UgYXR0YWNrcw0K
-PiBieSBwZXJmb3JtaW5nIHBhdGggbG9va3VwcyBhbmQgZmlsZSBhY2Nlc3NlcyByZXBlYXRlZGx5
-IHdpdGhpbiBhbg0KPiBob3VyLg0KPiBTbywgcGxlYXNlIGJlIGF3YXJlIG9mIHRoaXMgZGlmZmVy
-ZW5jZSBpbiBhc3N1bXB0aW9ucy4NCj4gDQo+IFdoZW4gSSBzYWlkICJhdGltZSBzdXBwb3J0IGxl
-dmVsLCIgSSB3YXNuJ3QgcmVmZXJyaW5nIHRvIGRyYXN0aWMNCj4gY2hhbmdlcyBpbiBpbXBsZW1l
-bnRhdGlvbiwgYnV0IHJhdGhlciB0byBkaWZmZXJlbmNlcyBpbiB1cGRhdGUNCj4gZnJlcXVlbmN5
-IGZyb20gdGhpcyBwZXJzcGVjdGl2ZS4NCj4gDQo+IEhhdmluZyBzYWlkIHRoYXQsIG9uIHN0YW5k
-YXJkIHN5c3RlbXMsIHJlbGF0aW1lIGlzIHRoZSBkZWZhdWx0LCBhbmQgSQ0KPiBhZ3JlZSB0aGF0
-IHRoaXMgc2hvdWxkIG5vdCBiZSBhIHByb2JsZW0gYnkgZGVmYXVsdCwgYXMgaXQNCj4gc2lnbmlm
-aWNhbnRseSByZWR1Y2VzIGF0aW1lIHVwZGF0ZXMgZm9yIG9uLW1lbW9yeSBpbm9kZXMuDQo+IA0K
-PiBJZiB3ZSBhbGxvdyBzdHJpY3RhdGltZSAod2l0aG91dCBzcGVjaWZ5aW5nIHJlZHVjdGlvbiBv
-cHRpb25zIHN1Y2ggYXMNCj4gcmVsYXRpbWUgb3Igbm9hdGltZSksIGl0IG1heSBiZSBhIGdvb2Qg
-aWRlYSB0byBpc3N1ZSBhIHdhcm5pbmcgYXQNCj4gbW91bnQgdGltZS4NCj4gVGhpcyBjYW4gYmUg
-ZG9uZSBvbiB0aGUgdG9vbCBzaWRlIChtb3VudC5uaWxmczIgaGVscGVyIHNpZGUpIGFuZCBkb2Vz
-DQo+IG5vdCBuZWNlc3NhcmlseSBuZWVkIHRvIGJlIGltcGxlbWVudGVkIGluIHRoZSBrZXJuZWwu
-DQo+IA0KPiBBcyBmb3IgbGF6eXRpbWUsIGl0IG1heSBiZSBiZXR0ZXIgdG8gZG8gdGhlIHNhbWUs
-IGNvbnNpZGVyaW5nIHRoYXQNCj4gYXRpbWUgdXBkYXRlcyB0cmlnZ2VyZWQgYnkgaW5vZGUgZXZp
-Y3Rpb25zIHJlc3VsdCBpbiBkaXJ0eSBibG9ja3MuDQo+IA0KPiA+ID4gVGhlcmVmb3JlLCByZWdh
-cmRsZXNzIG9mIHRoZSBpbXBsZW1lbnRhdGlvbiBtZXRob2QsIHNvbWUga2luZCBvZg0KPiA+ID4g
-Y29uc3RyYWludCBtdXN0IGJlIGltcG9zZWQuDQo+ID4gPiANCj4gPiA+IFBlcnNvbmFsbHksIEkg
-dGhpbmsgdGhlIGxpbWl0IGlzIHR3byBvcHRpb25zOiBub2F0aW1lLCByZWxhdGltZSwgb3INCj4g
-PiA+IHRocmVlIG9wdGlvbnMsIGluY2x1ZGluZyBsYXp5dGltZSAod2hlcmUgaW5vZGUgd3JpdGVz
-IG9jY3VyIHdoZW4NCj4gPiA+IGV2aWN0aW9ucyBvY2N1cikuDQo+ID4gDQo+ID4gSSBiZWxpZXZl
-IGl0J3MgdXAgdG8gZW5kLXVzZXJzIHdoaWNoIG1vdW50cyBvcHRpb24gdGhleSB3b3VsZCBsaWtl
-IHRvIHVzZS4gQnV0DQo+ID4gd2UgbmVlZCB0byBzdXBwb3J0IGF0aW1lIG1lY2hhbmlzbSwgYW55
-d2F5Lg0KPiANCj4gWWVzLCBJIGFncmVlIHRoYXQgYXRpbWUgc3VwcG9ydCBpcyBuZWVkZWQgYW55
-d2F5Lg0KPiANCj4gPiA+IA0KPiA+ID4gV2hhdCBsZXZlbCBvZiBhdGltZSBzdXBwb3J0IGlzIHJl
-cXVpcmVkIGZvciB0aGlzIHRlc3QgYW5kIG90aGVyIHRlc3RzPw0KPiA+ID4gKElzIGl0IHNpbXBs
-eSBhIG1hdHRlciBvZiBkZWNpc2lvbj8pDQo+ID4gDQo+ID4gQXMgZmFyIGFzIEkga25vdywgaXQg
-aXMgcG9zc2libGUgdG8gc2VsZWN0IGFueSBtb3VudCBvcHRpb25zLiBCdXQgSSBhbSB1c2luZw0K
-PiA+IGRlZmF1bHQgb25lcy4NCj4gDQo+IEluIHRoYXQgY2FzZSwgSSB0aGluayB0aGUgc2FmZXN0
-IG9wdGlvbiwgcmVsYXRpbWUsIGlzIGNob3Nlbi4NCj4gDQo+ID4gDQo+ID4gPiANCj4gPiA+IFJl
-Z2FyZGluZyB0aGUgYXRpbWUgaW1wbGVtZW50YXRpb24sIGl0IHdhcyBvcmlnaW5hbGx5IGludGVu
-ZGVkIHRvIGJlDQo+ID4gPiBzdG9yZWQgaW4gYSBzZXBhcmF0ZSBtZXRhZGF0YSBmaWxlIGNhbGxl
-ZCB0aGUgYXRpbWUgZmlsZS4gIEJlY2F1c2Ugb2YNCj4gPiA+IGl0cyBsaW1pdGVkIGZpZWxkcywg
-aXQgaXMgYSB0cmFkZS1vZmYgd2l0aCB4YXR0ciBzdXBwb3J0Lg0KPiA+ID4gQSBkZWNpc2lvbiBt
-dXN0IGJlIG1hZGUgdG8gZWl0aGVyIG1vdmUgaXQgdG8gYW5vdGhlciBtZXRhZGF0YSBmaWxlIG9y
-DQo+ID4gPiBleHBhbmQgdGhlIGlub2RlIHNpemUuDQo+ID4gPiANCj4gPiA+IFJlZ2FyZGluZyB0
-aGlzLCBJIGFncmVlIHdpdGggeW91IHRoYXQgaXQgd291bGQgYmUgYmV0dGVyIHRvIGlnbm9yZQ0K
-PiA+ID4gcGFzdCBhc3N1bXB0aW9ucywgYXNzaWduIHRoZSByZW1haW5pbmcgZmllbGRzIChpX3hh
-dHRyLCBpX3BhZCkgdG8NCj4gPiA+IGF0aW1lLCBhbmQgaW1wbGVtZW50IHhhdHRyIHNvIHRoYXQg
-dGhlIHN3ZWV0IHNwb3Qgb2YgdGhlIHhhdHRyIHNpemUNCj4gPiA+IGZpdHMgaW5saW5lLCBieSBl
-eHBhbmRpbmcgdGhlIGlub2RlIHNpemUgdG8gMjU2IGJ5dGVzLg0KPiA+IA0KPiA+IEkgc2VsZWN0
-ZWQgdGhlIGlfeGF0dHIsIGlfcGFkIGZpZWxkcyBiZWNhdXNlIHRoZXkgY2FuIGd1YXJhbnRlZSB0
-aGUgYmFja3dhcmQNCj4gPiBjb21wYXRpYmlsaXR5IG9mIG9uLWRpc2sgbGF5b3V0LiBUaGVzZSBm
-aWVsZHMgd2VyZSBuZXZlciB1c2VkIGJlZm9yZS4gQWxzbywgd2UNCj4gPiBkb24ndCBuZWVkIHRv
-IGV4cGVuZCB0aGUgaW5vZGUgc2l6ZSwgY3VycmVudGx5LCBiZWNhdXNlIHN1Y2ggZXhwYW5zaW9u
-IGNvdWxkDQo+ID4gYnJlYWsgdGhlIGJhY2t3YXJkIGNvbXBhdGliaWxpdHkgb2YgdGhlIG9uLWRp
-c2sgbGF5b3V0Lg0KPiANCj4gWWVzLCB0aGF0J3MgcmlnaHQuDQo+IFVzaW5nIHRoZXNlIGZpZWxk
-cyBmb3IgYXRpbWUgbWluaW1pemVzIGNvbXBhdGliaWxpdHkgaXNzdWVzLg0KPiBIb3dldmVyLCBz
-dHJpY3RseSBzcGVha2luZywgeW91IG5lZWQgdG8gYmUgY2FyZWZ1bCBvZiB0aGUgZm9sbG93aW5n
-IHBvaW50czoNCj4gDQo+IC0gQm90aCBta2ZzLm5pbGZzMiBhbmQgdGhlIG5pbGZzMiBtZXRhZGF0
-YSBmaWxlIGluaXRpYWxpemUgdGhlc2UNCj4gZmllbGRzIHRvIDAsIHNvIHdlIG1heSBuZWVkIHRv
-IGNvbnNpZGVyIHJlcGxhY2luZyAwIHdpdGggdGhlIHNhbWUNCj4gdmFsdWUgYXMgY3RpbWUvbXRp
-bWUgb3IgY3VycmVudF90aW1lKCkgd2hlbiBkZXRlY3RlZC4NCj4gDQo+IC0gSW4gdGhlIGN1cnJl
-bnQgaW1wbGVtZW50YXRpb24sIHRoZXNlIGZpZWxkcyBhcmUgbm90IGNsZWFyZWQgb24NCj4gZGVs
-ZXRpb24sIHNvIGlmIGFuIGlub2RlIGlzIGRlbGV0ZWQgYW5kIHJldXNlZCBvbiBhbiBvbGRlciB2
-ZXJzaW9uLA0KPiBhbmQgdGhlbiBtb3VudGVkIG9uIGEgbmV3ZXIgdmVyc2lvbiB0aGF0IHN1cHBv
-cnRzIGF0aW1lLCB0aGUgYXRpbWUNCj4gdmFsdWUgbWF5IGluaGVyaXQgdGhlIHZhbHVlIGZyb20g
-dGhlIHByZXZpb3VzIGlub2RlLg0KPiANCj4gVGhlIGlub2RlIHNpemUgaW4gbmlsZnMyIGlzIGRl
-ZmluZWQgaW4gdGhlIHN1cGVyYmxvY2ssIGFuZCBhbHRob3VnaCBpdA0KPiBpcyBwb3NzaWJsZSB0
-byBleHRlbmQgaXQsIHRoaXMgcmVxdWlyZXMgbW9yZSByaWdvciB0aGFuIGNvbXBhdGliaWxpdHkN
-Cj4gY29udHJvbCwgYW5kIHdvdWxkIGJlIGJldHRlciBkb25lIHRvZ2V0aGVyIHdpdGggeGF0dHIg
-c3VwcG9ydC4NCj4gDQo+ID4gPiANCj4gPiA+IEluIGFueSBjYXNlLCB0aGUgYWJvdmUgZmllbGRz
-IGNhbm5vdCBiZSBjb25zdW1lZCB1bmxlc3MgdGhlDQo+ID4gPiBpbXBsZW1lbnRhdGlvbiBwb2xp
-Y3kgZm9yIHhhdHRycyBpcyBkZWNpZGVkLg0KPiA+ID4gDQo+ID4gDQo+ID4gSWYgd2UgYXJlIGNv
-bnNpZGVyaW5nIHRoZSBpbmxpbmUgeGF0dHJzLCB0aGVuIGlub2RlIHNob3VsZCBiZSBleHRlbmRl
-ZC4gQnV0IGl0DQo+ID4gY291bGQgbm90IHByb3ZpZGUgdGhlIGVub3VnaCBzcGFjZSBpZiB4YXR0
-ciBpcyBiaWcgb3Igd2UgbmVlZCB0byBoYXZlIG11bHRpcGxlDQo+ID4geGF0dHJzLiBQb3RlbnRp
-YWxseSwgZXh0ZW50cyB0cmVlIGNhbiBjb250YWlucyBkaWZmZXJlbnQgdHlwZXMgb2YgZXh0ZW50
-cyAodXNlcg0KPiA+IGRhdGEsIHhhdHRyKS4gQW5kIGxvZ2ljYWwgYmxvY2sgaXMgYWxsb2NhdGVk
-IGZvciB4YXR0ciBzaG91bGQgY29udGFpbiBoZWFkZXINCj4gPiB3aXRoIG1ldGFkYXRhIGV4cGxh
-aW5pbmcgdGhlIGFsbCB4YXR0ciBkZXRhaWxzLiBEb2VzIGl0IG1ha2Ugc2Vuc2U/DQo+IA0KPiBJ
-IHVzZWQgZ2V0ZmF0dHIgdG8gYWdncmVnYXRlIHhhdHRyIHNpemVzIG9uIGEgY2VydGFpbiBzZXJ2
-ZXIgd2l0aA0KPiBleHQ0LWJhc2VkIHBhcnRpdGlvbnMsIGFuZCBjcmVhdGVkIGEgaGlzdG9ncmFt
-LCBhbmQgdGhlIGRpc3RyaWJ1dGlvbg0KPiB3YXMgYXMgZm9sbG93czoNCj4gDQo+IC0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLQ0KPiAgU0laRSBSQU5HRSA6IENPVU5UICB8IERJU1RSSUJVVElPTg0KPiAt
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0NCj4gICAzMiAtICAgNDcgOiA1NjMyNjUgfCAjIyMjIyMjIyMj
-IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIw0KPiAgIDQ4IC0gICA2MyA6
-IDI0OTUyMCB8ICMjIyMjIyMjIyMjIyMjIyMjIyMjIyMNCj4gICA2NCAtICAgNzkgOiAgIDE5ODYg
-fA0KPiAgIDgwIC0gICA5NSA6ICAxMTE1OCB8DQo+ICAgOTYgLSAgMTExIDogICAgIDU0IHwNCj4g
-IDExMiAtICAxMjcgOiAgICAgIDIgfA0KPiAgMTI4IC0gIDE0MyA6ICAgICAgMSB8DQo+ICAxNDQg
-LSAgMTU5IDogICAgIDY3IHwNCj4gIDE3NiAtICAxOTEgOiAgICAgMzIgfA0KPiAgMTkyIC0gIDIw
-NyA6ICAgICAgMyB8DQo+ICAyMDggLSAgMjIzIDogICAgICAyIHwNCj4gIDI0MCAtICAyNTUgOiAg
-ICAgIDEgfA0KPiAgMjU2IC0gIDI3MSA6ICAgICAgMSB8DQo+IC0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LQ0KPiANCj4gT24gTkFTIHNlcnZlcnMsIHRoZSBwZXJjZW50YWdlIG9mIGZpbGVzIG92ZXIgMTAw
-IGJ5dGVzIHdhcyBzbGlnaHRseQ0KPiBoaWdoZXIsIGF0IGFib3V0IDYlLg0KPiANCj4gVGhlIHRl
-bmRlbmN5IGZvciBkdXBsaWNhdGUgeGF0dHIgdmFsdWVzIHZhcmllcyBkZXBlbmRpbmcgb24gdGhl
-IHN5c3RlbS4NCj4gV2l0aCBvbmx5IFNFTGludXggc2VjdXJpdHkgbGFiZWxzLCB0aGVyZSBhcmUg
-bWFueSBkdXBsaWNhdGUgdmFsdWVzLg0KPiBPbiB0aGUgb3RoZXIgaGFuZCwgdGhlcmUgYXJlIGFs
-c28gY2FzZXMgd2hlcmUgZGlmZmVyZW50IHZhbHVlcywgc3VjaA0KPiBhcyBjaGVja3N1bXMgYW5k
-IElEIHRhZ3MsIGFyZSB3cml0dGVuIGZvciBlYWNoIGZpbGUgKGUuZy4sIG9uIGEgTkFTKS4NCj4g
-DQo+IE9uZSBwb3NzaWJsZSBpbXBsZW1lbnRhdGlvbiBvZiB4YXR0ciBpcyB0byB1c2UgZnJlZSBp
-bm9kZXMgKGZvcg0KPiBleGFtcGxlLCBhbGxvY2F0aW5nIGNvbnRpZ3VvdXMgaW5vZGVzKS4NCj4g
-SG93ZXZlciwgY29uc2lkZXJpbmcgdGhhdCBpbm9kZXMgd2lsbCBldmVudHVhbGx5IG5lZWQgdG8g
-YmUgZXhwYW5kZWQsDQo+IEkgcmVjb21tZW5kIGEgaHlicmlkIGNvbmZpZ3VyYXRpb24sIGFzc3Vt
-aW5nIGV4cGFuc2lvbiB0byAyNTYgYnl0ZXMgb3INCj4gbW9yZSwgdXNlcyB0aGUgbGF0dGVyIHBv
-cnRpb24gZm9yIGlubGluZSB4YXR0ciwgYW5kIHB1c2hlcyBhbnl0aGluZw0KPiB0aGF0IGRvZXNu
-J3QgZml0IGludG8gdGhhdCBhcmVhIHRvIGEgcmVzZXJ2ZWQgeGF0dHIgbWV0YWRhdGEgZmlsZQ0K
-PiAoTklMRlNfWEFUVFJfSU5PIGlub2RlKS4NCj4gDQo+IExldCdzIGxlYXZlIHRoZSBkaXNjdXNz
-aW9uIG9mIHhhdHRyIGltcGxlbWVudGF0aW9uIGFzIGEgc2VwYXJhdGUgaXNzdWUuDQo+IA0KPiBX
-aGVuIGNvbnNpZGVyaW5nIGF0aW1lLCBJIHRoaW5rIHRoZSBrZXkgaXMgd2hldGhlciB3ZSBkZXRl
-cm1pbmUgdGhhdA0KPiB0aGUgY3VycmVudCAxMjgtYnl0ZSBpbm9kZSB3aWxsIGJlIHVzZWQgdXAg
-YnkgYXRpbWUuDQo+IE15IG9waW5pb24gaXMgdGhlIHNhbWUgYXMgeW91cnM6IFllcy4NCj4gDQoN
-ClNvLCBJIGJlbGlldmUgdGhhdCB3ZSBhcmUgb24gdGhlIHNhbWUgcGFnZS4gOikNCg0KVG8gc3Vt
-bWFyaXplLi4uIEN1cnJlbnRseSwgd2UgY2FuIGxlYXZlIHRoZSBzaXplIG9mIHJhdyBpbm9kZSBh
-cyBpdCBpcyAoMTI4DQpieXRlcykgZm9yIGF0aW1lIHN1cHBvcnQgaW1wbGVtZW50YXRpb24uIFdl
-IGNhbiByZS11c2UgdGhlIGlfeGF0dHIsIGlfcGFkIGZpZWxkcw0KZm9yIHRoaXMgaW1wbGVtZW50
-YXRpb24gb24ga2VybmVsIHNpZGUuIFRoZSBtb3VudC5uaWxmczIgc2hvdWxkIHJlamVjdCBvciBp
-c3N1ZQ0KdGhlIHdhcm5pbmcgcmVsYXRpbmcgdG8gdXNpbmcgdGhlIGFnZ3Jlc3NpdmUgYXRpbWUg
-bW91bnQgb3B0aW9ucy4NCg0KQW0gSSBjb3JyZWN0PyBJZiB3ZSBoYXZlIHRoZSBzaW1pbGFyIHZp
-c2lvbiwgdGhlbiBJIGNhbiBzdGFydCB0aGUgYXRpbWUgc3VwcG9ydA0KaW1wbGVtZW50YXRpb24g
-YW5kIHdlIGNhbiBjb250aW51ZSBkaXNjdXNzaW9uIHdoZW4gSSdsbCBzaGFyZSB0aGUgcGF0Y2gu
-DQoNClJlbGF0ZWQgdG8geGF0dHIgc3VwcG9ydC4uLiBJIGJlbGlldmUgdGhhdCB3ZSBuZWVkIHRv
-IGZpeCB0aGUgYWxsIGRldGVjdGVkDQp4ZnN0ZXN0cyBpc3N1ZXMgZmlyc3QuIFRoZW4sIGl0IHdp
-bGwgbWFrZSBzZW5zZSB0byBoYXZlIHRoZSBkaXNjdXNzaW9uIHJlbGF0ZWQNCnRvIGRlZmluaXRp
-b24gb2YgeGF0dHIgYXJjaGl0ZWN0dXJlIGluIE5JTEZTMi4gRG8geW91IGFncmVlPw0KDQpUaGFu
-a3MsDQpTbGF2YS4NCg==
+On Tue, Jan 13, 2026 at 9:20=E2=80=AFAM Viacheslav Dubeyko wrote:
+>
+> Hi Ryusuke,
+>
+> On Sat, 2026-01-10 at 01:34 +0900, Ryusuke Konishi wrote:
+> > Hi Viacheslav,
+> >
+> > On Fri, Jan 9, 2026 at 9:32=E2=80=AFAM Viacheslav Dubeyko wrote:
+> > >
+> > > On Thu, 2026-01-08 at 14:46 +0900, Ryusuke Konishi wrote:
+> > > > On Thu, Jan 8, 2026 at 1:04=E2=80=AFPM Viacheslav Dubeyko wrote:
+> > > > >
+> > > > > Hi Ryusuke,
+> > > > >
+> > > > > As far as I can see, this test is trying to check the access time=
+ (atime) after
+> > > > > every touch. And it expects to see the difference between atime a=
+nd ctime. But
+> > > > > it cannot see the difference:
+> > > > >
+> > > > > sudo touch ./001.txt
+> > > > > sudo stat ./001.txt
+> > > > >   File: ./001.txt
+> > > > >   Size: 0               Blocks: 0          IO Block: 4096   regul=
+ar empty file
+> > > > > Device: 7,50    Inode: 12          Links: 1
+> > > > > Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/  =
+  root)
+> > > > > Access: 2026-01-06 16:23:18.315637313 -0800
+> > > > > Modify: 2026-01-06 16:23:18.315637313 -0800
+> > > > > Change: 2026-01-06 16:23:18.315637313 -0800
+> > > > >  Birth: -
+> > > > >
+> > > > > sudo touch ./001.txt
+> > > > > sudo stat ./001.txt
+> > > > >   File: ./001.txt
+> > > > >   Size: 0               Blocks: 0          IO Block: 4096   regul=
+ar empty file
+> > > > > Device: 7,50    Inode: 12          Links: 1
+> > > > > Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/  =
+  root)
+> > > > > Access: 2026-01-06 16:23:44.535933843 -0800
+> > > > > Modify: 2026-01-06 16:23:44.535933843 -0800
+> > > > > Change: 2026-01-06 16:23:44.535933843 -0800
+> > > > >  Birth: -
+> > > > >
+> > > > > Moreover, NILFS2 hasn't atime support in on-disk layout [1]:
+> > > > >
+> > > > > struct nilfs_inode {
+> > > > >         __le64  i_blocks;
+> > > > >         __le64  i_size;
+> > > > >         __le64  i_ctime;
+> > > > >         __le64  i_mtime;
+> > > > >         __le32  i_ctime_nsec;
+> > > > >         __le32  i_mtime_nsec;
+> > > > >         __le32  i_uid;
+> > > > >         __le32  i_gid;
+> > > > >         __le16  i_mode;
+> > > > >         __le16  i_links_count;
+> > > > >         __le32  i_flags;
+> > > > >         __le64  i_bmap[NILFS_INODE_BMAP_SIZE];
+> > > > > #define i_device_code   i_bmap[0]
+> > > > >         __le64  i_xattr;
+> > > > >         __le32  i_generation;
+> > > > >         __le32  i_pad;
+> > > > > };
+> > > > >
+> > > > > Current implementation does such trick [2]:
+> > > > >
+> > > > > int nilfs_read_inode_common(struct inode *inode,
+> > > > >                             struct nilfs_inode *raw_inode)
+> > > > > {
+> > > > > <skipped>
+> > > > >         inode_set_atime(inode, le64_to_cpu(raw_inode->i_mtime),
+> > > > >                         le32_to_cpu(raw_inode->i_mtime_nsec));
+> > > > >         inode_set_ctime(inode, le64_to_cpu(raw_inode->i_ctime),
+> > > > >                         le32_to_cpu(raw_inode->i_ctime_nsec));
+> > > > >         inode_set_mtime(inode, le64_to_cpu(raw_inode->i_mtime),
+> > > > >                         le32_to_cpu(raw_inode->i_mtime_nsec));
+> > > > > <skipped>
+> > > > > }
+> > > > >
+> > > > > I think we can use i_xattr and i_pad fields of struct nilfs_inode=
+ to implement
+> > > > > atime support. NILFS2 hasn't xattrs support and, anyway, i_xattr =
+is not enough
+> > > > > to implement this support.
+> > > > >
+> > > > > What do you think?
+> > > >
+> > > > What do you think is the appropriate goal for atime support?
+> > > >
+> > > > The Linux kernel has multiple support levels for atime, including
+> > > > lazytime, relatime, noatime, and nodiratime.
+> > > > For an append-only filesystem like nilfs2, supporting strict atime
+> > > > would likely result in a disk-full error due to inode writes.
+> > > >
+> > >
+> > > The lazytime, relatime, noatime, and nodiratime are mount options and=
+ it is up
+> > > to end-user which particular mount option(s) should be used. Frankly =
+speaking, I
+> > > don't see the problem with any atime support for the case of append-o=
+nly
+> > > filesystem. Because, GC subsystem should guarantee proper fraction of=
+ segments
+> > > cleaning operations. It's another point how significant will be the w=
+rite
+> > > amplification for relatime mount option, for example. But users of LF=
+S file
+> > > systems usually know which atime related options should be used for t=
+heir
+> > > workloads.
+> >
+> > Logically, in the case of standard LFS, I think it's correct that GC
+> > reduces issues caused by atime update writes to workload issues rather
+> > than disk usage issues.
+> >
+> > However, NILFS also has the property of being a filesystem that stores
+> > past data and metadata. For example, by default, updates (checkpoints)
+> > within the last hour are protected.
+> >
+> > Therefore, even with GC, there is a possibility of disk usage attacks
+> > by performing path lookups and file accesses repeatedly within an
+> > hour.
+> > So, please be aware of this difference in assumptions.
+> >
+> > When I said "atime support level," I wasn't referring to drastic
+> > changes in implementation, but rather to differences in update
+> > frequency from this perspective.
+> >
+> > Having said that, on standard systems, relatime is the default, and I
+> > agree that this should not be a problem by default, as it
+> > significantly reduces atime updates for on-memory inodes.
+> >
+> > If we allow strictatime (without specifying reduction options such as
+> > relatime or noatime), it may be a good idea to issue a warning at
+> > mount time.
+> > This can be done on the tool side (mount.nilfs2 helper side) and does
+> > not necessarily need to be implemented in the kernel.
+> >
+> > As for lazytime, it may be better to do the same, considering that
+> > atime updates triggered by inode evictions result in dirty blocks.
+> >
+> > > > Therefore, regardless of the implementation method, some kind of
+> > > > constraint must be imposed.
+> > > >
+> > > > Personally, I think the limit is two options: noatime, relatime, or
+> > > > three options, including lazytime (where inode writes occur when
+> > > > evictions occur).
+> > >
+> > > I believe it's up to end-users which mounts option they would like to=
+ use. But
+> > > we need to support atime mechanism, anyway.
+> >
+> > Yes, I agree that atime support is needed anyway.
+> >
+> > > >
+> > > > What level of atime support is required for this test and other tes=
+ts?
+> > > > (Is it simply a matter of decision?)
+> > >
+> > > As far as I know, it is possible to select any mount options. But I a=
+m using
+> > > default ones.
+> >
+> > In that case, I think the safest option, relatime, is chosen.
+> >
+> > >
+> > > >
+> > > > Regarding the atime implementation, it was originally intended to b=
+e
+> > > > stored in a separate metadata file called the atime file.  Because =
+of
+> > > > its limited fields, it is a trade-off with xattr support.
+> > > > A decision must be made to either move it to another metadata file =
+or
+> > > > expand the inode size.
+> > > >
+> > > > Regarding this, I agree with you that it would be better to ignore
+> > > > past assumptions, assign the remaining fields (i_xattr, i_pad) to
+> > > > atime, and implement xattr so that the sweet spot of the xattr size
+> > > > fits inline, by expanding the inode size to 256 bytes.
+> > >
+> > > I selected the i_xattr, i_pad fields because they can guarantee the b=
+ackward
+> > > compatibility of on-disk layout. These fields were never used before.=
+ Also, we
+> > > don't need to expend the inode size, currently, because such expansio=
+n could
+> > > break the backward compatibility of the on-disk layout.
+> >
+> > Yes, that's right.
+> > Using these fields for atime minimizes compatibility issues.
+> > However, strictly speaking, you need to be careful of the following poi=
+nts:
+> >
+> > - Both mkfs.nilfs2 and the nilfs2 metadata file initialize these
+> > fields to 0, so we may need to consider replacing 0 with the same
+> > value as ctime/mtime or current_time() when detected.
+> >
+> > - In the current implementation, these fields are not cleared on
+> > deletion, so if an inode is deleted and reused on an older version,
+> > and then mounted on a newer version that supports atime, the atime
+> > value may inherit the value from the previous inode.
+> >
+> > The inode size in nilfs2 is defined in the superblock, and although it
+> > is possible to extend it, this requires more rigor than compatibility
+> > control, and would be better done together with xattr support.
+> >
+> > > >
+> > > > In any case, the above fields cannot be consumed unless the
+> > > > implementation policy for xattrs is decided.
+> > > >
+> > >
+> > > If we are considering the inline xattrs, then inode should be extende=
+d. But it
+> > > could not provide the enough space if xattr is big or we need to have=
+ multiple
+> > > xattrs. Potentially, extents tree can contains different types of ext=
+ents (user
+> > > data, xattr). And logical block is allocated for xattr should contain=
+ header
+> > > with metadata explaining the all xattr details. Does it make sense?
+> >
+> > I used getfattr to aggregate xattr sizes on a certain server with
+> > ext4-based partitions, and created a histogram, and the distribution
+> > was as follows:
+> >
+> > -----------------------------------------------------------------------=
+-------
+> >  SIZE RANGE : COUNT  | DISTRIBUTION
+> > -----------------------------------------------------------------------=
+-------
+> >   32 -   47 : 563265 | ################################################=
+##
+> >   48 -   63 : 249520 | ######################
+> >   64 -   79 :   1986 |
+> >   80 -   95 :  11158 |
+> >   96 -  111 :     54 |
+> >  112 -  127 :      2 |
+> >  128 -  143 :      1 |
+> >  144 -  159 :     67 |
+> >  176 -  191 :     32 |
+> >  192 -  207 :      3 |
+> >  208 -  223 :      2 |
+> >  240 -  255 :      1 |
+> >  256 -  271 :      1 |
+> > -----------------------------------------------------------------------=
+-------
+> >
+> > On NAS servers, the percentage of files over 100 bytes was slightly
+> > higher, at about 6%.
+> >
+> > The tendency for duplicate xattr values varies depending on the system.
+> > With only SELinux security labels, there are many duplicate values.
+> > On the other hand, there are also cases where different values, such
+> > as checksums and ID tags, are written for each file (e.g., on a NAS).
+> >
+> > One possible implementation of xattr is to use free inodes (for
+> > example, allocating contiguous inodes).
+> > However, considering that inodes will eventually need to be expanded,
+> > I recommend a hybrid configuration, assuming expansion to 256 bytes or
+> > more, uses the latter portion for inline xattr, and pushes anything
+> > that doesn't fit into that area to a reserved xattr metadata file
+> > (NILFS_XATTR_INO inode).
+> >
+> > Let's leave the discussion of xattr implementation as a separate issue.
+> >
+> > When considering atime, I think the key is whether we determine that
+> > the current 128-byte inode will be used up by atime.
+> > My opinion is the same as yours: Yes.
+> >
+>
+> So, I believe that we are on the same page. :)
+>
+> To summarize... Currently, we can leave the size of raw inode as it is (1=
+28
+> bytes) for atime support implementation. We can re-use the i_xattr, i_pad=
+ fields
+> for this implementation on kernel side. The mount.nilfs2 should reject or=
+ issue
+> the warning relating to using the aggressive atime mount options.
+>
+> Am I correct? If we have the similar vision, then I can start the atime s=
+upport
+> implementation and we can continue discussion when I'll share the patch.
+>
+
+Yes, that's generally my understanding.
+
+Just one thing: as long as issuing warnings for strictatime and
+lazytime, I think handling them in the mount.nilfs2 helper is fine.
+But if we find that the filesystem gets stuck due to atime updates
+(e.g., unable to recover from a disk-full state), then the kernel
+should enforce the rejection to prevent the unsafe state.
+
+> Related to xattr support... I believe that we need to fix the all detecte=
+d
+> xfstests issues first. Then, it will make sense to have the discussion re=
+lated
+> to definition of xattr architecture in NILFS2. Do you agree?
+
+Yes, I agree.
+
+
+Thanks,
+Ryusuke Konishi
+
+>
+> Thanks,
+> Slava.
