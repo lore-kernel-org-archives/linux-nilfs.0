@@ -1,389 +1,222 @@
-Received: from mail-lf1-f52.google.com (mail-lf1-f52.google.com [209.85.167.52])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F9EB18FC80
-	for <linux-nilfs@vger.kernel.org>; Tue, 13 Jan 2026 01:31:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8AB836C0DC;
+	Tue, 13 Jan 2026 08:54:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768267904; cv=none; b=ph1iNeVCPI+Y0I+RX85DihoL1VTxB/gAyXzPUq96ENECK61erm43wDRXxebGZ5OkfL+mTYOVa18OZLGgZeR7n+JQfidc47TVUlIiAKaj/j2MhrAvRnRcCr5rVuOcIkkFXVtFK11SHJdfNdv/BxPXcomOE8MiCQRzG+D5XpuM4p0=
+	t=1768294474; cv=none; b=J5MI8uersA/PGhlGUohFBRbhnLlhP3FGtFGyktALIwLnfSEacqEKWbWvgmWwH3nI/RPKF6ZKJ2CzlBhwKrBIcRWAdEsO47hT35hdBfDA8rmSkBsFLAjW7bWoVp7raZX8RbWyaUWqutybd8gXbZeQF2ix2RgdRgpo1VljdbLGqnU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768267904; c=relaxed/simple;
-	bh=n7UWN+KqmnrFw9UtmqTif3SSWS47gvp2WwDx1go8+sA=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=gRZA5oPqJDyOQwGQJGkXzOqs6I1huCO0pvN9BFYMsuYJg5lmwSKUmd/kV4DMWjlDMOpq3rH7R5QocT3eSaUWaSQVtgKuk3pRjgKJhwKTzUKqIUV6D087Yryhb5dTWmXPxV5ptw9DnII+42rlfMKMPa4R46/alYhWqFZ/djTS3rU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JnFuZWeu; arc=none smtp.client-ip=209.85.167.52
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1768294474; c=relaxed/simple;
+	bh=8pJH5EMsw2Zf/vnxVI5TNW+Tn1VjYrvuVd/4u81hQjw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Z39OZBNSmXhLxNtEV5x9eH965/XmRauOANmEnv5rZalW23LMxpIn9JiVQc5hU+Nt7+LKhCH5bZIYngEy7zQ99G7Daq5KZeqrsbfsGNT0SrlFJNaWskVmHEYUsk62cmeueTF5vIPC940ysEcYmfQIKOXmq9aO8DGa+vj1NxNwOZA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VMqw4jfO; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JnFuZWeu"
-Received: by mail-lf1-f52.google.com with SMTP id 2adb3069b0e04-59b6df3d6b4so7089047e87.0
-        for <linux-nilfs@vger.kernel.org>; Mon, 12 Jan 2026 17:31:41 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1768267900; x=1768872700; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=2X+XpBTAaBenXXZPooJkNunaNNFLF/l+efpCeAcf9m0=;
-        b=JnFuZWeueePuBxBHhnnsJYWXrNzp6XGjg7ASu2Nfd0WMIQyiH0o+O6WZByrI3+ccPI
-         Wlu5+EwEehDpbwTyo6ysu6I5Jq/8uV8lRaSsFgXQEoHPWv86d3udaThpcIq3vtymwUSB
-         MHs+CytPRjUij1Ekc6LukI3CyPJxxkixM+NO/VCo3zGnx87kwnEnqBNewQg/D8eKHHzW
-         1oJMvsqhouV4tJ0qyoqgFugSZrdVWLkCKZM6PARXleipLAQflSvV3LIZeaetbiI3QED4
-         Sa/U0m0Jzld4tY7pOz70yK+X9e//EXjGDO8pZdkVSgKnak1gb86BFHdISWnFHt2KtiOi
-         1JzQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1768267900; x=1768872700;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=2X+XpBTAaBenXXZPooJkNunaNNFLF/l+efpCeAcf9m0=;
-        b=QQuPbTWwjtoFRqb9vQ8+c2Y2xOzdyZyfDB1TmebwzCNDf4v1aGlQVAiEqlAVF02vLJ
-         S0joyVt0Z3TyUKI723szpGm+op/n0fMW9mxMP8Ad5pL+U2fNAmYUaBq3JT7SSmwUcj3c
-         8spboy1tZ7gC+y8XCm4Ed65UYV/tNaYqTYaby1aZTYI3J0SmQYMEi/6NT0xIOFQ+99jY
-         6jcNRVN9zYE0thioMXASDrgLDW2Iun7T6kI5cdwftGhm+H9g4Cp3WuipnXZMhJxdXLmM
-         yOWVmb2/WwZJj5iC8PyZNjmU6iSz2GM+YPjcvoTf+H7YsID7dznsD3gFC+9AdrjFGnIN
-         DpBg==
-X-Gm-Message-State: AOJu0YwbIe++X2dvY6a21fXNxOPc6Lmo+3xfvL4t8+/On29S/eTJx6/2
-	29HUxrBERkVykaVIWJfs6Ja/PQO2FHkWUDTClY1guYwzQGh81lNO8yNP+EFkZpq61VduEaxJrsJ
-	eZeT245BRb0v+O6+mNNXBhBGDYiaXeO4=
-X-Gm-Gg: AY/fxX7OXWEeVPHaQNhoMLxeOiZ1JXjjpHhC+aXJx3C4iWhZuGK9pNjUjGq4z3cgCQQ
-	1RwpAKyw/4oPHUUMizROfbZwUydeTeOpAaYGHfEAGimg5Dk18Y8CCtOBf+p1E7EuYfoMTtfqxdb
-	6/TKT2y0tNGJ5r+buaIT7E9hWiT+EdZ4aqXanWuJH7+6LVyTp8Bi7EEoYl5SkCcEQlVLQoKlBIk
-	qOM/TOD3OGV11DHBl3yrpQEvQkcehx5JoQa4zUoJ1ENzdc4G/ybChHE/zaVizk+z6hcFiVj4poq
-	wNOl7dQ=
-X-Google-Smtp-Source: AGHT+IFSYZ1vv1I/44nyGiVPpzv192vC3U3x3yNj3JwdRt4REcNnO/HlnBIq13d9TYFKhSJUfVShoIJR9vvQgmIN8QM=
-X-Received: by 2002:a05:6512:3c88:b0:59b:7d3a:2a26 with SMTP id
- 2adb3069b0e04-59b7d3a2c31mr3735059e87.44.1768267899748; Mon, 12 Jan 2026
- 17:31:39 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VMqw4jfO"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2A24BC116C6;
+	Tue, 13 Jan 2026 08:54:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1768294474;
+	bh=8pJH5EMsw2Zf/vnxVI5TNW+Tn1VjYrvuVd/4u81hQjw=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=VMqw4jfOdED4XJIXekFPVJQafNNTl6ZiZA++QmJZRBiaMMpeaGnJz3p4o2lTbIKwN
+	 ZGKZS5HpYR0+N1ii5xC8s/TyQQtV2NHGSS3n0xjeitfnyVlfkGYGF3WN3Zn7pEUn7y
+	 amB5o/YtgvPlamLE3g3COpvYgjvxdfsKYBT2hFD400U3g9OGS1J+dMj0yVSbLkyPHq
+	 +GkCBtTzjYLjVlnxILoQmVvBvvr3BKnDX0iaKwspCd8aN5JnS4IRKaSF02TomWn63P
+	 ouok9TX1G4ku4VsaA4mPbFNSkRS1iOdM6roW82YC7GjR5YxocE6Li41axUo0cFM9rz
+	 CEFrc/zUFpOyw==
+Date: Tue, 13 Jan 2026 09:54:15 +0100
+From: Christian Brauner <brauner@kernel.org>
+To: Jeff Layton <jlayton@kernel.org>, Amir Goldstein <amir73il@gmail.com>
+Cc: Chuck Lever <chuck.lever@oracle.com>, Jan Kara <jack@suse.cz>, 
+	Luis de Bethencourt <luisbg@kernel.org>, Salah Triki <salah.triki@gmail.com>, 
+	Nicolas Pitre <nico@fluxnic.net>, Christoph Hellwig <hch@infradead.org>, 
+	Anders Larsen <al@alarsen.net>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	David Sterba <dsterba@suse.com>, Chris Mason <clm@fb.com>, Gao Xiang <xiang@kernel.org>, 
+	Chao Yu <chao@kernel.org>, Yue Hu <zbestahu@gmail.com>, 
+	Jeffle Xu <jefflexu@linux.alibaba.com>, Sandeep Dhavale <dhavale@google.com>, 
+	Hongbo Li <lihongbo22@huawei.com>, Chunhai Guo <guochunhai@vivo.com>, Jan Kara <jack@suse.com>, 
+	Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, 
+	Jaegeuk Kim <jaegeuk@kernel.org>, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>, 
+	David Woodhouse <dwmw2@infradead.org>, Richard Weinberger <richard@nod.at>, 
+	Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, 
+	Viacheslav Dubeyko <slava@dubeyko.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
+	Mark Fasheh <mark@fasheh.com>, Joel Becker <jlbec@evilplan.org>, 
+	Joseph Qi <joseph.qi@linux.alibaba.com>, Mike Marshall <hubcap@omnibond.com>, 
+	Martin Brandenburg <martin@omnibond.com>, Miklos Szeredi <miklos@szeredi.hu>, 
+	Phillip Lougher <phillip@squashfs.org.uk>, Carlos Maiolino <cem@kernel.org>, 
+	Hugh Dickins <hughd@google.com>, Baolin Wang <baolin.wang@linux.alibaba.com>, 
+	Andrew Morton <akpm@linux-foundation.org>, Namjae Jeon <linkinjeon@kernel.org>, 
+	Sungjong Seo <sj1557.seo@samsung.com>, Yuezhang Mo <yuezhang.mo@sony.com>, 
+	Alexander Aring <alex.aring@gmail.com>, Andreas Gruenbacher <agruenba@redhat.com>, 
+	Jonathan Corbet <corbet@lwn.net>, "Matthew Wilcox (Oracle)" <willy@infradead.org>, 
+	Eric Van Hensbergen <ericvh@kernel.org>, Latchesar Ionkov <lucho@ionkov.net>, 
+	Dominique Martinet <asmadeus@codewreck.org>, Christian Schoenebeck <linux_oss@crudebyte.com>, 
+	Xiubo Li <xiubli@redhat.com>, Ilya Dryomov <idryomov@gmail.com>, 
+	Trond Myklebust <trondmy@kernel.org>, Anna Schumaker <anna@kernel.org>, 
+	Steve French <sfrench@samba.org>, Paulo Alcantara <pc@manguebit.org>, 
+	Ronnie Sahlberg <ronniesahlberg@gmail.com>, Shyam Prasad N <sprasad@microsoft.com>, 
+	Tom Talpey <tom@talpey.com>, Bharath SM <bharathsm@microsoft.com>, 
+	Hans de Goede <hansg@kernel.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+	linux-btrfs@vger.kernel.org, linux-erofs@lists.ozlabs.org, linux-ext4@vger.kernel.org, 
+	linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, 
+	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev, 
+	ocfs2-devel@lists.linux.dev, devel@lists.orangefs.org, linux-unionfs@vger.kernel.org, 
+	linux-xfs@vger.kernel.org, linux-mm@kvack.org, gfs2@lists.linux.dev, 
+	linux-doc@vger.kernel.org, v9fs@lists.linux.dev, ceph-devel@vger.kernel.org, 
+	linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, samba-technical@lists.samba.org
+Subject: Re: [PATCH 00/24] vfs: require filesystems to explicitly opt-in to
+ lease support
+Message-ID: <20260113-mondlicht-raven-82fc4eb70e9d@brauner>
+References: <20260108-setlease-6-20-v1-0-ea4dec9b67fa@kernel.org>
+ <m3mywef74xhcakianlrovrnaadnhzhfqjfusulkcnyioforfml@j2xnk7dzkmv4>
+ <8af369636c32b868f83669c49aea708ca3b894ac.camel@kernel.org>
+ <CAOQ4uxgD+Sgbbg9K2U0SF9TyUOBb==Z6auShUWc4FfPaDCQ=rg@mail.gmail.com>
+ <ec78bf021fa1f6243798945943541ba171e337e7.camel@kernel.org>
+ <cb5d2da6-2090-4639-ad96-138342bba56d@oracle.com>
+ <ce700ee20834631eceededc8cd15fc5d00fee28e.camel@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <93c5c0a639a31958876739641fae9989afe8bb26.camel@ibm.com>
- <CAKFNMo=a+gB+SUhWGO+J_2t7TOgzfwYBsJLF61UGEfWej-yLrA@mail.gmail.com>
- <d7bb64793d0990cc4b441c7a55e30b87b13dd4aa.camel@ibm.com> <CAKFNMo=scKgYNobap44HQb+cuy7tquQUnNOSnzwGQB=W-gotpQ@mail.gmail.com>
- <4f1af0d0b9d867e8baf964d033452f86ccc27c08.camel@ibm.com>
-In-Reply-To: <4f1af0d0b9d867e8baf964d033452f86ccc27c08.camel@ibm.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Tue, 13 Jan 2026 10:31:23 +0900
-X-Gm-Features: AZwV_Qib_cFlFazJMJOZcvFAk5AohfMkGCtpXDpqx2R43Wk7pljqW_5qplhRIro
-Message-ID: <CAKFNMokM7=3wdqdcWWLgBkDK-H=mgfHyd3z61TYT8WxBUC_X9g@mail.gmail.com>
-Subject: Re: [RFC] generic/003 xfstests failure details
-To: Viacheslav Dubeyko <Slava.Dubeyko@ibm.com>
-Cc: "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>, "slava@dubeyko.com" <slava@dubeyko.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <ce700ee20834631eceededc8cd15fc5d00fee28e.camel@kernel.org>
 
-On Tue, Jan 13, 2026 at 9:20=E2=80=AFAM Viacheslav Dubeyko wrote:
->
-> Hi Ryusuke,
->
-> On Sat, 2026-01-10 at 01:34 +0900, Ryusuke Konishi wrote:
-> > Hi Viacheslav,
-> >
-> > On Fri, Jan 9, 2026 at 9:32=E2=80=AFAM Viacheslav Dubeyko wrote:
-> > >
-> > > On Thu, 2026-01-08 at 14:46 +0900, Ryusuke Konishi wrote:
-> > > > On Thu, Jan 8, 2026 at 1:04=E2=80=AFPM Viacheslav Dubeyko wrote:
-> > > > >
-> > > > > Hi Ryusuke,
-> > > > >
-> > > > > As far as I can see, this test is trying to check the access time=
- (atime) after
-> > > > > every touch. And it expects to see the difference between atime a=
-nd ctime. But
-> > > > > it cannot see the difference:
-> > > > >
-> > > > > sudo touch ./001.txt
-> > > > > sudo stat ./001.txt
-> > > > >   File: ./001.txt
-> > > > >   Size: 0               Blocks: 0          IO Block: 4096   regul=
-ar empty file
-> > > > > Device: 7,50    Inode: 12          Links: 1
-> > > > > Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/  =
-  root)
-> > > > > Access: 2026-01-06 16:23:18.315637313 -0800
-> > > > > Modify: 2026-01-06 16:23:18.315637313 -0800
-> > > > > Change: 2026-01-06 16:23:18.315637313 -0800
-> > > > >  Birth: -
-> > > > >
-> > > > > sudo touch ./001.txt
-> > > > > sudo stat ./001.txt
-> > > > >   File: ./001.txt
-> > > > >   Size: 0               Blocks: 0          IO Block: 4096   regul=
-ar empty file
-> > > > > Device: 7,50    Inode: 12          Links: 1
-> > > > > Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/  =
-  root)
-> > > > > Access: 2026-01-06 16:23:44.535933843 -0800
-> > > > > Modify: 2026-01-06 16:23:44.535933843 -0800
-> > > > > Change: 2026-01-06 16:23:44.535933843 -0800
-> > > > >  Birth: -
-> > > > >
-> > > > > Moreover, NILFS2 hasn't atime support in on-disk layout [1]:
-> > > > >
-> > > > > struct nilfs_inode {
-> > > > >         __le64  i_blocks;
-> > > > >         __le64  i_size;
-> > > > >         __le64  i_ctime;
-> > > > >         __le64  i_mtime;
-> > > > >         __le32  i_ctime_nsec;
-> > > > >         __le32  i_mtime_nsec;
-> > > > >         __le32  i_uid;
-> > > > >         __le32  i_gid;
-> > > > >         __le16  i_mode;
-> > > > >         __le16  i_links_count;
-> > > > >         __le32  i_flags;
-> > > > >         __le64  i_bmap[NILFS_INODE_BMAP_SIZE];
-> > > > > #define i_device_code   i_bmap[0]
-> > > > >         __le64  i_xattr;
-> > > > >         __le32  i_generation;
-> > > > >         __le32  i_pad;
-> > > > > };
-> > > > >
-> > > > > Current implementation does such trick [2]:
-> > > > >
-> > > > > int nilfs_read_inode_common(struct inode *inode,
-> > > > >                             struct nilfs_inode *raw_inode)
-> > > > > {
-> > > > > <skipped>
-> > > > >         inode_set_atime(inode, le64_to_cpu(raw_inode->i_mtime),
-> > > > >                         le32_to_cpu(raw_inode->i_mtime_nsec));
-> > > > >         inode_set_ctime(inode, le64_to_cpu(raw_inode->i_ctime),
-> > > > >                         le32_to_cpu(raw_inode->i_ctime_nsec));
-> > > > >         inode_set_mtime(inode, le64_to_cpu(raw_inode->i_mtime),
-> > > > >                         le32_to_cpu(raw_inode->i_mtime_nsec));
-> > > > > <skipped>
-> > > > > }
-> > > > >
-> > > > > I think we can use i_xattr and i_pad fields of struct nilfs_inode=
- to implement
-> > > > > atime support. NILFS2 hasn't xattrs support and, anyway, i_xattr =
-is not enough
-> > > > > to implement this support.
-> > > > >
-> > > > > What do you think?
-> > > >
-> > > > What do you think is the appropriate goal for atime support?
-> > > >
-> > > > The Linux kernel has multiple support levels for atime, including
-> > > > lazytime, relatime, noatime, and nodiratime.
-> > > > For an append-only filesystem like nilfs2, supporting strict atime
-> > > > would likely result in a disk-full error due to inode writes.
-> > > >
-> > >
-> > > The lazytime, relatime, noatime, and nodiratime are mount options and=
- it is up
-> > > to end-user which particular mount option(s) should be used. Frankly =
-speaking, I
-> > > don't see the problem with any atime support for the case of append-o=
-nly
-> > > filesystem. Because, GC subsystem should guarantee proper fraction of=
- segments
-> > > cleaning operations. It's another point how significant will be the w=
-rite
-> > > amplification for relatime mount option, for example. But users of LF=
-S file
-> > > systems usually know which atime related options should be used for t=
-heir
-> > > workloads.
-> >
-> > Logically, in the case of standard LFS, I think it's correct that GC
-> > reduces issues caused by atime update writes to workload issues rather
-> > than disk usage issues.
-> >
-> > However, NILFS also has the property of being a filesystem that stores
-> > past data and metadata. For example, by default, updates (checkpoints)
-> > within the last hour are protected.
-> >
-> > Therefore, even with GC, there is a possibility of disk usage attacks
-> > by performing path lookups and file accesses repeatedly within an
-> > hour.
-> > So, please be aware of this difference in assumptions.
-> >
-> > When I said "atime support level," I wasn't referring to drastic
-> > changes in implementation, but rather to differences in update
-> > frequency from this perspective.
-> >
-> > Having said that, on standard systems, relatime is the default, and I
-> > agree that this should not be a problem by default, as it
-> > significantly reduces atime updates for on-memory inodes.
-> >
-> > If we allow strictatime (without specifying reduction options such as
-> > relatime or noatime), it may be a good idea to issue a warning at
-> > mount time.
-> > This can be done on the tool side (mount.nilfs2 helper side) and does
-> > not necessarily need to be implemented in the kernel.
-> >
-> > As for lazytime, it may be better to do the same, considering that
-> > atime updates triggered by inode evictions result in dirty blocks.
-> >
-> > > > Therefore, regardless of the implementation method, some kind of
-> > > > constraint must be imposed.
-> > > >
-> > > > Personally, I think the limit is two options: noatime, relatime, or
-> > > > three options, including lazytime (where inode writes occur when
-> > > > evictions occur).
-> > >
-> > > I believe it's up to end-users which mounts option they would like to=
- use. But
-> > > we need to support atime mechanism, anyway.
-> >
-> > Yes, I agree that atime support is needed anyway.
-> >
-> > > >
-> > > > What level of atime support is required for this test and other tes=
-ts?
-> > > > (Is it simply a matter of decision?)
-> > >
-> > > As far as I know, it is possible to select any mount options. But I a=
-m using
-> > > default ones.
-> >
-> > In that case, I think the safest option, relatime, is chosen.
-> >
-> > >
-> > > >
-> > > > Regarding the atime implementation, it was originally intended to b=
-e
-> > > > stored in a separate metadata file called the atime file.  Because =
-of
-> > > > its limited fields, it is a trade-off with xattr support.
-> > > > A decision must be made to either move it to another metadata file =
-or
-> > > > expand the inode size.
-> > > >
-> > > > Regarding this, I agree with you that it would be better to ignore
-> > > > past assumptions, assign the remaining fields (i_xattr, i_pad) to
-> > > > atime, and implement xattr so that the sweet spot of the xattr size
-> > > > fits inline, by expanding the inode size to 256 bytes.
-> > >
-> > > I selected the i_xattr, i_pad fields because they can guarantee the b=
-ackward
-> > > compatibility of on-disk layout. These fields were never used before.=
- Also, we
-> > > don't need to expend the inode size, currently, because such expansio=
-n could
-> > > break the backward compatibility of the on-disk layout.
-> >
-> > Yes, that's right.
-> > Using these fields for atime minimizes compatibility issues.
-> > However, strictly speaking, you need to be careful of the following poi=
-nts:
-> >
-> > - Both mkfs.nilfs2 and the nilfs2 metadata file initialize these
-> > fields to 0, so we may need to consider replacing 0 with the same
-> > value as ctime/mtime or current_time() when detected.
-> >
-> > - In the current implementation, these fields are not cleared on
-> > deletion, so if an inode is deleted and reused on an older version,
-> > and then mounted on a newer version that supports atime, the atime
-> > value may inherit the value from the previous inode.
-> >
-> > The inode size in nilfs2 is defined in the superblock, and although it
-> > is possible to extend it, this requires more rigor than compatibility
-> > control, and would be better done together with xattr support.
-> >
-> > > >
-> > > > In any case, the above fields cannot be consumed unless the
-> > > > implementation policy for xattrs is decided.
-> > > >
-> > >
-> > > If we are considering the inline xattrs, then inode should be extende=
-d. But it
-> > > could not provide the enough space if xattr is big or we need to have=
- multiple
-> > > xattrs. Potentially, extents tree can contains different types of ext=
-ents (user
-> > > data, xattr). And logical block is allocated for xattr should contain=
- header
-> > > with metadata explaining the all xattr details. Does it make sense?
-> >
-> > I used getfattr to aggregate xattr sizes on a certain server with
-> > ext4-based partitions, and created a histogram, and the distribution
-> > was as follows:
-> >
-> > -----------------------------------------------------------------------=
--------
-> >  SIZE RANGE : COUNT  | DISTRIBUTION
-> > -----------------------------------------------------------------------=
--------
-> >   32 -   47 : 563265 | ################################################=
-##
-> >   48 -   63 : 249520 | ######################
-> >   64 -   79 :   1986 |
-> >   80 -   95 :  11158 |
-> >   96 -  111 :     54 |
-> >  112 -  127 :      2 |
-> >  128 -  143 :      1 |
-> >  144 -  159 :     67 |
-> >  176 -  191 :     32 |
-> >  192 -  207 :      3 |
-> >  208 -  223 :      2 |
-> >  240 -  255 :      1 |
-> >  256 -  271 :      1 |
-> > -----------------------------------------------------------------------=
--------
-> >
-> > On NAS servers, the percentage of files over 100 bytes was slightly
-> > higher, at about 6%.
-> >
-> > The tendency for duplicate xattr values varies depending on the system.
-> > With only SELinux security labels, there are many duplicate values.
-> > On the other hand, there are also cases where different values, such
-> > as checksums and ID tags, are written for each file (e.g., on a NAS).
-> >
-> > One possible implementation of xattr is to use free inodes (for
-> > example, allocating contiguous inodes).
-> > However, considering that inodes will eventually need to be expanded,
-> > I recommend a hybrid configuration, assuming expansion to 256 bytes or
-> > more, uses the latter portion for inline xattr, and pushes anything
-> > that doesn't fit into that area to a reserved xattr metadata file
-> > (NILFS_XATTR_INO inode).
-> >
-> > Let's leave the discussion of xattr implementation as a separate issue.
-> >
-> > When considering atime, I think the key is whether we determine that
-> > the current 128-byte inode will be used up by atime.
-> > My opinion is the same as yours: Yes.
-> >
->
-> So, I believe that we are on the same page. :)
->
-> To summarize... Currently, we can leave the size of raw inode as it is (1=
-28
-> bytes) for atime support implementation. We can re-use the i_xattr, i_pad=
- fields
-> for this implementation on kernel side. The mount.nilfs2 should reject or=
- issue
-> the warning relating to using the aggressive atime mount options.
->
-> Am I correct? If we have the similar vision, then I can start the atime s=
-upport
-> implementation and we can continue discussion when I'll share the patch.
->
+On Mon, Jan 12, 2026 at 09:50:20AM -0500, Jeff Layton wrote:
+> On Mon, 2026-01-12 at 09:31 -0500, Chuck Lever wrote:
+> > On 1/12/26 8:34 AM, Jeff Layton wrote:
+> > > On Fri, 2026-01-09 at 19:52 +0100, Amir Goldstein wrote:
+> > > > On Thu, Jan 8, 2026 at 7:57 PM Jeff Layton <jlayton@kernel.org> wrote:
+> > > > > 
+> > > > > On Thu, 2026-01-08 at 18:40 +0100, Jan Kara wrote:
+> > > > > > On Thu 08-01-26 12:12:55, Jeff Layton wrote:
+> > > > > > > Yesterday, I sent patches to fix how directory delegation support is
+> > > > > > > handled on filesystems where the should be disabled [1]. That set is
+> > > > > > > appropriate for v6.19. For v7.0, I want to make lease support be more
+> > > > > > > opt-in, rather than opt-out:
+> > > > > > > 
+> > > > > > > For historical reasons, when ->setlease() file_operation is set to NULL,
+> > > > > > > the default is to use the kernel-internal lease implementation. This
+> > > > > > > means that if you want to disable them, you need to explicitly set the
+> > > > > > > ->setlease() file_operation to simple_nosetlease() or the equivalent.
+> > > > > > > 
+> > > > > > > This has caused a number of problems over the years as some filesystems
+> > > > > > > have inadvertantly allowed leases to be acquired simply by having left
+> > > > > > > it set to NULL. It would be better if filesystems had to opt-in to lease
+> > > > > > > support, particularly with the advent of directory delegations.
+> > > > > > > 
+> > > > > > > This series has sets the ->setlease() operation in a pile of existing
+> > > > > > > local filesystems to generic_setlease() and then changes
+> > > > > > > kernel_setlease() to return -EINVAL when the setlease() operation is not
+> > > > > > > set.
+> > > > > > > 
+> > > > > > > With this change, new filesystems will need to explicitly set the
+> > > > > > > ->setlease() operations in order to provide lease and delegation
+> > > > > > > support.
+> > > > > > > 
+> > > > > > > I mainly focused on filesystems that are NFS exportable, since NFS and
+> > > > > > > SMB are the main users of file leases, and they tend to end up exporting
+> > > > > > > the same filesystem types. Let me know if I've missed any.
+> > > > > > 
+> > > > > > So, what about kernfs and fuse? They seem to be exportable and don't have
+> > > > > > .setlease set...
+> > > > > > 
+> > > > > 
+> > > > > Yes, FUSE needs this too. I'll add a patch for that.
+> > > > > 
+> > > > > As far as kernfs goes: AIUI, that's basically what sysfs and resctrl
+> > > > > are built on. Do we really expect people to set leases there?
+> > > > > 
+> > > > > I guess it's technically a regression since you could set them on those
+> > > > > sorts of files earlier, but people don't usually export kernfs based
+> > > > > filesystems via NFS or SMB, and that seems like something that could be
+> > > > > used to make mischief.
+> > > > > 
+> > > > > AFAICT, kernfs_export_ops is mostly to support open_by_handle_at(). See
+> > > > > commit aa8188253474 ("kernfs: add exportfs operations").
+> > > > > 
+> > > > > One idea: we could add a wrapper around generic_setlease() for
+> > > > > filesystems like this that will do a WARN_ONCE() and then call
+> > > > > generic_setlease(). That would keep leases working on them but we might
+> > > > > get some reports that would tell us who's setting leases on these files
+> > > > > and why.
+> > > > 
+> > > > IMO, you are being too cautious, but whatever.
+> > > > 
+> > > > It is not accurate that kernfs filesystems are NFS exportable in general.
+> > > > Only cgroupfs has KERNFS_ROOT_SUPPORT_EXPORTOP.
+> > > > 
+> > > > If any application is using leases on cgroup files, it must be some
+> > > > very advanced runtime (i.e. systemd), so we should know about the
+> > > > regression sooner rather than later.
+> > > > 
+> > > 
+> > > I think so too. For now, I think I'll not bother with the WARN_ONCE().
+> > > Let's just leave kernfs out of the set until someone presents a real
+> > > use-case.
+> > > 
+> > > > There are also the recently added nsfs and pidfs export_operations.
+> > > > 
+> > > > I have a recollection about wanting to be explicit about not allowing
+> > > > those to be exportable to NFS (nsfs specifically), but I can't see where
+> > > > and if that restriction was done.
+> > > > 
+> > > > Christian? Do you remember?
+> > > > 
+> > > 
+> > > (cc'ing Chuck)
+> > > 
+> > > FWIW, you can currently export and mount /sys/fs/cgroup via NFS. The
+> > > directory doesn't show up when you try to get to it via NFSv4, but you
+> > > can mount it using v3 and READDIR works. The files are all empty when
+> > > you try to read them. I didn't try to do any writes.
+> > > 
+> > > Should we add a mechanism to prevent exporting these sorts of
+> > > filesystems?
+> > > 
+> > > Even better would be to make nfsd exporting explicitly opt-in. What if
+> > > we were to add a EXPORT_OP_NFSD flag that explicitly allows filesystems
+> > > to opt-in to NFS exporting, and check for that in __fh_verify()? We'd
+> > > have to add it to a bunch of existing filesystems, but that's fairly
+> > > simple to do with an LLM.
+> > 
+> > What's the active harm in exporting /sys/fs/cgroup ? It has to be done
+> > explicitly via /etc/exports, so this is under the NFS server admin's
+> > control. Is it an attack surface?
+> > 
+> 
+> Potentially?
+> 
+> I don't see any active harm with exporting cgroupfs. It doesn't work
+> right via nfsd, but it's not crashing the box or anything.
+> 
+> At one time, those were only defined by filesystems that wanted to
+> allow NFS export. Now we've grown them on filesystems that just want to
+> provide filehandles for open_by_handle_at() and the like. nfsd doesn't
+> care though: if the fs has export operations, it'll happily use them.
+> 
+> Having an explicit "I want to allow nfsd" flag see ms like it might
+> save us some headaches in the future when other filesystems add export
+> ops for this sort of filehandle use.
 
-Yes, that's generally my understanding.
+So we are re-hashing a discussion we had a few months ago (Amir was
+involved at least).
 
-Just one thing: as long as issuing warnings for strictatime and
-lazytime, I think handling them in the mount.nilfs2 helper is fine.
-But if we find that the filesystem gets stuck due to atime updates
-(e.g., unable to recover from a disk-full state), then the kernel
-should enforce the rejection to prevent the unsafe state.
+I don't think we want to expose cgroupfs via NFS that's super weird.
+It's like remote partial resource management and it would be very
+strange if a remote process suddenly would be able to move things around
+in the cgroup tree. So I would prefer to not do this.
 
-> Related to xattr support... I believe that we need to fix the all detecte=
-d
-> xfstests issues first. Then, it will make sense to have the discussion re=
-lated
-> to definition of xattr architecture in NILFS2. Do you agree?
+So my preference would be to really sever file handles from the export
+mechanism so that we can allow stuff like pidfs and nsfs and cgroupfs to
+use file handles via name_to_handle_at() and open_by_handle_at() without
+making them exportable.
 
-Yes, I agree.
-
-
-Thanks,
-Ryusuke Konishi
-
->
-> Thanks,
-> Slava.
+Somehow I thought that Amir had already done that work a while ago but
+maybe it was really just about name_to_handle_at() and not also
+open_by_handle_at()...
