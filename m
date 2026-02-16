@@ -1,83 +1,102 @@
-Received: from mail-oo1-f71.google.com (mail-oo1-f71.google.com [209.85.161.71])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from pdx-out-011.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-011.esa.us-west-2.outbound.mail-perimeter.amazon.com [52.35.192.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E4DD33D508
-	for <linux-nilfs@vger.kernel.org>; Fri, 13 Feb 2026 08:40:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.71
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41CB2273D6D;
+	Mon, 16 Feb 2026 09:06:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.35.192.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770972038; cv=none; b=CoTB0x8T2uhPe5jAlkaeIay3RAh7qZmeoydn0pUH9G6JjG1ONjjaYNbd7dNeELphwW8dUwdIgQTeqBA5HlkmC5EdaoOp3IVkCYANchSUKoj9vtQkLLDkPbRlAmiYKZOW21egU/cio7S7nSYlPiqxbbJhMEHRMlsniEA2Lvs+iyQ=
+	t=1771232812; cv=none; b=iNYr5scbJ0WTPkS/lAdjyjMdBFZ8WW5f0lKOqLszeaJLN2+YjKY8RwBilStkUlbmB3dPy5StpaDov3LVl3GdoV5L8fLVDmgO/QD0p0Xa0ndITV86op7UzQPILnMWzSmSosU4BEqkWREGpbPQhEQCzAsRvRWRbBnQpXyl3nl6mMM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770972038; c=relaxed/simple;
-	bh=WDhD5psvG2AxZ2QvGXE9hgYo1EyBLCsNzkxK3MfoUfs=;
-	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=N1nz80P8bDstrHtK2EITAaNob7VlzScF34RBk7pL0p/SszMLTBqRovdVRmzPNOOAeP86wuCgO6vow9AYcxkUIUSB0oXSQT8OwLb7/grY+s8zB2bhNyEBCAN+MuI4R0AyUZhSyH7SMVO51UZ0DJHwdpJ+n1T7ZcdW/oroputFA+s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.161.71
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oo1-f71.google.com with SMTP id 006d021491bc7-6751720c676so5881891eaf.3
-        for <linux-nilfs@vger.kernel.org>; Fri, 13 Feb 2026 00:40:36 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1770972036; x=1771576836;
-        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=scCZZg3Vh0JswBMR2QvcF/nq06ybDJkUtCTpqsIgIlc=;
-        b=mq3rkg/c3QhmAem8P7lXx5wJ2GDVVDx78XCDfEuEfHdLFRkcrdIkescg/u3WZ2Uo3s
-         9sLZvo9vbJdBVyaWRFgZRniB75B5klioYWaBbk4Ssg8PZjkw4yf/7+/uRzt3GhqsHfV3
-         xp7qYtibZSDpKG4yWZnDAWrXyYy+1vuVDov19ZfdRSt8maw2wtX57x6TpMzbaEnRjeKB
-         1d4vLeRUPpSsXtan1LwcrSUAlmg3MongSxhQ2T+KjBgaqrrk3Ao0t3RfZY7ms4m5b1g+
-         feAD7t1ScKApjvzuKuFtPO2DSzyuo4ZheevkR6BVJFZLT0mh4LzqT9eDecjVSGhNYuiE
-         tcZg==
-X-Forwarded-Encrypted: i=1; AJvYcCUCQQMARp00WkQhxolUfIiFzx0wwmO5kLvdz2EIQtKPTGlXpnKQi/zGkdigpkx7Dt6sNxZsQDFmGyfUOw==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yy7lTd03yJcwNcsm1LZsxXczlaPyFpXr+ls03n5cehiWLBx4OTQ
-	UC73QlgHUekdpqxae/MjscxQ6RS+sQ7kAKykJ2RT3vjfX7qAk6YeiOzwa5R6vy8czcce9fn4sXY
-	4Rdp1eilVs/5kJHTqQkX5irtCSeb6ImHw3cz9O8UYrmvWcekvs7GvjS/HU5M=
+	s=arc-20240116; t=1771232812; c=relaxed/simple;
+	bh=teVpk2XZW67wfkZQ1XKSJ+AuDGNe6REwyeDEOoqWHE8=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=hJGl15MBfrcl4afU+NqxWcLV/AGIc6X8XNdSwZ1waLtp0O6DR39y7JV3/LjoTuMxOuVwLeaaBVDcMmfWQh2uIFQfVNkG8h+IAQevGWrVGOFaBh18gq/MyDIYB41ziVZC6PMibSwiLF5RUHwSO+0f0Uxn4EIb0IxX6XYDyQaZRlE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=dfpIdfwW; arc=none smtp.client-ip=52.35.192.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="dfpIdfwW"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1771232811; x=1802768811;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=QBXQKckpKtA9xxZeWDZVrxYkoL0OJsfPg2X+lblSyqM=;
+  b=dfpIdfwW53+0irJHAV+dKbWAFhkeQSczV651iK13WzSa4mmS9EE/9O3Y
+   ijNLF7+58Ad1BShvK4e33ZWKsTVWgfX8Aw3Uw90ZphJ5tTbMRnxRT5h/o
+   GUyuY5sR/1MBhz+stW1PLvZiOyKkIlr+A1VTnc8u+P9gKJsERVMeKJh2Q
+   fvDkVGcaVf2wenbWaOZu/Zg9u+7ehWq+NLudlf35j4hOu/EDlE8d1FKa4
+   zZeu4JVtGMbqQVoAW3PXM95aeITqq+qm/khatOIc0obDQWYmkQL1XT1E4
+   Hd7Qg9ra9WXtwX6a/4heVySA4We9yiR7h7DwUh6BBeB97L5rhFPrXAnUr
+   Q==;
+X-CSE-ConnectionGUID: UJFg1NUcTiqyvEBSx97Ijg==
+X-CSE-MsgGUID: ltLFHf3/TFaAxCrO1FypUA==
+X-IronPort-AV: E=Sophos;i="6.21,293,1763424000"; 
+   d="scan'208";a="12918401"
+Received: from ip-10-5-6-203.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.6.203])
+  by internal-pdx-out-011.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Feb 2026 09:06:48 +0000
+Received: from EX19MTAUWA001.ant.amazon.com [205.251.233.182:10964]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.33.12:2525] with esmtp (Farcaster)
+ id 8bf631ae-f39c-429a-aee1-a17fd5aee6f0; Mon, 16 Feb 2026 09:06:48 +0000 (UTC)
+X-Farcaster-Flow-ID: 8bf631ae-f39c-429a-aee1-a17fd5aee6f0
+Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
+ EX19MTAUWA001.ant.amazon.com (10.250.64.218) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.35;
+ Mon, 16 Feb 2026 09:06:47 +0000
+Received: from c889f3b07a0a.amazon.com (10.106.83.11) by
+ EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.35;
+ Mon, 16 Feb 2026 09:06:46 +0000
+From: Yuto Ohnuki <ytohnuki@amazon.com>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Viacheslav Dubeyko
+	<slava@dubeyko.co>
+CC: <linux-nilfs@vger.kernel.org>, <linux-kernel@vger.kernel.org>, Yuto Ohnuki
+	<ytohnuki@amazon.com>
+Subject: [PATCH] nilfs2: fix i_xattr comment to note it is unused
+Date: Mon, 16 Feb 2026 09:06:37 +0000
+Message-ID: <20260216090637.97744-1-ytohnuki@amazon.com>
+X-Mailer: git-send-email 2.50.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6820:4dcb:b0:66e:ce9a:f404 with SMTP id
- 006d021491bc7-67766cc3384mr364732eaf.13.1770972036192; Fri, 13 Feb 2026
- 00:40:36 -0800 (PST)
-Date: Fri, 13 Feb 2026 00:40:36 -0800
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <698ee384.a70a0220.2c38d7.00ba.GAE@google.com>
-Subject: [syzbot] Monthly nilfs report (Feb 2026)
-From: syzbot <syzbot+list9d8018bad17431b2d4e0@syzkaller.appspotmail.com>
-To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+X-ClientProxiedBy: EX19D045UWA004.ant.amazon.com (10.13.139.91) To
+ EX19D001UWA001.ant.amazon.com (10.13.138.214)
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Hello nilfs maintainers/developers,
+NILFS2 does not currently support extended attributes. Update the
+comment for @i_xattr in struct nilfs_inode_info to clarify that it is
+reserved but unused.
 
-This is a 31-day syzbot report for the nilfs subsystem.
-All related reports/information can be found at:
-https://syzkaller.appspot.com/upstream/s/nilfs
-
-During the period, 0 new issues were detected and 0 were fixed.
-In total, 4 issues are still open and 65 have already been fixed.
-
-Some of the still happening issues:
-
-Ref Crashes Repro Title
-<1> 14      Yes   WARNING in nilfs_btree_assign (3)
-                  https://syzkaller.appspot.com/bug?extid=158be45e4d99232e1900
-<2> 12      Yes   WARNING in nilfs_rename (2)
-                  https://syzkaller.appspot.com/bug?extid=f6c7e1f1809f235eeb90
-<3> 5       Yes   INFO: task hung in find_inode (2)
-                  https://syzkaller.appspot.com/bug?extid=6646318bbcf419411bc5
-
+Signed-off-by: Yuto Ohnuki <ytohnuki@amazon.com>
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+ fs/nilfs2/nilfs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-To disable reminders for individual bugs, reply with the following command:
-#syz set <Ref> no-reminders
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index b7e3d91b6243..41b8b42be21d 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -27,7 +27,7 @@
+  * @i_state: dynamic state flags
+  * @i_bmap: pointer on i_bmap_data
+  * @i_bmap_data: raw block mapping
+- * @i_xattr: <TODO>
++ * @i_xattr: reserved for xattr object (unused)
+  * @i_dir_start_lookup: page index of last successful search
+  * @i_cno: checkpoint number for GC inode
+  * @i_assoc_inode: associated inode (B-tree node cache holder or back pointer)
+-- 
+2.50.1
 
-To change bug's subsystems, reply with:
-#syz set <Ref> subsystems: new-subsystem
 
-You may send multiple commands in a single email message.
+
+
+Amazon Web Services EMEA SARL, 38 avenue John F. Kennedy, L-1855 Luxembourg, R.C.S. Luxembourg B186284
+
+Amazon Web Services EMEA SARL, Irish Branch, One Burlington Plaza, Burlington Road, Dublin 4, Ireland, branch registration number 908705
+
+
+
