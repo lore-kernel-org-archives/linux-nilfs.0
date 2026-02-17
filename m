@@ -1,150 +1,153 @@
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8FAE15B971
-	for <linux-nilfs@vger.kernel.org>; Mon, 16 Feb 2026 10:02:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.49
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771236157; cv=pass; b=UWxNEaPvBIzilh/SXBnS143ESIStZWHfMCbHbo/fdyUZpHNSSmeAMaIS1DXHBEewVvKeFuHzKTpeWGEEBOPmI8BM0DhhcxVfVsNU4Q3eWMFI95aZwquXa1k+0dSbAGuBfykhyQ5NPhUZR7M7SqCQdcX7IwOiBgoAnfU4WiaT5XU=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771236157; c=relaxed/simple;
-	bh=PP2ug3+ToD9NwcQFoGliHhs1xYjn97rQMrUocmTRDA8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=gSsSieEo/DzbvicZEfNIUItWo07pPP+pMkASUQVwBJEfXdQUQkeF8Z2UKsmG5NSJiqhCqbZb6gkt+nniPFb8j9BffOZY1D+jHO4pw65xgLN0gEM0lKqvXL7vCXnCrr3ia41iWOg0jtExzoEAf8jQ3kKTiBe80Hmrj/Evs6IUUAI=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NKbP6BSd; arc=pass smtp.client-ip=209.85.167.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DFEE3793B1;
+	Tue, 17 Feb 2026 21:14:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1771362878; cv=none; b=I1cE0czN/JqrzwCyYagf5KFZu2o2M3/tomV5KpJ3m76vgxobOJgTM0cEsY8zprq11QsGUJNYWVld+2V7PuI2Ho0eHbUunAz6fN6oTrIsrYwPc/Ses21IHJztjbV7AbtH/IUbJpTrIQkT7PrrYtAnLgPVv52tTi8pTqUqiDuJvQk=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1771362878; c=relaxed/simple;
+	bh=SWr3Pg6zIeu2S3Z6UDsk8BzZU6tf527GPJ41POMlghM=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=qf73RQTBW78Pcv6J9dBKvzNX/FNGJgXVTmVVoigvinF0CjnwPfK0iR0uj8VK38XoiI6cVmH64K4TLto6Y3pEc02dtB225HrR8fIR/RV3h6mqzIvUGnbdLlsk8MLaVaquaRd2p/sYT+3a1y5N6U27AF7NGxXcL3SWTYAmHp7+jO4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=qME5lVPC; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NKbP6BSd"
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-59e5ea93a1aso2483065e87.1
-        for <linux-nilfs@vger.kernel.org>; Mon, 16 Feb 2026 02:02:35 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1771236154; cv=none;
-        d=google.com; s=arc-20240605;
-        b=OnJ/2IK+nhaVyD2Y77NH5vaDwAYvW8q4YUkxU8LlE5lq0DkVtY7PDw2nAlQx6snjze
-         T4tR8DuDiFWtgj9axgpXjFBYGqCGPdPgALv0AzxenyvhxP3BqFyNw9pI94fGzqCiXv6g
-         mWuAbagJw8TawCuok8UwtgnuFAXLiNwOttWu/s5HnD6FjZ2BWaqMMD7B6q1yH10OI8Hh
-         5eDkMM9qrsTITptL4qqgTQCSZsaruBg3ZBzdSUnec2wIipEmhMtYaLeeTBB6PedMb0oO
-         WA9G6iVFP1kmGfkoAqUmcRlV8MKwo1J24cd51jAD/Po8arMJA+8sCvC63WqVdP0pKH6u
-         Awrw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=sDGjYeKXKvxlN/G34NJHTNTXSITum5R8GbL5eHEkWxo=;
-        fh=rCj3LUeI6dOlppbnVWiqkB1KRFTA5iJgdLMdt5oNaNw=;
-        b=kcpfpQE0SQ37Dko8LL8hb89J4dIV+wzjG5q8bvOehEYd8CD3zDAIIx9yf/tGeuIHTu
-         E/dOP25aox4OnSDReSvSVQ/DLCJU8TwINncX68fSb40Yet1jw+qX1FCC69tdzByYyhbu
-         zqyGf+4EUXriBANEqOZlJaQ/sCqZXCCXU2YrfUMIoqnD2Jx6PSA8ixVBO5bYm3E3IFa3
-         LT9xkjLyi0wJ55KIUVM/TQWpE2d4NKxytexnNfFXfHCLRMH8CPrm3bAT1Kh+pawdNhTK
-         QaSvlUOBwHWtdiCpu3+2xfTg/HiGV7zmooldHca8STIJPnqXGsVxKFR+t5jZ17ncmN+6
-         qsZg==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1771236154; x=1771840954; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=sDGjYeKXKvxlN/G34NJHTNTXSITum5R8GbL5eHEkWxo=;
-        b=NKbP6BSdTUmsRZjG2IivyhQ+0UYZ4LpzNfcbBro68iq5obdZFQ2QAEA+utuqzoTXy1
-         rLmdn1xKZVkiVvIXCgES/SbzAB+NYZOIVeksZN49fAguaxhg8umHSIyneHxsiXtYapmb
-         ah1nStNwpPqVadtjvol3RBh1/2g+M2E9FteyfZjRp6I9sov4MgNK19co0vaAGqzzJgXq
-         nmRVpKEemX9fSQ43QfcxdTE+DxsmfEPW4Jy61magnDjncvw6aQ9K8yUMa0iC7Y/Asd2x
-         2EsWwOu5onZnbNK1k9ebyg48vLCW0luyI4ZjYPHM2fN+/emkKP/pqHJO3Hv1xXrvNDr3
-         OsJw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771236154; x=1771840954;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=sDGjYeKXKvxlN/G34NJHTNTXSITum5R8GbL5eHEkWxo=;
-        b=srqWX3GmuMEUsw32ZBxNvJu7zV2olzZ5zSstEcRfmYQ52Gnkd3t0Oniq1poJDD8jwO
-         qcTJjQ0dfDS3kZdt51SkWXUcuGvUvPJBgvoV3zhuBDIZz3lnV9PW9tB/yuj/6E0DvtrP
-         mr21UYpqoKLT4zT+y1zRE6LO+PoxNO6Gby+/u/9Um+eRHqZVKn2yOvoYyKeeOHb53tCi
-         mggoP0rhx7xyjqZC2JAIXe0gd2WyA/0lIs8Rleozfc8NYUj+R00PzTQQniDlK/TGKv5z
-         KFwjjl0m6LmJ48H2kAtjYq7dlqIfRjnFJuP6/3i05SHJKWTBSEdDRKzl5jj4moyWfmvN
-         8LgA==
-X-Gm-Message-State: AOJu0Yz7PjkWMIf3LIJrWErgNoZ3YfHgMMgucOTN7750agQNUty3CBXD
-	njOivImgDtNnvUgexfjeLrexNoZF3ZU8+5P3gKV9DY5bTWYoFKw+n6kSzt2VcFfGEr4bXVaXHVI
-	flDutEaD8ViM7tAuRCjK/v8PtAWfNNHk=
-X-Gm-Gg: AZuq6aIdZ7IFQbLz0Gh0rUhbF/hTBPCJMmLWicymGq0qysOO2EtXi2diOVcO5PL+fcH
-	RxZK+W/H7TT2f4HOcqVpDq8FBW51gMAvlBTUdFKG1kaX8Xqy6D6NkaTmxaulWIZhxO9BrPrXcjN
-	CZyd3SPorK2bYNzRDfbtuRYMC7nQ9uhNGXgMFtM6nFau1U+ktyF4nXy4qqxwWfSPF1BXyAiY2Up
-	OdvIAa9bYxzWH01ZOSPuYORDgFKiKrDbqC/TzSrskpRPEFllOqq6Q7zDdf5lwVNjv1CFGctpGTL
-	FZfrM2oOzz4FnG6SF8o=
-X-Received: by 2002:a05:6512:3b9c:b0:59e:4d28:b16f with SMTP id
- 2adb3069b0e04-59f6d358bfdmr1984962e87.20.1771236153737; Mon, 16 Feb 2026
- 02:02:33 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="qME5lVPC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0A0DCC19425;
+	Tue, 17 Feb 2026 21:14:38 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1771362878;
+	bh=SWr3Pg6zIeu2S3Z6UDsk8BzZU6tf527GPJ41POMlghM=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
+	b=qME5lVPCgbs75GtVkYDVSedStUuy5Pu7iKCY4IKu3xqN3EcQE+Oh5yA77hoZy7VyU
+	 +0wZZYMpZQVXM9oVuFBmRCNz9ULENuT2B5em0ouDg88Yb0OXaPujVB/GBPkgNNMpHr
+	 EhgPO+uLpu1WI515RTCnoSYcSuoUoWHPdRcl280BUTS4HjHiimnSyoFiD+9+NmEu7s
+	 4m0WVXB/a1C6i48qotqtPrvf49sFdMixg5MNCldkNycO7JhTW+IJtnP0WEfZw+8dYi
+	 1uYBY6iDz7huxRyc2w6LATusfRgMkVW0RAKYcp9Uufer3E7jADONKO2Apo8cM0wFiU
+	 pB1OIFY+N5Jzg==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 0B1123806667;
+	Tue, 17 Feb 2026 21:14:31 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260216092446.5596-2-ytohnuki@amazon.com>
-In-Reply-To: <20260216092446.5596-2-ytohnuki@amazon.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Mon, 16 Feb 2026 19:02:17 +0900
-X-Gm-Features: AaiRm50WXeIbFecBCKWbnqN9Rt-6_yW3z7fCoDmosAsfexOo13wJ74JNWU3gPBo
-Message-ID: <CAKFNMomoo0CbBXZg1v59XU=3Yp+RkagkOk7DWaghzAWeFNvbnw@mail.gmail.com>
-Subject: Re: [PATCH RESEND] nilfs2: fix i_xattr comment to note it is unused
-To: Yuto Ohnuki <ytohnuki@amazon.com>, Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+Subject: Re: [f2fs-dev] [PATCH 00/24] vfs: require filesystems to explicitly
+ opt-in to lease support
+From: patchwork-bot+f2fs@kernel.org
+Message-Id: 
+ <177136286957.643511.1991968143318289235.git-patchwork-notify@kernel.org>
+Date: Tue, 17 Feb 2026 21:14:29 +0000
+References: <20260108-setlease-6-20-v1-0-ea4dec9b67fa@kernel.org>
+In-Reply-To: <20260108-setlease-6-20-v1-0-ea4dec9b67fa@kernel.org>
+To: Jeff Layton <jlayton@kernel.org>
+Cc: luisbg@kernel.org, salah.triki@gmail.com, nico@fluxnic.net,
+ hch@infradead.org, jack@suse.cz, al@alarsen.net, viro@zeniv.linux.org.uk,
+ brauner@kernel.org, dsterba@suse.com, clm@fb.com, xiang@kernel.org,
+ chao@kernel.org, zbestahu@gmail.com, jefflexu@linux.alibaba.com,
+ dhavale@google.com, lihongbo22@huawei.com, guochunhai@vivo.com,
+ jack@suse.com, tytso@mit.edu, adilger.kernel@dilger.ca, jaegeuk@kernel.org,
+ hirofumi@mail.parknet.co.jp, dwmw2@infradead.org, richard@nod.at,
+ shaggy@kernel.org, konishi.ryusuke@gmail.com, slava@dubeyko.com,
+ almaz.alexandrovich@paragon-software.com, mark@fasheh.com,
+ jlbec@evilplan.org, joseph.qi@linux.alibaba.com, hubcap@omnibond.com,
+ martin@omnibond.com, miklos@szeredi.hu, amir73il@gmail.com,
+ phillip@squashfs.org.uk, cem@kernel.org, hughd@google.com,
+ baolin.wang@linux.alibaba.com, akpm@linux-foundation.org,
+ linkinjeon@kernel.org, sj1557.seo@samsung.com, yuezhang.mo@sony.com,
+ chuck.lever@oracle.com, alex.aring@gmail.com, agruenba@redhat.com,
+ corbet@lwn.net, willy@infradead.org, ericvh@kernel.org, lucho@ionkov.net,
+ asmadeus@codewreck.org, linux_oss@crudebyte.com, xiubli@redhat.com,
+ idryomov@gmail.com, trondmy@kernel.org, anna@kernel.org, sfrench@samba.org,
+ pc@manguebit.org, ronniesahlberg@gmail.com, sprasad@microsoft.com,
+ tom@talpey.com, bharathsm@microsoft.com, hansg@kernel.org,
+ jfs-discussion@lists.sourceforge.net, linux-doc@vger.kernel.org,
+ linux-kernel@vger.kernel.org, gfs2@lists.linux.dev, linux-mm@kvack.org,
+ linux-mtd@lists.infradead.org, linux-cifs@vger.kernel.org,
+ linux-nilfs@vger.kernel.org, linux-ext4@vger.kernel.org,
+ devel@lists.orangefs.org, ocfs2-devel@lists.linux.dev,
+ ceph-devel@vger.kernel.org, linux-nfs@vger.kernel.org, v9fs@lists.linux.dev,
+ samba-technical@lists.samba.org, linux-unionfs@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, ntfs3@lists.linux.dev,
+ linux-erofs@lists.ozlabs.org, linux-btrfs@vger.kernel.org
 
-On Mon, Feb 16, 2026 at 6:25=E2=80=AFPM Yuto Ohnuki wrote:
->
-> NILFS2 does not currently support extended attributes. Update the
-> comment for @i_xattr in struct nilfs_inode_info to clarify that it is
-> reserved but unused.
->
-> Signed-off-by: Yuto Ohnuki <ytohnuki@amazon.com>
-> ---
->  fs/nilfs2/nilfs.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+Hello:
 
-Thank you.
+This series was applied to jaegeuk/f2fs.git (dev)
+by Christian Brauner <brauner@kernel.org>:
 
-Viacheslav, could you please pick this up directly and queue it for
-the next cycle (with the following Acked-by tag)?
+On Thu, 08 Jan 2026 12:12:55 -0500 you wrote:
+> Yesterday, I sent patches to fix how directory delegation support is
+> handled on filesystems where the should be disabled [1]. That set is
+> appropriate for v6.19. For v7.0, I want to make lease support be more
+> opt-in, rather than opt-out:
+> 
+> For historical reasons, when ->setlease() file_operation is set to NULL,
+> the default is to use the kernel-internal lease implementation. This
+> means that if you want to disable them, you need to explicitly set the
+> ->setlease() file_operation to simple_nosetlease() or the equivalent.
+> 
+> [...]
 
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Here is the summary with links:
+  - [f2fs-dev,01/24] fs: add setlease to generic_ro_fops and read-only filesystem directory operations
+    https://git.kernel.org/jaegeuk/f2fs/c/ca4388bf1d9e
+  - [f2fs-dev,02/24] affs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/663cdef61a27
+  - [f2fs-dev,03/24] btrfs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/f9688474e413
+  - [f2fs-dev,04/24] erofs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/f8902d3df893
+  - [f2fs-dev,05/24] ext2: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/ccdc2e0569f5
+  - [f2fs-dev,06/24] ext4: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/20747a2a29c6
+  - [f2fs-dev,07/24] exfat: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/b8ca02667552
+  - [f2fs-dev,08/24] f2fs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/9e2ac6ddb397
+  - [f2fs-dev,09/24] fat: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/a9acc8422ffb
+  - [f2fs-dev,10/24] gfs2: add a setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/3b514c333390
+  - [f2fs-dev,11/24] jffs2: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/c275e6e7c085
+  - [f2fs-dev,12/24] jfs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/7dd596bb35e5
+  - [f2fs-dev,13/24] nilfs2: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/f46bb13dc5d9
+  - [f2fs-dev,14/24] ntfs3: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/6aaa1d6337b5
+  - [f2fs-dev,15/24] ocfs2: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/f15d3150279d
+  - [f2fs-dev,16/24] orangefs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/136b43aa4b16
+  - [f2fs-dev,17/24] overlayfs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/94a3f60af5dc
+  - [f2fs-dev,18/24] squashfs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/dfd8676efe43
+  - [f2fs-dev,19/24] tmpfs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/f5a3446be277
+  - [f2fs-dev,20/24] udf: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/dbe8d57d1483
+  - [f2fs-dev,21/24] ufs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/545b4144d804
+  - [f2fs-dev,22/24] xfs: add setlease file operation
+    https://git.kernel.org/jaegeuk/f2fs/c/6163b5da2f5e
+  - [f2fs-dev,23/24] filelock: default to returning -EINVAL when ->setlease operation is NULL
+    https://git.kernel.org/jaegeuk/f2fs/c/2b10994be716
+  - [f2fs-dev,24/24] fs: remove simple_nosetlease()
+    https://git.kernel.org/jaegeuk/f2fs/c/51e49111c00b
 
-There's been discussion about removing the on-disk inode xattr field
-to implement atime, so if it's no longer needed for that reason, you
-can drop it.
+You are awesome, thank you!
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
 
-However, since this is an on-memory inode field, I think it's okay to
-leave the field itself in place until its handling is decided.
 
-Regards,
-Ryusuke Konishi
-
-> diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-> index b7e3d91b6243..41b8b42be21d 100644
-> --- a/fs/nilfs2/nilfs.h
-> +++ b/fs/nilfs2/nilfs.h
-> @@ -27,7 +27,7 @@
->   * @i_state: dynamic state flags
->   * @i_bmap: pointer on i_bmap_data
->   * @i_bmap_data: raw block mapping
-> - * @i_xattr: <TODO>
-> + * @i_xattr: reserved for xattr object (unused)
->   * @i_dir_start_lookup: page index of last successful search
->   * @i_cno: checkpoint number for GC inode
->   * @i_assoc_inode: associated inode (B-tree node cache holder or back po=
-inter)
-> --
-> 2.50.1
->
->
->
->
-> Amazon Web Services EMEA SARL, 38 avenue John F. Kennedy, L-1855 Luxembou=
-rg, R.C.S. Luxembourg B186284
->
-> Amazon Web Services EMEA SARL, Irish Branch, One Burlington Plaza, Burlin=
-gton Road, Dublin 4, Ireland, branch registration number 908705
->
->
->
