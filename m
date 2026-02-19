@@ -1,129 +1,97 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+Received: from mail-oa1-f42.google.com (mail-oa1-f42.google.com [209.85.160.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C51902ECE91
-	for <linux-nilfs@vger.kernel.org>; Thu, 19 Feb 2026 12:03:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D552834251A
+	for <linux-nilfs@vger.kernel.org>; Thu, 19 Feb 2026 15:24:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771502584; cv=none; b=LVvdHa1/VTmAPBH+uLPsYTcguUQszHOsflNAsbML8UnDSZHCPbmgJDtLRMgis2pAManKJw5q6lGh+j5mUfYAnElTRX6THYA2P5hi/4Xo8KeePMFuf+7W5A/4u5tADv+p+UEX750oWphnlhlaB5wVE6a/Na3AZ67vpxzD5K6QdsE=
+	t=1771514684; cv=none; b=d8AVyP4tBhntbKe0UnRe3YAzDiMxfiQN8EcgqWXrXIGk+AwghEFcmczF4K5DoBoZ1n/8qatbbMeSYbNF8kN0IDB6ZGNI7uAkhkmpNBNZBg6WltI9oKiU8Xfu27cxTjz7YJl2BScZ0XId5n1b9M/sxNCFovRSKoVBnn747ScH2AA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771502584; c=relaxed/simple;
-	bh=R2wi7pz1uWWNINYF+qbl+Y5HyzW0s3Euy2EaSq2Rl2Y=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=al4/p75VqJsIq/g3SZhF2oNXIVwrwb3uxLASucrHdxsvcpk+LabXXWUUDntF4FeIufARB5WYzMtvKSU2Kk6sYXbbQwohRJyGZwaxHvbkKcBTJ/zDb7MCKW06z597PyPQNWA8QU6/UM271BtbzZSVj2jYCV/ii3FDJ7ULmd44/MA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=FX3La7g9; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=NroNxCrq; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=FX3La7g9; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=NroNxCrq; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	s=arc-20240116; t=1771514684; c=relaxed/simple;
+	bh=lDifLTAx9n9Mk40OXQsRSz1vGqgpmvsXnNPyhYBsb2A=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=GoaTNuQVcpSJulCovDWaDGEYiRHiQOxSztyMi1EvClp1hjtJ8Pg2z3VwPTPLZycH6/hUphsqrJnVx13rfBHpTFts0L5EjnSyb8yk/k6Zn6z0etqUc13MO8f+7SrsWdy5w5bu7reP8i1nAd5UsaG2ufxqPuufzMWTj4vUyd+IP40=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=rP+SJ6It; arc=none smtp.client-ip=209.85.160.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="FX3La7g9";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="NroNxCrq";
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="FX3La7g9";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="NroNxCrq"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 0BDF43E6DB;
-	Thu, 19 Feb 2026 12:03:01 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1771502581; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=PYIguF5TPw9Bm5ffYF+ezNu69qmxavOJ15nqAdMnsBo=;
-	b=FX3La7g9lSI644cAJzI9v5F9vi/V+5Hpcix96v6lt+D0D89nqAeB3dgu8rau2hCiTOSJiZ
-	lzetvgo0gNzcFcQGantfXs5RDF7qFnCE6GH/bBEJfFKY81BmEpVkKUWYPXAZjTF/TMIvax
-	QLrEe5l6dM0z/Qwe3++GAg/EfvGyqW4=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1771502581;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=PYIguF5TPw9Bm5ffYF+ezNu69qmxavOJ15nqAdMnsBo=;
-	b=NroNxCrqBXmR+uaYb7gSDV9Z1n9WRiE6wJfD385TwA7Uf9tyZnceL0eQKy9R+IruzABSh+
-	Z8sGXwVwwLOb0JBA==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1771502581; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=PYIguF5TPw9Bm5ffYF+ezNu69qmxavOJ15nqAdMnsBo=;
-	b=FX3La7g9lSI644cAJzI9v5F9vi/V+5Hpcix96v6lt+D0D89nqAeB3dgu8rau2hCiTOSJiZ
-	lzetvgo0gNzcFcQGantfXs5RDF7qFnCE6GH/bBEJfFKY81BmEpVkKUWYPXAZjTF/TMIvax
-	QLrEe5l6dM0z/Qwe3++GAg/EfvGyqW4=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1771502581;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=PYIguF5TPw9Bm5ffYF+ezNu69qmxavOJ15nqAdMnsBo=;
-	b=NroNxCrqBXmR+uaYb7gSDV9Z1n9WRiE6wJfD385TwA7Uf9tyZnceL0eQKy9R+IruzABSh+
-	Z8sGXwVwwLOb0JBA==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id E84613EA65;
-	Thu, 19 Feb 2026 12:03:00 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id zSavOPT7lmkiVAAAD6G6ig
-	(envelope-from <jack@suse.cz>); Thu, 19 Feb 2026 12:03:00 +0000
-Received: by quack3.suse.cz (Postfix, from userid 1000)
-	id AB2CFA06FE; Thu, 19 Feb 2026 13:03:00 +0100 (CET)
-Date: Thu, 19 Feb 2026 13:03:00 +0100
-From: Jan Kara <jack@suse.cz>
-To: Tal Zussman <tz2294@columbia.edu>
-Cc: Jens Axboe <axboe@kernel.dk>, 
-	"Tigran A. Aivazian" <aivazian.tigran@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, Namjae Jeon <linkinjeon@kernel.org>, 
-	Sungjong Seo <sj1557.seo@samsung.com>, Yuezhang Mo <yuezhang.mo@sony.com>, 
-	Dave Kleikamp <shaggy@kernel.org>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, 
-	Viacheslav Dubeyko <slava@dubeyko.com>, Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
-	Bob Copeland <me@bobcopeland.com>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net, 
-	linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev, linux-karma-devel@lists.sourceforge.net
-Subject: Re: [PATCH RFC] block: enable RWF_DONTCACHE for block devices
-Message-ID: <ew75xhk7i26smogev3mhd6vg24dsiguyh4fvhfghcobyne6w2d@shlc7nufv5b7>
-References: <20260218-blk-dontcache-v1-1-fad6675ef71f@columbia.edu>
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="rP+SJ6It"
+Received: by mail-oa1-f42.google.com with SMTP id 586e51a60fabf-40fb2789476so1894430fac.1
+        for <linux-nilfs@vger.kernel.org>; Thu, 19 Feb 2026 07:24:42 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1771514682; x=1772119482; darn=vger.kernel.org;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=JgHRaYW1iBhNDu18vHtaVid1O4fLAXLvbx6+OcL28Ko=;
+        b=rP+SJ6ItQ9+0oGu8v1SHmgBL4tJPjuYcoaOv5KD+xlf3WnkdeLuTqOJ/ER1KI9Hiv0
+         b5xbALEcDaZcaBaQl5lWsqZsKUTKvmDsssgoTAXxkyIYNsw4sFvAbuBrS108+yvOQUad
+         ufv/VdRFxhOXTA9fnFMG2aptWNcOMGbFNFIKVtsPuPQ8wAqe5HQVw8bQ9r404Qq2//5q
+         CnMJJxql8Zlz2BogV1j1RO3VQ2pIpu4LnAU0OSv76EEtD4Vs/T1m6Dm6nfO+nlDqxVxS
+         k8QG3Qewz8+CgiotrlTtKA6BbBgBX915w4QJ/xpfzZmQstCXb4Nb+gITYVJu8cL+q94r
+         I9dQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1771514682; x=1772119482;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=JgHRaYW1iBhNDu18vHtaVid1O4fLAXLvbx6+OcL28Ko=;
+        b=UnJ2J1EK8ZTQyDr1f2I0DlWbNWOj+eHzPUdAzarmSOfdWhZmO0EJu1fqquSQlQa2Gw
+         kHLX0IsJCatmKoLqDSTMkdXokfnNNFTuTIZ7IurJammd5Zr66H9Yf8x8yL6E7uLf4rhG
+         NvCscaqWJUbC48iKHstidH74tfG+46AJbWTEFUR22w0X01dgYLSUpPQKtLrlDV9HcrdK
+         yxnLq4IZFmgf/uYh0b11uiPsP65eTUnhd++bagJUIRZLg+qSfzkwDus0+X+2Xyvld86d
+         gVHUKu32guSPSe4SeRyNmnicFPYszbuuFRasneoCshHg1rVS1CL0s7ZEgwp8lYM50qrI
+         8j7A==
+X-Forwarded-Encrypted: i=1; AJvYcCVs4+F50oWYGpRQhmUON8tl2S7RiQtDqC0FyEuM30Uhim8fXJtJXxRPDz8Ks9nR3m+dc+MkSYwwobm9Ug==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwGl/M+4etKsIA3g93piVexM/TunXrtwxQYI6FOM6oJeouqDM1w
+	+gyPeO4XdUkVheOlhGqevlnRb4YPXwSOneyrw/hSaSyCNNy/3zKzzb2BdSPLMc/hqMU=
+X-Gm-Gg: AZuq6aKxoBVfljeX2nrwsaJhaZqxc1NApMySM+xI0uctOPIi7xelYpwLG0C6hHn5p6n
+	rY0M4nHAviK1dMxJ18FnSyp0BNP8TjRfEHHTlpjr0ukSYzGrZgF8BMRTjxY9uFy6w9Jb9dk6Bk6
+	ZjuA1Sx7syTI/VczW8GyG5eHr3m0hdCXb267xzJuD05G/kczGI96rGtfxddrgdUl/O0+BE3u32X
+	PcpBE2IyEiM309UGnIEJmWuElizZGHfEDff6T2VA2d4rIfXyPfpqw2712ZLB1pjcr3reNm8UHqt
+	0/m33OX07WCpPKfw6IpGLbAZY/+wFDxTUXL0lVT8DG/EJz6YV4SCxbjGBISde3vfhaRqRZlyauH
+	d3nuMsXSd4T8quB/k4XjtsyTEA2bPovY10RoaeFpdumW4mVIn5VRCWxNs4zm5A24YVw8QpTs6LF
+	Av1u7kzsP5yJh1wb1J8utaYdhuhUuyVihKM8zQ9EWCboqK2X3KlHjx1Xbl+Uru/yYWTaOX/YRQ9
+	pBgP4wyvQU=
+X-Received: by 2002:a05:6870:a0ad:b0:414:9285:c243 with SMTP id 586e51a60fabf-41545713115mr1093784fac.21.1771514681487;
+        Thu, 19 Feb 2026 07:24:41 -0800 (PST)
+Received: from [172.25.209.35] ([187.199.77.89])
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-40f062ee328sm17955312fac.4.2026.02.19.07.24.38
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 19 Feb 2026 07:24:40 -0800 (PST)
+Message-ID: <35866783-2312-4e31-904d-3746510eaf56@kernel.dk>
+Date: Thu, 19 Feb 2026 08:24:38 -0700
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH RFC] block: enable RWF_DONTCACHE for block devices
+To: Tal Zussman <tz2294@columbia.edu>,
+ "Tigran A. Aivazian" <aivazian.tigran@gmail.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+ Namjae Jeon <linkinjeon@kernel.org>, Sungjong Seo <sj1557.seo@samsung.com>,
+ Yuezhang Mo <yuezhang.mo@sony.com>, Dave Kleikamp <shaggy@kernel.org>,
+ Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+ Viacheslav Dubeyko <slava@dubeyko.com>,
+ Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
+ Bob Copeland <me@bobcopeland.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+ jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org,
+ ntfs3@lists.linux.dev, linux-karma-devel@lists.sourceforge.net
+References: <20260218-blk-dontcache-v1-1-fad6675ef71f@columbia.edu>
+Content-Language: en-US
+From: Jens Axboe <axboe@kernel.dk>
 In-Reply-To: <20260218-blk-dontcache-v1-1-fad6675ef71f@columbia.edu>
-X-Spamd-Result: default: False [-2.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	MID_RHS_NOT_FQDN(0.50)[];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	ARC_NA(0.00)[];
-	MISSING_XM_UA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCPT_COUNT_TWELVE(0.00)[22];
-	TAGGED_RCPT(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	TO_DN_SOME(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	FREEMAIL_CC(0.00)[kernel.dk,gmail.com,zeniv.linux.org.uk,kernel.org,suse.cz,samsung.com,sony.com,dubeyko.com,paragon-software.com,bobcopeland.com,vger.kernel.org,lists.sourceforge.net,lists.linux.dev];
-	RCVD_COUNT_THREE(0.00)[3];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCVD_TLS_LAST(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email]
-X-Spam-Flag: NO
-X-Spam-Score: -2.30
-X-Spam-Level: 
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Wed 18-02-26 16:13:17, Tal Zussman wrote:
+On 2/18/26 2:13 PM, Tal Zussman wrote:
 > Block device buffered reads and writes already pass through
 > filemap_read() and iomap_file_buffered_write() respectively, both of
 > which handle IOCB_DONTCACHE. Enable RWF_DONTCACHE for block device files
@@ -136,264 +104,11 @@ On Wed 18-02-26 16:13:17, Tal Zussman wrote:
 > 
 > This support is useful for databases that operate on raw block devices,
 > among other userspace applications.
-> 
-> Signed-off-by: Tal Zussman <tz2294@columbia.edu>
 
-Looks good to me. Feel free to add:
+OOO right now so I'll take a real look when I'm back, but when I
+originally did this work, it's not the issue side that's the issue. It's
+the pruning done from completion context, and you need to ensure that's
+sane context for that (non-irq).
 
-Reviewed-by: Jan Kara <jack@suse.cz>
-
-								Honza
-
-> ---
-> This is based on v6.19. Please let me know if there's a different tree I
-> should base this on.
-> 
-> I wasn't sure if the block_write_begin() changes were necessary for
-> block device support if CONFIG_BUFFER_HEAD is set (hence the RFC tag). I
-> can remove those if they're not necessary.
-> ---
->  block/fops.c                |  4 ++--
->  fs/bfs/file.c               |  2 +-
->  fs/buffer.c                 | 12 ++++++++----
->  fs/exfat/inode.c            |  2 +-
->  fs/ext2/inode.c             |  2 +-
->  fs/jfs/inode.c              |  2 +-
->  fs/minix/inode.c            |  2 +-
->  fs/nilfs2/inode.c           |  2 +-
->  fs/nilfs2/recovery.c        |  2 +-
->  fs/ntfs3/inode.c            |  2 +-
->  fs/omfs/file.c              |  2 +-
->  fs/udf/inode.c              |  2 +-
->  fs/ufs/inode.c              |  2 +-
->  include/linux/buffer_head.h |  5 +++--
->  14 files changed, 24 insertions(+), 19 deletions(-)
-> 
-> diff --git a/block/fops.c b/block/fops.c
-> index 4d32785b31d9..6bc727f8b252 100644
-> --- a/block/fops.c
-> +++ b/block/fops.c
-> @@ -505,7 +505,7 @@ static int blkdev_write_begin(const struct kiocb *iocb,
->  			      unsigned len, struct folio **foliop,
->  			      void **fsdata)
->  {
-> -	return block_write_begin(mapping, pos, len, foliop, blkdev_get_block);
-> +	return block_write_begin(iocb, mapping, pos, len, foliop, blkdev_get_block);
->  }
->  
->  static int blkdev_write_end(const struct kiocb *iocb,
-> @@ -967,7 +967,7 @@ const struct file_operations def_blk_fops = {
->  	.splice_write	= iter_file_splice_write,
->  	.fallocate	= blkdev_fallocate,
->  	.uring_cmd	= blkdev_uring_cmd,
-> -	.fop_flags	= FOP_BUFFER_RASYNC,
-> +	.fop_flags	= FOP_BUFFER_RASYNC | FOP_DONTCACHE,
->  };
->  
->  static __init int blkdev_init(void)
-> diff --git a/fs/bfs/file.c b/fs/bfs/file.c
-> index d33d6bde992b..f2804e38b8a7 100644
-> --- a/fs/bfs/file.c
-> +++ b/fs/bfs/file.c
-> @@ -177,7 +177,7 @@ static int bfs_write_begin(const struct kiocb *iocb,
->  {
->  	int ret;
->  
-> -	ret = block_write_begin(mapping, pos, len, foliop, bfs_get_block);
-> +	ret = block_write_begin(iocb, mapping, pos, len, foliop, bfs_get_block);
->  	if (unlikely(ret))
->  		bfs_write_failed(mapping, pos + len);
->  
-> diff --git a/fs/buffer.c b/fs/buffer.c
-> index 838c0c571022..33c3580b85d8 100644
-> --- a/fs/buffer.c
-> +++ b/fs/buffer.c
-> @@ -2241,14 +2241,18 @@ EXPORT_SYMBOL(block_commit_write);
->   *
->   * The filesystem needs to handle block truncation upon failure.
->   */
-> -int block_write_begin(struct address_space *mapping, loff_t pos, unsigned len,
-> -		struct folio **foliop, get_block_t *get_block)
-> +int block_write_begin(const struct kiocb *iocb, struct address_space *mapping,
-> +		loff_t pos, unsigned len, struct folio **foliop, get_block_t *get_block)
->  {
->  	pgoff_t index = pos >> PAGE_SHIFT;
-> +	fgf_t fgp_flags = FGP_WRITEBEGIN;
->  	struct folio *folio;
->  	int status;
->  
-> -	folio = __filemap_get_folio(mapping, index, FGP_WRITEBEGIN,
-> +	if (iocb && iocb->ki_flags & IOCB_DONTCACHE)
-> +		fgp_flags |= FGP_DONTCACHE;
-> +
-> +	folio = __filemap_get_folio(mapping, index, fgp_flags,
->  			mapping_gfp_mask(mapping));
->  	if (IS_ERR(folio))
->  		return PTR_ERR(folio);
-> @@ -2591,7 +2595,7 @@ int cont_write_begin(const struct kiocb *iocb, struct address_space *mapping,
->  		(*bytes)++;
->  	}
->  
-> -	return block_write_begin(mapping, pos, len, foliop, get_block);
-> +	return block_write_begin(iocb, mapping, pos, len, foliop, get_block);
->  }
->  EXPORT_SYMBOL(cont_write_begin);
->  
-> diff --git a/fs/exfat/inode.c b/fs/exfat/inode.c
-> index f9501c3a3666..39d36e8fdfd6 100644
-> --- a/fs/exfat/inode.c
-> +++ b/fs/exfat/inode.c
-> @@ -456,7 +456,7 @@ static int exfat_write_begin(const struct kiocb *iocb,
->  	if (unlikely(exfat_forced_shutdown(mapping->host->i_sb)))
->  		return -EIO;
->  
-> -	ret = block_write_begin(mapping, pos, len, foliop, exfat_get_block);
-> +	ret = block_write_begin(iocb, mapping, pos, len, foliop, exfat_get_block);
->  
->  	if (ret < 0)
->  		exfat_write_failed(mapping, pos+len);
-> diff --git a/fs/ext2/inode.c b/fs/ext2/inode.c
-> index dbfe9098a124..11aab03de752 100644
-> --- a/fs/ext2/inode.c
-> +++ b/fs/ext2/inode.c
-> @@ -930,7 +930,7 @@ ext2_write_begin(const struct kiocb *iocb, struct address_space *mapping,
->  {
->  	int ret;
->  
-> -	ret = block_write_begin(mapping, pos, len, foliop, ext2_get_block);
-> +	ret = block_write_begin(iocb, mapping, pos, len, foliop, ext2_get_block);
->  	if (ret < 0)
->  		ext2_write_failed(mapping, pos + len);
->  	return ret;
-> diff --git a/fs/jfs/inode.c b/fs/jfs/inode.c
-> index 4709762713ef..ae52db437771 100644
-> --- a/fs/jfs/inode.c
-> +++ b/fs/jfs/inode.c
-> @@ -303,7 +303,7 @@ static int jfs_write_begin(const struct kiocb *iocb,
->  {
->  	int ret;
->  
-> -	ret = block_write_begin(mapping, pos, len, foliop, jfs_get_block);
-> +	ret = block_write_begin(iocb, mapping, pos, len, foliop, jfs_get_block);
->  	if (unlikely(ret))
->  		jfs_write_failed(mapping, pos + len);
->  
-> diff --git a/fs/minix/inode.c b/fs/minix/inode.c
-> index 51ea9bdc813f..9075c0ba2f20 100644
-> --- a/fs/minix/inode.c
-> +++ b/fs/minix/inode.c
-> @@ -465,7 +465,7 @@ static int minix_write_begin(const struct kiocb *iocb,
->  {
->  	int ret;
->  
-> -	ret = block_write_begin(mapping, pos, len, foliop, minix_get_block);
-> +	ret = block_write_begin(iocb, mapping, pos, len, foliop, minix_get_block);
->  	if (unlikely(ret))
->  		minix_write_failed(mapping, pos + len);
->  
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index 51bde45d5865..d9d57eeecc5d 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -230,7 +230,7 @@ static int nilfs_write_begin(const struct kiocb *iocb,
->  	if (unlikely(err))
->  		return err;
->  
-> -	err = block_write_begin(mapping, pos, len, foliop, nilfs_get_block);
-> +	err = block_write_begin(iocb, mapping, pos, len, foliop, nilfs_get_block);
->  	if (unlikely(err)) {
->  		nilfs_write_failed(mapping, pos + len);
->  		nilfs_transaction_abort(inode->i_sb);
-> diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
-> index a9c61d0492cb..2f5fe44bf736 100644
-> --- a/fs/nilfs2/recovery.c
-> +++ b/fs/nilfs2/recovery.c
-> @@ -541,7 +541,7 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
->  		}
->  
->  		pos = rb->blkoff << inode->i_blkbits;
-> -		err = block_write_begin(inode->i_mapping, pos, blocksize,
-> +		err = block_write_begin(NULL, inode->i_mapping, pos, blocksize,
->  					&folio, nilfs_get_block);
->  		if (unlikely(err)) {
->  			loff_t isize = inode->i_size;
-> diff --git a/fs/ntfs3/inode.c b/fs/ntfs3/inode.c
-> index 0a9ac5efeb67..8c788feb319e 100644
-> --- a/fs/ntfs3/inode.c
-> +++ b/fs/ntfs3/inode.c
-> @@ -966,7 +966,7 @@ int ntfs_write_begin(const struct kiocb *iocb, struct address_space *mapping,
->  			goto out;
->  	}
->  
-> -	err = block_write_begin(mapping, pos, len, foliop,
-> +	err = block_write_begin(iocb, mapping, pos, len, foliop,
->  				ntfs_get_block_write_begin);
->  
->  out:
-> diff --git a/fs/omfs/file.c b/fs/omfs/file.c
-> index 49a1de5a827f..3bade632e36e 100644
-> --- a/fs/omfs/file.c
-> +++ b/fs/omfs/file.c
-> @@ -317,7 +317,7 @@ static int omfs_write_begin(const struct kiocb *iocb,
->  {
->  	int ret;
->  
-> -	ret = block_write_begin(mapping, pos, len, foliop, omfs_get_block);
-> +	ret = block_write_begin(iocb, mapping, pos, len, foliop, omfs_get_block);
->  	if (unlikely(ret))
->  		omfs_write_failed(mapping, pos + len);
->  
-> diff --git a/fs/udf/inode.c b/fs/udf/inode.c
-> index 7fae8002344a..aec9cdc938be 100644
-> --- a/fs/udf/inode.c
-> +++ b/fs/udf/inode.c
-> @@ -259,7 +259,7 @@ static int udf_write_begin(const struct kiocb *iocb,
->  	int ret;
->  
->  	if (iinfo->i_alloc_type != ICBTAG_FLAG_AD_IN_ICB) {
-> -		ret = block_write_begin(mapping, pos, len, foliop,
-> +		ret = block_write_begin(iocb, mapping, pos, len, foliop,
->  					udf_get_block);
->  		if (unlikely(ret))
->  			udf_write_failed(mapping, pos + len);
-> diff --git a/fs/ufs/inode.c b/fs/ufs/inode.c
-> index e2b0a35de2a7..dfba985265a8 100644
-> --- a/fs/ufs/inode.c
-> +++ b/fs/ufs/inode.c
-> @@ -481,7 +481,7 @@ static int ufs_write_begin(const struct kiocb *iocb,
->  {
->  	int ret;
->  
-> -	ret = block_write_begin(mapping, pos, len, foliop, ufs_getfrag_block);
-> +	ret = block_write_begin(iocb, mapping, pos, len, foliop, ufs_getfrag_block);
->  	if (unlikely(ret))
->  		ufs_write_failed(mapping, pos + len);
->  
-> diff --git a/include/linux/buffer_head.h b/include/linux/buffer_head.h
-> index b16b88bfbc3e..4b07dec5f8eb 100644
-> --- a/include/linux/buffer_head.h
-> +++ b/include/linux/buffer_head.h
-> @@ -258,8 +258,9 @@ int __block_write_full_folio(struct inode *inode, struct folio *folio,
->  		get_block_t *get_block, struct writeback_control *wbc);
->  int block_read_full_folio(struct folio *, get_block_t *);
->  bool block_is_partially_uptodate(struct folio *, size_t from, size_t count);
-> -int block_write_begin(struct address_space *mapping, loff_t pos, unsigned len,
-> -		struct folio **foliop, get_block_t *get_block);
-> +int block_write_begin(const struct kiocb *iocb, struct address_space *mapping,
-> +		loff_t pos, unsigned len, struct folio **foliop,
-> +		get_block_t *get_block);
->  int __block_write_begin(struct folio *folio, loff_t pos, unsigned len,
->  		get_block_t *get_block);
->  int block_write_end(loff_t pos, unsigned len, unsigned copied, struct folio *);
-> 
-> ---
-> base-commit: 05f7e89ab9731565d8a62e3b5d1ec206485eeb0b
-> change-id: 20260218-blk-dontcache-338133dd045e
-> 
-> Best regards,
-> -- 
-> Tal Zussman <tz2294@columbia.edu>
-> 
 -- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+Jens Axboe
