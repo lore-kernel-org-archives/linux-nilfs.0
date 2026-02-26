@@ -1,217 +1,114 @@
-Received: from mail-pg1-f175.google.com (mail-pg1-f175.google.com [209.85.215.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D30AD4657CB
-	for <linux-nilfs@vger.kernel.org>; Thu, 26 Feb 2026 21:11:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.215.175
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772140319; cv=pass; b=TNPLX6HUrcYptqjqWVw++GLi/CfSHkQFzKLBpay75gA9PwGv7x3Y1hw5OtTyd6c6kpk06tUQJ/38n4xxvfDP/tIKzulP/D6WNEJvgCjuNVxSTqRKAUPo+0Ga86cVSc1Vfq4xxWk6L5mp7/MeRwVQm/ryZNLZrBnlOonIESCEeZg=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772140319; c=relaxed/simple;
-	bh=bnDaNoU6qjKfC/eAGGjHl/JBEfLQ2MSCDsq35dJ1WO8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ryoEP3HtyCA4HQ9dmrtIueWPCbw2cA1fC2BhuXTOUGQhhDYa/dUG9ViNeJl+AtcKOWz1FViiPMcTEba+hFSWhII8iPo1TmxIs72MDkM0cAlfi3AR3HvOjcJkhqfK1+H3KrdGVuGrEwoeqPWLWK6caPXU4qE8g+0GVyIr6I51//k=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com; spf=pass smtp.mailfrom=paul-moore.com; dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b=HW/o4Vat; arc=pass smtp.client-ip=209.85.215.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=paul-moore.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=paul-moore.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 397393A1E82;
+	Thu, 26 Feb 2026 21:12:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1772140345; cv=none; b=Z3d5vS9JQOeS1xtl7n8viGXhI6FlwrjDBRCpCNH2sfeIH3LdzrT5dqVclsibosdYvYGZrJB3X/ci4vXM6hue8XaxTE/IP53kvo/9Wq9PhyE/p4w6HeBB/2xalftpC2cYj/8IJHYLQ0dXV6iQAOj2gIkNtScGGBlKbXTd9HCvm+g=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1772140345; c=relaxed/simple;
+	bh=h/eCq6uk34O9sRVEPL6UJ9Eruk+vrXSzn2fekqThhV4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=dZHnnEtPDQbk9Q4PaKb/IjzJDhEVKNM8A4v6IE04aBVWmBD/u/6wvA3H2Czdr64Gxz3VGMlZTZyRFIA4tg3OoB+RvMUMK2TZnKDLlQ57gc8fEspn7k/SzTIlj5IV/wTj2fUe0K2J5Ks0F9E9kaZtgrfPa1iMvzAJfynvwCsmyp0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=lgkspXoZ; arc=none smtp.client-ip=90.155.50.34
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=paul-moore.com header.i=@paul-moore.com header.b="HW/o4Vat"
-Received: by mail-pg1-f175.google.com with SMTP id 41be03b00d2f7-c70bfef17a4so739147a12.2
-        for <linux-nilfs@vger.kernel.org>; Thu, 26 Feb 2026 13:11:54 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1772140314; cv=none;
-        d=google.com; s=arc-20240605;
-        b=Z5rMdrLYUy5R2qJBYX+MVwOScjruf6kOyZ6+TRL2yYezE9UxtYko9XkrN89PWMytGv
-         ZcS0tv72XGneth4VhgzSCnv+uNYlQwDlmsEclljrAuiJRiJu/CBP1EE4m3K5jZSEur46
-         aXEHviQC0v0HGAYVifeZMkT4PDkgPtC22KTEVNum/ySzItV37lqHg1vKUXTuq4obiAZQ
-         1gcPPHCJmk50K2tEUk96A0/PWPEeX8nFZyrYeHmqGoBddJ1Stxa9dG5FWpma5YITXrgq
-         wMKyKj/3chNQsJ2JNsKaU1QHftmWUK7e0ae+Ffwylgbliy6YDCVN/yajorDKpCnvctTG
-         5BKg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=zmNhsrxkJsNmzJoSll+GD0SvmHq0rQdZiw5NaBd3y6o=;
-        fh=vWVBYmmYsKBTRVUdEmhvI1u4apbnTeqmuMpMIqTa4VQ=;
-        b=E+GwxYD64Do3ZXMCfYuRVQ++INOprN1AHI3DTJXrVf2nsd3NIUMlxnrzcW6UMaZaNA
-         B/6GD41s6utp3oe97RPB7BTUcIFWm4qnueIiYT3jYk7eovsQldQplYxsJIOqQfGR4mxr
-         cFCaOy/Ly/OqNt5M/uuJoMyTu54ik5rsNyzp2fnhLC0SDr8QJvI93FY5m2JDIlWSP4Rx
-         kdKgSJKcaRf9y1xADWdmq5xPWue/juedasLbyHcJ02xezB7mR8LAKouWsvBi4kWdqvd+
-         K+kVx4wn2K+ZkSQG2KQmk0lakcmbQRJOXruYxIGbOAKSR2ig0nLAo27V5gUbCuJa3z+e
-         G0cQ==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1772140314; x=1772745114; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=zmNhsrxkJsNmzJoSll+GD0SvmHq0rQdZiw5NaBd3y6o=;
-        b=HW/o4Vata6iL0319Ebvg+XwcmFV3aXvPxwJavhnSNkrdZzg0DUnb3gyhur+Z5qjlLy
-         DF8ktagjV0h021ZkfaIiy95wdENx8nhp/3Vvz2748i/fBYrVuloVbagkkQGgRNG86+Xf
-         7YlzwOmtdpv3bWcOUuDxueD4ZLfhl1dx7sRZkDnHp2PU66qfJaPiPJAVJ/M8KD8ERzr8
-         bIQQxKK/DZLsihhNuRa8yQlW78+eqc562C9u6niHHz0B0ONpkKGa75Gk3umCQziU6XHm
-         celOWJX9fFF/7lcRec9du77GkDGs1yNtYP28Isk20pFkO0mQFH92SHVI+gBYVb/yj5+Z
-         wXJQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772140314; x=1772745114;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=zmNhsrxkJsNmzJoSll+GD0SvmHq0rQdZiw5NaBd3y6o=;
-        b=AeC8WBVhJtyqYmtBeISh+7cN5nyB/PrBg35TfEu7Tktrf2dZJxZy198RWTeGzQLFLr
-         GdAeeHM3mQmQ7vZt3T2MX8SHeuMeAeGtTdI4x7yw+Zia0AFwRc6dLeY2YpUxfp5ObhFQ
-         SXHJNr91jTgKN898AVcTMGDaaZ75jjmqia6fR/AaR461CJjvgsD6xzuBFPlKoHyHS6+B
-         HEiV9HMZcKQg/gMj4oReChnkrk+qM7fse9v6xKGyTnOYehUeZdgiAmA2CG1ei8Smstne
-         KOyMjTdEIIbAoKewz7vcN+LrW+lcLI6siZHImmPCXAn+gT027NgtBxwZ5l+W0TzmeyT3
-         mQYg==
-X-Forwarded-Encrypted: i=1; AJvYcCW0tM9q793ixE39up3wv5UaI6L4+eCq1bkcdQVYVAzBwp9SCTkYnP92aJsr7cn8Nk9cl9e3sLWnegHlOQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yy1Ac9vmKt9UNwJl7Xzclv5yXgmONhoAnz8hTPoAzfrRgAl0uDT
-	lIXAf6HSif7/FOqT8ZQVWA3Fci6ypbCMf465PA+5kesvPmeGFoQgWczxxS2aVmwYxa0bBTHiDBt
-	WzIJ6DjDGXOW/+U2nHlMok8Fmpvm4kG3q/c4n8qda
-X-Gm-Gg: ATEYQzz5fg0xHp+Bci4ZJOVPjALl4C97GXbSjsJ4gY8Bdmw/AXsftc8eWmZRgrIAWGU
-	MI8wlOaAZGoqNVv3/a1rE+LeeLgqDiDUgujc4Ml88JtCVH9+lxsTJf/14s7DZDvuJZhhom/7vJn
-	eWZTXOSwvo6uwHxuwIAQnnI/vOePzvGcQI6Ls3gTlWZBOxscljNt+G90sAjHDFRspYNpiQdPqZX
-	Fxe1RfLNwEDMvEC0tj5HHp9vYQvU7EYlQ8oiKOKd6KThhEEv/ZPsQvcl5+pIkm11pNWxSWjxvY5
-	CTSh9nQ=
-X-Received: by 2002:a17:90b:574f:b0:359:877:370f with SMTP id
- 98e67ed59e1d1-35965ccf029mr498632a91.17.1772140313953; Thu, 26 Feb 2026
- 13:11:53 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="lgkspXoZ"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=cxjFK2I1rFqs+rF+S3xFy7UtO9xYKfa9VhNCsIXi0UM=; b=lgkspXoZtskd+nEFTO7IHEtKtY
+	QTWQeCvLBoCUJsiEPlwCe6SWhlX4OpH4sfIcf973/D/KHKtxmL7cdhI6EVPhq+88YezeXjnYeF9/k
+	lTBC4JUAHiw0PjPxqQDKyXesl0LB4Vk4iaFTKfzl2Tl3I2RHXTu5RqbQRomZRKajicLkxk1Zc3Cgl
+	EA9AE9Aq8Dj+/BUR9USybQncuYrIbgeNeLca3LgZvkDQDBJlBeBiGdrYoUnF5XrvaNGooNpTfJR43
+	oaTeNczWoFDSM88QQWW6khDtS0804E+RmfZTXk4WzycI+T/ry+ky6kMNEO4z3lOlB81Jk2mHVpBQg
+	Mtjq8aOQ==;
+Received: from willy by casper.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1vviec-00000003Sxg-0gjd;
+	Thu, 26 Feb 2026 21:12:14 +0000
+Date: Thu, 26 Feb 2026 21:12:13 +0000
+From: Matthew Wilcox <willy@infradead.org>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Tal Zussman <tz2294@columbia.edu>,
+	"Tigran A. Aivazian" <aivazian.tigran@gmail.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+	Namjae Jeon <linkinjeon@kernel.org>,
+	Sungjong Seo <sj1557.seo@samsung.com>,
+	Yuezhang Mo <yuezhang.mo@sony.com>,
+	Dave Kleikamp <shaggy@kernel.org>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	Viacheslav Dubeyko <slava@dubeyko.com>,
+	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
+	Bob Copeland <me@bobcopeland.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org,
+	ntfs3@lists.linux.dev, linux-karma-devel@lists.sourceforge.net,
+	linux-mm@kvack.org,
+	"Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+Subject: Re: [PATCH RFC v2 1/2] filemap: defer dropbehind invalidation from
+ IRQ context
+Message-ID: <aaC3LUFa1Jz2ahk3@casper.infradead.org>
+References: <20260225-blk-dontcache-v2-0-70e7ac4f7108@columbia.edu>
+ <20260225-blk-dontcache-v2-1-70e7ac4f7108@columbia.edu>
+ <c8078a80-f801-4f8a-b3cd-e2ccbfca1def@kernel.dk>
+ <aZ-2G_6lDZePLSyx@casper.infradead.org>
+ <44e3e9ea-350b-4357-ba50-726e506feab5@kernel.dk>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260226-iino-u64-v1-0-ccceff366db9@kernel.org> <20260226-iino-u64-v1-51-ccceff366db9@kernel.org>
-In-Reply-To: <20260226-iino-u64-v1-51-ccceff366db9@kernel.org>
-From: Paul Moore <paul@paul-moore.com>
-Date: Thu, 26 Feb 2026 16:11:41 -0500
-X-Gm-Features: AaiRm51CHDvKlRV2Z04ZUK5c4lU9AiJhpRFTzD6a70HHA0FgEKDqsojtRqG1Wpw
-Message-ID: <CAHC9VhTPutzjNfYoRJigC2AQS4wz1A3vTEYn2koeR0kKetYk0w@mail.gmail.com>
-Subject: Re: [PATCH 51/61] security: update audit format strings for u64 i_ino
-To: Jeff Layton <jlayton@kernel.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
-	Steven Rostedt <rostedt@goodmis.org>, Masami Hiramatsu <mhiramat@kernel.org>, 
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Dan Williams <dan.j.williams@intel.com>, 
-	Matthew Wilcox <willy@infradead.org>, Eric Biggers <ebiggers@kernel.org>, 
-	"Theodore Y. Ts'o" <tytso@mit.edu>, Muchun Song <muchun.song@linux.dev>, 
-	Oscar Salvador <osalvador@suse.de>, David Hildenbrand <david@kernel.org>, 
-	David Howells <dhowells@redhat.com>, Paulo Alcantara <pc@manguebit.org>, 
-	Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.com>, 
-	Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, 
-	Trond Myklebust <trondmy@kernel.org>, Anna Schumaker <anna@kernel.org>, 
-	Chuck Lever <chuck.lever@oracle.com>, NeilBrown <neil@brown.name>, 
-	Olga Kornievskaia <okorniev@redhat.com>, Dai Ngo <Dai.Ngo@oracle.com>, Tom Talpey <tom@talpey.com>, 
-	Steve French <sfrench@samba.org>, Ronnie Sahlberg <ronniesahlberg@gmail.com>, 
-	Shyam Prasad N <sprasad@microsoft.com>, Bharath SM <bharathsm@microsoft.com>, 
-	Alexander Aring <alex.aring@gmail.com>, Ryusuke Konishi <konishi.ryusuke@gmail.com>, 
-	Viacheslav Dubeyko <slava@dubeyko.com>, Eric Van Hensbergen <ericvh@kernel.org>, 
-	Latchesar Ionkov <lucho@ionkov.net>, Dominique Martinet <asmadeus@codewreck.org>, 
-	Christian Schoenebeck <linux_oss@crudebyte.com>, David Sterba <dsterba@suse.com>, 
-	Marc Dionne <marc.dionne@auristor.com>, Ian Kent <raven@themaw.net>, 
-	Luis de Bethencourt <luisbg@kernel.org>, Salah Triki <salah.triki@gmail.com>, 
-	"Tigran A. Aivazian" <aivazian.tigran@gmail.com>, Ilya Dryomov <idryomov@gmail.com>, 
-	Alex Markuze <amarkuze@redhat.com>, Jan Harkes <jaharkes@cs.cmu.edu>, coda@cs.cmu.edu, 
-	Nicolas Pitre <nico@fluxnic.net>, Tyler Hicks <code@tyhicks.com>, Amir Goldstein <amir73il@gmail.com>, 
-	Christoph Hellwig <hch@infradead.org>, 
-	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>, Yangtao Li <frank.li@vivo.com>, 
-	Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, David Woodhouse <dwmw2@infradead.org>, 
-	Richard Weinberger <richard@nod.at>, Dave Kleikamp <shaggy@kernel.org>, 
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Mark Fasheh <mark@fasheh.com>, 
-	Joel Becker <jlbec@evilplan.org>, Joseph Qi <joseph.qi@linux.alibaba.com>, 
-	Mike Marshall <hubcap@omnibond.com>, Martin Brandenburg <martin@omnibond.com>, 
-	Miklos Szeredi <miklos@szeredi.hu>, Anders Larsen <al@alarsen.net>, 
-	Zhihao Cheng <chengzhihao1@huawei.com>, Damien Le Moal <dlemoal@kernel.org>, 
-	Naohiro Aota <naohiro.aota@wdc.com>, Johannes Thumshirn <jth@kernel.org>, 
-	John Johansen <john.johansen@canonical.com>, James Morris <jmorris@namei.org>, 
-	"Serge E. Hallyn" <serge@hallyn.com>, Mimi Zohar <zohar@linux.ibm.com>, 
-	Roberto Sassu <roberto.sassu@huawei.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, 
-	Eric Snowberg <eric.snowberg@oracle.com>, Fan Wu <wufan@kernel.org>, 
-	Stephen Smalley <stephen.smalley.work@gmail.com>, Ondrej Mosnacek <omosnace@redhat.com>, 
-	Casey Schaufler <casey@schaufler-ca.com>, Alex Deucher <alexander.deucher@amd.com>, 
-	=?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>, 
-	David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
-	Sumit Semwal <sumit.semwal@linaro.org>, Eric Dumazet <edumazet@google.com>, 
-	Kuniyuki Iwashima <kuniyu@google.com>, Paolo Abeni <pabeni@redhat.com>, 
-	Willem de Bruijn <willemb@google.com>, "David S. Miller" <davem@davemloft.net>, 
-	Jakub Kicinski <kuba@kernel.org>, Simon Horman <horms@kernel.org>, Oleg Nesterov <oleg@redhat.com>, 
-	Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, 
-	Arnaldo Carvalho de Melo <acme@kernel.org>, Namhyung Kim <namhyung@kernel.org>, 
-	Mark Rutland <mark.rutland@arm.com>, 
-	Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@kernel.org>, 
-	Ian Rogers <irogers@google.com>, Adrian Hunter <adrian.hunter@intel.com>, 
-	James Clark <james.clark@linaro.org>, "Darrick J. Wong" <djwong@kernel.org>, 
-	Martin Schiller <ms@dev.tdt.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-trace-kernel@vger.kernel.org, nvdimm@lists.linux.dev, 
-	fsverity@lists.linux.dev, linux-mm@kvack.org, netfs@lists.linux.dev, 
-	linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, 
-	linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, 
-	samba-technical@lists.samba.org, linux-nilfs@vger.kernel.org, 
-	v9fs@lists.linux.dev, linux-afs@lists.infradead.org, autofs@vger.kernel.org, 
-	ceph-devel@vger.kernel.org, codalist@coda.cs.cmu.edu, 
-	ecryptfs@vger.kernel.org, linux-mtd@lists.infradead.org, 
-	jfs-discussion@lists.sourceforge.net, ntfs3@lists.linux.dev, 
-	ocfs2-devel@lists.linux.dev, devel@lists.orangefs.org, 
-	linux-unionfs@vger.kernel.org, apparmor@lists.ubuntu.com, 
-	linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, 
-	selinux@vger.kernel.org, amd-gfx@lists.freedesktop.org, 
-	dri-devel@lists.freedesktop.org, linux-media@vger.kernel.org, 
-	linaro-mm-sig@lists.linaro.org, netdev@vger.kernel.org, 
-	linux-perf-users@vger.kernel.org, linux-fscrypt@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, linux-hams@vger.kernel.org, 
-	linux-x25@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <44e3e9ea-350b-4357-ba50-726e506feab5@kernel.dk>
 
-On Thu, Feb 26, 2026 at 11:06=E2=80=AFAM Jeff Layton <jlayton@kernel.org> w=
-rote:
->
-> Update %lu/%ld to %llu/%lld in security audit logging functions that
-> print inode->i_ino, since i_ino is now u64.
->
-> Files updated: apparmor/apparmorfs.c, integrity/integrity_audit.c,
-> ipe/audit.c, lsm_audit.c.
->
-> Signed-off-by: Jeff Layton <jlayton@kernel.org>
-> ---
->  security/apparmor/apparmorfs.c       |  4 ++--
->  security/integrity/integrity_audit.c |  2 +-
->  security/ipe/audit.c                 |  2 +-
->  security/lsm_audit.c                 | 10 +++++-----
->  security/selinux/hooks.c             |  4 ++--
->  security/smack/smack_lsm.c           | 12 ++++++------
->  6 files changed, 17 insertions(+), 17 deletions(-)
+On Wed, Feb 25, 2026 at 08:15:28PM -0700, Jens Axboe wrote:
+> On 2/25/26 7:55 PM, Matthew Wilcox wrote:
+> > I recently saw something (possibly XFS?) promoting this idea again.
+> > And now there's this.  Perhaps the time has come to process all
+> > write-completions in task context, rather than everyone coming up with
+> > their own workqueues to solve their little piece of the problem?
+> 
+> Perhaps, even though the punting tends to suck... One idea I toyed with
+> but had to abandon due to fs freezeing was letting callers that process
+> completions in task context anyway just do the necessary work at that
+> time. There's literally nothing worse than having part of a completion
+> happen in IRQ, then punt parts of that to a worker, and need to wait for
+> the worker to finish whatever it needs to do - only to then wake the
+> target task. We can trivially do this in io_uring, as the actual
+> completion is posted from the task itself anyway. We just need to have
+> the task do the bottom half of the completion as well, rather than some
+> unrelated kthread worker.
+> 
+> I'd be worried a generic solution would be the worst of all worlds, as
+> it prevents optimizations that happen in eg iomap and other spots, where
+> only completions that absolutely need to happen in task context get
+> punted. There's a big difference between handling a completion inline vs
+> needing a round-trip to some worker to do it.
 
-...
+I spoke a little hastily when I said "all write completions".  What I
+really meant was something like:
 
-> diff --git a/security/lsm_audit.c b/security/lsm_audit.c
-> index 7d623b00495c14b079e10e963c21a9f949c11f07..737f5a263a8f79416133315ed=
-f363ece3d79c722 100644
-> --- a/security/lsm_audit.c
-> +++ b/security/lsm_audit.c
++++ b/block/bio.c
+@@ -1788,7 +1788,9 @@ void bio_endio(struct bio *bio)
+        }
+ #endif
 
-Everything in security/lsm_audit.c looks okay.
+-       if (bio->bi_end_io)
++       if (!in_task() && bio_flagged(bio, BIO_COMPLETE_IN_TASK_CONTEXT))
++               bio_queue_completion(bio);
++       else if (bio->bi_end_io)
+                bio->bi_end_io(bio);
+ }
+ EXPORT_SYMBOL(bio_endio);
 
-> diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-> index d8224ea113d1ac273aac1fb52324f00b3301ae75..150ea86ebc1f7c7f8391af410=
-9a3da82b12d00d2 100644
-> --- a/security/selinux/hooks.c
-> +++ b/security/selinux/hooks.c
-> @@ -1400,7 +1400,7 @@ static int inode_doinit_use_xattr(struct inode *ino=
-de, struct dentry *dentry,
->         if (rc < 0) {
->                 kfree(context);
->                 if (rc !=3D -ENODATA) {
-> -                       pr_warn("SELinux: %s:  getxattr returned %d for d=
-ev=3D%s ino=3D%ld\n",
-> +                       pr_warn("SELinux: %s:  getxattr returned %d for d=
-ev=3D%s ino=3D%lld\n",
->                                 __func__, -rc, inode->i_sb->s_id, inode->=
-i_ino);
->                         return rc;
->                 }
-
-Additionally, later in this function there are pr_notice_ratelimited()
-and pr_warn() calls that print inode numbers and need to be updated.
-
---=20
-paul-moore.com
+and then the submitter (ie writeback) would choose to set
+BIO_COMPLETE_IN_TASK_CONTEXT.  And maybe others (eg fscrypt) would
+want to do the same.
