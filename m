@@ -1,145 +1,355 @@
-Received: from mail-oi1-f181.google.com (mail-oi1-f181.google.com [209.85.167.181])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D7349463
-	for <linux-nilfs@vger.kernel.org>; Thu, 26 Feb 2026 03:15:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D34C31985E
+	for <linux-nilfs@vger.kernel.org>; Thu, 26 Feb 2026 13:12:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772075733; cv=none; b=W8JscwJ0xlo2h191gmeyQ9qCevlTq0fASrCW6llcOyhIWVgqWEYg8W1vceZHaCAfEgfww77ZE1e5YpvMJ1n2mmWzeBFEoTZ3o0fTij9bZXR8mNqLmoqz73WUqKsaSV+I01V8oAvaBU0TQQgCOfjz4IgY5VXtTPYyLTb93dLF/VQ=
+	t=1772111579; cv=none; b=cYGGyCOmykfW/3i6Fn8W+Rw59srvPMhfXYFm1ClNXUfxn+M4NpL8SHBd8Cw1wYu+8r2jWVYxtA6aktRIkzQoObOpkNypuU3Ldx7aYjKG0Ts/1HdmAn2nShj8JFREOBLROyEdhoHIxGiWS/zci5ybc1tr1g1qw6WEbG2mtCnwFEE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772075733; c=relaxed/simple;
-	bh=3Uj98JRcjkXg45L932sgBQ4jyAOkKnrA4eVXq0Mc2RQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=iT1aEv/XURsa5QOIexzww8RSBXljwHfKJd204Ha/6f0RvPgCKT5XbMN4+Fasoi18+6gFJUHQmBhrobWoZgzMM1EHuo0lm8gJk8Fx4GJ4QWeVTsaGZzBGn23qj8fkNRxzs6ajU/FH9Lu6S9BMMGFHapjOzD+IabNpBglkAoTViCs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=Pt3QESqe; arc=none smtp.client-ip=209.85.167.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1772111579; c=relaxed/simple;
+	bh=vegVhIJhcUiP5X8JHJRDRq8HeUl3UwDpwhcfSI9tT2k=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=PzObTxN1vwKKy3qGHevSSE+/FIzOhYHR7/ff+U096B0o//xQ2KLadBC5AmqDGTTX31VICkGyyyx9mjywcnosPLhXPLVapiCYV0Vp4fzDEgaEs0iPQY7X0eAr2qznPk0zip1NjMZlS04HyT0fCItr3bMcIHMQOK2v9pbISjh1VvI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=VGr+5vEt; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=69XqZjby; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=F9/qrZcg; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=uMdyIKIf; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="Pt3QESqe"
-Received: by mail-oi1-f181.google.com with SMTP id 5614622812f47-4638fe85a7eso160796b6e.2
-        for <linux-nilfs@vger.kernel.org>; Wed, 25 Feb 2026 19:15:32 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1772075731; x=1772680531; darn=vger.kernel.org;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=myOpzKKufRrzTXzkKkTioHHnRh1Fxba9oHbsZ8bSehI=;
-        b=Pt3QESqeGYGEyfcbtu599/TaELTldNHt9ng7MdkbQscEZnkRuSh25I41b9c9dvwbs0
-         pbRiegVYVhXxN6kv/Eg0EFcqolSkF8sW2dHcoxou+89/W6wTpoKs3MeS5dRmlnq0QHLz
-         beD0NKXnUFkxdzpurznywZsv0jcAXSFUEZlDVEaGEZX/fH8nT2ZLRuRzU4wRZYWgAJYK
-         HjXy/ScGA0aB6TeNRft1Dvn6Qb35HEKMPwb1Y7g7J2FWEhFtSj7eArl0e01dC8zPx26E
-         xYJnhHsEiybj+rxDtRCtjALwF7rqZEnbad8aUzCkCd2gR90/cfeFhG91HuY5K4g9N7cT
-         grQw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772075731; x=1772680531;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=myOpzKKufRrzTXzkKkTioHHnRh1Fxba9oHbsZ8bSehI=;
-        b=fe6ifW/l6SCuriqxyDiFec/4NoIwGkHI8v+bw3O1qNmxTrQgz96MADbop8nT+mUp21
-         7IJ7SQDy9gCbejgLmBsvYEf4heFhiNLgLmGQAApnsSx9mcVgt4sWLgU+PzIPIlaZdiCW
-         1uYiyaKFyfBOVP/+SaEmn8TueozqI+bqCKPmT7xaj7gB/O36uxcRrBiXUWN70iSboeLU
-         KTWsCRXjnipeNNc/ysxN6egOtpawCxHE6u7o0WwPUX2us0f1mjUV9Zumrys5Wg6kCnKs
-         AwyFdSURDP+GLk59SMYn9jLusboSGrWPRip+uYa8d9uFKDXG2mryQtT6aomKGCOCICgV
-         9GUg==
-X-Forwarded-Encrypted: i=1; AJvYcCUBLPxJDAoyp5kC/RkqLvp5JFk4NJXweEioZoyVXSeN03g1YfeUJc7tzEeKsjjKqKwJmZwSF9C1BvOfdQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0YwogodLUPEYOoAI9dC2R/YjYO7UZPqc/eB5ggqoUO2gga9IyTc8
-	IfyyFiX00ytAO/uvFJdWr0Vy/V38rADt4uycpxQktn8FoiOH5eNHnpjHrRTT0IeQml0=
-X-Gm-Gg: ATEYQzxJLxMxgOrRCWDNyM3weA+X6rG4UfvRhAQG6eMvQogmisP4q/Cl9bKjDVCshC8
-	YeDlTP9T0Y2/KfjaKfMlEJY80PUTKHXr5xqwFmq66BCcjLYl/sFai8v+o14dvEkcaDkK1lKsdpz
-	MITgpVg5AcX5xhuz/Hcssgl4xSNtvWNE7Quui+ObPbH4QwNueIp9B/Kq7Z7yj5259PiA/aRluD4
-	GXpfK7ukKJ40meY+GP3qdpphQZInpUK4TQvZMefo9gKNlyt4qx/J8oR8svJ2A1eU8QE/8oDGH3E
-	wW/KbL3WTpowokIHix6dEhIILJVNt0Ogsd0ajyJoMDTjbIMRKpDPTdzvXtl7Mi1+reH/B060+HI
-	MNPZ/jFQBVJWPWWEQcQiq0OvpmpKdN5FHNyE63prBezf48CdCVidQPA0xa+7030zehC3b6MmYKs
-	2I8u7KfUgK49XUT/TkwRI097ijrTN7dOLzH1X9PzHgFhUo+b8QsOpRZo0dATJv88HC2VM45EV0v
-	hINLeoiRQ==
-X-Received: by 2002:a05:6808:320b:b0:462:d9a2:84e1 with SMTP id 5614622812f47-464463ef61fmr8794809b6e.60.1772075731397;
-        Wed, 25 Feb 2026 19:15:31 -0800 (PST)
-Received: from [192.168.1.150] ([198.8.77.157])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-4160cf9b240sm786090fac.8.2026.02.25.19.15.29
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 25 Feb 2026 19:15:30 -0800 (PST)
-Message-ID: <44e3e9ea-350b-4357-ba50-726e506feab5@kernel.dk>
-Date: Wed, 25 Feb 2026 20:15:28 -0700
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="VGr+5vEt";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="69XqZjby";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="F9/qrZcg";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="uMdyIKIf"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id DA9EC1FA54;
+	Thu, 26 Feb 2026 13:12:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1772111576; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=t9pIdsXl9YcbrN7MEcIZiwr5nHNouAJ8lo4fxykwpls=;
+	b=VGr+5vEttV5KSq8KiEHuA26h/lUE7LlTpKXuEPlZT6DHY8M0THqc8Wu4WiiN1rMKTDa6OR
+	5Zwq7W2zP5J9H2ZZtsgp7HFYiY7A5pTLtjNy0TniXfJ1K1ZfjtmltW1AfqY66XIH5dEDdF
+	VeWG6x2cAMoVE/5vHhJrUfeSClIjrGI=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1772111576;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=t9pIdsXl9YcbrN7MEcIZiwr5nHNouAJ8lo4fxykwpls=;
+	b=69XqZjby1BkpPQKJs37ti4jhyJiLv1OPj8pDlz96Ez+SqXyH4PTF7HJvtJR1jjG+ILIaff
+	xw7ztXeG0NlBlDCA==
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1772111575; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=t9pIdsXl9YcbrN7MEcIZiwr5nHNouAJ8lo4fxykwpls=;
+	b=F9/qrZcgGN/hgxgLb3qI//qiHnxBKsB5Ntd3IGQuMTlxZWdr2ZN0mP/0xmZRIkCuKafDWW
+	+xk6zJK7T/iYLhGjEM5isA7Eem1B8k1QXrKcyY15lvatrlOTH99iXwpZ6R10io+b8DM7zy
+	RLtfnL1PTllGjvJOTHiKeaQnegihWz4=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1772111575;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=t9pIdsXl9YcbrN7MEcIZiwr5nHNouAJ8lo4fxykwpls=;
+	b=uMdyIKIfyG5+TXpjkra12NBuPmWqX7KgZp3+we3ktt8NePQQXrpbFT4ToI2DhSA7MGpiSM
+	FOl4NQaT3QPKQJDQ==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id CA6F53EA62;
+	Thu, 26 Feb 2026 13:12:55 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 1O9nMddGoGkmSAAAD6G6ig
+	(envelope-from <jack@suse.cz>); Thu, 26 Feb 2026 13:12:55 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id 8CCF6A0A27; Thu, 26 Feb 2026 14:12:51 +0100 (CET)
+Date: Thu, 26 Feb 2026 14:12:51 +0100
+From: Jan Kara <jack@suse.cz>
+To: Tal Zussman <tz2294@columbia.edu>
+Cc: David Howells <dhowells@redhat.com>, 
+	Marc Dionne <marc.dionne@auristor.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <chao@kernel.org>, 
+	Andrew Morton <akpm@linux-foundation.org>, David Hildenbrand <david@kernel.org>, 
+	Lorenzo Stoakes <lorenzo.stoakes@oracle.com>, "Liam R. Howlett" <Liam.Howlett@oracle.com>, 
+	Vlastimil Babka <vbabka@kernel.org>, Mike Rapoport <rppt@kernel.org>, 
+	Suren Baghdasaryan <surenb@google.com>, Michal Hocko <mhocko@suse.com>, Chris Li <chrisl@kernel.org>, 
+	Kairui Song <kasong@tencent.com>, Kemeng Shi <shikemeng@huaweicloud.com>, 
+	Nhat Pham <nphamcs@gmail.com>, Baoquan He <bhe@redhat.com>, Barry Song <baohua@kernel.org>, 
+	Matthew Wilcox <willy@infradead.org>, Dan Williams <dan.j.williams@intel.com>, Jan Kara <jack@suse.cz>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
+	Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, 
+	Paulo Alcantara <pc@manguebit.org>, Trond Myklebust <trondmy@kernel.org>, 
+	Anna Schumaker <anna@kernel.org>, Mark Fasheh <mark@fasheh.com>, Joel Becker <jlbec@evilplan.org>, 
+	Joseph Qi <joseph.qi@linux.alibaba.com>, Steve French <sfrench@samba.org>, 
+	Ronnie Sahlberg <ronniesahlberg@gmail.com>, Shyam Prasad N <sprasad@microsoft.com>, 
+	Tom Talpey <tom@talpey.com>, Bharath SM <bharathsm@microsoft.com>, 
+	Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, Maxime Ripard <mripard@kernel.org>, 
+	Thomas Zimmermann <tzimmermann@suse.de>, David Airlie <airlied@gmail.com>, 
+	Simona Vetter <simona@ffwll.ch>, Jani Nikula <jani.nikula@linux.intel.com>, 
+	Joonas Lahtinen <joonas.lahtinen@linux.intel.com>, Rodrigo Vivi <rodrigo.vivi@intel.com>, 
+	Tvrtko Ursulin <tursulin@ursulin.net>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, 
+	Ilya Dryomov <idryomov@gmail.com>, Alex Markuze <amarkuze@redhat.com>, 
+	Viacheslav Dubeyko <slava@dubeyko.com>, Andreas Gruenbacher <agruenba@redhat.com>, 
+	Muchun Song <muchun.song@linux.dev>, Oscar Salvador <osalvador@suse.de>, 
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>, "Darrick J. Wong" <djwong@kernel.org>, 
+	Chuck Lever <chuck.lever@oracle.com>, Jeff Layton <jlayton@kernel.org>, NeilBrown <neil@brown.name>, 
+	Olga Kornievskaia <okorniev@redhat.com>, Dai Ngo <Dai.Ngo@oracle.com>, Jason Gunthorpe <jgg@ziepe.ca>, 
+	John Hubbard <jhubbard@nvidia.com>, Peter Xu <peterx@redhat.com>, 
+	Johannes Weiner <hannes@cmpxchg.org>, Roman Gushchin <roman.gushchin@linux.dev>, 
+	Shakeel Butt <shakeel.butt@linux.dev>, Jann Horn <jannh@google.com>, Pedro Falcato <pfalcato@suse.de>, 
+	Brendan Jackman <jackmanb@google.com>, Zi Yan <ziy@nvidia.com>, Hugh Dickins <hughd@google.com>, 
+	Baolin Wang <baolin.wang@linux.alibaba.com>, Axel Rasmussen <axelrasmussen@google.com>, 
+	Yuanchu Xie <yuanchu@google.com>, Wei Xu <weixugc@google.com>, 
+	Qi Zheng <zhengqi.arch@bytedance.com>, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, 
+	linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, 
+	nvdimm@lists.linux.dev, linux-ext4@vger.kernel.org, netfs@lists.linux.dev, 
+	linux-nfs@vger.kernel.org, ocfs2-devel@lists.linux.dev, linux-cifs@vger.kernel.org, 
+	samba-technical@lists.samba.org, dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesktop.org, 
+	linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org, gfs2@lists.linux.dev, 
+	linux-nilfs@vger.kernel.org, linux-xfs@vger.kernel.org, cgroups@vger.kernel.org
+Subject: Re: [PATCH v2 2/4] fs: Remove unncessary pagevec.h includes
+Message-ID: <hulhfdnrv4bbm6nvy3x4xbuxmc5ypmhpwdpt3jurfkibq5t2pu@6dcvs2uzzr46>
+References: <20260225-pagevec_cleanup-v2-0-716868cc2d11@columbia.edu>
+ <20260225-pagevec_cleanup-v2-2-716868cc2d11@columbia.edu>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH RFC v2 1/2] filemap: defer dropbehind invalidation from
- IRQ context
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Tal Zussman <tz2294@columbia.edu>,
- "Tigran A. Aivazian" <aivazian.tigran@gmail.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
- Namjae Jeon <linkinjeon@kernel.org>, Sungjong Seo <sj1557.seo@samsung.com>,
- Yuezhang Mo <yuezhang.mo@sony.com>, Dave Kleikamp <shaggy@kernel.org>,
- Ryusuke Konishi <konishi.ryusuke@gmail.com>,
- Viacheslav Dubeyko <slava@dubeyko.com>,
- Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
- Bob Copeland <me@bobcopeland.com>, Andrew Morton
- <akpm@linux-foundation.org>, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net,
- linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev,
- linux-karma-devel@lists.sourceforge.net, linux-mm@kvack.org,
- "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
-References: <20260225-blk-dontcache-v2-0-70e7ac4f7108@columbia.edu>
- <20260225-blk-dontcache-v2-1-70e7ac4f7108@columbia.edu>
- <c8078a80-f801-4f8a-b3cd-e2ccbfca1def@kernel.dk>
- <aZ-2G_6lDZePLSyx@casper.infradead.org>
-Content-Language: en-US
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <aZ-2G_6lDZePLSyx@casper.infradead.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260225-pagevec_cleanup-v2-2-716868cc2d11@columbia.edu>
+X-Spamd-Result: default: False [-2.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	TO_DN_SOME(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MISSING_XM_UA(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	FREEMAIL_CC(0.00)[redhat.com,auristor.com,kernel.org,linux-foundation.org,oracle.com,google.com,suse.com,tencent.com,huaweicloud.com,gmail.com,infradead.org,intel.com,suse.cz,zeniv.linux.org.uk,mit.edu,dilger.ca,manguebit.org,fasheh.com,evilplan.org,linux.alibaba.com,samba.org,microsoft.com,talpey.com,linux.intel.com,suse.de,ffwll.ch,ursulin.net,fb.com,dubeyko.com,linux.dev,brown.name,ziepe.ca,nvidia.com,cmpxchg.org,bytedance.com,lists.infradead.org,vger.kernel.org,lists.sourceforge.net,kvack.org,lists.linux.dev,lists.samba.org,lists.freedesktop.org];
+	RCVD_COUNT_THREE(0.00)[3];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	R_RATELIMIT(0.00)[to_ip_from(RL3r69cimucwc5kbfiftdz1c5n)];
+	TO_MATCH_ENVRCPT_SOME(0.00)[];
+	RCPT_COUNT_GT_50(0.00)[97];
+	RCVD_TLS_LAST(0.00)[];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.cz:email]
+X-Spam-Flag: NO
+X-Spam-Score: -2.30
+X-Spam-Level: 
 
-On 2/25/26 7:55 PM, Matthew Wilcox wrote:
-> On Wed, Feb 25, 2026 at 03:52:41PM -0700, Jens Axboe wrote:
->> How well does this scale? I did a patch basically the same as this, but
->> not using a folio batch though. But the main sticking point was
->> dropbehind_lock contention, to the point where I left it alone and
->> thought "ok maybe we just do this when we're done with the awful
->> buffer_head stuff". What happens if you have N threads doing IO at the
->> same time to N block devices? I suspect it'll look absolutely terrible,
->> as each thread will be banging on that dropbehind_lock.
->>
->> One solution could potentially be to use per-cpu lists for this. If you
->> have N threads working on separate block devices, they will tend to be
->> sticky to their CPU anyway.
+On Wed 25-02-26 18:44:26, Tal Zussman wrote:
+> Remove unused pagevec.h includes from .c files. These were found with
+> the following command:
 > 
-> Back in 2021, I had Vishal look at switching the page cache from using
-> hardirq-disabling locks to softirq-disabling locks [1].  Some of the
-> feedback (which doesn't seem to be entirely findable on the lists ...)
-> was that we'd be better off punting writeback completion from interrupt
-> context to task context and going from spin_lock_irq() to spin_lock()
-> rather than going to spin_lock_bh().
+>   grep -rl '#include.*pagevec\.h' --include='*.c' | while read f; do
+>   	grep -qE 'PAGEVEC_SIZE|folio_batch' "$f" || echo "$f"
+>   done
 > 
-> I recently saw something (possibly XFS?) promoting this idea again.
-> And now there's this.  Perhaps the time has come to process all
-> write-completions in task context, rather than everyone coming up with
-> their own workqueues to solve their little piece of the problem?
+> There are probably more removal candidates in .h files, but those are
+> more complex to analyze.
+> 
+> Signed-off-by: Tal Zussman <tz2294@columbia.edu>
 
-Perhaps, even though the punting tends to suck... One idea I toyed with
-but had to abandon due to fs freezeing was letting callers that process
-completions in task context anyway just do the necessary work at that
-time. There's literally nothing worse than having part of a completion
-happen in IRQ, then punt parts of that to a worker, and need to wait for
-the worker to finish whatever it needs to do - only to then wake the
-target task. We can trivially do this in io_uring, as the actual
-completion is posted from the task itself anyway. We just need to have
-the task do the bottom half of the completion as well, rather than some
-unrelated kthread worker.
+If it compiles than it's nice to get rid of. Feel free to add:
 
-I'd be worried a generic solution would be the worst of all worlds, as
-it prevents optimizations that happen in eg iomap and other spots, where
-only completions that absolutely need to happen in task context get
-punted. There's a big difference between handling a completion inline vs
-needing a round-trip to some worker to do it.
+Reviewed-by: Jan Kara <jack@suse.cz>
 
+								Honza
+
+> ---
+>  fs/afs/write.c                   | 1 -
+>  fs/dax.c                         | 1 -
+>  fs/ext4/file.c                   | 1 -
+>  fs/ext4/page-io.c                | 1 -
+>  fs/ext4/readpage.c               | 1 -
+>  fs/f2fs/file.c                   | 1 -
+>  fs/mpage.c                       | 1 -
+>  fs/netfs/buffered_write.c        | 1 -
+>  fs/nfs/blocklayout/blocklayout.c | 1 -
+>  fs/nfs/dir.c                     | 1 -
+>  fs/ocfs2/refcounttree.c          | 1 -
+>  fs/smb/client/connect.c          | 1 -
+>  fs/smb/client/file.c             | 1 -
+>  13 files changed, 13 deletions(-)
+> 
+> diff --git a/fs/afs/write.c b/fs/afs/write.c
+> index 93ad86ff3345..fcfed9d24e0a 100644
+> --- a/fs/afs/write.c
+> +++ b/fs/afs/write.c
+> @@ -10,7 +10,6 @@
+>  #include <linux/fs.h>
+>  #include <linux/pagemap.h>
+>  #include <linux/writeback.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/netfs.h>
+>  #include <trace/events/netfs.h>
+>  #include "internal.h"
+> diff --git a/fs/dax.c b/fs/dax.c
+> index b78cff9c91b3..a5237169b467 100644
+> --- a/fs/dax.c
+> +++ b/fs/dax.c
+> @@ -15,7 +15,6 @@
+>  #include <linux/memcontrol.h>
+>  #include <linux/mm.h>
+>  #include <linux/mutex.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/sched.h>
+>  #include <linux/sched/signal.h>
+>  #include <linux/uio.h>
+> diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+> index f1dc5ce791a7..5e02f6cf653e 100644
+> --- a/fs/ext4/file.c
+> +++ b/fs/ext4/file.c
+> @@ -27,7 +27,6 @@
+>  #include <linux/dax.h>
+>  #include <linux/filelock.h>
+>  #include <linux/quotaops.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/uio.h>
+>  #include <linux/mman.h>
+>  #include <linux/backing-dev.h>
+> diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+> index a8c95eee91b7..98da200d11c8 100644
+> --- a/fs/ext4/page-io.c
+> +++ b/fs/ext4/page-io.c
+> @@ -16,7 +16,6 @@
+>  #include <linux/string.h>
+>  #include <linux/buffer_head.h>
+>  #include <linux/writeback.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/mpage.h>
+>  #include <linux/namei.h>
+>  #include <linux/uio.h>
+> diff --git a/fs/ext4/readpage.c b/fs/ext4/readpage.c
+> index 830f3b8a321f..3c7aabde719c 100644
+> --- a/fs/ext4/readpage.c
+> +++ b/fs/ext4/readpage.c
+> @@ -43,7 +43,6 @@
+>  #include <linux/mpage.h>
+>  #include <linux/writeback.h>
+>  #include <linux/backing-dev.h>
+> -#include <linux/pagevec.h>
+>  
+>  #include "ext4.h"
+>  #include <trace/events/ext4.h>
+> diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+> index c8a2f17a8f11..c6b6a1465d08 100644
+> --- a/fs/f2fs/file.c
+> +++ b/fs/f2fs/file.c
+> @@ -17,7 +17,6 @@
+>  #include <linux/compat.h>
+>  #include <linux/uaccess.h>
+>  #include <linux/mount.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/uio.h>
+>  #include <linux/uuid.h>
+>  #include <linux/file.h>
+> diff --git a/fs/mpage.c b/fs/mpage.c
+> index 7dae5afc2b9e..e5285fbfcf09 100644
+> --- a/fs/mpage.c
+> +++ b/fs/mpage.c
+> @@ -28,7 +28,6 @@
+>  #include <linux/mm_inline.h>
+>  #include <linux/writeback.h>
+>  #include <linux/backing-dev.h>
+> -#include <linux/pagevec.h>
+>  #include "internal.h"
+>  
+>  /*
+> diff --git a/fs/netfs/buffered_write.c b/fs/netfs/buffered_write.c
+> index 22a4d61631c9..05ea5b0cc0e8 100644
+> --- a/fs/netfs/buffered_write.c
+> +++ b/fs/netfs/buffered_write.c
+> @@ -10,7 +10,6 @@
+>  #include <linux/mm.h>
+>  #include <linux/pagemap.h>
+>  #include <linux/slab.h>
+> -#include <linux/pagevec.h>
+>  #include "internal.h"
+>  
+>  static void __netfs_set_group(struct folio *folio, struct netfs_group *netfs_group)
+> diff --git a/fs/nfs/blocklayout/blocklayout.c b/fs/nfs/blocklayout/blocklayout.c
+> index cb0a645aeb50..11f9f69cde61 100644
+> --- a/fs/nfs/blocklayout/blocklayout.c
+> +++ b/fs/nfs/blocklayout/blocklayout.c
+> @@ -36,7 +36,6 @@
+>  #include <linux/namei.h>
+>  #include <linux/bio.h>		/* struct bio */
+>  #include <linux/prefetch.h>
+> -#include <linux/pagevec.h>
+>  
+>  #include "../pnfs.h"
+>  #include "../nfs4session.h"
+> diff --git a/fs/nfs/dir.c b/fs/nfs/dir.c
+> index 2402f57c8e7d..0d276441206b 100644
+> --- a/fs/nfs/dir.c
+> +++ b/fs/nfs/dir.c
+> @@ -32,7 +32,6 @@
+>  #include <linux/nfs_fs.h>
+>  #include <linux/nfs_mount.h>
+>  #include <linux/pagemap.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/namei.h>
+>  #include <linux/mount.h>
+>  #include <linux/swap.h>
+> diff --git a/fs/ocfs2/refcounttree.c b/fs/ocfs2/refcounttree.c
+> index c1cdececdfa4..b4acd081bbc4 100644
+> --- a/fs/ocfs2/refcounttree.c
+> +++ b/fs/ocfs2/refcounttree.c
+> @@ -31,7 +31,6 @@
+>  #include <linux/blkdev.h>
+>  #include <linux/slab.h>
+>  #include <linux/writeback.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/swap.h>
+>  #include <linux/security.h>
+>  #include <linux/string.h>
+> diff --git a/fs/smb/client/connect.c b/fs/smb/client/connect.c
+> index 33dfe116ca52..9e57812b7b95 100644
+> --- a/fs/smb/client/connect.c
+> +++ b/fs/smb/client/connect.c
+> @@ -20,7 +20,6 @@
+>  #include <linux/delay.h>
+>  #include <linux/completion.h>
+>  #include <linux/kthread.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/freezer.h>
+>  #include <linux/namei.h>
+>  #include <linux/uuid.h>
+> diff --git a/fs/smb/client/file.c b/fs/smb/client/file.c
+> index 18f31d4eb98d..853ce1817810 100644
+> --- a/fs/smb/client/file.c
+> +++ b/fs/smb/client/file.c
+> @@ -15,7 +15,6 @@
+>  #include <linux/stat.h>
+>  #include <linux/fcntl.h>
+>  #include <linux/pagemap.h>
+> -#include <linux/pagevec.h>
+>  #include <linux/writeback.h>
+>  #include <linux/task_io_accounting_ops.h>
+>  #include <linux/delay.h>
+> 
+> -- 
+> 2.39.5
+> 
 -- 
-Jens Axboe
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
