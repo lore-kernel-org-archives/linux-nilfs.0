@@ -1,158 +1,193 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f53.google.com (mail-ot1-f53.google.com [209.85.210.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4EBB338BF94;
-	Tue, 10 Mar 2026 16:05:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB103348457
+	for <linux-nilfs@vger.kernel.org>; Tue, 10 Mar 2026 16:54:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773158746; cv=none; b=rgLs0UAiwcVQuPLfN9l56oA2I9j/PQaL+D+AFkWraVbAqsbSs8lgKlTajY3fM2M0iIzerU06j3v56ZuQm2BKYWMmyP1KHVd4wYdyzd+rpnjwIRkzjgSenh0E4UDprMLNCp7VEEs0GglUrSXLuejIkj070zVFqXE46Z+IYvX5AGg=
+	t=1773161673; cv=none; b=M6qL2+N9W0Ru8BAek8joiuymYLs6NKvDaJF0J66mTu/WCuikwwgmb08y5bINb9toY+7qdRP0tQD5oaOINlNBhM6UTUuRTMuztw+QZrYkuQ7+1UsUucAWaEbKhMNmkepj26tgQXgE2A35DPrezoqDZCafvTTcDdL/7dNdQU/RvNw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773158746; c=relaxed/simple;
-	bh=QjmXv3J82aNpVvxsT/+P2fPbW9qzk6DDf510Ul/2zYM=;
-	h=Message-ID:Subject:From:To:Cc:In-Reply-To:References:Content-Type:
-	 Date:MIME-Version; b=Rilyk967LzaJ9/XxGJOFBcK1Iubqu5BrU5eZ8hCbMhTGBKIn48p7DNQMUYfWfoya9oBkXsEI5K5H7UpUdlwKWy78seTeo4j5iCjYr+BJWCseZ66zHF/7zo4PFBmurCDmqsHRR1KNI+knXHO7ssTxQtUWUrAbck+vdxEIDjDiaag=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=mEyspq3U; arc=none smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1773161673; c=relaxed/simple;
+	bh=bBAFu2yyXdiAsw4cmI2FgxwowRwabRXcNMDJDRQqsGE=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=V2Dzy+LrkFN1bzTqNAU//X9GCQAmOkTjDAKJUbLiw34iBDPc+Hdof+b/hZb/0hroOVnqK0wm9sV+53Q7J9wnq0mmEnVs5hbBoH/3J08jnyxSdKfMpc4yHtPq3jhLZhvramUnh0qhE0PXuLZMc6jvYso2WcmYXnZQ9m97iqJp1Qs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20230601.gappssmtp.com header.i=@dubeyko-com.20230601.gappssmtp.com header.b=p53jRwu/; arc=none smtp.client-ip=209.85.210.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="mEyspq3U"
-Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 62A9JfCg1455623;
-	Tue, 10 Mar 2026 16:05:18 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=cWnPbA
-	Lr4v7J4i6+UyjhgVFwJufozAm4abfHYh9aPE8=; b=mEyspq3Ue7i9i+oZlvSgRj
-	wqiWSvltjpT/A/iEAUDZJ6YfVBbTUGJ1aaEwKkvZjMrA/KnvmaC5gkZ7mOiBE/v/
-	epgfKXPHAVG7P3hHXfX9u4KXXIl7ukMQGipHzgwoB3tZ5fwyffniZWVXFYNdvM/v
-	a6LmwI1JuB5UAEQHI6mba/JqONdaK+i4xdFaBprA2UCUtqCfXrtJ15TRxrqUrUJQ
-	iyHbhz1B7veM79DdjMmIdu+N6UErZfLGCAJX09k8Qr3EpmqH7ce4tHMwe0VBdwbw
-	A9IilKaOT8EtPb4tIaZc6RBii0x1a6o+PY2m556sTBKZN4F6qD0zvC6MNE+mfMpA
-	==
-Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4crcuybq24-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 10 Mar 2026 16:05:17 +0000 (GMT)
-Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma12.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 62AFsJsG021521;
-	Tue, 10 Mar 2026 16:05:16 GMT
-Received: from smtprelay01.wdc07v.mail.ibm.com ([172.16.1.68])
-	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 4crxbssx72-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 10 Mar 2026 16:05:16 +0000
-Received: from smtpav04.dal12v.mail.ibm.com (smtpav04.dal12v.mail.ibm.com [10.241.53.103])
-	by smtprelay01.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 62AG5FEK63504758
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 10 Mar 2026 16:05:15 GMT
-Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 3BF9658067;
-	Tue, 10 Mar 2026 16:05:15 +0000 (GMT)
-Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 3F6B15805A;
-	Tue, 10 Mar 2026 16:05:14 +0000 (GMT)
-Received: from li-43857255-d5e6-4659-90f1-fc5cee4750ad.ibm.com (unknown [9.61.8.247])
-	by smtpav04.dal12v.mail.ibm.com (Postfix) with ESMTP;
-	Tue, 10 Mar 2026 16:05:14 +0000 (GMT)
-Message-ID: <93bdbda8ff7d732baccc6b2ccfc28d1e2f25d731.camel@linux.ibm.com>
-Subject: Re: [PATCH 2/2] EVM: add comment describing why ino field is still
- unsigned long
-From: Mimi Zohar <zohar@linux.ibm.com>
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20230601.gappssmtp.com header.i=@dubeyko-com.20230601.gappssmtp.com header.b="p53jRwu/"
+Received: by mail-ot1-f53.google.com with SMTP id 46e09a7af769-7d73be007a1so3141688a34.0
+        for <linux-nilfs@vger.kernel.org>; Tue, 10 Mar 2026 09:54:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=dubeyko-com.20230601.gappssmtp.com; s=20230601; t=1773161670; x=1773766470; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=+koyysHEgwYLGjTMWchPnqVqiDSFwULCAON7pQbpaUo=;
+        b=p53jRwu/2CvEv86F797S2VjC3TrR4NwvcN+JIoso/yqEcGtDKA4G98Kgqa4DX3rK1J
+         PSNPxc4w8VRrNQliGBTA2N+LQtKWpcUaTKGbRPzOOn2IiIVtdZPB8YshB5fZSlEdXt+T
+         ALKHgcdI3UyBdrlcathOwFCC8mExAYzq2X89tyMLepfHVGkLWSIK7a5SM9372RnKYJWd
+         086gu/4c/80HWPIG+qBY3qaSsvFz59VLMGsukC12YTs/LLrar01LjlyGNiCvs818xDHF
+         SEcsHCDTnxNEjSuR8wnwjjRimjmALLgFfUn4m48BOiXFF9AATMKbr4oa6JA9Tl4c81ei
+         srXg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1773161670; x=1773766470;
+        h=mime-version:user-agent:content-transfer-encoding:autocrypt
+         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=+koyysHEgwYLGjTMWchPnqVqiDSFwULCAON7pQbpaUo=;
+        b=kZ9ApvAg41SuE/Tu5pQQ6GMFpT1wCOesuQ1r3ZBcXVUhJJuDdfyiiFUJN34aA9RWXg
+         43c1BunRkvKEeG6sIzfAWl4TSde7mVo265BVyWNjqstlDnVYCWX99TQPi/mIuwIKdSPa
+         e3MtN+QHGU5mpxsgs6lDgVn8oNXHB07MGEQ92JxZqsfsyblVU8vtTnBzyilGKm5FFOde
+         VakbouxHwQ9HAdIEo+kpBXQ802XpglzX61L8/xUgBBFabWDL1LfAvY3xOSYjRLj8obxM
+         Z5xctsfL4mHpHim7yGKw4iz2O6H7Faj1tKn0YKnWVfrElpWi27wQlon+F2MJXXFINfsP
+         B1LA==
+X-Gm-Message-State: AOJu0YwLyp05AcCOyxheKJGu89REFapcQZRBuezkltlg3b+prrsIjyFq
+	2LVCkYZoRmH+jnZ8jKcdD2CGjQs1QNm+tecKS/foCyVCZqIzmFjfhi/Jy2S9pQWMNAWTOg5+KJA
+	GbzgXcl8=
+X-Gm-Gg: ATEYQzzdzZH15+MQvhCkqMoRm7nF8e9bX+lFMJvWEAiNsgVzmvbft7yRnXWPQM4arJb
+	uJsQWz6Q7YbLDSKV7vdn5WjdeRZORHXQ42OfJOM5m6x/XkSxCl23qlrXgPdVG0SablDRZsYNEBi
+	rVjsxDgGpXLA94eG7/XxuaqGdFIrqTYW7wtlIHeI8XP0Ng3HRD54ZYaPCO2YRau7cOa7phEy2/A
+	h4z4A1DukRcyv9gma+Eye0MevXSeAbcoakuOit+Ltp65mSqFYsho/D7+3zETwr1Seus4mfvRHHL
+	2dezSY4KNzlZ3704g/YygZjaXg7BXu0jNIURoQhp+m6fd4aU5PC5WeuhQJRF2+L/6YK3V6G6oxO
+	vqe/uvHJ2r1mQLC88RXdKlC9zTfnBKfn+6B3FtacpVscUwMXg8rXm6xMKz2Hqx50aslkVSTt1d4
+	424DTO+0HIF8TNEkwj1lZufrghXMd4mY2No6KwrE3NL/5uboKZX2CBtfcnL9gmn5DuJbxjoODi+
+	pYQnqnQ2gH7m0iIhYuGJX9xAbbjfczAxkozCm5gk7TK2Sv8RHImGdzr9Q==
+X-Received: by 2002:a05:6830:6887:b0:7c7:6043:dd8f with SMTP id 46e09a7af769-7d726f631bdmr10091186a34.15.1773161669861;
+        Tue, 10 Mar 2026 09:54:29 -0700 (PDT)
+Received: from ?IPv6:2600:1700:6476:1430:a85:69a0:8fa8:d652? ([2600:1700:6476:1430:a85:69a0:8fa8:d652])
+        by smtp.gmail.com with ESMTPSA id 46e09a7af769-7d745cac199sm5377746a34.9.2026.03.10.09.54.27
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 10 Mar 2026 09:54:29 -0700 (PDT)
+Message-ID: <b0225cff966425a16213e2dae7cd30ba438e5af7.camel@dubeyko.com>
+Subject: Re: [PATCH 1/2] nilfs2: fix 64-bit division operations in
+ nilfs_bmap_find_target_in_group()
+From: Viacheslav Dubeyko <slava@dubeyko.com>
 To: Jeff Layton <jlayton@kernel.org>, Christian Brauner
- <brauner@kernel.org>,
-        Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-        Viacheslav Dubeyko <slava@dubeyko.com>,
-        Roberto Sassu	
- <roberto.sassu@huawei.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-        Eric Snowberg <eric.snowberg@oracle.com>,
-        Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
-        "Serge E. Hallyn"	 <serge@hallyn.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org
-In-Reply-To: <20260310-iino-u64-v1-2-18422a053b04@kernel.org>
+ <brauner@kernel.org>,  Ryusuke Konishi <konishi.ryusuke@gmail.com>, Mimi
+ Zohar <zohar@linux.ibm.com>, Roberto Sassu	 <roberto.sassu@huawei.com>,
+ Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,  Eric Snowberg
+ <eric.snowberg@oracle.com>, Paul Moore <paul@paul-moore.com>, James Morris
+ <jmorris@namei.org>,  "Serge E. Hallyn"	 <serge@hallyn.com>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-integrity@vger.kernel.org, linux-security-module@vger.kernel.org, 
+ kernel test robot
+	 <lkp@intel.com>
+Date: Tue, 10 Mar 2026 09:54:26 -0700
+In-Reply-To: <20260310-iino-u64-v1-1-18422a053b04@kernel.org>
 References: <20260310-iino-u64-v1-0-18422a053b04@kernel.org>
-	 <20260310-iino-u64-v1-2-18422a053b04@kernel.org>
+	 <20260310-iino-u64-v1-1-18422a053b04@kernel.org>
+Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
+ keydata=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
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
-Date: Tue, 10 Mar 2026 12:05:13 -0400
+User-Agent: Evolution 3.58.3 (by Flathub.org) 
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Evolution 3.56.2 (3.56.2-2.fc42) 
-X-TM-AS-GCONF: 00
-X-Proofpoint-Reinject: loops=2 maxloops=12
-X-Authority-Analysis: v=2.4 cv=EK4LElZC c=1 sm=1 tr=0 ts=69b0413d cx=c_pps
- a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17
- a=IkcTkHD0fZMA:10 a=Yq5XynenixoA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=RnoormkPH1_aCDwRdu11:22 a=uAbxVGIbfxUO_5tXvNgY:22 a=VnNF1IyMAAAA:8
- a=VwQbUJbxAAAA:8 a=lgndsluPPLUQNjNvJxsA:9 a=QEXdDO2ut3YA:10
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzEwMDEzOSBTYWx0ZWRfX7AfBZa7SBzJt
- rgrndk7Bjmgqakq2EUmANRrO52qlOeuNSsn2Pa0x5dZ5oS/F1UX1LdflCsAsqphIpaigdNuffOX
- iPoMZaSocQpo4N2x+2PuWyDHY4+y5A7TZO0EDaSJHbHsCFdKIqdSLBnWT/j3puqtO3n1nsiawxW
- fBVE5ej+2eeKXX96ClVOg+Q6Y2Uql8oYMxb7eeAgu2F52NC4uW9Zll/wrWWsqZMhhX5IsPqT0Al
- nqBJ/ADZ9SGhM7/tXIuiIrmgWBDJ6aEwxqtYWJmxEKh51pJnc5bpd4kiBgX7ok1KvvuaOMVKPhD
- 0wtbaRmjGypif2GUjXRi7m4ucD5ApPH0T9FL1hdL8pXWNz/1AHuTspLIH4Hj+iLpdSYIspBwPdA
- K5lsJjqAHADWJF+G1VFW0e5AAv7Ao0AxFajPzCZwojfEfue9byUNP0TBUamCKLMu0CQi9Opt/55
- 0Qxc3TU+zeFnNc71oYQ==
-X-Proofpoint-GUID: E-t0rJBRUI1-ZiXIQ2YHBUAuMgBw3s1q
-X-Proofpoint-ORIG-GUID: A-FOOk-YvSOo99TgQ_TIFUetByEWl4mX
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-03-10_03,2026-03-09_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- phishscore=0 lowpriorityscore=0 spamscore=0 suspectscore=0 clxscore=1011
- bulkscore=0 impostorscore=0 priorityscore=1501 malwarescore=0 adultscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2602130000 definitions=main-2603100139
 
 On Tue, 2026-03-10 at 07:43 -0400, Jeff Layton wrote:
-> Mimi pointed out that we didn't widen the inode number field in struct
-> h_misc alongside the inode->i_ino widening. While we could make an
-> equivalent change there, that would force EVM remeasurement on all
-> 32-bit hosts.
-
-Instead of saying "force EVM remeasurement" say, "require EVM resigning".
-
+> With the change to make inode->i_ino a u64, the build started failing
+> on
+> 32-bit ARM with:
 >=20
-> Instead, leave the field as an unsigned long. This should have no effect
-> on 64-bit hosts, and allow things to continue working on 32-bit hosts in
-> the cases where the i_ino fits in 32-bits.
+> =C2=A0=C2=A0=C2=A0 ERROR: modpost: "__aeabi_uldivmod" [fs/nilfs2/nilfs2.k=
+o]
+> undefined!
 >=20
-> Add a comment explaining why it's being left as unsigned long.
+> Fix this by using the 64-bit division interfaces in
+> nilfs_bmap_find_target_in_group().
 >=20
-> Cc: Mimi Zohar <zohar@linux.ibm.com>
+> Fixes: 998a59d371c2 ("treewide: fix missed i_ino format specifier
+> conversions")
+> Reported-by: kernel test robot <lkp@intel.com>
+> Closes:
+> https://lore.kernel.org/oe-kbuild-all/202603100602.KPxiClIO-lkp@intel.com=
+/
 > Signed-off-by: Jeff Layton <jlayton@kernel.org>
 > ---
->  security/integrity/evm/evm_crypto.c | 6 ++++++
->  1 file changed, 6 insertions(+)
+> =C2=A0fs/nilfs2/bmap.c | 9 ++++++---
+> =C2=A01 file changed, 6 insertions(+), 3 deletions(-)
 >=20
-> diff --git a/security/integrity/evm/evm_crypto.c b/security/integrity/evm=
-/evm_crypto.c
-> index c0ca4eedb0fe5d5c30f45f515a4bc90248ec64ea..3445f4c2097f7e8af61de6299=
-b721fc4a1d8afb4 100644
-> --- a/security/integrity/evm/evm_crypto.c
-> +++ b/security/integrity/evm/evm_crypto.c
-> @@ -144,6 +144,12 @@ static void hmac_add_misc(struct shash_desc *desc, s=
-truct inode *inode,
->  			  char type, char *digest)
->  {
->  	struct h_misc {
-> +		/*
-> +		 * Although inode->i_ino is now u64, this field remains
-> +		 * unsigned long to allow existing hashes from 32-bit hosts
-> +		 * to continue working when i_ino hasn't changed and fitsxi
-> +		 * in a u32.
+> diff --git a/fs/nilfs2/bmap.c b/fs/nilfs2/bmap.c
+> index
+> 824f2bd91c167965ec3a660202b6e6c5f1fe007e..4ce9a93149a5af13bc215cc1877
+> a757e2c6cf49b 100644
+> --- a/fs/nilfs2/bmap.c
+> +++ b/fs/nilfs2/bmap.c
+> @@ -455,11 +455,14 @@ __u64 nilfs_bmap_find_target_in_group(const
+> struct nilfs_bmap *bmap)
+> =C2=A0{
+> =C2=A0	struct inode *dat =3D nilfs_bmap_get_dat(bmap);
+> =C2=A0	unsigned long entries_per_group =3D
+> nilfs_palloc_entries_per_group(dat);
+> -	unsigned long group =3D bmap->b_inode->i_ino /
+> entries_per_group;
+> +	unsigned long group;
+> +	u32 rem;
+> +
+> +	group =3D div_u64(bmap->b_inode->i_ino, entries_per_group);
+> +	div_u64_rem(bmap->b_inode->i_ino, NILFS_BMAP_GROUP_DIV,
+> &rem);
+> =C2=A0
+> =C2=A0	return group * entries_per_group +
+> -		(bmap->b_inode->i_ino % NILFS_BMAP_GROUP_DIV) *
+> -		(entries_per_group / NILFS_BMAP_GROUP_DIV);
+> +	=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rem * (entries_per_group / NILFS_B=
+MAP_GROUP_DIV);
+> =C2=A0}
+> =C2=A0
+> =C2=A0static struct lock_class_key nilfs_bmap_dat_lock_key;
 
-security.evm contains either an HMAC or signature.  Change "hashes" -> HMAC=
- and
-signatures"
+Makes sense. :) Maybe, rem is not very good variable name, but the
+whole logic looks good.
 
-Mimi
+Reviewed-by: Viacheslav Dubeyko <slava@dubeyko.com>
 
-> +		 */
->  		unsigned long ino;
->  		__u32 generation;
->  		uid_t uid;
+Thanks,
+Slava.
