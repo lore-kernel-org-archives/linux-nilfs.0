@@ -1,61 +1,74 @@
-Received: from out162-62-58-216.mail.qq.com (out162-62-58-216.mail.qq.com [162.62.58.216])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BD0C2EF652;
-	Tue, 17 Mar 2026 08:30:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=162.62.58.216
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55C6319CC0C
+	for <linux-nilfs@vger.kernel.org>; Tue, 17 Mar 2026 09:01:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773736210; cv=none; b=bbRnjM+j2UbKfUzAunp3Cz/9jwjojQE0FpGN4VWlKV7nZRRMWmH+jKhsH6/2ovoytMWsXIOHVmP0TKIqUnPSDJbuAhdXXKzB6qzRVcDtIJW8X+IVLYuP7YOFrYg27UlSjimRjTZNxM7OAOF7XJFOMrXlQ3p/WPlwHNJqGwWENT8=
+	t=1773738081; cv=none; b=GSfztEB3WKTBSTTXzzwPPh7ndN2i7P5mnmeRKZJHN4d41H5WQmA/0EIKQ9WgcCd4TuQy1tBUN66PCfPRE2OlodtQQPprN+2Wc9JX8umJACb0TIPOXg8VS7mSM8Jv26AH3652ln/nmH18yFGyiTlzKMShGcP2hRCjiK4HH/6r0KQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773736210; c=relaxed/simple;
-	bh=D/llmGos/e+GxHSFX4FJvLp3tr5a/xQIJ6D2rvbzYMQ=;
-	h=Message-ID:From:To:Cc:Subject:Date:In-Reply-To:References:
-	 MIME-Version; b=DUMjLMJ37XhdkFgpfSCL8gc60uyU2pjCZcJ8MjBAeIIFsxdDyCyp56r/2y0FoNaD2XLaQUTkDW9bWe9r/SybEemGPe/TL3Zj/KHdQTskMq5x6L0qNGG7RVqjDb18k3MqRi64Yxc3X/oCYvEKp+2idTzpJRMYGTjQoTAmOsbHf18=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=XeX9QpNK; arc=none smtp.client-ip=162.62.58.216
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+	s=arc-20240116; t=1773738081; c=relaxed/simple;
+	bh=nN0x5g2DoAQ5Go7ldIH53w9Og235GSmjJ3oFV9XcwJE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=LZAC2OAnATCIkIfzKGtSfY6V6aq2+1/a8p8DUcwhdKAFZkDH9PZtSRhppwSSBKJni/BEgHaCYTMrp+VCL6l0gtB3+Hi661S4feOx8xQAeI7mX09MDVcFbAwCWOuRnnKOWcG9Oa4EcphsWwy3EZIAY+bVBYteAfWeIH/BQzQ1tYE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jQsWOAcF; arc=none smtp.client-ip=209.85.216.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="XeX9QpNK"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
-	t=1773736195; bh=Ldr2L0fuMunzyvxzCND5l189lNABZjita0GvpSUT4vU=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=XeX9QpNKi/C75nIvv+bHpoAW37YFEsGcPowsqakDiihiM5s2+RZhvTuTTk2kmUtwE
-	 olgBy0lKJt1b0jGkGnI0KpcxlfLy8zywrCVXNVxES1Fga6Y0xKEcHr7aDUWhHc8cH8
-	 Sqe5UNh3GDpWY8px570TU+Z3VkFaiaTMM4ZlpLy0=
-Received: from lxu-ped-host.. ([111.198.231.89])
-	by newxmesmtplogicsvrszc43-0.qq.com (NewEsmtp) with SMTP
-	id 77480CD2; Tue, 17 Mar 2026 16:29:52 +0800
-X-QQ-mid: xmsmtpt1773736192trs6b5d5f
-Message-ID: <tencent_5E9ECE1B9E4B941B182565BAC2BB48336408@qq.com>
-X-QQ-XMAILINFO: NAOky/E1C/NcBBO3VUstH+w8nRUaS2TRfRtFtV8W0ysv4JBfUyWc6FRr5HGG7j
-	 npr7UmqngDuApMQHbQ+MF4wEyj1LyrTrisySstKjoPTNFUHBewr4Yc/7OhPH1MtgKmNaYeCwmL4l
-	 Wtj6Jqr9UY0xogfxgXWkx8oz3w1QBXRt4L0Cf+mFp+Ke6OkQLf5yscz6VjM5ugAXswNY6sUEMuQl
-	 GPQ2os7LvpASuBohC1xvc7WIahhECERNJY8o/uMhcVKZYZqXwZ/b8Ui+2h8gYMKgD41f41HkmNcM
-	 jOjGXxI9T/8m5fGtzLRvvuVYBUXgrvoJeUL/eyHO+b27OwrDifulcit03uyeiGP4Stc5mwO7WZsb
-	 Ixtz6h2ThUsYzMdBua36es7UCPGtCkiQkDmafqtQKPYPOmHy5gtEPvm7uG3/trajY9+nzhdf8IKT
-	 CAAXh7HhTWB0NEEM3HDaKON6Dzjy+XyhnuilPZp8GpzXO0vOeasnLr2s7kTxn27oZK9PrNlcQy4T
-	 nuxx9iMEdwITouovJl+DHTKqQxyxLRNMG2lC5cpzeeELiNUJHvj0E6u25bWeDieIPILbxcfU6JTf
-	 BypzxetFboMeusBAwOmj2JjiO39qTbZC0rBXVjnE3ZgeqDyhuvFWnfDksz2xvT/Jzk+A0KXFYgz6
-	 ZGDoO0LJDmsFxp76cX/KgGG9Z5K4Aj6GCrgtYRSUbn7r5lE7JFI8h89SHJYY3hW33ito1CoiK/Yd
-	 yO98AIuu2cy0WAWvb2y24hJdc2Sxms4W4Vz7Qc5q5LpDR0mnFArFXELPeKROnXB8/XtL6HwK+Vw9
-	 FCoOJYyXuADT/y8kJVp9mUgw+tVLx/ZfroblAQJQfvJb0C4lQf3CuxNhZxkUzg677e3M17o4HFi1
-	 NMG1CJLncsq5XGARtvo040tprGDDnJMklivHitfKWXuVU5264y5/AW00T+vzRpnkzFKP1rxyswmf
-	 ApZvY78NcsHtLSnoaDxrNPKnR7uFyLr7CZ7WceIeXhY/NkgGkC5XifaWV2lPsu2NNnS01URo6RHO
-	 SGV6Y9IaT/TwIEF1+2
-X-QQ-XMRINFO: Nq+8W0+stu50tPAe92KXseR0ZZmBTk3gLg==
-From: Edward Adam Davis <eadavis@qq.com>
-To: syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
-Cc: konishi.ryusuke@gmail.com,
-	linux-kernel@vger.kernel.org,
-	linux-nilfs@vger.kernel.org,
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jQsWOAcF"
+Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-354a18c48b5so5232854a91.1
+        for <linux-nilfs@vger.kernel.org>; Tue, 17 Mar 2026 02:01:20 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1773738080; x=1774342880; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=03sJZVwXZw+lbk50VCUYHq6xOlFCk2MSYpF/KKFvuBQ=;
+        b=jQsWOAcFMlaUGcfKeZxW9aiwm9I827iokHfYf4lX4H7RO/qcasCyasYdV1Ap8nQdql
+         APKU/tGoOm/+xmiBQpv6VIwDACQ0ykHQ1Ft8iYM3lcBR52mCEMFnMCatYrzZwjLJW1ck
+         Uk+EZ0bLyWGthAEhbsJYC3f217aGdEIsgKiLDYFLqswCNn1dXFKeTbmmOjTh+9o/qHb4
+         LL/+gpb6GRWYfkbbHy8QXL0j9ws0iKCTvpM6KaG5AhHJIPxqvJMVHjx/7wIc26mUyVRk
+         pUJz6R7GENHSCQ0evo/5gZkpETmN7RskQU4pHKzH5sv4boCgHJ+oiPte19sn8kKFbZJe
+         kTlA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1773738080; x=1774342880;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=03sJZVwXZw+lbk50VCUYHq6xOlFCk2MSYpF/KKFvuBQ=;
+        b=NcKhQqgHA9oLNkNYceRS08VS8ssN0SINuyX+88VlSHao8mRy2kXz43HVoZdloXa+GC
+         YO/FtznJK3ZSjZ8sY4agcAUmrHfzujlSaHhB3E8073XLOKj7rHaMXqsDJS3VO2BeozBW
+         OXTzurgCL+SMFmSZSV8VVkbT0DfQX5NrQMqUDJehiOwmlipUJMlyOIsy3jA3FR+3XP5G
+         2ndkitYPgFF6GwOivnH/Q/IAk7QSBkgt3vveFK7RCR39RfIh8s/OR23gaownPQKTXecb
+         Bz1RWH5TGPqI0liifDkTDMtLfV5+GYDP4viyO2KgBu1+j8+s8Pir/tMI2ldX3bdU5UoN
+         0gvQ==
+X-Gm-Message-State: AOJu0Yzh8JOKg3DAZnfcQB9M01k1OB/XUG0n6ajNtx5ZrPdecqq+Y9RC
+	ni/OfTR6P8sHQJTZuepGSxUZ+oFdlU75mcSWzKaRkG6TtQjr/VIU5fPu
+X-Gm-Gg: ATEYQzxkLYckXG4wALStyiiTcTGyOHYAmS/r/uDJS/fzwHazZxnuO6FwdXAfN6UBBHv
+	PUQ3SpsJhgldU7g/tZAEdbXXPKf0NJnwrTX8k5EJvd07eyVlDjx8EBvc54wuTjv3eKlaTngH24P
+	NqbNnskiFpZu0VTq+Jw9lVeFCwC8kOctHYzZNoollkzeCQV2lBwPsTMEUhS1usDrqX8MzGs37RD
+	DFjSZGnhVZ/ygk9jxC0Ca9wKa7k8o2NopwUG9FjR1+/Z6N4SZ9FHD64FLebETOCUVkEqrgx1MOJ
+	k9zKPtsuud7dxOoaMa2iP6vhfmaZfkCk0YQLk1NbVvzLuVNm/Bkkn7BHQbGsl8KRWJH9Jdi1Twv
+	uMdazEraH8dedtHjDPbCglyoLMNlmjzOe3vO/ywCC5609PLBQG08J1MBWxJe8ttHrW0T/ovduwQ
+	DMF4GMI1d8G1MacbsuOXPJG2QebLg5htZ4mgI+x9v/AKGwWH8ULJ75nz8buzCUckQIxrd7K3GLf
+	nTo5StMP4tYpf2hPQ==
+X-Received: by 2002:a17:90b:498b:b0:356:2c7b:c026 with SMTP id 98e67ed59e1d1-35a220576d7mr14769359a91.23.1773738079328;
+        Tue, 17 Mar 2026 02:01:19 -0700 (PDT)
+Received: from deepanshu-kernel-hacker.. ([2405:201:682f:389d:8eb7:8452:540b:880a])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-35bada2bc3esm2796850a91.1.2026.03.17.02.01.14
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 17 Mar 2026 02:01:18 -0700 (PDT)
+From: Deepanshu Kartikey <kartikey406@gmail.com>
+To: konishi.ryusuke@gmail.com,
 	slava@dubeyko.com,
-	syzkaller-bugs@googlegroups.com
-Subject: [PATCH] nilfs2: no longer save to shadow map if the num of members is too small
-Date: Tue, 17 Mar 2026 16:29:53 +0800
-X-OQ-MSGID: <20260317082952.184228-2-eadavis@qq.com>
+	akpm@linux-foundation.org
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Deepanshu Kartikey <kartikey406@gmail.com>,
+	syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com,
+	Deepanshu Kartikey <Kartikey406@gmail.com>
+Subject: [PATCH] nilfs2: fix NULL i_assoc_inode dereference in nilfs_mdt_save_to_shadow_map
+Date: Tue, 17 Mar 2026 14:31:09 +0530
+Message-ID: <20260317090109.878401-1-kartikey406@gmail.com>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <69b8c713.a00a0220.3b25d1.0029.GAE@google.com>
-References: <69b8c713.a00a0220.3b25d1.0029.GAE@google.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -64,48 +77,43 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The value of argv0.v_nmembs passed from userspace is 0. This prevents
-nilfs_iget_for_gc() from being called to initialize the gcinode during
-the execution of nilfs_ioctl_move_blocks(). Consequently, this triggers
-a null-ptr-deref involving ii->i_assoc_inode within the subsequent call
-sequence: nilfs_clean_segments()->nilfs_mdt_save_to_shadow_map() [1].
 
-A check for argv[0].v_nmembs has been added to nilfs_clean_segments()
-to prevent this potential null-ptr-deref of ii->i_assoc_inode.
+The DAT inode's btree node cache (i_assoc_inode) is initialized lazily
+during btree operations. However, nilfs_mdt_save_to_shadow_map()
+assumes i_assoc_inode is already initialized when copying dirty pages
+to the shadow map during GC.
 
-[1]
-KASAN: null-ptr-deref in range [0x0000000000000030-0x0000000000000037]
-Call Trace:
- nilfs_clean_segments+0x162/0xa50 fs/nilfs2/segment.c:2521
- nilfs_ioctl_clean_segments fs/nilfs2/ioctl.c:916 [inline]
- nilfs_ioctl+0x261f/0x2780 fs/nilfs2/ioctl.c:1346
+If NILFS_IOCTL_CLEAN_SEGMENTS is called immediately after mount before
+any btree operation has occurred on the DAT inode, i_assoc_inode is
+NULL leading to a general protection fault.
+
+Fix this by calling nilfs_attach_btree_node_cache() on the DAT inode
+in nilfs_dat_read() at mount time, ensuring i_assoc_inode is always
+initialized before any GC operation can use it.
 
 Reported-by: syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
 Closes: https://syzkaller.appspot.com/bug?extid=4b4093b1f24ad789bf37
-Signed-off-by: Edward Adam Davis <eadavis@qq.com>
+Tested-by: syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
+Fixes: e897be17a441 ("nilfs2: fix lockdep warnings in page operations for btree nodes")
+Signed-off-by: Deepanshu Kartikey <Kartikey406@gmail.com>
 ---
- fs/nilfs2/segment.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ fs/nilfs2/dat.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index 1491a4d4b1e1..7e0b24361d0b 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -2518,9 +2518,11 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
+diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+index 674380837ab9..888dc1831c86 100644
+--- a/fs/nilfs2/dat.c
++++ b/fs/nilfs2/dat.c
+@@ -524,6 +524,9 @@ int nilfs_dat_read(struct super_block *sb, size_t entry_size,
+ 	if (err)
+ 		goto failed;
  
- 	nilfs_transaction_lock(sb, &ti, 1);
- 
--	err = nilfs_mdt_save_to_shadow_map(nilfs->ns_dat);
--	if (unlikely(err))
--		goto out_unlock;
-+	if (argv[0].v_nmembs > 0) {
-+		err = nilfs_mdt_save_to_shadow_map(nilfs->ns_dat);
-+		if (unlikely(err))
-+			goto out_unlock;
-+	}
- 
- 	err = nilfs_ioctl_prepare_clean_segments(nilfs, argv, kbufs);
- 	if (unlikely(err)) {
++	err = nilfs_attach_btree_node_cache(dat);
++	if (err)
++		goto failed;
+ 	err = nilfs_read_inode_common(dat, raw_inode);
+ 	if (err)
+ 		goto failed;
 -- 
 2.43.0
 
