@@ -1,155 +1,139 @@
-Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com [209.85.167.46])
+Received: from mail-oo1-f79.google.com (mail-oo1-f79.google.com [209.85.161.79])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9CD025C6F9
-	for <linux-nilfs@vger.kernel.org>; Wed, 18 Mar 2026 02:10:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.46
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773799841; cv=pass; b=rUHgLmMt3AxQHLCVV6lAT3u6wsocny/yxmwX8NzqkuNMF/gZxQXlOXxRjaQ1c4FTchvvOfAmooTd4yBf+cI+bneIp4FuC43rvyAMSs2qwLabG34bL0GbOrkax6XSwEcJRTtklGkTS+pt+eh6YK+iS/CIPW0/hnLwP7YN68Rkz+I=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773799841; c=relaxed/simple;
-	bh=e0JPB7Ul1862fdYhG1SLzDh5XHxBmHzMGLY8DA06Lyc=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=bNSzK6HsPtUoUgf/ba1YZjLf8k8LPomShCV3AxA4qRZ7Ogb7BsMyHNb/h9OzsZB0aNYX8x5zATH3lTyuABW2pLrYHb/A62IYtrV9qfRUl7ApNPk5wbyNpnC5JW8vZHQkoIPEB2xqK3NaBDngiJ00AsAD/9Era8SWgnpU9H1v8/g=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=K/VDxgWa; arc=pass smtp.client-ip=209.85.167.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="K/VDxgWa"
-Received: by mail-lf1-f46.google.com with SMTP id 2adb3069b0e04-5a27b65a863so20965e87.0
-        for <linux-nilfs@vger.kernel.org>; Tue, 17 Mar 2026 19:10:39 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1773799838; cv=none;
-        d=google.com; s=arc-20240605;
-        b=Mql9ddxMjR8syt5yPCJJ0qXF1LMMURZskp0QtICYqE41Bi9eaMpyj80SjyVzfK6mmi
-         UkwjGlsiVmCLEY1uzhviUAJOBJTkbogKr3+gDQnxiTAoVPOo4M47887aOp+7ngQH0hTK
-         0MPNIvrRJ+ZXDHkppyGpggiMiqN+WRzi+8XlBsBZb8R5WtBRksp4FnDyQc8ZkDmDl4z1
-         RJwhHEBQUNFrLjRv+Vee5dHavwvkZoAtrY5SpfHXNJxQOyOgPOFuOKZU/sqPCRsxF6c3
-         7/OykkNyGj8ShHqRM5nza44AH6TjwrbvIhT5sD8s3UAfSbvGKl2go5+00Qgmg4ciVYf0
-         3z/Q==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=ZydEE/IaRmaswQKiT61pFyFMU/Uk9V8y3kVXUM+9TD4=;
-        fh=o8KZt8/6hNsdXi/bq49sbDX2ky2ggLUS1drBCwU4z5w=;
-        b=OWR3c2V1gntU94UDHsL2zzeTbpG6pzeWQ4Q3VZZWBJ+1dDr7mr5WHgCbwrFa5lJsjZ
-         9vwLRkKOf4gTPp17n09pg29bqq7dNYy47lxYWMG/aDiy9ABJHK3xilUY1tDto1dRA/oa
-         Yvc4sfHvcA4mPgbEHDloGJ7YMV7Do9gj+WKLXc9jSApigYCpz4ia+SwBPSQODsBaTATl
-         DEf61JRG+X5WHo+0a2UDDQmhszW27/XIQ4CTDdYL95mgEdzXlQi4CxkTRMlyCNy7If+9
-         vMGreB8Ep9ZvabIDNYxuz6clIZlrq2Hm20I+QHuCRFJg4nJjkyntHf4ru96RynlxWDUj
-         ELPA==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1773799838; x=1774404638; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ZydEE/IaRmaswQKiT61pFyFMU/Uk9V8y3kVXUM+9TD4=;
-        b=K/VDxgWasyuC8kaH8KT5wc95qaU17hrZQH4VuBFPx/03QZ7IFXiG/xzsGCxECUN6V/
-         I7C9LqM2iR0+KqjPn2N3Rr4j99tKP7PiNBDP3nIROKaTVguSUo1ihOtlz/RdsJ8LSfrr
-         yMb23FFmHxQNVkf3tGgRPD+W1Lyz9QKm0Qipv9P/nUQzraLDQ3nVRKZHIYCHUQ8UYZCx
-         AddTJoW9103qb76lywBdIQc09dhWtYpzpkFWSa3WTHmBtPi0mVs8pqx3HOTpOzdkh6Nb
-         J+/r6RjYkRxeIbmtYe07dUcXHOdU06PUGBv+WLzMSxBLwMUOhW9MHh7jQWsEYT091gAL
-         tN1g==
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 082E6346AFD
+	for <linux-nilfs@vger.kernel.org>; Thu, 19 Mar 2026 07:21:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.79
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1773904897; cv=none; b=GtWNV79n5WuEmNUEsfCMF7ZudQwO6MASglZnN5PLgDwvUPvSuQ+HrN6PRcE6r7jNOJjmpSren5zTwS6xwfSQ8g2O6G+keukikGkbC/ZfzhCwTEbPt4hZ/J7v4afL+hFuvySLKD5bJuk7pdMzuaeyeLTuHM0g+nFbjME18IHPJ8c=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1773904897; c=relaxed/simple;
+	bh=8seua+4qj/e0rmygFKzK6UtLvFZjOqL7B76gpKYERkQ=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=RQ4RoebW7GhGVfglDIOgxkcyfooK1EpjTwQimejxZjq/P0D4sE9zAETuDB+HwBtNa9X82cOxK+SQGtJAOA3TLJwFM6PvMpeVkHnIxwWRvjiP/r/LN5rthehiZ+4R5GVv7ucUYo306/8utLzOJUY++fnoYUexs1Ug/gyV68GF4X8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.161.79
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oo1-f79.google.com with SMTP id 006d021491bc7-67bb2273d42so11129380eaf.0
+        for <linux-nilfs@vger.kernel.org>; Thu, 19 Mar 2026 00:21:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1773799838; x=1774404638;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=ZydEE/IaRmaswQKiT61pFyFMU/Uk9V8y3kVXUM+9TD4=;
-        b=pU0GUyeMfyAncfi8bh7eIjuiZgy/EdmVMby8P2QipDrrhTvnOc87BwhQw0GU1GStLQ
-         s8v3ug/1yVOXsEdOvmfo3CaypN6TGIJmvGIkHYHdVJq9qzjTcYSzRwnKeHhb5hKyAXtW
-         r/lWNlleXkcXNHlwzMMPGLc1OrT4WjRoWrkFXO8wQWbRgH3QKWtT98bWb0fsiucvXxDQ
-         flrShm/G/a7/XRqqejkKn+pj6mvo6DO1INzAIydzC3b/BUotMSz0NvLAPQ20zsljn4XJ
-         W9LQfpL0DdlVmoEn82x7W4nT0FhGq7EbMkaEl4zl4BQVsBDjvR7HloLDcMthpnjlo8CD
-         YoDw==
-X-Forwarded-Encrypted: i=1; AJvYcCWxdgMC+a71ecOWclsH9jnMTyWh2jF/4j6mKlLy5F6LI7EX5BSMxJe4rg/xe9n5q184ARuhcYHN2HEntw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzXBfB2mPqeyjCwirlCpVXXfvcOfhMAMiBCrkISHZgSGLxB4RoE
-	NPfH7pm9799SvVagxp3r4qZEJOdNLdBCsNag3bAs99nXL4lGcqA8eZdoRmglKaxLYI/UunQd/x+
-	6VtVjMGIHLy2kNoQqRaZbpalpuK+n0PA=
-X-Gm-Gg: ATEYQzzV6KPBWJjGttk0yBJ8PJIM/aeIJyWFW58QrsyU70PzqcHLhooXKKzdA7yUEIl
-	oOlF7ZLUZKpkLtqCgKAPExG204ozXZ+/LIZpXL5F1Xg3MF5Zoa7ZrGAFrT1Pke9hjVSXtUYBzB+
-	PmzuRKEpSmjIOEnT1K7lnQ8C3ia1RWhlsepENgO4z0//5RW/ZXYnCtyYs6PSc9SvOptNh5woIOL
-	3v1hX3jBFVmgJme6Jq/C5iKhXMGsPacyARcvoGrMYJrWKXaVsZ+CXLH9SN1/oew+kxzaQgiUPzF
-	j4Iu8MYq
-X-Received: by 2002:a05:6512:1597:b0:59e:65ff:1e8c with SMTP id
- 2adb3069b0e04-5a2796c33e1mr718677e87.21.1773799837613; Tue, 17 Mar 2026
- 19:10:37 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1773904895; x=1774509695;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=ufulecwshlguFde1LfsWzzbGCArOQYfbgkkoEJK2Tzc=;
+        b=KkA3OxouTcEYIgLf/qPRuv9AQnr8Id6gnCXSz7DLzSr2dV6fLV/Zi5ECcqbvWYPANu
+         K1A10D8F392Re3YPXx5sdommUPjQqxPLD84UOl0Ho1YqDIxMJmj805e7qwd9n5LHzAjH
+         79RQwHBEG1uAceDK9WoTbZmAQ/ZQ1NKuTXVhjxh9zvjRUC5ieR/L5Tb03v6FI59/m2dt
+         CfBg87J367/TiMc/4yZ7/1iXJXoPYrVZz1GXlkUGo6+fcbmgBjnwATwbCK6ZAFFikT9j
+         /N5HMUoNPg/uMidh6DzYnDe7C77ECjcrhooZSZhtx4jXxRTJStGu4jbfIafgr+DmMObA
+         AKoA==
+X-Forwarded-Encrypted: i=1; AJvYcCVeLTNWf5CzSxgNofxsFpiuMvKBoa1Dxor751Qb89eG8ZAhuFV7OrFtDsDXs7bAOJSMG0+KHDSrOgkZnw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzpQW6yPvMTQ/APyBK4jHDdewVs3LkDwo2Oum07Y5ujW2SL7EUf
+	rdrc/NPwiXUzoxnOamv7Y2GLAvb+BAAoXMjWtnR3sCi2W0Ye+YTc67SdatP8Cje4jAoQz/SUBpe
+	aemmMf4l/S6m1xakc4HZoWk3lIME2ZUc1+SeGM3hzt0sAcSLGXXkFpkYZO4o=
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260317090109.878401-1-kartikey406@gmail.com>
-In-Reply-To: <20260317090109.878401-1-kartikey406@gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Wed, 18 Mar 2026 11:10:21 +0900
-X-Gm-Features: AaiRm51U9uMDuPFqmSR1A2ydV9tEyqPaHqmx8QDMY3XbWWFfyQ3bE3HdGi2p8rM
-Message-ID: <CAKFNMo=eqZDh3zEWX2Vyi853Hz8JdUJ7_kAqQbFcJfsS7Ld0Cg@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: fix NULL i_assoc_inode dereference in nilfs_mdt_save_to_shadow_map
-To: Deepanshu Kartikey <kartikey406@gmail.com>
-Cc: slava@dubeyko.com, akpm@linux-foundation.org, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, 
-	syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
+X-Received: by 2002:a05:6820:80c5:b0:67b:af3e:b1de with SMTP id
+ 006d021491bc7-67c0db3b7cfmr4420192eaf.69.1773904895177; Thu, 19 Mar 2026
+ 00:21:35 -0700 (PDT)
+Date: Thu, 19 Mar 2026 00:21:35 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <69bba3ff.050a0220.227207.0031.GAE@google.com>
+Subject: [syzbot] [nilfs?] WARNING in nilfs_btree_mark
+From: syzbot <syzbot+98a040252119df0506f8@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
+	syzkaller-bugs@googlegroups.com
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Tue, Mar 17, 2026 at 6:01=E2=80=AFPM Deepanshu Kartikey wrote:
->
->
-> The DAT inode's btree node cache (i_assoc_inode) is initialized lazily
-> during btree operations. However, nilfs_mdt_save_to_shadow_map()
-> assumes i_assoc_inode is already initialized when copying dirty pages
-> to the shadow map during GC.
->
-> If NILFS_IOCTL_CLEAN_SEGMENTS is called immediately after mount before
-> any btree operation has occurred on the DAT inode, i_assoc_inode is
-> NULL leading to a general protection fault.
->
-> Fix this by calling nilfs_attach_btree_node_cache() on the DAT inode
-> in nilfs_dat_read() at mount time, ensuring i_assoc_inode is always
-> initialized before any GC operation can use it.
->
-> Reported-by: syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=3D4b4093b1f24ad789bf37
-> Tested-by: syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
-> Fixes: e897be17a441 ("nilfs2: fix lockdep warnings in page operations for=
- btree nodes")
-> Signed-off-by: Deepanshu Kartikey <Kartikey406@gmail.com>
-> ---
->  fs/nilfs2/dat.c | 3 +++
->  1 file changed, 3 insertions(+)
->
-> diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-> index 674380837ab9..888dc1831c86 100644
-> --- a/fs/nilfs2/dat.c
-> +++ b/fs/nilfs2/dat.c
-> @@ -524,6 +524,9 @@ int nilfs_dat_read(struct super_block *sb, size_t ent=
-ry_size,
->         if (err)
->                 goto failed;
->
-> +       err =3D nilfs_attach_btree_node_cache(dat);
-> +       if (err)
-> +               goto failed;
->         err =3D nilfs_read_inode_common(dat, raw_inode);
->         if (err)
->                 goto failed;
-> --
-> 2.43.0
->
+Hello,
 
-As I've already answered in a discussion about another patch for the
-same issue, I'd like to adopt Deepanshu's patch as the fix for this
-issue, after doing a little more review (mainly for error cases) and
-testing just to be sure.
+syzbot found the following issue on:
 
-This fix pre-allocates inodes for the b-tree node cache and is a
-comprehensive stabilization technique that covers multiple potential
-cases regarding non-existent b-tree node cache references.  Since DAT
-usually starts using b-tree mapping very quickly, I believe this
-approach is not overkill and is a practical solution.
+HEAD commit:    f0caa1d49cc0 Merge tag 'hid-for-linus-2026031701' of git:/..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=12d868da580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=d46eab0cfd31c214
+dashboard link: https://syzkaller.appspot.com/bug?extid=98a040252119df0506f8
+compiler:       Debian clang version 21.1.8 (++20251221033036+2078da43e25a-1~exp1~20251221153213.50), Debian LLD 21.1.8
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1452974a580000
 
-Thanks,
-Ryusuke Konishi
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-f0caa1d4.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/790e2ce16030/vmlinux-f0caa1d4.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/dcb6a5644f0c/bzImage-f0caa1d4.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/93d9925377df/mount_1.gz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+98a040252119df0506f8@syzkaller.appspotmail.com
+
+------------[ cut here ]------------
+ret == -ENOENT
+WARNING: fs/nilfs2/btree.c:2356 at nilfs_btree_mark+0x1c9/0x210 fs/nilfs2/btree.c:2356, CPU#0: syz.0.17/5469
+Modules linked in:
+CPU: 0 UID: 0 PID: 5469 Comm: syz.0.17 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+RIP: 0010:nilfs_btree_mark+0x1c9/0x210 fs/nilfs2/btree.c:2356
+Code: 48 8b 05 4a f8 6e 0f 48 3b 44 24 10 75 26 89 e8 48 83 c4 18 5b 41 5c 41 5d 41 5e 41 5f 5d c3 cc cc cc cc cc e8 88 f8 17 fe 90 <0f> 0b 90 bd fe ff ff ff eb c3 e8 58 99 02 08 44 89 f1 80 e1 07 80
+RSP: 0018:ffffc90003d375b0 EFLAGS: 00010293
+RAX: ffffffff83adb7f8 RBX: ffff888042014000 RCX: ffff888040904980
+RDX: 0000000000000000 RSI: 00000000fffffffe RDI: 00000000fffffffe
+RBP: 00000000fffffffe R08: 000000000000000e R09: 0000000000000000
+R10: ffff888042014678 R11: ffffed10084028d3 R12: ffff8880464286a0
+R13: dffffc0000000000 R14: ffff888046428668 R15: 0000000000000009
+FS:  00007f5bd0f206c0(0000) GS:ffff88808ca55000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fab839e8000 CR3: 0000000033512000 CR4: 0000000000352ef0
+Call Trace:
+ <TASK>
+ nilfs_bmap_mark+0xba/0x180 fs/nilfs2/bmap.c:402
+ nilfs_ioctl_mark_blocks_dirty fs/nilfs2/ioctl.c:764 [inline]
+ nilfs_ioctl_prepare_clean_segments+0x49a/0x800 fs/nilfs2/ioctl.c:799
+ nilfs_clean_segments+0x18c/0xa50 fs/nilfs2/segment.c:2525
+ nilfs_ioctl_clean_segments fs/nilfs2/ioctl.c:916 [inline]
+ nilfs_ioctl+0x261f/0x2780 fs/nilfs2/ioctl.c:1346
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:597 [inline]
+ __se_sys_ioctl+0xfc/0x170 fs/ioctl.c:583
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x14d/0xf80 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f5bcff9c799
+Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 e8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f5bd0f20028 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+RAX: ffffffffffffffda RBX: 00007f5bd0215fa0 RCX: 00007f5bcff9c799
+RDX: 0000200000000640 RSI: 0000000040786e88 RDI: 0000000000000004
+RBP: 00007f5bd0032c99 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007f5bd0216038 R14: 00007f5bd0215fa0 R15: 00007ffdf65e5358
+ </TASK>
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
