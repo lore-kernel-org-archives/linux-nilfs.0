@@ -1,72 +1,82 @@
-Received: from mail-oi1-f198.google.com (mail-oi1-f198.google.com [209.85.167.198])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out-179.mta0.migadu.com (out-179.mta0.migadu.com [91.218.175.179])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73CC53EF0DC
-	for <linux-nilfs@vger.kernel.org>; Tue, 24 Mar 2026 12:01:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.198
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 053E327E049
+	for <linux-nilfs@vger.kernel.org>; Wed, 25 Mar 2026 08:35:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774353667; cv=none; b=AGo/mkjRGFHFHOxhTZ1AXfn6ovZX4wSnRpmrkzWK41eECd3J5gZBwr2uSrdKHmSXaDB3WdpfpKiDMH8/YmKNXl+KG9jjgxOk+DkfS+9TezMYwjSXXSZE0/nQJ/oGIYIujj2s+JWk3N2chMiLgLsVos3xBbhyZB+j7CTl2OowfZ8=
+	t=1774427750; cv=none; b=HX1rNUuLwGomBFsXwjIvA4KltvOhY8vDwj2aH0JHPRMn9CKOAfMlyRCuJbYRqkr+k859nUHvj89A65Kg9cRUFkEFA+3LFUaKJwn/qsLbuIIg3GMiFc+P8clQMaUDfHGkRE9PYO8vMle/YLjhH88xejKMDQVnzIelARji/YgazdE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774353667; c=relaxed/simple;
-	bh=NZdgAdznHpDbsb0SoRtymRAclQN4M4YzjI0NpfykQW8=;
-	h=MIME-Version:Date:In-Reply-To:Message-ID:Subject:From:To:
-	 Content-Type; b=rt8bZ3Txd4a5Dtpv8JWQzOkDvB24f87Ib1bGTuVJASa3BrkjEr967iPmo0HjqCXbsvWlMDVfr4VbwyZHEGKKWWL3riFHPYtFOolTzOBxgAgstFZZWtd0AwnHtmpPfy7kq8u0kug8d81YO3Mvqp8VoBXIxPUnldiefcHtu1Ho9Bw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.167.198
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oi1-f198.google.com with SMTP id 5614622812f47-467e8aaa943so15028636b6e.0
-        for <linux-nilfs@vger.kernel.org>; Tue, 24 Mar 2026 05:01:03 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1774353663; x=1774958463;
-        h=to:from:subject:message-id:in-reply-to:date:mime-version
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=eq+NSgDd45IxmtwonKl+qVks/DSrzpVI0yR9kUnzlGs=;
-        b=B7oBg+hLnOY4T0kRMkdzwb16HoJUqu5PyVGZZbevFWlAF7CSiESnNyNH2rG2f/T4IN
-         8xmcAw6Q1SLMv8eNE/08wv37GtnRccfe8oHr5WSK7bdLWElPEBDfTpMsaxtZPgE/OMr0
-         kBd/n3/+aoRsraLjd8oWQVKsuiyK7nDupI4KEU9Q5jamHfG8Y8JgafKfEDDsu2rIM4A1
-         BatcuH0hNybImkS1V+jDspF4aCzGg1Q4LAdoWenGa/yfy2i2c46fLKc9wJr4wbxD+SYT
-         cEKBK+l6+8puAmDzqSVknUt9xV1xbsgVOJ+M2e15J3p6WzHg77LcKE9QSnZOAfnLxT8x
-         +Y/g==
-X-Forwarded-Encrypted: i=1; AJvYcCW34haUqTqsdqfAlubt/9JlzWwILkmYxLYNdJ0dsPGl9aevFzDY8Ss52BqdkSme5t1oBkmgAyfhEMEOWg==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzbHVGJq07HyejVMNQi1AijSm+1ea95EwN/kpCJbMv6CrbYAvsJ
-	nbYdmaciK4CWWLjKKJLlTxcBLEvXovouvyaY9lR8BAAUKaRpgVU8GC3CF6goDjXQAxaS44RzVB5
-	UG+LwRTG2HM28mLeiBxtBa8/pLZFp7Y022mV6HTXkJ/3MQnhvxcINyJrypvA=
+	s=arc-20240116; t=1774427750; c=relaxed/simple;
+	bh=6qSQFNasMVXYLMKeWajRh7qvwpK9h4LTtPHXhLG2LUg=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=O7DG6bryziZcSBGm8+d6PQPIxI9BPNr3qiWWvHJDeQs0k7GeAkYRzNa8o7wva+qSVJlbA2QdIIIj4/RGERqhzXtOpruywWwUcgjvmlDN+dxjKtG9HlkgNlajLb1c7BM98YvMmHVsGcWhoiMVkqRVEY4EjeZUDFykL8bQ9VdWKWk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=lAwNRiCE; arc=none smtp.client-ip=91.218.175.179
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="lAwNRiCE"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1774427736;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=gLHVcGA6er5h67mQoiXCJ11evQL+AyiM8toagc3fS+4=;
+	b=lAwNRiCE9G0FzjrDkVebjugRuQLevJFSqm69htyi3B0ZmZwzr7VTGArAv9ddXyFVD4xUeS
+	kOLawiwg+zYLdUQZ3zbct+AByviXoUGNMzDHXUnshDaeBU2keOpkAKiKUG0ibPZB0xVpPk
+	LEeyYai0hYaCUwmgopwiVgbfY7F73k4=
+From: Junjie Cao <junjie.cao@linux.dev>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: Deepanshu Kartikey <kartikey406@gmail.com>,
+	Viacheslav Dubeyko <slava@dubeyko.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Koji Sato <sato.koji@lab.ntt.co.jp>,
+	linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	syzbot+98a040252119df0506f8@syzkaller.appspotmail.com,
+	Junjie Cao <junjie.cao@linux.dev>
+Subject: Re: [PATCH] nilfs2: fix missing continue after -ENOENT in nilfs_ioctl_mark_blocks_dirty()
+Date: Wed, 25 Mar 2026 16:35:20 +0800
+Message-ID: <20260325083520.501618-1-junjie.cao@linux.dev>
+In-Reply-To: <CAKFNMo=Z2wsL5za0VUeYh23nodPusUCC9WasSeR5BHc6tEBu1A@mail.gmail.com>
+References: <20260319091930.1088735-1-kartikey406@gmail.com> <CAKFNMo=Z2wsL5za0VUeYh23nodPusUCC9WasSeR5BHc6tEBu1A@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6820:1a07:b0:67d:e505:cf5f with SMTP id
- 006d021491bc7-67de505d224mr6123511eaf.1.1774353662909; Tue, 24 Mar 2026
- 05:01:02 -0700 (PDT)
-Date: Tue, 24 Mar 2026 05:01:02 -0700
-In-Reply-To: <f75eb907cfe0944a5cc3bd02d137fce8.junjie.cao@linux.dev>
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <69c27cfe.a70a0220.59f55.0006.GAE@google.com>
-Subject: Re: [syzbot] [nilfs?] WARNING in nilfs_ioctl_prepare_clean_segments
-From: syzbot <syzbot+466a45fcfb0562f5b9a0@syzkaller.appspotmail.com>
-To: junjie.cao@linux.dev, konishi.ryusuke@gmail.com, 
-	linux-kernel@vger.kernel.org, linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
-	stable@vger.kernel.org, syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-Hello,
+Hi Ryusuke,
 
-syzbot has tested the proposed patch and the reproducer did not trigger any issue:
+On Sat, 21 Mar 2026 at 02:32:05 +0900, Ryusuke Konishi wrote:
+> Since this implementation interacts with userland GC, I will check
+> whether this is a simple missing 'continue' statement or if it was
+> intentional.
 
-Reported-by: syzbot+466a45fcfb0562f5b9a0@syzkaller.appspotmail.com
-Tested-by: syzbot+466a45fcfb0562f5b9a0@syzkaller.appspotmail.com
+Both downstream paths have asserted on (ret == -ENOENT) since the
+original commit 7942b919f732 -- initially as BUG_ON, later softened
+to WARN_ON by 1f5abe7e7dbc.  If -ENOENT were meant to reach those
+paths, asserting on it would be contradictory.
 
-Tested on:
+The original code appears to rely on the dead-block check
+(bd_blocknr != bd_oblocknr) to implicitly skip the -ENOENT case,
+which breaks when bd_oblocknr is also 0.
 
-commit:         ebd34541 nilfs2: skip blocks with no bmap entry in nil..
-git tree:       https://github.com/Lukaaa525/linux-kernel.git nilfs2-mark-blocks-dirty-fix-syztest
-console output: https://syzkaller.appspot.com/x/log.txt?x=1100d6da580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=a1eff8566a28238e
-dashboard link: https://syzkaller.appspot.com/bug?extid=466a45fcfb0562f5b9a0
-compiler:       Debian clang version 21.1.8 (++20251221033036+2078da43e25a-1~exp1~20251221153213.50), Debian LLD 21.1.8
+This same fix also resolves a related syzbot report that hits the
+same root cause through the level-0 path (nilfs_mdt_get_block)
+rather than nilfs_bmap_mark.  I applied the patch on top of
+current master (bbeb83d3182a) and tested it locally against that
+report's C reproducer in QEMU -- the warning no longer triggers.
 
-Note: no patches were applied.
-Note: testing is done by a robot and is best-effort only.
+  https://syzkaller.appspot.com/bug?extid=466a45fcfb0562f5b9a0
+
+For that related report, when the patch is picked up:
+
+  Reported-by: syzbot+466a45fcfb0562f5b9a0@syzkaller.appspotmail.com
+  Closes: https://syzkaller.appspot.com/bug?extid=466a45fcfb0562f5b9a0
+  Tested-by: Junjie Cao <junjie.cao@linux.dev>
