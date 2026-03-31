@@ -1,160 +1,137 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pj1-f44.google.com (mail-pj1-f44.google.com [209.85.216.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC82936C5A1
-	for <linux-nilfs@vger.kernel.org>; Tue, 31 Mar 2026 02:59:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64B0A4418CA
+	for <linux-nilfs@vger.kernel.org>; Tue, 31 Mar 2026 17:52:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774925969; cv=none; b=ZyG3fgQZYszImi0FH8Cq7FJoIAD+jueJ0DV2qjohGb5oaLar2qQusFZYByJvnc1HZPhnL/ZmkiJMicYl9GQlegJiIcClUHjPC9JrFk81n49OVw0kS4Z+CZ4GEj5m9rilqkY3xr5WG0RQ4JFkUupb7HaPUMJP8rCEUMG9vqQzXtQ=
+	t=1774979582; cv=none; b=LGQ/S3imPaXp9kaHANU+RJL/qhgIZuIyah8r0dUdBrPXo5DNNqksvyIxJ/15wTQofN3K2mKnmS/s/QWN/IIKmGSWEfHXUaTtBcOTnnuviDo6G9Z4VSWBJir2Sme1B5WT0sXNK2Za6Pd5itiCpLWXSwl2ZWHo71LgWN4JKG2nnEc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774925969; c=relaxed/simple;
-	bh=zNhgUz9ReUGHOQ83EN9pFtwcqQdeke/vCJ+vd+ivkn0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=sNKfUbxLaMy6USB1Y6fnxUUjr9ZE+knLA5tgdWXdNP+0TAjN6dKhQUOAwOadI9dCIW/e3kjPPnhHy0Jh2McoUe/bBzLhdURI/wcrE6n0K3PziDsZfjKl54Yl7FEiCa+gM0uA4acZ9DmV/K34Pi43rEoVBE5I205nSOwVUnE0qsg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MBmISfNz; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=LDMZpk7j; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1774979582; c=relaxed/simple;
+	bh=QAZXf4JkOAmC+Mx/SpSz0uAK8WAYsJWx1iucQR2ubXk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=hF9APnCtjB26AlagIsvU/r63CSWKkgeQJ43TYZudun1T7WDMjlQ2C0Q5O1cSC3mbi+6AcCbioJGb9GrqYx40ORFfs4Odm0OQa7Ps9IVqByI5ATC9YveE0ykchySYeqJDMzhaEMpy8uiJ554Tuut51azgv1EuNmr8ePvxXQC2aRw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jv800zfu; arc=none smtp.client-ip=209.85.216.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MBmISfNz";
-	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="LDMZpk7j"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774925967;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=E0g6gRYM7q6LCZWMA79d4gm190i5DzNRGgx3Feq2BXc=;
-	b=MBmISfNzlGIYplSN6wVcxb3oC1biZpUSrvTnVbPiYaZp7dcriIIaQCTMnEbGYz/zGAqo+r
-	hGC5n6iSe33V+ZAWyfkj463hXb/OpducU8jdU7fY3M1lA/r1ZcjPK8rYRrZDok5yO2h/Ol
-	7XP0u2PDPRIQX5X2Mp5WQbNU8nQZics=
-Received: from mail-dl1-f69.google.com (mail-dl1-f69.google.com
- [74.125.82.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-345-DBu17xwsM9216y4nswxanw-1; Mon, 30 Mar 2026 22:59:24 -0400
-X-MC-Unique: DBu17xwsM9216y4nswxanw-1
-X-Mimecast-MFC-AGG-ID: DBu17xwsM9216y4nswxanw_1774925964
-Received: by mail-dl1-f69.google.com with SMTP id a92af1059eb24-1275c6fc58aso6460359c88.0
-        for <linux-nilfs@vger.kernel.org>; Mon, 30 Mar 2026 19:59:24 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jv800zfu"
+Received: by mail-pj1-f44.google.com with SMTP id 98e67ed59e1d1-35c124d2613so3849399a91.2
+        for <linux-nilfs@vger.kernel.org>; Tue, 31 Mar 2026 10:52:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=redhat.com; s=google; t=1774925964; x=1775530764; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=E0g6gRYM7q6LCZWMA79d4gm190i5DzNRGgx3Feq2BXc=;
-        b=LDMZpk7jO3CqV/8d1bgSbQpFE8Snibzy11vHdGAfUara/84O0Q/d94ytxwjNiYby1G
-         74ZlfYp1llsPGi04vlTSmdUxfBGNDazfpCHQqaW1WK6+aFiGzaf7O+pgzslbKUEovExs
-         vgpbtktirxoMV7QGhU8IBLmq91fG074LD1Ydv7IvkMpTt8pjd0zUmCrVlHrMaBAplgNy
-         eih56lSnTYdYtgGLbjCsVggxK09Ci50KzPXugqm7qFENO8lPwKZT5YWasgsbv7BdoqUk
-         z9KH54xatp1Q2DbKnIW/IS7Ub9yky6l561PaBFUhzmoEKP/ttMn0K3JWU3ZxnOgwJbll
-         z8Lg==
+        d=gmail.com; s=20251104; t=1774979577; x=1775584377; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=fed1i3OKdyyPfPcS5zEZlT7I7sjgHB4UBU0/7zGF7T0=;
+        b=jv800zfurZ+1e6mv2QGDc6ovb5dTzJqa++edh9NKNy1/7TO2aaBhDTKxAR1SgyiW3F
+         ZHMhTIVm1ZiMNFec8NtKK6FarSMaBP5xLnlXhh1sq30oF76+/usycYe5f//+wZI8Zd34
+         NZxTX1ruKFQiWH2i92tI2fJo47+qeJfMAvQ0Int8LtMyCrA3GSeXipdjbBlAQK2rGCOf
+         /uz/DM0O8JRSidPzByoEn6/D6S3b3u7Ijbit61xaImkB02+TTBCpwbR9K6paTwfo/fDm
+         EwZPxoEJgYyiVbxLXfvKLzK1c0Z0lBTVGFrBFSY0TvLltTDw4MShepSx4NtjCwLHxVp5
+         o1eA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1774925964; x=1775530764;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=E0g6gRYM7q6LCZWMA79d4gm190i5DzNRGgx3Feq2BXc=;
-        b=C98g0DA4FKRlxqQKQz3jeVEiN+aoWSiwRXsVwv+svgOwwEEj0P14j1pQErVqhKYxoR
-         GUtCr5zS5XnxTJsB5Hc0oPAzthZiuTJweQiUBPo5em1+JMbca0Fl+EtIWI5htv+PkWC9
-         PeLWYOu81J8/HCQgE1PVHiYAzLAm7NpypBFLfeP8QflpbquHsoCViZf4+8QB4R8Lyn5P
-         BfkT4vEyV0usOopOH2uVyPXvL0bLu5W7AldrInhT0NbCvy4hOZT6KkaBgUynq9fU/Sw2
-         b/v2pLxKslfaeIREB4MUFxyknmdu3KsJkUg+RHq1eLolT0UY8Kv6GMdx1dzU3PsAKaa4
-         eqjw==
-X-Gm-Message-State: AOJu0YwOMZEfKmpakEbTbb/nuXLOb92fC11i1dOIjV5w0bImsSo89JrR
-	8BBUh1+yVeFx2fUmPAwYujjtHmMpaR2f/rP8jrNzcq0JGSf+sM0e2FMfgplpIaXG2Xzvr/GOsMJ
-	WNQ+TNYk+0Ur1EDpOef4emso4WJmWuVepFUMJTA38ciznD6RTWc2bC/91Y4q25Z7p
-X-Gm-Gg: ATEYQzzKc4TYeqH7nD1qL5y3lryf1FVbMkpCVPb1X/jkCpljm6EX7IT6wcbpfuxGh2I
-	WPKtER9Inw1MNB7HZK9EP9fkl/hHdtQF5qAeEWlYv/swiG54DuCAiMezKNdWqyz5DwKgK2kVGMv
-	LHibnFJynYarq2Qe+slKU+hU1tZGWtz17JyqhzsqSECAuy7pk56KwUdTNv2z/kPl/whzDyWG4xP
-	zaEdCtlWWMZ1xVh0KI7yPP7CVt6YrE36/LGZM52n2XoIrAl01ufZKyihscCJ/P4jheXcQIRbK/x
-	4ClXQIdDbsnv9enqjpwxC8LNZ+hxDxIuqrbsqlhA3PXDxCImHL9su7Sg/VqDJ7qJlzJ3jPGoCBf
-	ayk4coQAOW9HtKIKjRofNvLut55sPkqMWOgV6t4D2k8WvGiaKMaJC
-X-Received: by 2002:a05:7022:f8b:b0:128:bec5:1b37 with SMTP id a92af1059eb24-12ab2877c40mr6788928c88.16.1774925963627;
-        Mon, 30 Mar 2026 19:59:23 -0700 (PDT)
-X-Received: by 2002:a05:7022:f8b:b0:128:bec5:1b37 with SMTP id a92af1059eb24-12ab2877c40mr6788916c88.16.1774925963105;
-        Mon, 30 Mar 2026 19:59:23 -0700 (PDT)
-Received: from li-4c4c4544-0032-4210-804c-c3c04f423534.ibm.com ([2600:1700:6476:1430::29])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-12ab983f9f3sm13665287c88.10.2026.03.30.19.59.21
+        d=1e100.net; s=20251104; t=1774979577; x=1775584377;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=fed1i3OKdyyPfPcS5zEZlT7I7sjgHB4UBU0/7zGF7T0=;
+        b=A6fU9oR5bTbYVlCCS39CthiDRo2CAVz6nSbwr8evmSAcRGhjZML64/kazLVCLJvl5v
+         0s+K5bRxrcPNPtcCmLnj7aFaVXYf6hxmz22h6gyabQLZASVjiCUK6jYvYIEXqcru27Le
+         BH/UdxBYsTj/yZABQECG9MnM6ZXUqHTJ6SLULHTCgXZaZsjqXLZvkvJlCIj/LUn2VNLk
+         1IupyO6iJQEoJtG19dAuadARrHqG/0Y8nddmC9uol7MeHO+Y3DMl2Bo0SgBqOF1s5/YV
+         0NTedn9gLaWICepfk/YE2FGNXXwB5IOHWJX/snEVCKoKa9OPFqKQZwOL1pHbJ64lCuuB
+         rB3A==
+X-Gm-Message-State: AOJu0Yxy2xTtO47GlxgWGNxt9hndMMdLCPq8EXTIMSGevWo0epiiOIl2
+	73b7qQ7D7MuhBaC2sfasYtvFn697dXqWu7IwTJsVw94ff2O/H3+XI3hx
+X-Gm-Gg: ATEYQzzsOFcORZILC7RzAtTXI8uamjn9gD424N6ktqQmc8z5nqPQDQXHjToU5FmoLhU
+	WLQ322nAu9vydYf2TTga/ep1nyPH2AY834VrGG4q1YJLVlmXBVWmRi7M/YLjkxSsJOeEN2mKB6u
+	lcS6+BWXOuA4z3L4hxvsMUse3vBH0VwCC+lh+iujEdKRCC5cw1LpdR4txTJn+IF67zlbC36SEFz
+	OkMy3gnv96naHPnvLnjfB6jgOQ5AXixp39CAgJqWc18DpCXlKO3AZO0M+OCgrU4eKwrfnGjeXwX
+	jwOTVY7lVmraEtMrW3e7IIIuDOrRqRlOVaC4UlgC5c69HlvgNgCZOjAJcS69i+3MgdWDZ0+oaAn
+	A0XAvnx9/Gh+1Nfka0+BT4tyua+hK3Jf9m44des1/a9Ck+Dn94k2tgec8nsjnc9ct11vBRfozec
+	NFTgmmBHDPD3LgZJ7Af7WUFHQtv14/bwKAuEjgL6Z1Ln+Py07O9b5rH1MPSi7+QnWVIH/n7zxua
+	Hp+GBw=
+X-Received: by 2002:a17:903:1ca:b0:2b0:624f:8edc with SMTP id d9443c01a7336-2b269aba73dmr1339905ad.12.1774979577486;
+        Tue, 31 Mar 2026 10:52:57 -0700 (PDT)
+Received: from carrot.home.local (i114-181-46-93.s41.a014.ap.plala.or.jp. [114.181.46.93])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2b24265e7basm163211155ad.21.2026.03.31.10.52.55
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 30 Mar 2026 19:59:22 -0700 (PDT)
-Message-ID: <5e8a0bd840b83601909186fc908f025fdb946b33.camel@redhat.com>
-Subject: Re: [PATCH] nilfs2: fix NULL i_assoc_inode dereference in
- nilfs_mdt_save_to_shadow_map
-From: Viacheslav Dubeyko <vdubeyko@redhat.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Viacheslav Dubeyko
-	 <slava@dubeyko.com>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML
-	 <linux-kernel@vger.kernel.org>, Deepanshu Kartikey <kartikey406@gmail.com>
-Date: Mon, 30 Mar 2026 19:59:21 -0700
-In-Reply-To: <20260331004734.25792-1-konishi.ryusuke@gmail.com>
-References: <20260331004734.25792-1-konishi.ryusuke@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.3 (3.58.3-1.fc43app2) 
+        Tue, 31 Mar 2026 10:52:56 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Viacheslav Dubeyko <slava@dubeyko.com>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Deepanshu Kartikey <kartikey406@gmail.com>,
+	Junjie Cao <junjie.cao@linux.dev>
+Subject: [PATCH] nilfs2: reject zero bd_oblocknr in nilfs_ioctl_mark_blocks_dirty()
+Date: Wed,  1 Apr 2026 02:52:09 +0900
+Message-ID: <20260331175253.32329-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Hi Ryusuke,
+From: Deepanshu Kartikey <kartikey406@gmail.com>
 
-On Tue, 2026-03-31 at 09:47 +0900, Ryusuke Konishi wrote:
-> From: Deepanshu Kartikey <kartikey406@gmail.com>
->=20
-> The DAT inode's btree node cache (i_assoc_inode) is initialized lazily
-> during btree operations. However, nilfs_mdt_save_to_shadow_map()
-> assumes i_assoc_inode is already initialized when copying dirty pages
-> to the shadow map during GC.
->=20
-> If NILFS_IOCTL_CLEAN_SEGMENTS is called immediately after mount before
-> any btree operation has occurred on the DAT inode, i_assoc_inode is
-> NULL leading to a general protection fault.
->=20
-> Fix this by calling nilfs_attach_btree_node_cache() on the DAT inode
-> in nilfs_dat_read() at mount time, ensuring i_assoc_inode is always
-> initialized before any GC operation can use it.
->=20
-> Reported-by: syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=3D4b4093b1f24ad789bf37
-> Tested-by: syzbot+4b4093b1f24ad789bf37@syzkaller.appspotmail.com
-> Fixes: e897be17a441 ("nilfs2: fix lockdep warnings in page operations for=
- btree nodes")
-> Signed-off-by: Deepanshu Kartikey <Kartikey406@gmail.com>
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Cc: stable@vger.kernel.org
-> ---
-> Hi Viacheslav,
->=20
-> Please queue this patch first.
->=20
-> It fixes a potential NULL pointer dereference defect that could be
-> triggered (likely most cases are intentionally) via the GC ioctl.
->=20
-> Thanks,
-> Ryusuke Konishi
->=20
->  fs/nilfs2/dat.c | 3 +++
->  1 file changed, 3 insertions(+)
->=20
-> diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
-> index 674380837ab9..888dc1831c86 100644
-> --- a/fs/nilfs2/dat.c
-> +++ b/fs/nilfs2/dat.c
-> @@ -524,6 +524,9 @@ int nilfs_dat_read(struct super_block *sb, size_t ent=
-ry_size,
->  	if (err)
->  		goto failed;
-> =20
-> +	err =3D nilfs_attach_btree_node_cache(dat);
-> +	if (err)
-> +		goto failed;
->  	err =3D nilfs_read_inode_common(dat, raw_inode);
->  	if (err)
->  		goto failed;
+nilfs_ioctl_mark_blocks_dirty() uses bd_oblocknr to detect dead blocks
+by comparing it with the current block number bd_blocknr. If they differ,
+the block is considered dead and skipped.
 
-Applied on for-next branch of NILFS2 git tree.
+However, bd_oblocknr should never be 0 since block 0 typically stores the
+primary superblock and is never a valid GC target block. A corrupted ioctl
+request with bd_oblocknr set to 0 causes the comparison to incorrectly
+match when the lookup returns -ENOENT and sets bd_blocknr to 0, bypassing
+the dead block check and calling nilfs_bmap_mark() on a non-existent
+block. This causes nilfs_btree_do_lookup() to return -ENOENT, triggering
+the WARN_ON(ret == -ENOENT).
+
+Fix this by rejecting ioctl requests with bd_oblocknr set to 0 at the
+beginning of each iteration.
+
+[ryusuke: slightly modified the commit message and comments for accuracy]
+
+Fixes: 7942b919f732 ("nilfs2: ioctl operations")
+Reported-by: syzbot+98a040252119df0506f8@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=98a040252119df0506f8
+Suggested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Signed-off-by: Deepanshu Kartikey <Kartikey406@gmail.com>
+Reported-by: syzbot+466a45fcfb0562f5b9a0@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=466a45fcfb0562f5b9a0
+Cc: Junjie Cao <junjie.cao@linux.dev>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Hi Viacheslav,
+
+Please add this to the queue for the next cycle.  This fixes assertion
+failures that can occur with broken GC ioctl calls recently discovered
+by syzbot.
 
 Thanks,
-Slava.
+Ryusuke Konishi
+
+ fs/nilfs2/ioctl.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index e17b8da66491..e0a606643e87 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -736,6 +736,12 @@ static int nilfs_ioctl_mark_blocks_dirty(struct the_nilfs *nilfs,
+ 	int ret, i;
+ 
+ 	for (i = 0; i < nmembs; i++) {
++		/*
++		 * bd_oblocknr must never be 0 as block 0
++		 * is never a valid GC target block
++		 */
++		if (unlikely(!bdescs[i].bd_oblocknr))
++			return -EINVAL;
+ 		/* XXX: use macro or inline func to check liveness */
+ 		ret = nilfs_bmap_lookup_at_level(bmap,
+ 						 bdescs[i].bd_offset,
+-- 
+2.43.0
 
