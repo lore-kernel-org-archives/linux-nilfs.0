@@ -1,286 +1,245 @@
-Received: from mail-yw1-f182.google.com (mail-yw1-f182.google.com [209.85.128.182])
+Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com [209.85.208.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE6152D1911
-	for <linux-nilfs@vger.kernel.org>; Thu, 30 Apr 2026 04:09:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.128.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B841540242C
+	for <linux-nilfs@vger.kernel.org>; Thu, 30 Apr 2026 12:13:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.172
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777522144; cv=pass; b=tKlfFrgvrVqxFY4oQjZn8ZAkfbbFpdONmdw9WwpboZNcXROcPzF9CI9fnetrwn97osFIQz8hDHGEKHdiRuigxFiXmjyhu+fnhSJRRhZfyj9g8Wz1L5KpP0E+3X4fCLu8bBJhpr6qaaDDt4/cNHAh2Z3dda0hs1UO6H4QrXiHx24=
+	t=1777551215; cv=pass; b=I7QyxTVItSAoJQ0RSy2h/jYgiiTWqNo+48vqYUc4OR5gyD10c9VORwqDR/vlHuAWCvq4HBtMbzjRFYrLABDlzbvx4x8PRnEpG/hfliSU02z+2D0HoJ5fDlPxUlV6I/yoZtrS9r/fl4DATZWYzGQYDVXNixBtokqjsCB7qWxEaXc=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777522144; c=relaxed/simple;
-	bh=3JFyuMQHVB108UxjuouDl4SYDlcKyU5nip54Et18JSI=;
+	s=arc-20240116; t=1777551215; c=relaxed/simple;
+	bh=TXDa7NSy3a1jhWRS3H4Tp3vEJQ8F5w1HWUyRgirZx6M=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=IBLC5Tgkj/xcHlvNjokCyLGEr1SHQtC/suFejBu6DrL3gUVdRSNcYH3ZRDcDoYNhAILNCN1u8dGiNnBXTk+eLypRm1HDV5Be/ad2gwTV33fHq5Jzh2ZbBegMTWB06QuoZx+PsW0AGdQ+uJJIU+Jw7umfht8xtan6utOgGTP2ea0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lFmusIgL; arc=pass smtp.client-ip=209.85.128.182
+	 To:Cc:Content-Type; b=fs3zLwjUu9n7VXnrty8MI+KHwSE0nqxYYwiY4Y+NRadHsKcVmWH+p4LzLU8QcD0HcXedHgZhDuNWltcTUkbLH3ALHMA0sx+aY+nlCnd5iE4cld6vSy5sUGCbdjxze12f/mwXbO+vt0W+brTlKPFcFMWjmz16j6H/MW/pae0kKW0=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ci9Sy1pl; arc=pass smtp.client-ip=209.85.208.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lFmusIgL"
-Received: by mail-yw1-f182.google.com with SMTP id 00721157ae682-7b23713eac9so4817507b3.2
-        for <linux-nilfs@vger.kernel.org>; Wed, 29 Apr 2026 21:09:02 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1777522142; cv=none;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ci9Sy1pl"
+Received: by mail-lj1-f172.google.com with SMTP id 38308e7fff4ca-38e800deae4so7726181fa.0
+        for <linux-nilfs@vger.kernel.org>; Thu, 30 Apr 2026 05:13:33 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1777551212; cv=none;
         d=google.com; s=arc-20240605;
-        b=JfLftTAHhUZRWxrTeTtN3Xv0qDojhZ24CJSPTij3kICfoA+myjuXI/YW5OYlHkXvRY
-         bDBL5eXsm6hEFxd19qBbFuwyzto/evH1AYfvmnpJkVVzsB4rXV95FD2oZ0y0mFwYH04s
-         /67b1tNhjz4fHJcU4NH3SwiJLcktvhVowx09ihfrMHqXhyHxGNhMt6Y1bx8p4Epi+VqI
-         O7tbRYDHpOlHB+OWbJ9JgUZeQM4rkNeS86iGy/zg+o5/bTQSq2bDEQwK2I3adj4ffZ41
-         WNREC5CnAIG+gE3Eb7rBu3AnX69QdHkHszZLGujWSt9N7Jl22brhwyc4ttvqS3uXmgVY
-         vaFQ==
+        b=UT5y2CcY3xO1KAaOMt4tTAiYRnwszCpsoFigPA9TBG8cfJwgJt/ksPsi/B+9ermZLU
+         Y/zGziPMI+yI08l71GWs8kJE+8MwHw2ClGt0jA8N2rChC+L+MfH6vv6a0zO7N8hVMLAL
+         PiYsXHNFrDMpYdqjsRCg3V02MzFv8Ytn3m3FzZp57zkI3+pAr0p5zzs8D1L9e4HqdqhI
+         ZUZDvYPnUWWQuF4WMROmnDCP4jv6asgZUNiDrlIdsGUEEUefjG4kwJqVd4p457lziIT7
+         2W0s40cvtUfcY5bztNAmUVoxPz1nY8/TkKbRyA5htuF589o3trILg2R68960TaUQow1Q
+         YN9Q==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:dkim-signature;
-        bh=tPYWn1pFz2Pgey4eVQGV/x4lDzfQrPvRhlCiK0bKikE=;
-        fh=5frYkAYNOhSxzyReHivWI/wbsNWH9q7DHlwwaAtRxF8=;
-        b=A9cAvdV5gXl2XPV1xDd6t4980YaTIsxbBo3WUt+kD3Qhfr8JGX1ulI4qMZ2BRDAiOk
-         S7Rq979jDe8XSQXe4qhPhtj1fYorAUUC91JS4ur5XLliWYIxdFTnby/UJOIyVaSKZu8K
-         KnX8Jen8T+FljxNzwPw4foKV/UHhjANJtd/mXSV6CW/52h82UCGnQo285ZUfs+VcDeq+
-         0sTExHua80Fws1uRODm3JgftXSGvlk2A6ROHYigp2e9oRNEirQAYwuE2y/GP4S1mib1V
-         4CdONo2hLFxEAUFYgATYYAncqT3V5frFoJnKmhCUQ/fF2+8xforD51HRdFsZcjWBlGga
-         CPnw==;
+        bh=gYuaEj62f6abXXXknGHMgNIJHgrJvbt+knMI7MVBneE=;
+        fh=I/c+HIofH3Gh9Hq3W6xHDM+7v1EBQen1gLaZdhwa1a8=;
+        b=VJ1qLiUcptkkuzGWyzhdstRdDYliYgOSkJQc0p9UCHM0uvdIxo6kAzVXIca3maefo5
+         EUfeodPO7w7J9e9Fz83j1zQTkEXRFl4fV6QnMVG+LgmNkCw8xC5qjq3eXYGpiBzi4JoO
+         4dAfr2ipqjm6bQizQuV0FGFBzE3VkKkJcXPLXZsOwrOuvnsN3dH+X049RyPfchomRw7d
+         f7C9E9MoWk567EXXDUqTFzHYDkSmPed+DxiIaSo3IOJfYnc/+pxZeeQSHrPb3T0iAUF8
+         wErQvAcj0CsXpxf9JovQM9nLoC0AEuYicODp2g1Pbiv68vuUkArbN5ZcDwjmjuRKyttU
+         0XiQ==;
         darn=vger.kernel.org
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1777522142; x=1778126942; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1777551212; x=1778156012; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=tPYWn1pFz2Pgey4eVQGV/x4lDzfQrPvRhlCiK0bKikE=;
-        b=lFmusIgLig2CaACbx1N6XdpTkRiFB5MjS7nJuDd6qAhLb50SVQB/Q84Tw4uRLhmDPO
-         QUTt6GXpPBmiPBPbqsrLFOLbHRDsqvUWaT+pqM98ne0aLP5G5XombRO4SBiVnLqCQWHW
-         iV9Wn5qg3Djk3TAR6T8dq4gKwkt4NlFRolJQyuNkwlgUcfbTIdMnR7UW+yZF5rTbE7Fg
-         Hn3Q2hoeWEmqxaAOf6mD9fdzrAA+ewg6nCo2EDMI71KRLmNsq+K7ed7Yg0t4u7gMQnIj
-         T2pKcZqX2sP3HmLpe2aJfvFPxK3Fwq6lMgd/quXn0+f3GTaaNDPUU3bR0NN+ivqE/FGU
-         M3mQ==
+        bh=gYuaEj62f6abXXXknGHMgNIJHgrJvbt+knMI7MVBneE=;
+        b=Ci9Sy1plPyQU4UoMlE0Hah7bQf63oXJiek5ZesbqNjgEH21rFGHD36u6T9Kf4v01Vn
+         oOfWHQJvCp8pb7cARwTB7z+drZx5rl8eBxO7CFk3Km9LucjovE0Xj4s0ZiVkjWJ4ZS3I
+         7qXAjMhucUwGYGkKzARdVpcZtK/d5t+Xm4pYQ8IGpjBM580Qe6ZUjp9eDLTw6uAyF4lO
+         tEl7VH9DQ8/aUXlo2RCdItpMbZbWLYNdPHJkCMbgSyL+Zt+JZyHR0AMObSDjFfXuh7rR
+         rq1o7KagK+cbxAbnWLTJec5pJ72lJpr0lHsZ4A0sB3u1xKLyOPcRZBOZhRaFSbjBUNoa
+         ObeA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777522142; x=1778126942;
+        d=1e100.net; s=20251104; t=1777551212; x=1778156012;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=tPYWn1pFz2Pgey4eVQGV/x4lDzfQrPvRhlCiK0bKikE=;
-        b=arR3qeAqeabS5Wj9r6MYk16pUWskZNDL8SgRuYuNkoVAV9zDJeRVVLzBD5X6nFEJut
-         jdD0/Qfm5jpogfAcr5AeTzHe29v5i3pOTBxrXM8p8m7VS2UTTPEG7uRpjhwytZlN0XVR
-         2bbDUMditSHpeQhc8a7fnOluYW0yIkhHK6Fy6rm7ZL5QxXOmwx8uGoBe0Ifes8y0o0LG
-         F3GPfRpiW8L4Ge9fBQcuEMLwCqpJR1yc6QWzwd9IaN3XcbXz+YLV+Aw0V1YkMwSmvv4O
-         zw5fXVdTnlYmy3M8tl06+VUHaliuYh9502wuMGlTV3VyYZXbAq512+RB6ip7PIgfoQHA
-         RLHA==
-X-Forwarded-Encrypted: i=1; AFNElJ97aLvORtsjvUHgHIA+9U4sjgQLVXX3hcU45bCxbQ7TgQ5IVjemtraNw1JiULOmaiy+i4O9vV+vaQy5iw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YyLKL0yM9SRYfAtQ6x+QyeDHuhf7LBG/2EqMCYAe3QpYB39inUY
-	urtjLgaFk5KmtO8xq/vAW62s+NOaMV/aB5oIheCQQokkX9F52flDNwNHNhW9e7d3CVYyE6hlEoX
-	+x5TWltDvsFIjTODCeEOY/5f9DqYINMY=
-X-Gm-Gg: AeBDietFbrwl+LE/C6JgVopcgq9dxk/JbMnTmgHtBLrLP3yqIEqUrdJmJ2JutJatr5c
-	G6rfzzk9xApkmRyBakXKM43WUtVMzZORfap2jcvg+yRzKDPW4tNAyCA2gpUYirPDg94E1SKT5QN
-	hEJoizbv2hpE5+aZiiojiAzYiXg2VdJSwWLth/JVNXMHfXh+3Dhlfr10fNHpwnYJ4U6Pw4nhJF+
-	owXf8FNYooD9FoKxiUfOrCN9sIKmv9/Id0vUSpubJTdpRQBx45FLoi8NGuMJicvp4AOEn3v4y9E
-	Mt+h9TXdI6KWwnNpV8hmPCUNscH0uAbOJQNyFJJ8brRS7sEThC7oGhSYrPA5p2BFiJTwSpnNLCI
-	AkIoppvU=
-X-Received: by 2002:a05:690c:6b01:b0:7a2:1f26:3d5f with SMTP id
- 00721157ae682-7bd548a7947mr9771397b3.28.1777522141500; Wed, 29 Apr 2026
- 21:09:01 -0700 (PDT)
+        bh=gYuaEj62f6abXXXknGHMgNIJHgrJvbt+knMI7MVBneE=;
+        b=akSevNFGaSqZlxRlY45dmKiyVSEqRl1t5lDtQFnIGHcA+jT8xpO2nKhMsLlMNySY87
+         ucuZf5mZS4hVNIgqeOk25w+tLQD6SDdz5DVd0fl5VrsZbtaXEdkwLP5MRxWj6c0hltXa
+         gfljSbadYLmw/mTanCDMKK0q8w8gCy8zmTaAzcQHDxRcylmfjoIXG48YDbbd9YGCqF6H
+         1lP25r0lUD5MfgkeFuTVHhZXC5hgON15MWHpt4XoKG62Na+mjD/Ff7eYDgYsqnsZSHYm
+         Vuo0sbQiGch0L9oy9cEgM95JV92UZlY7n92S7BE7Bo5wRjWI+Og/cfdk8MXtf6EO9C5J
+         B8XA==
+X-Forwarded-Encrypted: i=1; AFNElJ/qPCi6Gw7iDM9cvxR8hjLygcIxA+orOQT3oGgFTaODoAM12qaCF9vcSSMSIJJ4MX7LKPNUb93suWCTog==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyOldLhrzeSHo8z/b2JkSRbJ3F5+HZGl5fD53kOBFneef0o682s
+	sURSZYcUhLdhXyipQ99XbfbGmwx6ECAAxm+Pwded5cLro/5MdCknSypTqRdb5y5bPJQmvG7i17P
+	L18xfq3SL22MkWqdv1WlEXqFThIrujgs=
+X-Gm-Gg: AeBDiesf4k2uob3XGYfX3edc92KIPuaeZZFrlwFcTi6sv/JHNXx+ubrBfZ3/nn6nESS
+	FQwcqvWCI4LUnDLRQn13nIw5cEV9tSJ3LIyj/CD9kxmYeJkiPw9ska+yomwE8zu4J9UrpxfFzqh
+	zMK+0oGV7W+o/1+zago/Lcvmkj7yxas7PE4ZpI/HhXQYrFhKg/jnXeZq1s7IeSnuD/w4t/zeTwV
+	J0aniZRrjVntFOxLZLLTHH9fhm4JAujU1aYIwb4PQZIkut/UUpVYl954ppH4yRIlVi21xR1lpGx
+	5GKne+c5+ZyQTHlY6rI=
+X-Received: by 2002:a05:6512:3b28:b0:5a6:2a5f:11d with SMTP id
+ 2adb3069b0e04-5a8522d4b14mr982679e87.26.1777551211529; Thu, 30 Apr 2026
+ 05:13:31 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260428040256.84403-1-kartikey406@gmail.com> <2ed28b6008cf898a06036d5836380cc5cc45f118.camel@redhat.com>
- <CADhLXY5Q8UsSQZYm-KWpJ3q753xAcxbnk9y+vGfkwA9RF8VcrQ@mail.gmail.com> <CAKFNMom83SJqvN7ZSMt3p9TVvGVL_sC5sfO4+ZrC+zi6OC+HVQ@mail.gmail.com>
-In-Reply-To: <CAKFNMom83SJqvN7ZSMt3p9TVvGVL_sC5sfO4+ZrC+zi6OC+HVQ@mail.gmail.com>
-From: Deepanshu Kartikey <kartikey406@gmail.com>
-Date: Thu, 30 Apr 2026 09:38:49 +0530
-X-Gm-Features: AVHnY4II14EwlQikmsqUEy-F6foWShKK8RfRmQjjSm2gsv_H84WEBj5yK5Pj55M
-Message-ID: <CADhLXY6ihygaBJHpTj2QtkudX-kYf0yKvYd8dVs13FGCOVuX9w@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: reject CLEAN_SEGMENTS ioctl with out-of-range
+References: <20260430040704.113622-1-kartikey406@gmail.com>
+In-Reply-To: <20260430040704.113622-1-kartikey406@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Thu, 30 Apr 2026 21:13:15 +0900
+X-Gm-Features: AVHnY4Iy8pyMuz7kCxFxo_q6faXjAqhfSG5inFa-dNzyMIHUZn4zGe-SBjClBdU
+Message-ID: <CAKFNMo=_mkGn6OtXXcjhiYFQ2cvBVisPbSsRMz3XBqxHvByyMw@mail.gmail.com>
+Subject: Re: [PATCH v3] nilfs2: reject CLEAN_SEGMENTS ioctl with out-of-range
  segment numbers
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Viacheslav Dubeyko <vdubeyko@redhat.com>, slava@dubeyko.com, linux-nilfs@vger.kernel.org, 
+To: Deepanshu Kartikey <kartikey406@gmail.com>
+Cc: slava@dubeyko.com, linux-nilfs@vger.kernel.org, 
 	linux-kernel@vger.kernel.org, 
-	syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com
+	syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com, stable@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Apr 29, 2026 at 6:02=E2=80=AFPM Ryusuke Konishi
-<konishi.ryusuke@gmail.com> wrote:
+On Thu, Apr 30, 2026 at 1:07=E2=80=AFPM Deepanshu Kartikey wrote:
 >
-> On Wed, Apr 29, 2026 at 10:50=E2=80=AFAM Deepanshu Kartikey wrote:
-> >
-> > On Wed, Apr 29, 2026 at 12:29=E2=80=AFAM Viacheslav Dubeyko wrote:
-> > >
-> > > On Tue, 2026-04-28 at 09:32 +0530, Deepanshu Kartikey wrote:
-> > > > Syzbot reported a hung task in nilfs_transaction_begin() where mult=
-iple
-> > > > tasks performing chmod() on a nilfs2 mount blocked for over 143 sec=
-onds
-> > > > waiting to acquire ns_segctor_sem for read:
-> > > >
-> > > >   INFO: task syz.0.17:5918 blocked for more than 143 seconds.
-> > > >   Call Trace:
-> > > >    schedule+0x164/0x360
-> > > >    rwsem_down_read_slowpath+0x6d9/0x940
-> > > >    down_read+0x99/0x2e0
-> > > >    nilfs_transaction_begin+0x364/0x710 fs/nilfs2/segment.c:221
-> > > >    nilfs_setattr+0x124/0x2c0 fs/nilfs2/inode.c:921
-> > > >    notify_change+0xc1a/0xf40
-> > > >    chmod_common+0x273/0x4a0
-> > > >    do_fchmodat+0x12d/0x230
-> > > >
-> > > > The writer holding ns_segctor_sem was a concurrent NILFS_IOCTL_CLEA=
-N_SEGMENTS
-> > > > caller, stuck inside printk while emitting per-element warnings fro=
-m
-> > > > nilfs_sufile_updatev():
-> > > >
-> > > >    __nilfs_msg+0x373/0x450 fs/nilfs2/super.c:78
-> > > >    nilfs_sufile_updatev+0x21c/0x6d0 fs/nilfs2/sufile.c:186
-> > > >    nilfs_sufile_freev fs/nilfs2/sufile.h:93 [inline]
-> > > >    nilfs_free_segments fs/nilfs2/segment.c:1140 [inline]
-> > > >    nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1261 [inline]
-> > > >    nilfs_segctor_do_construct+0x1f55/0x76c0
-> > > >    nilfs_clean_segments+0x3bd/0xa50
-> > > >    nilfs_ioctl_clean_segments fs/nilfs2/ioctl.c:922 [inline]
-> > > >    nilfs_ioctl+0x261f/0x2780
-> > > >
-> > > > The root cause is that nilfs_ioctl_clean_segments() does not valida=
-te
-> > > > the user-supplied segment numbers in kbufs[4] before calling
-> > > > nilfs_clean_segments(), which acquires ns_segctor_sem for write.  T=
-he
-> > > > range check on each segnum is performed deep inside the call chain =
-by
-> > > > nilfs_sufile_updatev(), which emits a nilfs_warn() per invalid entr=
-y
-> > > > while still under the segctor lock and the sufile mi_sem.  Under lo=
-ad
-> > > > (repeated invocations across multiple mounts saturating the global
-> > > > printk path), the cumulative printk latency keeps ns_segctor_sem he=
-ld
-> > > > long enough to trip the hung_task watchdog, blocking concurrent
-> > > > operations such as chmod() that need ns_segctor_sem for read.
-> > > >
-> > > > Fix by validating the contents of kbufs[4] in the ioctl entry path,
-> > > > before any FS-wide lock is acquired.  Out-of-range segment numbers =
-are
-> > > > rejected with -EINVAL synchronously, with no work performed under
-> > > > ns_segctor_sem.
-> > > >
-> > > > Reported-by: syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com
-> > > > Closes: https://syzkaller.appspot.com/bug?extid=3D62f0f99d2f2bb8e3b=
-bd7
-> > > > Fixes: 4f6b828837b4 ("nilfs2: fix lock order reversal in nilfs_clea=
-n_segments ioctl")
-> > > > Tested-by: syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com
-> > > > Signed-off-by: Deepanshu Kartikey <kartikey406@gmail.com>
-> > > > ---
-> > > >  fs/nilfs2/ioctl.c | 16 ++++++++++++++++
-> > > >  1 file changed, 16 insertions(+)
-> > > >
-> > > > diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
-> > > > index e0a606643e87..38822dce1839 100644
-> > > > --- a/fs/nilfs2/ioctl.c
-> > > > +++ b/fs/nilfs2/ioctl.c
-> > > > @@ -846,6 +846,7 @@ static int nilfs_ioctl_clean_segments(struct in=
-ode *inode, struct file *filp,
-> > > >       struct the_nilfs *nilfs;
-> > > >       size_t len, nsegs;
-> > > >       int n, ret;
-> > > > +     size_t i;
-> > >
-> > > What about re-using the n variable? Does it make sense to introduce n=
-ew one?
-> > >
-> > > >
-> > > >       if (!capable(CAP_SYS_ADMIN))
-> > > >               return -EPERM;
-> > > > @@ -876,6 +877,21 @@ static int nilfs_ioctl_clean_segments(struct i=
-node *inode, struct file *filp,
-> > > >       }
-> > > >       nilfs =3D inode->i_sb->s_fs_info;
-> > > >
-> > > > +     /*
-> > > > +      * Validate segment numbers against the filesystem's segment =
-count
-> > > > +      * before entering nilfs_clean_segments(), which acquires
-> > > > +      * ns_segctor_sem for write.  Catching invalid segnums here a=
-voids
-> > > > +      * holding that lock while emitting per-element diagnostics u=
-nder
-> > > > +      * the segment constructor.
-> > > > +      */
-> > > > +     for (i =3D 0; i < nsegs; i++) {
-> > > > +             if (((__u64 *)kbufs[4])[i] >=3D nilfs->ns_nsegments) =
-{
-> > > > +                     ret =3D -EINVAL;
-> > > > +                     kfree(kbufs[4]);
-> > > > +                     goto out;
-> > >
-> > > Are you sure that you need to free buffer here and go to out? Maybe, =
-we can
-> > > introduce another label and to jump to kfree(kbufs[4]) at the end of =
-method?
-> > >
-> > > Thanks,
-> > > Slava.
-> > >
-> > > > +             }
-> > > > +     }
-> > > > +
-> > > >       for (n =3D 0; n < 4; n++) {
-> > > >               ret =3D -EINVAL;
-> > > >               if (argv[n].v_size !=3D argsz[n])
-> > >
-> >
-> > Thanks for the feedback. I have sent patch v2.
-> >
-> > Thanks
-> >
-> > Deepanshu Kartikey
+> Syzbot reported a hung task in nilfs_transaction_begin() where multiple
+> tasks performing chmod() on a nilfs2 mount blocked for over 143 seconds
+> waiting to acquire ns_segctor_sem for read:
 >
-> Thank you, Deepanshu, for the patch proposal.
+>   INFO: task syz.0.17:5918 blocked for more than 143 seconds.
+>   Call Trace:
+>    schedule+0x164/0x360
+>    rwsem_down_read_slowpath+0x6d9/0x940
+>    down_read+0x99/0x2e0
+>    nilfs_transaction_begin+0x364/0x710 fs/nilfs2/segment.c:221
+>    nilfs_setattr+0x124/0x2c0 fs/nilfs2/inode.c:921
+>    notify_change+0xc1a/0xf40
+>    chmod_common+0x273/0x4a0
+>    do_fchmodat+0x12d/0x230
 >
-> Because nilfs->ns_nsegments can be modified by nilfs_ioctl_resize(),
-> we must avoid race conditions regarding this proposed fix.
+> The writer holding ns_segctor_sem was a concurrent
+> NILFS_IOCTL_CLEAN_SEGMENTS caller, stuck inside printk while emitting
+> per-element warnings from nilfs_sufile_updatev():
 >
-> Therefore, it's appropriate to insert this check within the write lock
-> section of nilfs->ns_segctor_sem, that is, immediately after calling
-> nilfs_transaction_lock() within nilfs_clean_segments().
+>    __nilfs_msg+0x373/0x450 fs/nilfs2/super.c:78
+>    nilfs_sufile_updatev+0x21c/0x6d0 fs/nilfs2/sufile.c:186
+>    nilfs_sufile_freev fs/nilfs2/sufile.h:93 [inline]
+>    nilfs_free_segments fs/nilfs2/segment.c:1140 [inline]
+>    nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1261 [inline]
+>    nilfs_segctor_do_construct+0x1f55/0x76c0
+>    nilfs_clean_segments+0x3bd/0xa50
+>    nilfs_ioctl_clean_segments fs/nilfs2/ioctl.c:922 [inline]
+>    nilfs_ioctl+0x261f/0x2780
 >
-> As a coding comment, directly referencing kbufs[4] as an array is not
-> very readable, so it's better to declare a variable in the local
-> variable declaration section of nilfs_clean_segments() like this:
+> The root cause is that user-supplied segment numbers are not validated
+> before nilfs_clean_segments() begins doing work; the range check on
+> each segnum is performed deep inside the call chain by
+> nilfs_sufile_updatev(), which emits a nilfs_warn() per invalid entry
+> while still holding the segctor lock and the sufile mi_sem.  Under load
+> (repeated invocations across multiple mounts saturating the global
+> printk path), the cumulative printk latency keeps ns_segctor_sem held
+> long enough to trip the hung_task watchdog, blocking concurrent
+> operations such as chmod() that need ns_segctor_sem for read.
 >
->         size_t i, nsegs =3D argv[4].v_nmembs;
->         __u64 *segnumv =3D kbufs[4];
+> Fix by validating the contents of kbufs[4] in nilfs_clean_segments()
+> immediately after acquiring ns_segctor_sem via nilfs_transaction_lock().
+> Holding ns_segctor_sem serializes the check against
+> nilfs_ioctl_resize(), which can modify ns_nsegments, so the validation
+> uses a consistent value.  Out-of-range segment numbers are rejected
+> with -EINVAL before any segment-cleaning work begins, so the bad
+> entries never reach the per-element diagnostic path inside
+> nilfs_sufile_updatev().
 >
-> and then compare by referencing segnumv[i].
-> Here, the original variable name "nsegs" is confusingly similar to
-> "ns_nsegments", therefore, it would be better to simply change it to
-> "n" or rename it to something that more concisely represents the
-> number of segments in the array.
+> Reported-by: syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com
+> Closes: https://syzkaller.appspot.com/bug?extid=3D62f0f99d2f2bb8e3bbd7
+> Tested-by: syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com
+> Fixes: 4f6b828837b4 ("nilfs2: fix lock order reversal in nilfs_clean_segm=
+ents ioctl")
+
+The cause appears to be commit 071cb4b81987 ("nilfs2: eliminate
+removal list of segments"), which removed the segment release logic
+that used a list of segment information structures.
+Prior to that, the validity check of segment numbers was performed
+within nilfs_ioctl_prepare_clean_segments().
+
+Everything else seems OK, so I'll fix only that tag myself, perform a
+final check, and then send it upstream.
+
+Thanks,
+Ryusuke Konishi
+
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Deepanshu Kartikey <kartikey406@gmail.com>
+> ---
+> Changes in v3:
+>   - Move validation from nilfs_ioctl_clean_segments() into
+>     nilfs_clean_segments(), under ns_segctor_sem held for write
+>     by nilfs_transaction_lock(), to serialize against
+>     nilfs_ioctl_resize() which can modify ns_nsegments
+>     (Ryusuke Konishi)
+>   - Introduce local variables segnumv and nfreesegs for readability,
+>     rather than open-coding casts of kbufs[4] (Ryusuke Konishi)
+>   - Emit nilfs_err() once on the first out-of-range segnum and bail
+>     out, instead of nilfs_warn() per element (Ryusuke Konishi)
+>   - Add bail_unlock label for the early-failure path, parallel to
+>     the existing out_unlock structure (Ryusuke Konishi)
 >
-> Also, to help identify the error's cause, I recommend adding an error
-> message like the following within the pre-check loop:
+> Changes in v2:
+>   - Reuse existing 'n' loop variable instead of introducing a new
+>     one (Slava Dubeyko)
+>   - Add dedicated out_free_segnums label so the validation-failure
+>     path falls through the existing cleanup ladder rather than
+>     duplicating kfree(kbufs[4]) inline (Slava Dubeyko)
+> ---
+>  fs/nilfs2/segment.c | 22 ++++++++++++++++++++++
+>  1 file changed, 22 insertions(+)
 >
->         nilfs_err(sb,
->                 "Segment number %llu to be freed is out of range",
->                 (unsigned long long)segnumv[i]);
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 1491a4d4b1e1..dc54643866ce 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -2512,12 +2512,33 @@ int nilfs_clean_segments(struct super_block *sb, =
+struct nilfs_argv *argv,
+>         struct nilfs_sc_info *sci =3D nilfs->ns_writer;
+>         struct nilfs_transaction_info ti;
+>         int err;
+> +       size_t i, nfreesegs =3D argv[4].v_nmembs;
+> +       __u64 *segnumv =3D kbufs[4];
 >
-> Finally, a minor comment: to avoid scattering the function's exit path
-> when making corrections according to the above policy, it's better to
-> add a label like the following to nilfs_clean_segments() and jump to
-> it, rather than returning separately.
+>         if (unlikely(!sci))
+>                 return -EROFS;
 >
-> out_unlock:
->         ...
+>         nilfs_transaction_lock(sb, &ti, 1);
 >
-> bail_unlock:
+> +       /*
+> +        * Validate segment numbers under ns_segctor_sem (held for write
+> +        * by nilfs_transaction_lock above) so the check is serialized
+> +        * against nilfs_ioctl_resize(), which can modify ns_nsegments.
+> +        * Rejecting bad input here, before any segment-cleaning work
+> +        * begins, avoids the per-element diagnostic path inside
+> +        * nilfs_sufile_updatev() that would otherwise run under this
+> +        * same lock and stall concurrent readers.
+> +        */
+> +       for (i =3D 0; i < nfreesegs; i++) {
+> +               if (segnumv[i] >=3D nilfs->ns_nsegments) {
+> +                       nilfs_err(sb,
+> +                                "Segment number %llu to be freed is out =
+of range",
+> +                                (unsigned long long)segnumv[i]);
+> +                       err =3D -EINVAL;
+> +                       goto bail_unlock;
+> +               }
+> +       }
+> +
+>         err =3D nilfs_mdt_save_to_shadow_map(nilfs->ns_dat);
+>         if (unlikely(err))
+>                 goto out_unlock;
+> @@ -2558,6 +2579,7 @@ int nilfs_clean_segments(struct super_block *sb, st=
+ruct nilfs_argv *argv,
+>         sci->sc_freesegs =3D NULL;
+>         sci->sc_nfreesegs =3D 0;
+>         nilfs_mdt_clear_shadow_map(nilfs->ns_dat);
+> + bail_unlock:
 >         nilfs_transaction_unlock(sb);
 >         return err;
+>  }
+> --
+> 2.43.0
 >
-> Thanks,
-> Ryusuke Konishi
-
-Thanks for the detailed feedback, Ryusuke. I have sent the patch v3
-
-Thanks
-
-
-Deepanshu Kartikey
+>
