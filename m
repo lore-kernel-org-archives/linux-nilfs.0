@@ -1,135 +1,227 @@
-Received: from mail-lj1-f171.google.com (mail-lj1-f171.google.com [209.85.208.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7DCA3A9D94
-	for <linux-nilfs@vger.kernel.org>; Sun,  3 May 2026 07:43:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.171
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777794183; cv=pass; b=NMMbleXCz8eRY2vokXx/m3DuxWg22wTCIaal9Md42gZwumF9Pz+2s1J0fzammXf/MptsiH6U/AsFHiZZswkKtE4x3x6bEfW8kialBnGyE/vQ5Mm+lHDZzuYLJyDz9BFb2gvIKglZWiGYoVPs+CASBDRPf5/a9TEOt+aoIAH3KS0=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777794183; c=relaxed/simple;
-	bh=vO0BgCyCCBpw4io20N5pClr3ouvmEWnp+K6Fn8YGvFg=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=h5ykmzmOjhlB7Bf9zoDjhna5DWFVOhdAtuiw2PzRBZ2GAcjFq8HDPRWIPYAmIMCkUk7kwZdWdZmFeRVV54wSzNKphsw9maAByxXbvICWew6D/PnToBDvQehKPpRrGK52QtFi+mbgqGRg+pB+cZNvYsaRg9LzZ0xxu/FawLWY9Yo=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PcZyupcw; arc=pass smtp.client-ip=209.85.208.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D73B33F8B7
+	for <linux-nilfs@vger.kernel.org>; Mon,  4 May 2026 21:15:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1777929304; cv=none; b=OKKimo1WBtvR5gYGuANtjCJ/OYeZa1YNE1V7kFsN8CRH/lk0OJArjxw4RJ8DYm1rMHx8gqFScXjKTd7FvkyGKoU3Rn1WRj2upe2l7aO6ltWv5A0Rp+ALs/ZAOYZEuysLNFs+Wkhvw04LMTWh931sqnQNIiWz35SeJRCggFn+KBM=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1777929304; c=relaxed/simple;
+	bh=PM+hkaHZgCfqdEFmSA7FEQ2xqIO9Evw2ShqX/sHT/Gg=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=qOOhGXLjTsipmCGBvOxJThg9WBKk0ptt1S3EAWS0E7cIUxJFj41Aw664d4TNcA+hR5K3UOVrOixPnNB/jwClCYPwWdioGZLmqud/xb/17ariG+U3e5dyWAWBFqwudlW4rmO28VVwvCtzkdPWEVI8solJ5FZoXB/Njl08OUeOB3c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NLP0Ro4+; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=l1J55siL; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PcZyupcw"
-Received: by mail-lj1-f171.google.com with SMTP id 38308e7fff4ca-39397d63804so1105701fa.2
-        for <linux-nilfs@vger.kernel.org>; Sun, 03 May 2026 00:43:00 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1777794179; cv=none;
-        d=google.com; s=arc-20240605;
-        b=MvhCsPdQ09dOfVfUNej4TJlYQShuPEyw4ge0Kq1EZs8ZaBon1RSm1nMCxg2jcRMOKY
-         urichJmvqD1rFnD6nNnGqoI721ae7xRBp4cQo2nY+axa1YSajS3hzmqaCJ6G5bIIsXuw
-         Ndw53q+ilZby7FAhXWkUnZEde4JIUft0Cqqt+t0n4nsMFQsX9jhOfY+zBuNkRZ8qAr8F
-         ajCAoQVW2qo6dMUlBMpgjbc4Vwv0NMWAFMEU/r766rMh8BPClwbkVukIOd1hJ28sihvi
-         ySu2uFXJ/ZLfiClHwY/65tjmcWTJMFcE8XJLrCm/NppfPcr1b6uYp5tOdG5XmYOCYTnQ
-         TiKw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=t2Zci70UN0+ctGCkjt4JpXFz189jhyPmf5LWqO2185c=;
-        fh=7cszRMNhPm82vcvKtMrzeZmQNTXXLkPr2cCrYF8xW4k=;
-        b=WQ+/+fW55mG98Jw2YnZE7DOuVw0v2ogXwP70Ux5jIJvehq73eDxdCqEiNRfEJ3RbJl
-         hz/L2dfH/7nS/0z6BO5Kt3r1i8lZR6+nkZ1uwpULbA7PoJCzKHkC87uEavK7qiueFShR
-         YJzAyvACjC4R66fN+Yb+KU6P5o08yZHkPMif8GqmFDvY0gyM6Q7kt+9oT+h1h0miUpLs
-         9YiSqxyV1Q3le1kgEPRDYFb1Jh0jwyChfHNg5Bb3MQ+czBQgzbKObrrrvi4qmrE4mJM2
-         pCrGLcRE9pJU5Tsrll3bRcA3fR6S8KtYc49wSpPf/YrhqlbTORJYD9LPPzcAKuQFiZ9C
-         bGBg==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NLP0Ro4+";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="l1J55siL"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1777929300;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Gxvw3Qdk6v8FuJouRyKgQWLX6q4jluWaAR8BxfLyUoI=;
+	b=NLP0Ro4+eCDZMxh7obybpLS4ACc8nFAfZGiNXWLalq0PJ1eHhUlJNMaVuxE6b+FgoGin5p
+	DfegbicfsI2WHSpNyX0vXnelcbUK9FDRS1zbrHcdNVemdp6z+9zlVviBkxMWSE8p/yQROn
+	B2egLLFRgNQVu9eR4mpbxwPGSflhWWs=
+Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
+ [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-79-g6vk9r9CPcKllJJKonOtdA-1; Mon, 04 May 2026 17:14:58 -0400
+X-MC-Unique: g6vk9r9CPcKllJJKonOtdA-1
+X-Mimecast-MFC-AGG-ID: g6vk9r9CPcKllJJKonOtdA_1777929298
+Received: by mail-yw1-f200.google.com with SMTP id 00721157ae682-7b3e41a97f0so76954117b3.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 04 May 2026 14:14:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1777794179; x=1778398979; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=t2Zci70UN0+ctGCkjt4JpXFz189jhyPmf5LWqO2185c=;
-        b=PcZyupcwybOBq+W0Ir7TqF7Z7QIO2G/P3jnQddhgNwB8uWouxQ4LxLxzR/p9CmF5Qn
-         FPhWFcp9vaZjfc9pNWSV+j5y3fIX7MNmJB4bx4hvH10BBfv46UBia+YQo9PzHgV4ganu
-         JEO9izSbuMrJ4lFc0YCncrIOv4476KCbB4hpy39kRVPOj3Pcd2nmzqOftNX7ieIx8xvc
-         yt7U02mOBipBr5JemnWQgkh3KG6zg+liATP0m0RkCTCA/FXKCXXpbGMXiNUW0dj1+eh+
-         34z06Rx1Bwi9sd2B3fZH13p18V7Eb2yA6pacobnSZ635UaYY++GHfh3YUV/oVDqc0ZRU
-         MkXA==
+        d=redhat.com; s=google; t=1777929298; x=1778534098; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=Gxvw3Qdk6v8FuJouRyKgQWLX6q4jluWaAR8BxfLyUoI=;
+        b=l1J55siLZnylBAL2PGKThkEk25gL+R5c0LIrtqoIxnWfRlasO89NTEo0BSFGOkbleq
+         SqVazeSNWoIcskJO6Pm8vA9Uo8dSJpVbGxSEVwWomnhdScvmeba/yyAWJOMgVOcEvH4e
+         YJ3jGlLbR6N+IV7NaMMrt+Lnh3EutGXnkduEd3zEwi9onYL6NW2i5VbfMUuAFHyoYkqO
+         7+2tXEpb0iC9aEeBSDhJCdRTPbXbhrwxhuBw6SyAtreMSWdDijUSAPXjZbA/sQGKoT+a
+         h6FP1UBlsweyKa/8QBtOrPOG9+KzsujpsqugAllA+UWAbBBsVCGr+qvSMm/mjlcOuEjq
+         +GfQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777794179; x=1778398979;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=t2Zci70UN0+ctGCkjt4JpXFz189jhyPmf5LWqO2185c=;
-        b=JxuHAD162fY49Lu6LJ/AN7apIIT7483l2sOdpvFfkC8iuiqIdZt8z4AW9AY46IBlBF
-         mwtTH+WStyXuzdSeDlR/O4dv/eLQD3jtNsl/g4l5aJ6ninUfR/AtMiJ93rqfcTZcDmvf
-         as3l31LoJCs+Ne70g+p7Sog2PY0e9z68RtQst3jUxXBRp5bS+LrkoZZkrf1S/JkswRZT
-         sybSQA8VAo7/k5LU7ysmhv4tTZybB5OD8YqpUrdiNucg2H6Jq3fgGlJ9hppHT2T/S74z
-         Oq07eDuOuL1wTskHalQl/BnqDzv1C8TGkpMrBBDIie09bIHUF2lNOz8PtLdqzmkhdohk
-         v7Vw==
-X-Forwarded-Encrypted: i=1; AFNElJ/tug8kRBby0OVt+/p1Z53GcqF49Vw9SXECuhloZPYC6JVaLkwMVBdQyl/f4dmNLndYQvyT+MLRdm26xQ==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzJj1c2NwMVFY6Ta4Ou8ZXbuOHtRM37HWnZvcCxHvJ/kYKuQFSE
-	2qS5gcjK+0KGyPyGGzVO7EMIK4Vf/9ViNaf/Dx29IVHh096kMEif26zeDdYWwrnmrAIKNnUpGlL
-	qGNyh7nr5gE58NoC3PgondtJ/b5wvTyGV/Yi5
-X-Gm-Gg: AeBDieuBMp3Z4P1sLryaenqTYpMJWLyAr9/mS06pn4GsuNLYrcGCzyPdVis2a8H54WX
-	knqS8Pvn0l6Bm51uSQs3uZfWbiODgxu9M4xJnvUCnUpDd1oIWBPRihSiU1mHLLGzoM2u7n+qCLm
-	H7W/Dxlqy/OmmvBhjkvpOHy3pl0y6D/2dJ8vZGJpQI7NDgSb4gg+SqBij4q9rfXF2cpcCsRocgF
-	a68qNIlb0oawTzsA5QjzqhVDWsHhm6SdpOXsVtbkkuMJrec61zTlPBq1zb+biNGShv3LcXDQZdR
-	3VDbti/IWBtGvOHcnLA=
-X-Received: by 2002:a05:6512:3ba8:b0:5a3:d375:f587 with SMTP id
- 2adb3069b0e04-5a8631c7911mr1628582e87.35.1777794178749; Sun, 03 May 2026
- 00:42:58 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1777929298; x=1778534098;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Gxvw3Qdk6v8FuJouRyKgQWLX6q4jluWaAR8BxfLyUoI=;
+        b=M4NuxJFP58FmF7T7POfTRcN/Lp5Zy5VvMbb3J6h91Z7uhCJ0W16tGNcq9Oi00INJzm
+         Yy27hA7BgCJo+x3v9c2jYIUCjWZhxs5the3PlrzJmPrFpe4xGEi9tDbAUFAOP/ntEcCW
+         SnxKBRV2QWdqpihu8cnQJtDrt7AkbCZAs77dG7tsGn5P4X1+oIifziazGj2+T4ms06yD
+         x3tBE+cau4lGLB4bAGH4ov00pTqCjG/BW/uejT9b4SeOAYIael3/zoswChlAktlJoEFa
+         lGBmxjMqTkMjSou/Egki4/KyHnEG2rnoSo//JuPYLACyuYX02UZNGwEeL8k22KU9wB+P
+         15Xg==
+X-Gm-Message-State: AOJu0Yz5XmvNcPfMzx8k2Yz3cy0n99B+ePJBXcNtGLKIvZPI8DHXlQtn
+	1L/viAptXRKt5HwmZomnpqWfsQkgHtYjEh5VM/9CsoADxRMf9C3dm2QjW5GXAlJcyHDvUg8kD6j
+	KbLvwiFdccHhAn336dHFwtUlJZWlKehMVMXRZBJ8PzCwnkQwhJJlWFNu/V7vSZbqo
+X-Gm-Gg: AeBDietQ1nENlwX7HCNLRH0rfUkLWxU2tTE0uma+FYW0a99R8SyPdtsIZvUorRkYbwX
+	CNQt9TTI1iAn9uOCFaQu5saGMUBwH9ZVjG2i3hj50EcMtE6t4hnMbILvxiB8YIcYa/wI+j8Hr/2
+	DVq8r+l9M67WegCVMprdyApRXH1FQAdBbW7l+m+p1iL5qa2A819bXwy5DokrZJhLSsyicmT0ptO
+	F/zsPPsiKQSJZ3d4TG5LkF4V09L0IxJWRlXi8ZuEkeoZ8MCtDaTDbabpw+ECbpeTXtV1po6dnfl
+	rClgw4LjDkNQKGW/WUohGF9+Vv3/R4CfD26YXGYrTVmebHSRt++8/R+Pdtae3zvTmYjnB6EcAjk
+	FbMwAEMrMq6wMWp84EK0JEzhN0jHAzQ23O/2Df938aFBdkIM2nxmHJXwQSMAgcCw=
+X-Received: by 2002:a05:690c:9517:b0:7b8:8d3c:17b7 with SMTP id 00721157ae682-7bd7712831emr102769437b3.42.1777929298242;
+        Mon, 04 May 2026 14:14:58 -0700 (PDT)
+X-Received: by 2002:a05:690c:9517:b0:7b8:8d3c:17b7 with SMTP id 00721157ae682-7bd7712831emr102769167b3.42.1777929297760;
+        Mon, 04 May 2026 14:14:57 -0700 (PDT)
+Received: from li-4c4c4544-0032-4210-804c-c3c04f423534.ibm.com ([2600:1700:6476:1430::29])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-7bd66838851sm54759867b3.23.2026.05.04.14.14.56
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 04 May 2026 14:14:57 -0700 (PDT)
+Message-ID: <f67314c205d1418cd0abd1bbd74fc76857309cbe.camel@redhat.com>
+Subject: Re: [PATCH] nilfs2: reject CLEAN_SEGMENTS ioctl with out-of-range
+ segment numbers
+From: Viacheslav Dubeyko <vdubeyko@redhat.com>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Viacheslav Dubeyko
+	 <slava@dubeyko.com>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML
+	 <linux-kernel@vger.kernel.org>, Deepanshu Kartikey <kartikey406@gmail.com>
+Date: Mon, 04 May 2026 14:14:56 -0700
+In-Reply-To: <20260503043357.7031-1-konishi.ryusuke@gmail.com>
+References: <20260503043357.7031-1-konishi.ryusuke@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.0 (3.60.0-1.fc44app2) 
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260503041612.201421-1-zenghongling@kylinos.cn>
-In-Reply-To: <20260503041612.201421-1-zenghongling@kylinos.cn>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sun, 3 May 2026 16:42:42 +0900
-X-Gm-Features: AVHnY4LEI3C6SMAWNV7AVQEIB3Vlqm_nEQmJbgi9R3rFdd8Bjk9KqE2oDK4RqlA
-Message-ID: <CAKFNMomo6Np0=83XtJphysi6CbN0i9_r5h6K=j8suR6Q75CRdg@mail.gmail.com>
-Subject: Re: [PATCH 2/3] nilfs2: Fix return in nilfs_mkdir
-To: Hongling Zeng <zenghongling@kylinos.cn>
-Cc: slava@dubeyko.com, neil@brown.name, jlayton@kernel.org, jack@suse.cz, 
-	brauner@kernel.org, linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	zhongling0719@126.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Sun, May 3, 2026 at 1:16=E2=80=AFPM Hongling Zeng wrote:
->
-> Return NULL instead of passing zero to ERR_PTR.
->   Fixes smatch warning:
->      - fs/nilfs2/namei.c:261 nilfs_mkdir() warn: passing zero to 'ERR_PTR=
-'
->
-> Fixes: 88d5baf69082 ("Change inode_operations.mkdir to return struct dent=
-ry *")
-> Signed-off-by: Hongling Zeng <zenghongling@kylinos.cn>
+On Sun, 2026-05-03 at 13:33 +0900, Ryusuke Konishi wrote:
+> From: Deepanshu Kartikey <kartikey406@gmail.com>
+>=20
+> Syzbot reported a hung task in nilfs_transaction_begin() where multiple
+> tasks performing chmod() on a nilfs2 mount blocked for over 143 seconds
+> waiting to acquire ns_segctor_sem for read:
+>=20
+>   INFO: task syz.0.17:5918 blocked for more than 143 seconds.
+>   Call Trace:
+>    schedule+0x164/0x360
+>    rwsem_down_read_slowpath+0x6d9/0x940
+>    down_read+0x99/0x2e0
+>    nilfs_transaction_begin+0x364/0x710 fs/nilfs2/segment.c:221
+>    nilfs_setattr+0x124/0x2c0 fs/nilfs2/inode.c:921
+>    notify_change+0xc1a/0xf40
+>    chmod_common+0x273/0x4a0
+>    do_fchmodat+0x12d/0x230
+>=20
+> The writer holding ns_segctor_sem was a concurrent
+> NILFS_IOCTL_CLEAN_SEGMENTS caller, stuck inside printk while emitting
+> per-element warnings from nilfs_sufile_updatev():
+>=20
+>    __nilfs_msg+0x373/0x450 fs/nilfs2/super.c:78
+>    nilfs_sufile_updatev+0x21c/0x6d0 fs/nilfs2/sufile.c:186
+>    nilfs_sufile_freev fs/nilfs2/sufile.h:93 [inline]
+>    nilfs_free_segments fs/nilfs2/segment.c:1140 [inline]
+>    nilfs_segctor_collect_blocks fs/nilfs2/segment.c:1261 [inline]
+>    nilfs_segctor_do_construct+0x1f55/0x76c0
+>    nilfs_clean_segments+0x3bd/0xa50
+>    nilfs_ioctl_clean_segments fs/nilfs2/ioctl.c:922 [inline]
+>    nilfs_ioctl+0x261f/0x2780
+>=20
+> The root cause is that user-supplied segment numbers are not validated
+> before nilfs_clean_segments() begins doing work; the range check on
+> each segnum is performed deep inside the call chain by
+> nilfs_sufile_updatev(), which emits a nilfs_warn() per invalid entry
+> while still holding the segctor lock and the sufile mi_sem.  Under load
+> (repeated invocations across multiple mounts saturating the global
+> printk path), the cumulative printk latency keeps ns_segctor_sem held
+> long enough to trip the hung_task watchdog, blocking concurrent
+> operations such as chmod() that need ns_segctor_sem for read.
+>=20
+> Fix by validating the contents of kbufs[4] in nilfs_clean_segments()
+> immediately after acquiring ns_segctor_sem via nilfs_transaction_lock().
+> Holding ns_segctor_sem serializes the check against
+> nilfs_ioctl_resize(), which can modify ns_nsegments, so the validation
+> uses a consistent value.  Out-of-range segment numbers are rejected
+> with -EINVAL before any segment-cleaning work begins, so the bad
+> entries never reach the per-element diagnostic path inside
+> nilfs_sufile_updatev().
+>=20
+> Reported-by: syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com
+> Closes: https://syzkaller.appspot.com/bug?extid=3D62f0f99d2f2bb8e3bbd7
+> Tested-by: syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Deepanshu Kartikey <kartikey406@gmail.com>
+> Fixes: 071cb4b81987 ("nilfs2: eliminate removal list of segments")
+> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 > ---
->  fs/nilfs2/namei.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/fs/nilfs2/namei.c b/fs/nilfs2/namei.c
-> index 40ac679ec56e..e2fe95de3d71 100644
-> --- a/fs/nilfs2/namei.c
-> +++ b/fs/nilfs2/namei.c
-> @@ -258,7 +258,7 @@ static struct dentry *nilfs_mkdir(struct mnt_idmap *i=
-dmap, struct inode *dir,
->         else
->                 nilfs_transaction_abort(dir->i_sb);
->
-> -       return ERR_PTR(err);
-> +       return err ? ERR_PTR(err) : NULL;
->
->  out_fail:
->         drop_nlink(inode);
-> --
-> 2.25.1
->
+> Hi Viacheslav,
+>=20
+> Please queue this patch.
+>=20
+> This is a fix by Deepanshu that addresses the problem recently
+> detected by syzbot, a hang-up that can occur when GC ioctl parameters
+> are invalid (this time, when a segment number to be freed is
+> out-of-range).
+>=20
+> Thanks,
+> Ryusuke Konishi
+>=20
+>  fs/nilfs2/segment.c | 22 ++++++++++++++++++++++
+>  1 file changed, 22 insertions(+)
+>=20
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 1491a4d4b1e1..9332f5ac6083 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -2512,12 +2512,33 @@ int nilfs_clean_segments(struct super_block *sb, =
+struct nilfs_argv *argv,
+>  	struct nilfs_sc_info *sci =3D nilfs->ns_writer;
+>  	struct nilfs_transaction_info ti;
+>  	int err;
+> +	size_t i, nfreesegs =3D argv[4].v_nmembs;
+> +	__u64 *segnumv =3D kbufs[4];
+> =20
+>  	if (unlikely(!sci))
+>  		return -EROFS;
+> =20
+>  	nilfs_transaction_lock(sb, &ti, 1);
+> =20
+> +	/*
+> +	 * Validate segment numbers under ns_segctor_sem (held for write
+> +	 * by nilfs_transaction_lock above) so the check is serialized
+> +	 * against nilfs_ioctl_resize(), which can modify ns_nsegments.
+> +	 * Rejecting bad input here, before any segment-cleaning work
+> +	 * begins, avoids the per-element diagnostic path inside
+> +	 * nilfs_sufile_updatev() that would otherwise run under this
+> +	 * same lock and stall concurrent readers.
+> +	 */
+> +	for (i =3D 0; i < nfreesegs; i++) {
+> +		if (segnumv[i] >=3D nilfs->ns_nsegments) {
+> +			nilfs_err(sb,
+> +				 "Segment number %llu to be freed is out of range",
+> +				 (unsigned long long)segnumv[i]);
+> +			err =3D -EINVAL;
+> +			goto bail_unlock;
+> +		}
+> +	}
+> +
+>  	err =3D nilfs_mdt_save_to_shadow_map(nilfs->ns_dat);
+>  	if (unlikely(err))
+>  		goto out_unlock;
+> @@ -2558,6 +2579,7 @@ int nilfs_clean_segments(struct super_block *sb, st=
+ruct nilfs_argv *argv,
+>  	sci->sc_freesegs =3D NULL;
+>  	sci->sc_nfreesegs =3D 0;
+>  	nilfs_mdt_clear_shadow_map(nilfs->ns_dat);
+> + bail_unlock:
+>  	nilfs_transaction_unlock(sb);
+>  	return err;
+>  }
 
-Thanks for the patch.
-This is part of a series of fixes, but since you intend for it to be
-treated as a standalone fix, I will queue it as such.
+Applied.
 
 Thanks,
-Ryusuke Konishi
+Slava.
+
