@@ -1,235 +1,209 @@
-Received: from out30-112.freemail.mail.aliyun.com (out30-112.freemail.mail.aliyun.com [115.124.30.112])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0FB42C375A;
-	Mon, 25 May 2026 02:56:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=115.124.30.112
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B8FE37FF5F
+	for <linux-nilfs@vger.kernel.org>; Mon, 25 May 2026 16:10:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779677775; cv=none; b=I5WfuaZ+oVCREixnoRe6jOOXV7a/DINDgmI4H2MHxvcZ6oPbiQGDoTw/KUsVieYnrMAHlvXmM73YKzPcMHTfA3+LnLWFykEz3b5VnHhyuRcrI+VZXTRQ/2PgWVLAoJ1v6NHRVyI8No90cf09y+uVsbhpTDJz8yY1Qr0kjUKYQOA=
+	t=1779725407; cv=none; b=IIZ+XF+Ow2yvypH1v/7cQu7OL72M1bi/CIZLJ0pjWglDNc6Ubo/WE+NzUTCeFiB6kLtuvxIP/ZkeKqJTS0TQvXCyD/5uemTgSjpK0mmuh63XqruB9PJdnbp7fu2yjWn0ZKCZNZcH9YZL64/9g3RsZ7mKbIap9Ldil7n6iRzgwx8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779677775; c=relaxed/simple;
-	bh=i7jqF7KB60rAj2AodsD9VTYn7Kz2HqOFrxwajLcDu48=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=SIqaMcAtkfUU3tPMKGRzUMGH/t9onAOdxjGoWPkubZwVofAQ5WYN1WD1QF4r+V4o6yVqhJLzsoX0YoDPf7xZe9kNNdCXqL2hjvptlcnWYD7Z4R4R4+J6MLxIBSdP8vwL5NGGFZ4odirXXTdT9h9ynPM5uIbeRB7+FFfSuqvaRQQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com; spf=pass smtp.mailfrom=linux.alibaba.com; dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b=q//9YEFE; arc=none smtp.client-ip=115.124.30.112
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.alibaba.com
+	s=arc-20240116; t=1779725407; c=relaxed/simple;
+	bh=LvkqacNHqa0yNV+l1XvGYAx4+tIi7P/ocAJeqA6BNpY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=UCw1tahDFVrwwWU67/ox4zZLZELRzPoHquQ+p+3WjT3S+7PMtCVhAcuw1c21MXw67hsOog6Vep2IqBfkTF7KaNiaf317Gt8H0H8iCKnbpfL6MkyVmECIvCf+BjuJkmvkA3dIN4eQ2PlyiZPtuk/DjNhqvqjLVfuB3wACe+kV+ls=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=fO4rShwn; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=8CuABOSu; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=U/5mq3v3; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=ePm/y7Ab; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b="q//9YEFE"
-DKIM-Signature:v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=linux.alibaba.com; s=default;
-	t=1779677768; h=Message-ID:Date:MIME-Version:Subject:To:From:Content-Type;
-	bh=uKSeg2Nza4neRSzanFebtUm6bwcAHZPjsw3+MJtuG0c=;
-	b=q//9YEFEH8b+fCC/C8Kuas4QyBxwuuj/03udbzWbkC+LVfvrYtfxT6siAQd+jr+l7tF046Ajl2mjD/HNR6R8S/RurZ54sUsGc1c8sdUz5PcRLFkmWe7Lm2F1r8u8HvBHq3Z/Y6SCygvwCoeqsmMbxYPRWzkIVGIllayfdXfMe98=
-X-Alimail-AntiSpam:AC=PASS;BC=-1|-1;BR=01201311R181e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=maildocker-contentspam033032089153;MF=joseph.qi@linux.alibaba.com;NM=1;PH=DS;RN=12;SR=0;TI=SMTPD_---0X3Ty9G._1779677440;
-Received: from 30.221.145.59(mailfrom:joseph.qi@linux.alibaba.com fp:SMTPD_---0X3Ty9G._1779677440 cluster:ay36)
-          by smtp.aliyun-inc.com;
-          Mon, 25 May 2026 10:50:42 +0800
-Message-ID: <a5756f39-31c8-4e8b-939f-f498726c7d8a@linux.alibaba.com>
-Date: Mon, 25 May 2026 10:50:40 +0800
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="fO4rShwn";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="8CuABOSu";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="U/5mq3v3";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="ePm/y7Ab"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id DF4BE67348;
+	Mon, 25 May 2026 16:10:01 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1779725402; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=QzQMwNuzcTyDWDBbrPJPk+oWqpbFufgu+tYxwJzuBcA=;
+	b=fO4rShwnpRca/Qq5O5dxQ0BFI4I7JU8ZvchsxsYB2KOnAHYByNilhFy7ZhQmPdse2qBgxr
+	1EJdV6hae2L3Q2wFNfmlzmlMqdCDBUmuYcAsTvw0e7hEOeO/oASDzBJmlh8N0cUO6qkv/D
+	u/VTU/tIoYlYjbzA6JqzmS3QJkei470=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1779725402;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=QzQMwNuzcTyDWDBbrPJPk+oWqpbFufgu+tYxwJzuBcA=;
+	b=8CuABOSukBh/JOGoxdhoaM6XBagg0YJ4CgJiNPWcgimpcpAHRDawAfN6EsFSfMjXWRl/9H
+	fQS3Dit/JgMtZyBw==
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b="U/5mq3v3";
+	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b="ePm/y7Ab"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1779725401; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=QzQMwNuzcTyDWDBbrPJPk+oWqpbFufgu+tYxwJzuBcA=;
+	b=U/5mq3v3OCXAkr6Sjo6oRmqrs0tOQEwI5lkKi618l1AhAqyBkmorllMpPseqWOS0et5fHv
+	ovfPAMkU8QK34zrEPC5YWj3ZO3pym0SHQxLtDufibCoit05OiVufj9a80rYcRFqLG9XwEf
+	MZcxcPxZaybt//fplWyDTNqSi7HPLnQ=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1779725401;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=QzQMwNuzcTyDWDBbrPJPk+oWqpbFufgu+tYxwJzuBcA=;
+	b=ePm/y7Ab8Y6GajHNFTPHGNLubf7O6wf3vduHG1/Gag7Bjb3cUucL32Ipd0cybpnJns+YVi
+	CKubuBr2EdjSLsBA==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 9E05359D1D;
+	Mon, 25 May 2026 16:10:01 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id YBHzJVl0FGqXFwAAD6G6ig
+	(envelope-from <jack@suse.cz>); Mon, 25 May 2026 16:10:01 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id D01BAA08D7; Mon, 25 May 2026 18:10:00 +0200 (CEST)
+Date: Mon, 25 May 2026 18:10:00 +0200
+From: Jan Kara <jack@suse.cz>
+To: "Mike Rapoport (Microsoft)" <rppt@kernel.org>
+Cc: Jan Kara <jack@suse.com>, Mark Fasheh <mark@fasheh.com>, 
+	Joel Becker <jlbec@evilplan.org>, Joseph Qi <joseph.qi@linux.alibaba.com>, 
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>, Viacheslav Dubeyko <slava@dubeyko.com>, 
+	Trond Myklebust <trondmy@kernel.org>, Anna Schumaker <anna@kernel.org>, 
+	Chuck Lever <chuck.lever@oracle.com>, Jeff Layton <jlayton@kernel.org>, NeilBrown <neil@brown.name>, 
+	Olga Kornievskaia <okorniev@redhat.com>, Dai Ngo <Dai.Ngo@oracle.com>, Tom Talpey <tom@talpey.com>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
+	Dave Kleikamp <shaggy@kernel.org>, Theodore Ts'o <tytso@mit.edu>, 
+	Miklos Szeredi <miklos@szeredi.hu>, Andreas Hindborg <a.hindborg@kernel.org>, 
+	Breno Leitao <leitao@debian.org>, Kees Cook <kees@kernel.org>, 
+	"Tigran A. Aivazian" <aivazian.tigran@gmail.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+	ocfs2-devel@lists.linux.dev, linux-nilfs@vger.kernel.org, linux-nfs@vger.kernel.org, 
+	jfs-discussion@lists.sourceforge.net, linux-ext4@vger.kernel.org, linux-mm@kvack.org
+Subject: Re: [PATCH 01/17] quota: allocate dquot_hash with kmalloc()
+Message-ID: <xsmgh26s23da43wv6jza3dqrzhbxuetupiykjis2gkaq53yx3j@kttd6p2ba7f6>
+References: <20260523-b4-fs-v1-0-275e36a83f0e@kernel.org>
+ <20260523-b4-fs-v1-1-275e36a83f0e@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 03/17] ocfs2/dlm: replace __get_free_page() with kmalloc()
-To: "Mike Rapoport (Microsoft)" <rppt@kernel.org>,
- Mark Fasheh <mark@fasheh.com>, Joel Becker <jlbec@evilplan.org>,
- akpm <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- ocfs2-devel@lists.linux.dev, linux-nilfs@vger.kernel.org,
- linux-nfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net,
- linux-ext4@vger.kernel.org, linux-mm@kvack.org
-References: <20260523-b4-fs-v1-0-275e36a83f0e@kernel.org>
- <20260523-b4-fs-v1-3-275e36a83f0e@kernel.org>
-From: Joseph Qi <joseph.qi@linux.alibaba.com>
-In-Reply-To: <20260523-b4-fs-v1-3-275e36a83f0e@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260523-b4-fs-v1-1-275e36a83f0e@kernel.org>
+X-Spam-Score: -2.51
+X-Rspamd-Queue-Id: DF4BE67348
+X-Spam-Level: 
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Spamd-Result: default: False [-2.51 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RCVD_COUNT_THREE(0.00)[3];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	ARC_NA(0.00)[];
+	RCPT_COUNT_TWELVE(0.00)[33];
+	MIME_TRACE(0.00)[0:+];
+	RCVD_TLS_LAST(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	TO_DN_SOME(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	R_RATELIMIT(0.00)[to_ip_from(RLpnapcpkwxdkc5mopt1ezhhna)];
+	MISSING_XM_UA(0.00)[];
+	FREEMAIL_CC(0.00)[suse.com,fasheh.com,evilplan.org,linux.alibaba.com,gmail.com,dubeyko.com,kernel.org,oracle.com,brown.name,redhat.com,talpey.com,zeniv.linux.org.uk,suse.cz,mit.edu,szeredi.hu,debian.org,vger.kernel.org,lists.linux.dev,lists.sourceforge.net,kvack.org];
+	DKIM_TRACE(0.00)[suse.cz:+];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.cz:dkim,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:email]
+X-Rspamd-Action: no action
+X-Spam-Flag: NO
 
-
-
-On 5/24/26 1:54 AM, Mike Rapoport (Microsoft) wrote:
-> A few places in ocsfs2 allocate temporary buffers with __get_free_page() or
-> get_zeroed_page().
+On Sat 23-05-26 20:54:13, Mike Rapoport (Microsoft) wrote:
+> dquot_init() allocates a single page for dquot_hash with
+> __get_free_pages().
 > 
 > kmalloc() is a better API for such use and it also provides better
 > scalability and more debugging possibilities.
 > 
-> Replace use of __get_free_page() and get_zeroed_page() with kmalloc() and
-> kzalloc() respectively.
+> Replace use of __get_free_pages() with kmalloc() and get rid of the order
+> variable that remained 0 for more than 20 years.
 > 
 > Signed-off-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
 
-Looks fine.
-Reviewed-by: Joseph Qi <joseph.qi@linux.alibaba.com>
+Thanks! I've added this patch to my tree.
+
+								Honza
 
 > ---
->  fs/ocfs2/dlm/dlmdebug.c    | 24 +++++++++---------------
->  fs/ocfs2/dlm/dlmdomain.c   |  8 +++++---
->  fs/ocfs2/dlm/dlmmaster.c   |  5 ++---
->  fs/ocfs2/dlm/dlmrecovery.c |  4 ++--
->  4 files changed, 18 insertions(+), 23 deletions(-)
+>  fs/quota/dquot.c | 11 +++++------
+>  1 file changed, 5 insertions(+), 6 deletions(-)
 > 
-> diff --git a/fs/ocfs2/dlm/dlmdebug.c b/fs/ocfs2/dlm/dlmdebug.c
-> index fe4fdd09bae3..6ca8b3b68eef 100644
-> --- a/fs/ocfs2/dlm/dlmdebug.c
-> +++ b/fs/ocfs2/dlm/dlmdebug.c
-> @@ -260,10 +260,10 @@ void dlm_print_one_mle(struct dlm_master_list_entry *mle)
+> diff --git a/fs/quota/dquot.c b/fs/quota/dquot.c
+> index 64cf42721496..9850de3955d3 100644
+> --- a/fs/quota/dquot.c
+> +++ b/fs/quota/dquot.c
+> @@ -3022,7 +3022,7 @@ static const struct ctl_table fs_dqstats_table[] = {
+>  static int __init dquot_init(void)
 >  {
->  	char *buf;
+>  	int i, ret;
+> -	unsigned long nr_hash, order;
+> +	unsigned long nr_hash;
+>  	struct shrinker *dqcache_shrinker;
 >  
-> -	buf = (char *) get_zeroed_page(GFP_ATOMIC);
-> +	buf = kzalloc(PAGE_SIZE, GFP_ATOMIC);
->  	if (buf) {
->  		dump_mle(mle, buf, PAGE_SIZE - 1);
-> -		free_page((unsigned long)buf);
-> +		kfree(buf);
->  	}
->  }
+>  	printk(KERN_NOTICE "VFS: Disk quotas %s\n", __DQUOT_VERSION__);
+> @@ -3035,8 +3035,7 @@ static int __init dquot_init(void)
+>  				SLAB_PANIC),
+>  			NULL);
 >  
-> @@ -280,7 +280,7 @@ static struct dentry *dlm_debugfs_root;
->  /* begin - utils funcs */
->  static int debug_release(struct inode *inode, struct file *file)
->  {
-> -	free_page((unsigned long)file->private_data);
-> +	kfree(file->private_data);
->  	return 0;
->  }
+> -	order = 0;
+> -	dquot_hash = (struct hlist_head *)__get_free_pages(GFP_KERNEL, order);
+> +	dquot_hash = kmalloc(PAGE_SIZE, GFP_KERNEL);
+>  	if (!dquot_hash)
+>  		panic("Cannot create dquot hash table");
 >  
-> @@ -327,17 +327,15 @@ static int debug_purgelist_open(struct inode *inode, struct file *file)
->  	struct dlm_ctxt *dlm = inode->i_private;
->  	char *buf = NULL;
+> @@ -3046,7 +3045,7 @@ static int __init dquot_init(void)
+>  		panic("Cannot create dquot stat counters");
 >  
-> -	buf = (char *) get_zeroed_page(GFP_NOFS);
-> +	buf = kzalloc(PAGE_SIZE, GFP_NOFS);
->  	if (!buf)
-> -		goto bail;
-> +		return -ENOMEM;
+>  	/* Find power-of-two hlist_heads which can fit into allocation */
+> -	nr_hash = (1UL << order) * PAGE_SIZE / sizeof(struct hlist_head);
+> +	nr_hash = PAGE_SIZE / sizeof(struct hlist_head);
+>  	dq_hash_bits = ilog2(nr_hash);
 >  
->  	i_size_write(inode, debug_purgelist_print(dlm, buf, PAGE_SIZE - 1));
+>  	nr_hash = 1UL << dq_hash_bits;
+> @@ -3054,8 +3053,8 @@ static int __init dquot_init(void)
+>  	for (i = 0; i < nr_hash; i++)
+>  		INIT_HLIST_HEAD(dquot_hash + i);
 >  
->  	file->private_data = buf;
+> -	pr_info("VFS: Dquot-cache hash table entries: %ld (order %ld,"
+> -		" %ld bytes)\n", nr_hash, order, (PAGE_SIZE << order));
+> +	pr_info("VFS: Dquot-cache hash table entries: %ld (%ld bytes)\n",
+> +		nr_hash, PAGE_SIZE);
 >  
->  	return 0;
-> -bail:
-> -	return -ENOMEM;
->  }
->  
->  static const struct file_operations debug_purgelist_fops = {
-> @@ -384,17 +382,15 @@ static int debug_mle_open(struct inode *inode, struct file *file)
->  	struct dlm_ctxt *dlm = inode->i_private;
->  	char *buf = NULL;
->  
-> -	buf = (char *) get_zeroed_page(GFP_NOFS);
-> +	buf = kzalloc(PAGE_SIZE, GFP_NOFS);
->  	if (!buf)
-> -		goto bail;
-> +		return -ENOMEM;
->  
->  	i_size_write(inode, debug_mle_print(dlm, buf, PAGE_SIZE - 1));
->  
->  	file->private_data = buf;
->  
->  	return 0;
-> -bail:
-> -	return -ENOMEM;
->  }
->  
->  static const struct file_operations debug_mle_fops = {
-> @@ -775,17 +771,15 @@ static int debug_state_open(struct inode *inode, struct file *file)
->  	struct dlm_ctxt *dlm = inode->i_private;
->  	char *buf = NULL;
->  
-> -	buf = (char *) get_zeroed_page(GFP_NOFS);
-> +	buf = kzalloc(PAGE_SIZE, GFP_NOFS);
->  	if (!buf)
-> -		goto bail;
-> +		return -ENOMEM;
->  
->  	i_size_write(inode, debug_state_print(dlm, buf, PAGE_SIZE - 1));
->  
->  	file->private_data = buf;
->  
->  	return 0;
-> -bail:
-> -	return -ENOMEM;
->  }
->  
->  static const struct file_operations debug_state_fops = {
-> diff --git a/fs/ocfs2/dlm/dlmdomain.c b/fs/ocfs2/dlm/dlmdomain.c
-> index dc9da9133c8e..97bb9400e24b 100644
-> --- a/fs/ocfs2/dlm/dlmdomain.c
-> +++ b/fs/ocfs2/dlm/dlmdomain.c
-> @@ -63,7 +63,7 @@ static inline void byte_copymap(u8 dmap[], unsigned long smap[],
->  static void dlm_free_pagevec(void **vec, int pages)
->  {
->  	while (pages--)
-> -		free_page((unsigned long)vec[pages]);
-> +		kfree(vec[pages]);
->  	kfree(vec);
->  }
->  
-> @@ -75,9 +75,11 @@ static void **dlm_alloc_pagevec(int pages)
->  	if (!vec)
->  		return NULL;
->  
-> -	for (i = 0; i < pages; i++)
-> -		if (!(vec[i] = (void *)__get_free_page(GFP_KERNEL)))
-> +	for (i = 0; i < pages; i++) {
-> +		vec[i] = kmalloc(PAGE_SIZE, GFP_KERNEL);
-> +		if (!vec[i])
->  			goto out_free;
-> +	}
->  
->  	mlog(0, "Allocated DLM hash pagevec; %d pages (%lu expected), %lu buckets per page\n",
->  	     pages, (unsigned long)DLM_HASH_PAGES,
-> diff --git a/fs/ocfs2/dlm/dlmmaster.c b/fs/ocfs2/dlm/dlmmaster.c
-> index 93eff38fdadd..aee3b4c56dcc 100644
-> --- a/fs/ocfs2/dlm/dlmmaster.c
-> +++ b/fs/ocfs2/dlm/dlmmaster.c
-> @@ -2548,7 +2548,7 @@ static int dlm_migrate_lockres(struct dlm_ctxt *dlm,
->  
->  	/* preallocate up front. if this fails, abort */
->  	ret = -ENOMEM;
-> -	mres = (struct dlm_migratable_lockres *) __get_free_page(GFP_NOFS);
-> +	mres = kmalloc(PAGE_SIZE, GFP_NOFS);
->  	if (!mres) {
->  		mlog_errno(ret);
->  		goto leave;
-> @@ -2725,8 +2725,7 @@ static int dlm_migrate_lockres(struct dlm_ctxt *dlm,
->  	if (wake)
->  		wake_up(&res->wq);
->  
-> -	if (mres)
-> -		free_page((unsigned long)mres);
-> +	kfree(mres);
->  
->  	dlm_put(dlm);
->  
-> diff --git a/fs/ocfs2/dlm/dlmrecovery.c b/fs/ocfs2/dlm/dlmrecovery.c
-> index 128872bd945d..9b97bf73df22 100644
-> --- a/fs/ocfs2/dlm/dlmrecovery.c
-> +++ b/fs/ocfs2/dlm/dlmrecovery.c
-> @@ -837,7 +837,7 @@ int dlm_request_all_locks_handler(struct o2net_msg *msg, u32 len, void *data,
->  	}
->  
->  	/* this will get freed by dlm_request_all_locks_worker */
-> -	buf = (char *) __get_free_page(GFP_NOFS);
-> +	buf = kmalloc(PAGE_SIZE, GFP_NOFS);
->  	if (!buf) {
->  		kfree(item);
->  		dlm_put(dlm);
-> @@ -933,7 +933,7 @@ static void dlm_request_all_locks_worker(struct dlm_work_item *item, void *data)
->  		}
->  	}
->  leave:
-> -	free_page((unsigned long)data);
-> +	kfree(data);
->  }
->  
->  
+>  	dqcache_shrinker = shrinker_alloc(0, "dquota-cache");
+>  	if (!dqcache_shrinker)
 > 
-
+> -- 
+> 2.53.0
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
