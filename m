@@ -1,39 +1,35 @@
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B72262FFF8B;
-	Mon, 25 May 2026 17:55:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C797B3D090A;
+	Tue, 26 May 2026 09:07:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779731752; cv=none; b=HJImi6lB7f3X7nfOtv4EeHQyOLnqgEfZYJlxZxglez3uVpfdmE8dcjP60rHPP7Px6HkNrOvAbUGLf8+iqA+PmwtgdTcON+GFYnzOoKFAT/SKMqL+C3IcvH738da4wm0aYak3RVEV0EHNP8A5wB2AkG/eTYh03a0g5z1pFNAWs3o=
+	t=1779786431; cv=none; b=uWDQeWQEsQ72u6z2U8B85g+NvvMO+XrbUKWJTUd3/1tNaAgGGYFNQBtOR1M9WDF2FvQ+Z4LZUjIz1qe+lLxfLXfU3arrpyGj4qMdL8j6LX+UwkaULgCjDaSx5D4JQgzcJmBoZ0QqtT4XAN5y+11JPRkFFHmHRnnQ2JkAjtmvpgI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779731752; c=relaxed/simple;
-	bh=5YL6HSkMXE8sg9IfrQO9LGoZdlBO3EtC4IxekeYbMaA=;
+	s=arc-20240116; t=1779786431; c=relaxed/simple;
+	bh=QfLNF+8MN7+UA5jASUGjhqz1VuWW5dkCYTwYJ47UEw4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=uHb4i1jFtfcki7R3FoMKlOD0E3oqFcZMONHfWgJtNjP5hCoyboX8yyU+ptY3dvfTsWmSkyhC2S6+W5GtJwI2XlPs6fDTJYordbiGw1aaRT9EafQwhUFS6rLDB5j7NE1x7ETzkWb1EKuKRDAYG87/g+iqTSi+ov54vPF2iztlyxg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=b0R5jvc3; arc=none smtp.client-ip=90.155.50.34
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	 Content-Type:Content-Disposition:In-Reply-To; b=NPFmal5myF+5CRoNB8I9fsPHdE/tPwHSXXv4qsPJOQDSgnpQ8ow0J67UDEJfDBN+5VKoWJ2lS/LrUxat4pTUa+KYe5T9OI7nXYtnEVMhZ8ZKU9IeYNXAa743aqKis+9WK4tf4Dvy0OYq1CojNTJn2C6UN/vduLiQ91jS76wT374=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=RbEXU9/u; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="b0R5jvc3"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=5YL6HSkMXE8sg9IfrQO9LGoZdlBO3EtC4IxekeYbMaA=; b=b0R5jvc3CRgQVq11325LstRMSF
-	oKrblBL52SG7Mz6mDBUW/VCNZ8uBa48sWIpmj+aRuCqaV96ZG/Ic5uQrXVPhUdvtGe7ow122bVaIA
-	g64TjlVIqJhmFIPhQ9wCX+ubNuU00b1Fk/phktSUzfKmvgsd/u/it9xu6ryC8NFJ8P8L+jQzq7Il9
-	5Fcvr4m7lX8njEgphrHxwGeZ8FFYx/Xu4BrbZv62N2oeayt3Hw7hBPI37P8QlLz3vlr2IuyQc45/N
-	JHeYVvUx9P7eOgJIhlxz42kjYZ7QlYPwj3MS8hyE/Lij4+DuMW47u5AhZAN8hmywk06dPCe0yGVYs
-	7c6BglcA==;
-Received: from willy by casper.infradead.org with local (Exim 4.99.1 #2 (Red Hat Linux))
-	id 1wRZWY-0000000HaDk-1h3I;
-	Mon, 25 May 2026 17:55:34 +0000
-Date: Mon, 25 May 2026 18:55:34 +0100
-From: Matthew Wilcox <willy@infradead.org>
-To: David Laight <david.laight.linux@gmail.com>
-Cc: Jan Kara <jack@suse.cz>, "Mike Rapoport (Microsoft)" <rppt@kernel.org>,
-	Jan Kara <jack@suse.com>, Mark Fasheh <mark@fasheh.com>,
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="RbEXU9/u"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C06EE1F000E9;
+	Tue, 26 May 2026 09:07:00 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1779786430;
+	bh=X4dMIY6FGLg34QRadG1/HG9iWSvS0YAF4MlMdh2Kq3c=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=RbEXU9/uZCN+Vwwr63QjTBV/FcuhwVfwE1G+xkgW/pj9WZHp/LQdAuV3xkOBHeSVD
+	 AkVVQtdnRcNWv1Bw2/evi6mIuYT8M6sdvUP021zd2BviqBaFduuPTu6GVcAaL1kq+a
+	 yKhCJ/vtQe57mGf0+XB50jud7L1iGR+3Nxbqn2wdPXOcyof2MefuGY6uRaRF2CuJg7
+	 WMCo9eaUxvKLIqX4WPVlUGktTPR2+4NMiJFCzGRIAyt+qpGqLdJcQVrkOFkTQH14+C
+	 SjFKDsC537UZa+0+zKQpAXFjuIC2XAnLkx7R7IqX94mMj62X14Wy3VSmaRPz7oaMOc
+	 6AA7mo4wiYdoA==
+Date: Tue, 26 May 2026 12:06:57 +0300
+From: Mike Rapoport <rppt@kernel.org>
+To: Jan Kara <jack@suse.cz>
+Cc: Jan Kara <jack@suse.com>, Mark Fasheh <mark@fasheh.com>,
 	Joel Becker <jlbec@evilplan.org>,
 	Joseph Qi <joseph.qi@linux.alibaba.com>,
 	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
@@ -55,12 +51,12 @@ Cc: Jan Kara <jack@suse.cz>, "Mike Rapoport (Microsoft)" <rppt@kernel.org>,
 	ocfs2-devel@lists.linux.dev, linux-nilfs@vger.kernel.org,
 	linux-nfs@vger.kernel.org, jfs-discussion@lists.sourceforge.net,
 	linux-ext4@vger.kernel.org, linux-mm@kvack.org
-Subject: Re: [PATCH 10/17] jbd2: replace __get_free_pages() with kmalloc()
-Message-ID: <ahSNFmwAA17pMy6o@casper.infradead.org>
+Subject: Re: [PATCH 14/17] fs/namespace: use __getname() to allocate mntpath
+ buffer
+Message-ID: <ahVisehwQGXEoM0g@kernel.org>
 References: <20260523-b4-fs-v1-0-275e36a83f0e@kernel.org>
- <20260523-b4-fs-v1-10-275e36a83f0e@kernel.org>
- <2omm5gmnv2khshoxkrag5rusd3qzrsqyjgsef2syxgryrtg6vq@ao7oabqwebgo>
- <20260525182134.04045610@pumpkin>
+ <20260523-b4-fs-v1-14-275e36a83f0e@kernel.org>
+ <lwnrjpmzbv6swapmnmb5jki3xxxzqsxuks5vykniwhakvhqh7i@rhff3qrwfnoj>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
@@ -69,13 +65,55 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20260525182134.04045610@pumpkin>
+In-Reply-To: <lwnrjpmzbv6swapmnmb5jki3xxxzqsxuks5vykniwhakvhqh7i@rhff3qrwfnoj>
 
-On Mon, May 25, 2026 at 06:21:34PM +0100, David Laight wrote:
-> Would kvalloc() be more appropriate here?
+On Mon, May 25, 2026 at 06:22:13PM +0200, Jan Kara wrote:
+> On Sat 23-05-26 20:54:26, Mike Rapoport (Microsoft) wrote:
+> > mnt_warn_timestamp_expiry() allocates memory for a path with
+> > __get_free_page() although there is a dedicated helper for allocation of
+> > file paths: __getname().
+> > 
+> > Replace __get_free_page() for allocation of a path buffer with __getname().
+> > 
+> > Signed-off-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
+> > ---
+> >  fs/namespace.c | 4 ++--
+> >  1 file changed, 2 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/fs/namespace.c b/fs/namespace.c
+> > index fe919abd2f01..2ed9cd846a81 100644
+> > --- a/fs/namespace.c
+> > +++ b/fs/namespace.c
+> > @@ -3303,7 +3303,7 @@ static void mnt_warn_timestamp_expiry(const struct path *mountpoint,
+> >  	   (ktime_get_real_seconds() + TIME_UPTIME_SEC_MAX > sb->s_time_max)) {
+> >  		char *buf, *mntpath;
+> >  
+> > -		buf = (char *)__get_free_page(GFP_KERNEL);
+> > +		buf = __getname();
+> 
+> Fair but d_path() below should then get PATH_MAX and not PAGE_SIZE.
 
-no
+Ack.
+ 
+> >  		if (buf)
+> >  			mntpath = d_path(mountpoint, buf, PAGE_SIZE);
+> >  		else
+> > @@ -3319,7 +3319,7 @@ static void mnt_warn_timestamp_expiry(const struct path *mountpoint,
+> >  
+> >  		sb->s_iflags |= SB_I_TS_EXPIRY_WARNED;
+> >  		if (buf)
+> > -			free_page((unsigned long)buf);
+> > +			__putname(buf);
+> 
+> And __putname() is fine with NULL so no need for the if (buf) check here.
 
-> Does __get_free_pages() return physically contiguous memory?
+Will fix.
+ 
+> 								Honza
+> -- 
+> Jan Kara <jack@suse.com>
+> SUSE Labs, CR
 
-yes
+-- 
+Sincerely yours,
+Mike.
