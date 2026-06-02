@@ -1,159 +1,127 @@
-Received: from mail-oi1-f182.google.com (mail-oi1-f182.google.com [209.85.167.182])
+Received: from mail-oo1-f79.google.com (mail-oo1-f79.google.com [209.85.161.79])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26D143101C8
-	for <linux-nilfs@vger.kernel.org>; Mon,  1 Jun 2026 16:47:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CDF631987D
+	for <linux-nilfs@vger.kernel.org>; Tue,  2 Jun 2026 18:05:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.79
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780332467; cv=none; b=T0pRg6XxOpk1RBJ9YaAlOQe9nmDxqxkZWmvg21UHTRggcrARdieg+qgehez+0bR5IOBcWvQD6SKoirSed5pjLcmP0qGlhn/gkY64uXjroY8JDey1WQPxRUtypWgnYKpRKeaVfMa1bbzO48nzkniYDiHbfEvzwpNbCc2L0gaBXXs=
+	t=1780423532; cv=none; b=GJ/elWHL/pdRAqtW8d+XnZU/L56OqVcOhwW8M4FE+78eA1wF/RGQ4tIgK/+aMNMqz5+Z9sKMEidq0UHF8Ho+cT1lb81clneyb0Y4CsJtSc81km2Humf+bFlvdUybnZcSAWF57BPA7oN/c0Pi2a+B/rQ/776VBv9EMVCbpgBIR9o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780332467; c=relaxed/simple;
-	bh=k7d7WO1IGhjE1EeoOZERJmeHfwgMycEtCXi2A0ollLA=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=js3aeH9aqkIvOZHeLrk905kmfcxaoyCKI+dn+hi7YcamxS+Gdf1lNZM9oqezYAL2/oDEz34D3gQdvIerMQntLWJFoIcTYX7F23FkTxz0oWMoeQosZaU5lKQXr4UjgrqvLKpEUatvBpgxqm1kllzSGVfqexf8A4pptTZ0auhkuuQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=CcIrEj3p; arc=none smtp.client-ip=209.85.167.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="CcIrEj3p"
-Received: by mail-oi1-f182.google.com with SMTP id 5614622812f47-4854d5cc708so7002756b6e.2
-        for <linux-nilfs@vger.kernel.org>; Mon, 01 Jun 2026 09:47:45 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1780332465; x=1780937265; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=k7d7WO1IGhjE1EeoOZERJmeHfwgMycEtCXi2A0ollLA=;
-        b=CcIrEj3pMQecm/JhQzqxTy9ldZE7pm8Rq4vKM/JctnD7zQ7BBF+4+opt5fK355v5IA
-         HwtdiX7A+PFaAszOKj1QW0lTtVlUoKVbSMbUfhzbdwfXYqmmfiXMbSwvcbXSy1E4TL6T
-         /DCLjA0FM6iRKVSmWhjmsPHOm74hAHZx903+lBj35v5Whgv8vSv7G2XwSWcX8jDDLZHp
-         lveuspIj2BQQxssLJWj6hr4Z/8OCo8T4kfEJFmq5+90ufy2cOezTdaAnfqmFaC+jNm0J
-         L5dgHRbgnVLArN9LtDi0O8dg7+BRoj3HY82gVHqlMDRCmtOTv2Yv4DiQ+FqO/AeOrw/f
-         JHnA==
+	s=arc-20240116; t=1780423532; c=relaxed/simple;
+	bh=WzpzICU25Zv9ZOEmPM50g75dhf+S24LnaiTzHypvvKA=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=GROWFrj0jR5UyQ5gy2DZyq7aoUR5UqyqAOVA+wJqc+2whUq0xEh5dd0J8fSu2pHkb3aidAqgIfYoNnii6/b0jOldtswvxGyaUdM1Y2vTWQMrUYaOV6T+Wr6l4Ncq/avuMY78WD4QigGzkqT/E6ITcqbW08x1jYz0q21BPpgJols=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.161.79
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oo1-f79.google.com with SMTP id 006d021491bc7-69e412347c1so1080103eaf.3
+        for <linux-nilfs@vger.kernel.org>; Tue, 02 Jun 2026 11:05:31 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780332465; x=1780937265;
-        h=mime-version:user-agent:content-transfer-encoding:autocrypt
-         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=k7d7WO1IGhjE1EeoOZERJmeHfwgMycEtCXi2A0ollLA=;
-        b=Qdk69vex1l+M+2haxOXULkX3zsiOv3GSgaU7+4nocKH7wigDYrLS3Jpez6/DUQ732Y
-         aRloLNHu316ECEqrAVFCpao5BBBEPOFu+tEsVmqIfFQjfRW7uj+234kmYu7OjS+8UpJS
-         AQD0HAoItyy74LqdWBuMe/Vp1meFShjaWQd1daWyDIAydnR08o4wPYjTuTB6NrPKTCs/
-         FlWx48klWXenNeVRZTa+dD2Ry2JgmTzCym1iW5Sub5dZNZI08gfRGnCnula/Mxrs3Oq+
-         RakitZ+QKyzhLp7ZnbWVL503lKcN1YM4/wlVvXLUe5Nrp8nTAIVAhXkwe32CdMS6gHkg
-         sUzg==
-X-Forwarded-Encrypted: i=1; AFNElJ9QhfT4ow2eB7xjXQfdMD1A5NlyR4clx2PPWPf/FIiQWAQB6hSlDGFAo3d5VgTYSazxA8KxRnDpcPlc5A==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzblCyiQNTxtpPvuXxkcHUZELCKvNy7gHYR+zQs6C8A+HlXOec0
-	F8hv4usoL8cyng436nquIkrGuRy4cNC4qI0EC3rYGus6GsOljIJVbgm+DoyrzN7m+FE=
-X-Gm-Gg: Acq92OG86fsSFZ8ijSUah49nMJRYnFq85Xy6g6KYIhkGOhSiyAnzuaIYoLr0VgwySAY
-	SL1KBx5T96OpI1FL+jLkNcCPpX9IQzh2X3gdO7WGktecRNH7titdGYjD2m31UwlsTfsl56otGWF
-	m9FsDUftfQOnjlTV0HGrlYdrH5rEy7zX2qMxcBNXNbZDVGxMpzF57xjkVqKvU8J4ZlSx5EAHq17
-	qd5um6ykvp5y5p/Xnq2auQn7UHBIZmVIL41S3G6U8Nb82yAFNOQjsYzHQ9EfspdXgahx6d9clR7
-	q0G4OTUYrl0jyPysWC6sLeAlEoqcXZrm0K1+UFVFUjDTQZGgIAo25Htq6R5ZpMz20Z77NiVlib/
-	Gndo6LUoEK+isn3wyWMyV4UW8IJBC6/p4BGptVM+Ww6WB+/ozrW43zVksoQapRfVrXc1/lWT+l8
-	FJieedkZhImnlzNQKDvmmFTdC/5x+HA5W22VrwJnPFbrdvBsKUH1/Rf+I1ipKxNGs1IfGUyW2E0
-	FgmI1YAG+ucNa1CkoKWHNOH2lYmv7x62BD7GeBsHUrAayvQSaw2yYoqccAoqRkML9Gy6aDW
-X-Received: by 2002:a05:6808:1921:b0:482:7a59:47a with SMTP id 5614622812f47-485fbd772b7mr6539898b6e.46.1780332465061;
-        Mon, 01 Jun 2026 09:47:45 -0700 (PDT)
-Received: from [10.0.0.3] (162-197-212-70.lightspeed.sntcca.sbcglobal.net. [162.197.212.70])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-43c93a2296bsm8049707fac.4.2026.06.01.09.47.43
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 01 Jun 2026 09:47:44 -0700 (PDT)
-Message-ID: <9e7569ab278fc8538f0e44b552856e52f9eab37c.camel@dubeyko.com>
-Subject: Re: [PATCH v3] nilfs2: reject CLEAN_SEGMENTS ioctl with
- out-of-range segment numbers
-From: slava@dubeyko.com
-To: Deepanshu Kartikey <kartikey406@gmail.com>, Viacheslav Dubeyko
-	 <vdubeyko@redhat.com>
-Cc: konishi.ryusuke@gmail.com, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, 
-	syzbot+62f0f99d2f2bb8e3bbd7@syzkaller.appspotmail.com,
- stable@vger.kernel.org
-Date: Mon, 01 Jun 2026 09:47:43 -0700
-In-Reply-To: <CADhLXY66nCRtQk-gzHcZGm596sB2BAVKM1Ehue0ELj=OjuC-=Q@mail.gmail.com>
-References: <20260430040704.113622-1-kartikey406@gmail.com>
-	 <eea194aa0f8734f38fa645db935aca47175bdf17.camel@redhat.com>
-	 <CADhLXY66nCRtQk-gzHcZGm596sB2BAVKM1Ehue0ELj=OjuC-=Q@mail.gmail.com>
-Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 (by Flathub.org) 
+        d=1e100.net; s=20251104; t=1780423530; x=1781028330;
+        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=rsexvP+uYpzrCbvDssZc+HgWdqJyuCaNaIHqOPAMe4w=;
+        b=pu84fTStJikD/2Z5/sxLcCuqHSD+4UelEVZEx3nfsQQsY2RmzNGFwrWMn94Z8uWBfW
+         6yH5yEzL597hZ56ghBf7sqL49ZOBIsqOq69GR5YyeGfgzCmPY051YUkcShsa4HZMYlSb
+         cAGNAxCC+5HO+k0Txs0b32mzECQ5BmR0Pv5g7O/dTAC4VE18TFo6J8HHsiD2BjSUmXdf
+         YWl6a4gMxoaxsrxz+TuSZUpOT0kyiNLbGD0zbKC94aDxa5DB0GM4U9yMAPkMg/KNXdI9
+         zGBDoLRSAWKq646HIM3izflM3X7gkKVO/umDLkxgU91Kj+wSXKEaMZWvqGidKKnGyBFf
+         Ed2A==
+X-Forwarded-Encrypted: i=1; AFNElJ8Hbwpi9oDWQxXl0d3iZLJFfc6Y3YuTkDHPQ0wpnZEzHy4PCDiyI1HetlyFDALD6wpKz7U32ikAhPleKQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxHxrAOksa+DzJD8YatpcGHdEi4s3wr10WWaXzYZP/i3VfgmdoE
+	muGXObo/d7qsD2KWJetJmDT87yk6dbXBkWqvuaOtzYO2rFzeg3dEar50I/PLhe/k/Ma2X75f13Z
+	wYRMZalc4XxeHrdHSXl+OaVsIzDD2KG4tqWpTHO02odZKl8TVsDtMcHZS5dQ=
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+X-Received: by 2002:a05:6820:82a:b0:69e:337e:5a7c with SMTP id
+ 006d021491bc7-69e47e64fe9mr137336eaf.11.1780423530311; Tue, 02 Jun 2026
+ 11:05:30 -0700 (PDT)
+Date: Tue, 02 Jun 2026 11:05:30 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6a1f1b6a.fbc46276.3c3783.0009.GAE@google.com>
+Subject: [syzbot] [nilfs?] WARNING in nilfs_segctor_abort_construction (3)
+From: syzbot <syzbot+5957361606d7b750b874@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-On Sun, 2026-05-31 at 07:14 +0530, Deepanshu Kartikey wrote:
-> On Thu, Apr 30, 2026 at 11:41=E2=80=AFPM Viacheslav Dubeyko
-> <vdubeyko@redhat.com> wrote:
-> >=20
-> > Usually, I prefer to keep the err variable at the end of
-> > declarations. Because,
-> > it is the ending state of the function. And I am feeling that
-> > something is wrong
-> > every time when likewise variable is hidden inside of declaration
-> > list. :) There
-> > is nothing critical in my remark. But anyway... :)
-> >=20
-> > The path looks good to me.
-> >=20
-> > Thanks,
-> > Slava.
-> >=20
->=20
-> Hi Viacheslav,
->=20
-> Gentle Reminder. I want to know the status of the patch.
-> Let me know if anything is required from my side.
->=20
+Hello,
 
-This patch in the for-next branch several weeks already. I will send it
-to upstream for 7.2-rc1 merge cycle.
+syzbot found the following issue on:
 
-Thanks,
-Slava.
+HEAD commit:    8fde5d1d47f6 Merge tag 'acpi-7.1-rc6' of git://git.kernel...
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=14bd1ab6580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=b4166e8ea5fbf7e3
+dashboard link: https://syzkaller.appspot.com/bug?extid=5957361606d7b750b874
+compiler:       Debian clang version 21.1.8 (++20251221033036+2078da43e25a-1~exp1~20251221153213.50), Debian LLD 21.1.8
+
+Unfortunately, I don't have any reproducer for this issue yet.
+
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-8fde5d1d.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/9d8eca02a966/vmlinux-8fde5d1d.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/01e3e901b0a4/bzImage-8fde5d1d.xz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+5957361606d7b750b874@syzkaller.appspotmail.com
+
+NILFS (loop0): segctord starting. Construction interval = 5 seconds, CP frequency < 30 seconds
+NILFS error (device loop0): nilfs_bmap_lookup_at_level: broken bmap (inode number=4)
+NILFS error (device loop0): nilfs_bmap_lookup_at_level: broken bmap (inode number=5)
+------------[ cut here ]------------
+ret
+WARNING: fs/nilfs2/segment.c:1507 at nilfs_cancel_segusage fs/nilfs2/segment.c:1507 [inline], CPU#0: segctord/5339
+WARNING: fs/nilfs2/segment.c:1507 at nilfs_segctor_abort_construction+0xd7d/0xde0 fs/nilfs2/segment.c:1873, CPU#0: segctord/5339
+Modules linked in:
+CPU: 0 UID: 0 PID: 5339 Comm: segctord Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+RIP: 0010:nilfs_cancel_segusage fs/nilfs2/segment.c:1507 [inline]
+RIP: 0010:nilfs_segctor_abort_construction+0xd7d/0xde0 fs/nilfs2/segment.c:1873
+Code: 8b 05 67 50 84 0f 48 3b 84 24 a0 00 00 00 75 3e 48 8d 65 d8 5b 41 5c 41 5d 41 5e 41 5f 5d e9 8a ca f7 07 cc e8 64 47 11 fe 90 <0f> 0b 90 e9 cc f9 ff ff e8 56 47 11 fe 90 0f 0b 90 e9 60 fb ff ff
+RSP: 0018:ffffc900039ef5e0 EFLAGS: 00010293
+RAX: ffffffff83b47fdc RBX: ffff88800e4ac2c8 RCX: ffff88801fb1ca80
+RDX: 0000000000000000 RSI: 00000000fffffffb RDI: 0000000000000000
+RBP: ffffc900039ef6d0 R08: ffff8880436efa07 R09: 1ffff110086ddf40
+R10: dffffc0000000000 R11: ffffed10086ddf41 R12: 0000000000000000
+R13: ffff88800e4ac338 R14: ffff888046f765b0 R15: 00000000fffffffb
+FS:  0000000000000000(0000) GS:ffff88808c893000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fe074a99e3a CR3: 000000000bb60000 CR4: 0000000000352ef0
+Call Trace:
+ <TASK>
+ nilfs_segctor_do_construct+0x6e3f/0x76c0 fs/nilfs2/segment.c:2186
+ nilfs_segctor_construct+0x17b/0x690 fs/nilfs2/segment.c:2462
+ nilfs_segctor_thread_construct fs/nilfs2/segment.c:2570 [inline]
+ nilfs_segctor_thread+0x6c0/0xdc0 fs/nilfs2/segment.c:2684
+ kthread+0x389/0x470 kernel/kthread.c:436
+ ret_from_fork+0x514/0xb70 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+ </TASK>
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
