@@ -1,72 +1,177 @@
-Received: from mail-oo1-f72.google.com (mail-oo1-f72.google.com [209.85.161.72])
+Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA93A3769EF
-	for <linux-nilfs@vger.kernel.org>; Thu, 25 Jun 2026 09:49:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.72
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782380944; cv=none; b=fhpl4OP+WjAiDzPinfUKX5Xaw1K7oBVg8s8cANqcPksmZohWLt5ffGvpToNSUvINGURp+6yZTJvFMOkw5NcvgZN2Z2KUhp0neI585X9T0UksAF21UzWT/JyKVICJctYdnoqr+vVYLjVv9k5x411VEXe2LjO4x0mcneUzSWl+dno=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782380944; c=relaxed/simple;
-	bh=BXbIQG/QXjnUkq26Tiw7+SOliZLbHNceg8UX45FQkmY=;
-	h=MIME-Version:Date:In-Reply-To:Message-ID:Subject:From:To:
-	 Content-Type; b=D5If7Bgbg3fxL0YiPg7K4opPrkAiFC06WyQgi4SiF6jrMj5KcuwJKbWU5Mi+zDZ0HYPyz+sl879M3sq7tcescB6QVHuYBMTBhnADm4jezjMuqPHEYd/Is+qAC8HXaryTYNUeIXzKKFOo3oqXr3Sl/EODnelNMJoCZeNK48d/4uE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.161.72
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oo1-f72.google.com with SMTP id 006d021491bc7-69e887d70dbso1217833eaf.0
-        for <linux-nilfs@vger.kernel.org>; Thu, 25 Jun 2026 02:49:02 -0700 (PDT)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27146378839
+	for <linux-nilfs@vger.kernel.org>; Thu, 25 Jun 2026 10:43:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.45
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1782384209; cv=pass; b=nPJUVdF5luOn06UA2H3FMHHGSUGe3sHI+C6/twLyYHAEe0K/NNePXbA350W7zmIsIWOccI7AGOlN25CTzk8ecyiit46+iBm44+HPmXAU+sUJsNu5Ga/DsMyW8h2HorTKYnjDvrFmGQTT83JaioL6wmeip35UTSoy9X164D3v8Ks=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1782384209; c=relaxed/simple;
+	bh=L+Tww66Gi0HVQyfEXxt/Mm7D7qY5CI8GyF0pFTLdjAE=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=ieex7SvKxwos7EIebgvMCPAxB4oa/oR9Krikh8gamYLIeRq87m2KtD2SP08JMmMQtngl2geMEwzDsPJMXLf6LPY4b5ZD0KGSGN8sDHdZs/aNgaOmqc9ihjz5cgF2xjdFxmJBDGeoW9nK/Pp2lF6cZtLhQdyO9+scDxhAWYCywHo=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=T1/yLG6s; arc=pass smtp.client-ip=209.85.167.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="T1/yLG6s"
+Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-5ad4a5647e5so1982606e87.3
+        for <linux-nilfs@vger.kernel.org>; Thu, 25 Jun 2026 03:43:27 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1782384206; cv=none;
+        d=google.com; s=arc-20260327;
+        b=Hi+EHcGgCCrGSfjHvrSSqHD7mtTTtenZ1eh8UN1NuTGNbStJm6ZBdcduA8bs0+iJgX
+         2IOe2X8Uv57JsTAK4PYEqOvZsWXtHyVKSLN+EW+RoFMvW10Gkb53+TuI8E3jAJgdpiOu
+         zeTRNuKQ1+gMFBfq3S+mI5PpzkC80E+TtZN+X4Aujx1NETY+eMz6DAQewLght9BaAuMx
+         M6oOIqvYcOjj7r0K/bUTHzsNDSyAGHpTeN/NdVSk8zNf5a+pDMuJsigN0W8Tcfe0zBTi
+         ioTUxJ/iBLXEsjJRqnLhYEki3hCxZY2U7spAkeksHWhPt2cRL+e2vgCi/Op9lL63GsFd
+         ZVzQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=V0o9GExuR0Ux+TjU9F9sF0wawXg9XX0jF+jaTnMVqVA=;
+        fh=VhRKeBzoI7mJuYXp4G8ZzT379qig2qhx7m/u40LWS4c=;
+        b=J2ROkVlwV0q/GVVax+deWXRZ0mrUloPBPW1rFQvx7SYyFqIg1VFCW3REbxCrn2Gf8S
+         BHBfmlkrjnm8jvjgRXNtAz09uXCxV106nxA06+q3vH7hQANnhkcnTnbVVOsLjtefR5m6
+         /CxpYGEUi78UMIrWDHkNBNdKYoRn6kSvXIG2og3tLNkYEkwMf7KOEOyYiFLffXcy5mBz
+         QtWEIP90Xm2Dc4BxtB9EnyGTU3Lm1Jc8a/2GHVGNliigu0kVMuNK1AmmkzgoVG0YPVnA
+         C2t5CwEpKfdrg24SCtNVQvgxFgeq+/C4XmzZG07v1CvWVepLawYj1PPArxAOZjWiVQmQ
+         bOLg==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1782384206; x=1782989006; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=V0o9GExuR0Ux+TjU9F9sF0wawXg9XX0jF+jaTnMVqVA=;
+        b=T1/yLG6sIJR3k50A4UWHgMIQ/14Kt7riBRCyosiQ/dL12W7QXUOJWcA8cQa0dhxmWX
+         c+6G74zZOWWytY47muynKCyDrBTX7jIONQyPaRe2h0T2jyKGNCSnM+5xcb/KNJ+RS0a/
+         Zb+lp8F3Ubz4LLq57yRZafSpt5hResKmuIOJzNRtHKL/7BIFY7ulzUKGIvTcedmfiK65
+         O9tpXyg5f4yIQFcVwKdHp0cou/xotGhOM77NvBm3gnLjuPCBPPTHE0mQEyZ78ulckvJR
+         HFWAkdYvfytNpeMQW7AOoIShr4Im6JPGjeQhwyhMjDn2UdO6AQzqHZUcXdz3vSwamPbk
+         cdZw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782380942; x=1782985742;
-        h=to:from:subject:message-id:in-reply-to:date:mime-version
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ILUleABfnKpatSC0NM41FoxmSlxdKcDh8vwIhGsBt9g=;
-        b=FJ+yAYmtulDvc42H0a/CtwtljeMEt/pGRaEhH7FtcwHs2nriRI+ZDbge8jMMI1TU3S
-         j3wFpAv8/kplLgM17UKI3Y0wcX5fRA8WttFLppdxCaB896hiIgvmBMZuTEte92lGZ2I5
-         3TVfc4Ar8zzxk6hAcDT3wRa9RelG8WmDgmSaFcxM97tvmKZGoEKpKTc9BdXBQkbuIiUp
-         8IaOtDSl72v5Ql9iHHCtfUcfw1fmAQU625wJ8uiwHCzQFye3ayspXMqvruukh7UMHsXb
-         YL6vZ0l/C3a0HBlbDTJfAW3YsuHluf1PVPoDEAc4R3EQxAYNLuMFppaIGrMArow8Rnbh
-         yg7w==
-X-Forwarded-Encrypted: i=1; AFNElJ97U2e9Lzxj1IwLcQEm7vBH+v8auTnDu9xJY/k/HKbq/f8nBO5GvNinYx/ZkP+VJZZYh5m8n2J23b6p5g==@vger.kernel.org
-X-Gm-Message-State: AOJu0YxFPZf93nZAyKqxN42XYRY7Yzeu8p4XhhwnRjPTFL3uBzNHHtzj
-	09lkEm7303FNU8FUWyhghoYUkxIZ2xTLZqc2TohXNuRCuuu4iCrai1yPBLpRJd2dROQSxYP8/7a
-	rKErnGAI6UsmvgfT3871Wth+KUuzmssA7/x+iuaO9/XDcklzf81k0hW1cXuo=
+        d=1e100.net; s=20251104; t=1782384206; x=1782989006;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=V0o9GExuR0Ux+TjU9F9sF0wawXg9XX0jF+jaTnMVqVA=;
+        b=EfjkH9cQVv4/uX1L6vN+gI7EIdy0oV4jqOKAxe2WZO0O33jd1/FdGkm+Xt2Ppr9Zna
+         pMPxGleygNC0i7SgD+D4nqivPWWi9GFQbNZwqd06ZxT1unyCB97ColMELQ0XmQRqf5eK
+         a03+xozdIYhLz7hPlaz+y/7GekcLrghWmFicMm0zDcADTJsaUvjoDIorUyUSjoknJM7n
+         04gDS1kekoCxdibr5sPLU5MX0Aga7cnNuVTbt3740VJMJfI0XSOZHLHunIx0P5M3kpZc
+         qWiaj3yMRXqIgj+LsgVM17D8EU9RGRDb8tyYSAaW82/dJyOxSbc1pC599ov0apXvuV4q
+         nbxA==
+X-Forwarded-Encrypted: i=1; AHgh+Rp8sPrKqIOF2tLCtXXLH6prz62IUf7v5KVv6XRmTIiET18b6xi5+6Ia3B/u4TtyMUcX0th4Z4zYVX6W2Q==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyHYh4IBHZtDc7WRXW4UEEBfRfPFor93TCDIDLNy+9BpVyI0Jfa
+	vAvuNGYFxYo0KoYg85Nlqxfy9L5z4RjSe+tANXINCcf+bRbxxdk9OC0yaPvOKqSBD+0Fj+hxDo+
+	UTAj9gqip2jqg7PQoxB33gWuv8D3ZO/Y=
+X-Gm-Gg: AfdE7cm9x3lqKfYQxxDDHbZ+Tkw5/6RUN5CaM4DrzWp9uVWgeSrzYW8pUmew/tsLNkx
+	tG/iyFuPrAnNCrsyk24uf+HGeFUTkeFVmg+VEa1LUgJWNMVElUm/u8UxkWGocI236CuHF+Avp+W
+	0aEWuBVf+XaUsrWgWTQGQCsIEK6pWlQCNGOQt9BpPYn+39Ck6jd+PBbXzN8NCJeZWWLKrRJL079
+	xkv7CmmS2bX7Mc+5NdWhn7Uj47KID8lsEsDFmK6v5DrKer2hIJ9dhmRn0Ij5U1WgYQctW8AoQ==
+X-Received: by 2002:a05:6512:4203:b0:5ae:9d23:2887 with SMTP id
+ 2adb3069b0e04-5aea1f4b643mr628542e87.32.1782384206066; Thu, 25 Jun 2026
+ 03:43:26 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6820:3083:b0:6a1:10b3:3565 with SMTP id
- 006d021491bc7-6a1351ce240mr1787150eaf.24.1782380941994; Thu, 25 Jun 2026
- 02:49:01 -0700 (PDT)
-Date: Thu, 25 Jun 2026 02:49:01 -0700
-In-Reply-To: <20260625091400.270398-1-wuyankun@uniontech.com>
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6a3cf98d.ac7367b4.6675.0000.GAE@google.com>
-Subject: Re: [syzbot] [nilfs?] BUG: corrupted list in nilfs_lookup_dirty_data_buffers
-From: syzbot <syzbot+c37bed40868932d790e9@syzkaller.appspotmail.com>
-To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
-	syzkaller-bugs@googlegroups.com, wuyankun@uniontech.com
+References: <20260625052639.241024-1-wuyankun@uniontech.com>
+In-Reply-To: <20260625052639.241024-1-wuyankun@uniontech.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Thu, 25 Jun 2026 19:43:09 +0900
+X-Gm-Features: AVVi8CcfiW5fTtqnEVzGSXN9sbb8rOuWi2o7RvZ_4l7TE7UxEzzVrF3kP1SbbjM
+Message-ID: <CAKFNMokkDqSYUzNkmvztUHx9U3YWPOdYmJ-9xkkQMnutN6H-ug@mail.gmail.com>
+Subject: Re: [PATCH] nilfs2: prevent double insertion of b_assoc_buffers in
+ dirty buffer lookup
+To: wuyankun <wuyankun@uniontech.com>
+Cc: slava@dubeyko.com, linux-nilfs@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, syzkaller-bugs@googlegroups.com, 
+	syzbot+c37bed40868932d790e9@syzkaller.appspotmail.com
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hello,
+On Thu, Jun 25, 2026 at 2:27=E2=80=AFPM wuyankun  wrote:
+>
+> syzbot reported list corruption caused by double list_add_tail() on
+> bh->b_assoc_buffers in nilfs_lookup_dirty_data_buffers().
+>
+> A buffer_head can still be dirty and not under async write while already
+> linked on another association list. Add list state checks before enqueuei=
+ng
+> in both data and node dirty buffer scanners to avoid re-adding already
+> linked nodes.
+>
+> Reported-by: syzbot+c37bed40868932d790e9@syzkaller.appspotmail.com
+> Link: https://syzkaller.appspot.com/bug?extid=3Dc37bed40868932d790e9
+> Signed-off-by: wuyankun <wuyankun@uniontech.com>
+> ---
+>  fs/nilfs2/segment.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+>
+> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+> index 1491a4d4b1e1..09202d155903 100644
+> --- a/fs/nilfs2/segment.c
+> +++ b/fs/nilfs2/segment.c
+> @@ -741,6 +741,8 @@ static size_t nilfs_lookup_dirty_data_buffers(struct =
+inode *inode,
+>                 do {
+>                         if (!buffer_dirty(bh) || buffer_async_write(bh))
+>                                 continue;
+> +                       if (!list_empty(&bh->b_assoc_buffers))
+> +                               continue;
+>                         get_bh(bh);
+>                         list_add_tail(&bh->b_assoc_buffers, listp);
+>                         ndirties++;
+> @@ -779,7 +781,8 @@ static void nilfs_lookup_dirty_node_buffers(struct in=
+ode *inode,
+>                         bh =3D head =3D folio_buffers(fbatch.folios[i]);
+>                         do {
+>                                 if (buffer_dirty(bh) &&
+> -                                               !buffer_async_write(bh)) =
+{
+> +                                               !buffer_async_write(bh) &=
+&
+> +                                               list_empty(&bh->b_assoc_b=
+uffers)) {
+>                                         get_bh(bh);
+>                                         list_add_tail(&bh->b_assoc_buffer=
+s,
+>                                                       listp);
+> --
+> 2.20.1
+>
 
-syzbot has tested the proposed patch and the reproducer did not trigger any issue:
+Thank you for the patch.
 
-Reported-by: syzbot+c37bed40868932d790e9@syzkaller.appspotmail.com
-Tested-by: syzbot+c37bed40868932d790e9@syzkaller.appspotmail.com
+This patch adds a fix to forcibly avoid double registration of a
+buffer head to the list at the list manipulation level.
 
-Tested on:
+However, we need to clarify why that happened in the first place, and
+what caused the state inconsistency that led to this double
+registration.
 
-commit:         ab9de95c Merge tag 'rust-7.2-2' of git://git.kernel.or..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=134eecde580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=3c3d59be33cf7e9a
-dashboard link: https://syzkaller.appspot.com/bug?extid=c37bed40868932d790e9
-compiler:       Debian clang version 22.1.8 (++20260613092233+e80beda6e255-1~exp1~20260613092250.77), Debian LLD 22.1.8
-patch:          https://syzkaller.appspot.com/x/patch.diff?x=17c5db7a580000
+The search routine for dirty buffers performs a gang lookup for dirty
+folios, registering them to the list in ascending order of their
+offsets in the page cache.
 
-Note: testing is done by a robot and is best-effort only.
+Furthermore, the construction and destruction of this list take place
+inside the log writer, which operates exclusively. Whether the write
+succeeds or fails, the list is released by nilfs_release_buffers()
+(called via nilfs_destroy_logs()). Therefore, double registration
+normally does not occur, meaning there must be an oversight somewhere.
+
+As this issue arises from calls made via the GC ioctl
+(nilfs_ioctl_clean_segments()), the underlying implementation flaw
+likely lies there.
+
+Since it seems reproducible with the syzbot reproducer, I will also
+trace what is happening to verify if this fix direction is
+appropriate.
+
+Thanks,
+Ryusuke Konishi
