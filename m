@@ -1,144 +1,141 @@
-Received: from mail-oi1-f207.google.com (mail-oi1-f207.google.com [209.85.167.207])
+Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1BD9623ED6F
-	for <linux-nilfs@vger.kernel.org>; Mon,  6 Jul 2026 06:10:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.207
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D6113F075B
+	for <linux-nilfs@vger.kernel.org>; Mon,  6 Jul 2026 11:08:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783318230; cv=none; b=p5tUx9RjYlpNFq3VNY0lNyFTtgrJ3SUVjSzzPqQ8BqzOTp+vwPQLVxg9ctJ+LzVHcMpXpWCNJk4Go+c9rRMNWymY3F+LFnNTU43zzjdtqMo5qZF/1eUFf4/TNTeRTvwYv+WJ0cFnq7Vvgj84/HRYADvwKKYoIKKOQM9mzi5lzm8=
+	t=1783336095; cv=none; b=l9fOKWt0+HggcFMREmcjIcykMfhuFgELoxCXOwQLaWqRXc2sz7/2YQgM62L4n3aKzSjtkq+uDxV/so7HgTWH541TvxGKu4riYJxh9qqcG1YURz556eUM427ogtyQZi+Cx4XC770X9IOl/JXNzuUW1fI/zdpKbGcdf+NSdzuQ1Rk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783318230; c=relaxed/simple;
-	bh=RnmAxHW4VNSgXES/ca9hlrez5V5t40FaJaehXOofSKU=;
-	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=Au1QTpvW02OKX1BOlhexlPiKAx8r//93FJJSejrLX5ChE+IzIJf4HUud7h11JcD+YWcFsDGc9MqwFlsUQ4bHDo36zqyc5humUIdsXlW/5o5NcO1wLUIlw6+J2ed+IvGp9GdxfEAYi3954ofWJYF2VUeSrkipH6/O/Vy86KC+qoI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.167.207
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oi1-f207.google.com with SMTP id 5614622812f47-486055c1c6fso1094961b6e.1
-        for <linux-nilfs@vger.kernel.org>; Sun, 05 Jul 2026 23:10:28 -0700 (PDT)
+	s=arc-20240116; t=1783336095; c=relaxed/simple;
+	bh=vpa89zqJRQ9fSGMVcwJznhT3rLkKb/H+YNZTERWaYC8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=pehNysKjty30WQQxnUR/azd5yNC7aGrGF4J9/wE3ScZLb8wvx+T1sMqlkemMi0wTN9P2EVJvgzkhsBn6P5xdOEn4pkfIsUi9G1Ciyxs2cptyPSgPkJRMk0p4RfmRy5G3sDXx4acT68cI6UCl03nh0RmJ82LVnFrPmuF3kzasc54=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=e5aXNFTH; arc=none smtp.client-ip=209.85.167.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="e5aXNFTH"
+Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-5aeb89359a3so2275762e87.3
+        for <linux-nilfs@vger.kernel.org>; Mon, 06 Jul 2026 04:08:13 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1783336091; x=1783940891; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=vtUwtg812qYxWb4tbGZyGStRjOL012fzxVYjSpjnYjQ=;
+        b=e5aXNFTHoYy/h7j3C84HNhaebC2kit362uddQx0aMgMll3mXztldwl8deoRDXnx+wC
+         u/gzODpeV1+QXXzokEiFjDs7JdJSymYbzqzsSV2Wk2qm+VNAgsVKjN3Ifd7tvolLHyN+
+         Mu5iU6HEf8Kt0S2F4TmEPU7XAthnKZnpPXGz/aPkELLxpPXLHqLGwA0Mp9og+UWg6lat
+         OpicZ9NJolZYCUSwMnFGnH3E+ghyL4Clum/fRnpS6GCVz8QSKkIEHN/N51ZOAtj51rGK
+         jDqpis91qD8k+lW4OVJpxVT7o/ZYU6Us6G6xmsRdYTSyxPdqZ1d/kd1LFnqffRbaiBKv
+         Xauw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783318228; x=1783923028;
-        h=to:from:subject:message-id:date:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=+LdvZXVLSiym5V2GL9AFvzCyPT1hHbHqQ7KZlFCqzD0=;
-        b=fD9bl/5/4tyIFT06c4BIpUdlRkmuNgS+bVaD80Q34f3R4LKFQ9mQAYW8Za8j/e3unY
-         /IAMJnpBnlWocXdEBzVyu6Cni44Eyvsj+s9X7tmVezjCCMZy+AeVyrW/303JUsKAkpYO
-         4m+PlWYQ7PZyxWBhvud5VhhUn7PcHb5y27NG3fkKZClW7OUzwRomxu+Lw2ov8FauaOCu
-         cs2T0rCpjZQsvxZ9XsxWaS6PbU8EPO6Bf5H9pleXaEgLctn/ltqSRwykSVSJsA2c7OZb
-         a41fn0nKP70riqkuknZvUsa5l6UrDOS0jXD5/C0NhJrmeGxgliZmbOnv8h+8NYjIcclu
-         ISLA==
-X-Forwarded-Encrypted: i=1; AFNElJ+lWdvQCfAmCG+X+uS2qdI5gwF95tq/c4FFZ+NtFV94rqGySmsqiXU9voqgQ5RYnTxIQ1PeG2eApGNmig==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzMcLH3Pz5Yc+SiVQ5zyE5SwK0sPRYzYITwYI2DKB1zzuSdFXJ1
-	QxUQZmAN7Pgbxkew5qYbqdfdzQtw5DDG4bXLdjK6/Tzf26HN6Qd5eAybLdULnZvBpDPcMU8IVYX
-	ddkTDpS5+DKgjdZhGbleflJBFEA4Mgv8qXRw12reYEOMcEUuFdwIw+sztlQM=
+        d=1e100.net; s=20251104; t=1783336091; x=1783940891;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=vtUwtg812qYxWb4tbGZyGStRjOL012fzxVYjSpjnYjQ=;
+        b=mkc6B7QARALeQfD6UbshKvOQqiYSwWwP32jwoxFKOZKxeq2AGvoDz7fxIZzF51L/Wl
+         i44v979TQzQgDlEbLknLc53h1Isa1fbS2B2ExpDubDQAKjVa8vtzpelcwYu9zXPeviJg
+         3lxMXCQU5GSSrnuHLCDK+0OzE/QJo847xNHM30kD0liIFEzalqyCJXQ50l74BONb7jM4
+         rTj6abwFS1y0rLohkTpOjM9RRwZwgiYpV18TVjolObf6v1khDMkqRWVN2dzjtx6DLNyD
+         WlptnL82R9B3KGF7rg0qpwNmJd609G4/Zew8CsDCALpuvB4OQDzhkbKun48ra7k1eLk6
+         2ilw==
+X-Gm-Message-State: AOJu0YyN6qbxiwCictIW0QuezTWHpRa8rRpc36GhLN5Vsgc3q4068gnK
+	7ymGT69DfV/ygXjvs5SqJ94YHb+5iweuOYQegVvemZzsNFj2PV1VSqQ1
+X-Gm-Gg: AfdE7cnYuFF9wY3aaNSwuT7DkS3uSwVfpBC9IaiBVuwXWlRiOyGkXH5OeZ+8Bear210
+	UAw28ThPo2nZVUTNJaPH0YpW+K7TWdv3PrtVp9YNrqb0Vhuxi/QY8wAUzL6KixgYa61R32tdtNT
+	yUQh21klHuk3uLeh2iQXTJUCralcEArafL3DhbSm0td3pPRWmzl1gY0bfLswtbdCDuhIFBEZBDm
+	dv5v0pfh3kLFtY7DzKXqcHe30qfGeqz1AYPtG7cnvRfoHf93QMkodvb9pBwkeOCXFsTLLQxwgIy
+	lY8L+pcsoKXDOYKqdR2nGjjmwnXbUg6LQwkIK5YHlWvS5k07YnUhsg9HdNeAbcn3tuRark9hEER
+	uTNErJFDZEjAhCHNCp0QJ/0ExVzcSfQg9SznkEjvfjJZZLJMP1V6XdqUDiu+YoJB3THLUMiNrkC
+	jojeldJIP6ellP8H5HPVSiiJDwwOvwLKM5Onm6GCrG0Lw8xBnKR3lXcwU8dkhjvdeRUnjG9VTUv
+	N09YTc=
+X-Received: by 2002:a05:6512:620d:b0:5ae:b880:d4a8 with SMTP id 2adb3069b0e04-5aed50b6680mr1649603e87.57.1783336091255;
+        Mon, 06 Jul 2026 04:08:11 -0700 (PDT)
+Received: from debian.localdomain (95-25-158-125.broadband.corbina.ru. [95.25.158.125])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5aed13bfd1fsm2706666e87.55.2026.07.06.04.08.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 06 Jul 2026 04:08:10 -0700 (PDT)
+From: Igor Putko <igorpetindev@gmail.com>
+To: konishi.ryusuke@gmail.com,
+	slava@dubeyko.com
+Cc: linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Igor Putko <igorpetindev@gmail.com>,
+	syzbot+79b815da3aec0a6a4d02@syzkaller.appspotmail.com
+Subject: [PATCH] nilfs2: handle corrupted checkpoint count gracefully during deletion
+Date: Mon,  6 Jul 2026 14:08:07 +0300
+Message-ID: <20260706110807.2835-1-igorpetindev@gmail.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6808:2383:b0:497:df42:1e04 with SMTP id
- 5614622812f47-499b741a01dmr5412579b6e.18.1783318228080; Sun, 05 Jul 2026
- 23:10:28 -0700 (PDT)
-Date: Sun, 05 Jul 2026 23:10:28 -0700
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6a4b46d4.b42ede87.8bd1.001b.GAE@google.com>
-Subject: [syzbot] [nilfs?] WARNING in nilfs_cpfile_delete_checkpoints
-From: syzbot <syzbot+79b815da3aec0a6a4d02@syzkaller.appspotmail.com>
-To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
-	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Hello,
+Syzkaller reported a kernel warning in nilfs_cpfile_delete_checkpoints()
+due to a corrupted checkpoint count on the storage medium where
+le32_to_cpu(cp->cp_checkpoints_count) is less than the number of
+checkpoints being deleted.
+Triggering a WARN_ON() for disk image corruption is suboptimal. Fix
+this by returning -EIO and reporting a filesystem error via
+nilfs_error() instead of interrupting execution with a kernel warning.
 
-syzbot found the following issue on:
-
-HEAD commit:    71dfdfb0209b Merge tag 'vfs-7.2-rc2.fixes' of git://git.ke..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=10c00d39580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=20c9876b0f77b546
-dashboard link: https://syzkaller.appspot.com/bug?extid=79b815da3aec0a6a4d02
-compiler:       Debian clang version 22.1.8 (++20260613092233+e80beda6e255-1~exp1~20260613092250.77), Debian LLD 22.1.8
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=14d01c6e580000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=12776e6e580000
-
-Downloadable assets:
-disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-71dfdfb0.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/522f1a761fe1/vmlinux-71dfdfb0.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/595943c8baaa/bzImage-71dfdfb0.xz
-mounted in repro #1: https://storage.googleapis.com/syzbot-assets/e2143050dc41/mount_0.gz
-mounted in repro #2: https://storage.googleapis.com/syzbot-assets/958ab3f4c7bb/mount_5.gz
-mounted in repro #3: https://storage.googleapis.com/syzbot-assets/77f82daa3be0/mount_6.gz
-  fsck result: OK (log: https://syzkaller.appspot.com/x/fsck.log?x=15143946580000)
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
 Reported-by: syzbot+79b815da3aec0a6a4d02@syzkaller.appspotmail.com
-
-------------[ cut here ]------------
-le32_to_cpu(cp->cp_checkpoints_count) < n
-WARNING: fs/nilfs2/cpfile.c:94 at nilfs_cpfile_block_sub_valid_checkpoints fs/nilfs2/cpfile.c:94 [inline], CPU#0: syz.0.17/5467
-WARNING: fs/nilfs2/cpfile.c:94 at nilfs_cpfile_delete_checkpoints+0x913/0xce0 fs/nilfs2/cpfile.c:522, CPU#0: syz.0.17/5467
-Modules linked in:
-CPU: 0 UID: 0 PID: 5467 Comm: syz.0.17 Not tainted syzkaller #0 PREEMPT(full) 
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
-RIP: 0010:nilfs_cpfile_block_sub_valid_checkpoints fs/nilfs2/cpfile.c:94 [inline]
-RIP: 0010:nilfs_cpfile_delete_checkpoints+0x913/0xce0 fs/nilfs2/cpfile.c:522
-Code: fb ff 41 89 c6 31 ff 89 c6 e8 e9 f9 f1 fd 45 85 f6 0f 85 6a 03 00 00 e8 9b f5 f1 fd 45 31 f6 e9 23 fd ff ff e8 8e f5 f1 fd 90 <0f> 0b 90 e9 d0 fe ff ff 89 d9 80 e1 07 80 c1 03 38 c1 0f 8c 0a f9
-RSP: 0018:ffffc900025df4e0 EFLAGS: 00010293
-RAX: ffffffff83d48d02 RBX: 1ffff11006feb480 RCX: ffff88803462a540
-RDX: 0000000000000000 RSI: 0000000000000005 RDI: 0000000000000000
-RBP: ffffc900025df630 R08: ffffea0000dfd687 R09: 1ffffd40001bfad0
-R10: dffffc0000000000 R11: fffff940001bfad1 R12: 0000000000000005
-R13: dffffc0000000000 R14: 0000000000000000 R15: ffff888037f5a404
-FS:  0000555559731500(0000) GS:ffff88808c54e000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000000000000010 CR3: 0000000044683000 CR4: 0000000000352ef0
-Call Trace:
- <TASK>
- nilfs_ioctl_delete_checkpoints fs/nilfs2/ioctl.c:680 [inline]
- nilfs_ioctl_prepare_clean_segments+0x158/0x840 fs/nilfs2/ioctl.c:787
- nilfs_clean_segments+0x2b6/0xbb0 fs/nilfs2/segment.c:2546
- nilfs_ioctl_clean_segments fs/nilfs2/ioctl.c:922 [inline]
- nilfs_ioctl+0x2619/0x2780 fs/nilfs2/ioctl.c:1352
- vfs_ioctl fs/ioctl.c:51 [inline]
- __do_sys_ioctl fs/ioctl.c:597 [inline]
- __se_sys_ioctl+0xfc/0x170 fs/ioctl.c:583
- do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
- do_syscall_64+0x174/0x580 arch/x86/entry/syscall_64.c:94
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-RIP: 0033:0x7ff42779de59
-Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 e8 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007ffd20bf4538 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-RAX: ffffffffffffffda RBX: 00007ff427a25fa0 RCX: 00007ff42779de59
-RDX: 0000200000000640 RSI: 0000000040786e88 RDI: 0000000000000009
-RBP: 00007ff427833e6f R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
-R13: 00007ff427a25fac R14: 00007ff427a25fa0 R15: 00007ff427a25fa0
- </TASK>
-
-
+Closes: https://syzkaller.appspot.com/bug?extid=79b815da3aec0a6a4d02
+Signed-off-by: Igor Putko <igorpetindev@gmail.com>
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+ fs/nilfs2/cpfile.c | 20 ++++++++++++++++----
+ 1 file changed, 16 insertions(+), 4 deletions(-)
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+diff --git a/fs/nilfs2/cpfile.c b/fs/nilfs2/cpfile.c
+index 4bbdc832d..d3349fa58 100644
+--- a/fs/nilfs2/cpfile.c
++++ b/fs/nilfs2/cpfile.c
+@@ -81,18 +81,26 @@ nilfs_cpfile_block_add_valid_checkpoints(const struct inode *cpfile,
+ 	return count;
+ }
+ 
+-static unsigned int
++static int
+ nilfs_cpfile_block_sub_valid_checkpoints(const struct inode *cpfile,
+ 					 struct buffer_head *bh,
+ 					 unsigned int n)
+ {
+ 	struct nilfs_checkpoint *cp;
+-	unsigned int count;
++	unsigned int checkpoints_count;
++	int count;
+ 
+ 	cp = kmap_local_folio(bh->b_folio,
+ 			      offset_in_folio(bh->b_folio, bh->b_data));
+-	WARN_ON(le32_to_cpu(cp->cp_checkpoints_count) < n);
+-	count = le32_to_cpu(cp->cp_checkpoints_count) - n;
++	checkpoints_count = le32_to_cpu(cp->cp_checkpoints_count);
++	if (unlikely(checkpoints_count < n)) {
++		nilfs_error(cpfile->i_sb,
++			    "deleted checkpoints count %u exceeds block count %u",
++			    n, checkpoints_count);
++		kunmap_local(cp);
++		return -EIO;
++	}
++	count = checkpoints_count - n;
+ 	cp->cp_checkpoints_count = cpu_to_le32(count);
+ 	kunmap_local(cp);
+ 	return count;
+@@ -522,6 +530,10 @@ int nilfs_cpfile_delete_checkpoints(struct inode *cpfile,
+ 		count = nilfs_cpfile_block_sub_valid_checkpoints(cpfile, cp_bh,
+ 								 nicps);
+ 		brelse(cp_bh);
++		if (unlikely(count < 0)) {
++			ret = count;
++			break;
++		}
+ 		if (count)
+ 			continue;
+ 
+-- 
+2.47.3
 
-If the report is already addressed, let syzbot know by replying with:
-#syz fix: exact-commit-title
-
-If you want syzbot to run the reproducer, reply with:
-#syz test: git://repo/address.git branch-or-commit-hash
-If you attach or paste a git patch, syzbot will apply it before testing.
-
-If you want to overwrite report's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
-
-If the report is a duplicate of another one, reply with:
-#syz dup: exact-subject-of-another-report
-
-If you want to undo deduplication, reply with:
-#syz undup
