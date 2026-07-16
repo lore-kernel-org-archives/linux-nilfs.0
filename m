@@ -1,66 +1,66 @@
-Received: from mail-yx1-f42.google.com (mail-yx1-f42.google.com [74.125.224.42])
+Received: from mail-yw1-f178.google.com (mail-yw1-f178.google.com [209.85.128.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC9463B777F
-	for <linux-nilfs@vger.kernel.org>; Mon, 13 Jul 2026 22:33:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35D563C2E
+	for <linux-nilfs@vger.kernel.org>; Thu, 16 Jul 2026 00:08:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783982014; cv=none; b=rk3YMiDCv/6CSpUkXl0AkkPUJfUP+Didqwf6Ra5G++KrTY7Ypz/ZEPRzQLXxYxzVjlCIzLW81SmXlG1G2Ov8gQ8V369heRL9rUZsAfKxii487gGHANUeio2BNbq4t40N3fQ03oSuTtPHnkaVQozeZaFXUsSkTGR11Ybo2Q0oV30=
+	t=1784160536; cv=none; b=lS8zIrXBvliHDmkvebet+kwwLUDJ/EGc0ueCj8D2FOgr9VSJUXZNz/2z5flU8j9Uw1eZIyJPVfezD9aXihGWiYOVaOvX6x8W3zAr8w0gCgTermkySFpmIl/eLovmyUALAaPA5VLAdwpju9yseYsLYw5+B40seW71ZrAxhBqxQpc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783982014; c=relaxed/simple;
-	bh=Ox6BVqo9uQAHzFJ89Dkk5sMUjCTGHUh4RcAozmVDRhU=;
+	s=arc-20240116; t=1784160536; c=relaxed/simple;
+	bh=edm+o1poLBaX+Zgd7MELrnQcglifvh/n77uGGSvqid0=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=p/1ZuFWrOLp3XDgktIfpJ6ajhg4WJ8WA/SxGvHD4Qz0W7K2ENrAPKPdpq3d5W9cQDsPzBTTVDWfWP+tBOvocPCX2dRGlo/uqAM5Gk3EChbmLpRMNJTRYjoViovDtV5CowCScdmvFEoz+6jl5WFs+9vm3JyMeAF3bt+qbcniRfgY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=IAunUBnJ; arc=none smtp.client-ip=74.125.224.42
+	 Content-Type:MIME-Version; b=ETcSnkdTESyakDwcnBaVlprphcFUpxqTlz1avMt60co0MgRUbRLVp1uyC1/l2PY7b/eyDrGehWGnRm0SZMZCLTTOHGjhTpZroV6AMgRe3O4z950ILi5ccVhaWdwYBvmRfLNMaPGLoHL6g3kqA3Hv694Q2Ll2Y8+SyNoCiAFgbl0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=e2k0zjvb; arc=none smtp.client-ip=209.85.128.178
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="IAunUBnJ"
-Received: by mail-yx1-f42.google.com with SMTP id 956f58d0204a3-6679d88abdcso514266d50.2
-        for <linux-nilfs@vger.kernel.org>; Mon, 13 Jul 2026 15:33:32 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="e2k0zjvb"
+Received: by mail-yw1-f178.google.com with SMTP id 00721157ae682-81e8fa1b8d6so52052247b3.1
+        for <linux-nilfs@vger.kernel.org>; Wed, 15 Jul 2026 17:08:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1783982012; x=1784586812; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1784160534; x=1784765334; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Ox6BVqo9uQAHzFJ89Dkk5sMUjCTGHUh4RcAozmVDRhU=;
-        b=IAunUBnJDxlah/Sv0Cf2p1sKnOrAm95WPlA74UitO2vjNNAZo5mjFM98pLXvmD01O8
-         n5p6fOyuhAE5VJk2r6Dr2a05ppQxfqxvV9g9zwQL2u4+bPSNX2RgWfMcZn0oGyQdJmtX
-         skjrHuWQHTphG00lWcGHl4+fbu1jWddKGUlLFkZOo/6DZhY3QPV0QkRiqAcXYZtGKtUf
-         lZXH27817lCwtT34RQNMb210/076w0VpyqD4YlwpZBkJyw47X2peZcTV3wWtZmhqGjHU
-         ww4cnK1UIbsnLMmZr/thAWu9yOjUCApjSv4nbigPhdF+byJYVa6VBL0va0Pwf/jxfxeJ
-         GEtA==
+        bh=edm+o1poLBaX+Zgd7MELrnQcglifvh/n77uGGSvqid0=;
+        b=e2k0zjvbcII7uBHfGWN81zogklE6Duk0k7ku5kCoRMykbXxtxYLp+uowv5X/zUqOLk
+         cXzzq3Yi3nruaZn5+Mn04DRBm4zksgv9V3XabMPxUmcyCbXmGuZ1xdBwWyJoMOFcecvg
+         2t6ywh8eCUXLvqwmgoTRAIWZvX7oAJ/KXRtumtFriir0hlbMzUP/S1Flx/PWflgJJCEl
+         1rsViXUcTxugoS0PJp79Awl2K7AWGnUlTFSMNp+o1k97t5IPMCbgDH2zXmoBFpZ+90WA
+         Blb8ebR2BGZK87EDqAIRGHFHrSPwrJsbPrYfc3617NaaObd+W4nwgfTuf/nj7sOQnLdS
+         gagw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783982012; x=1784586812;
+        d=1e100.net; s=20251104; t=1784160534; x=1784765334;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=Ox6BVqo9uQAHzFJ89Dkk5sMUjCTGHUh4RcAozmVDRhU=;
-        b=GEU/nn77Ck4JtQUkBYc45zJIYVCdOlN5rQ7AZifJLiCcC+nd6jmJs04LH1nzIhl3Uu
-         OnedFurr0s2J+18mJC5Kl1b6GXfjbiR8r3i4u00wxhZVOVKd9f4qgTc3Ib5SWaVBencs
-         99qlEVewOYekxNw2UZZGWZxP4YdkO6Gr37R7x81XNf/p4ciptW7huI8x4XzbC1l6DI9x
-         iFLJWxjlAyFTOqnDvRVxv0vT9nqFs+dUWXu9hhyFrdF2aTiAM59GP2YhuzeLADqDsZkX
-         0HvLd7LUPNG89UZqXWdJ7nK+jRH8xPiTu4rkPV73Q6HeF+wkLQTwBm2vQ+wV85WL0gek
-         rhsA==
-X-Forwarded-Encrypted: i=1; AHgh+RpveDp91psIT3aaQPvd4sF5byI//hbr8PTPLXo+/q/sqsy4SoKRFZvvFah9wuCaR3cBnFz1dTCWZjNWig==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yw+ppyED6IcTT9WL12WdVwCJ6u15BZ1AJBaIAqcmqM/OSyDZtmf
-	J0IpNtfgHaVZPA1/yNoND59bi9LG+fCxZ5nSBniP7++FQGyum0h0t8VVYsKoQ0Mp/O4=
-X-Gm-Gg: AfdE7clc8yW4ZaItv2kx9JChrZymPr66+qMk7dYM9IKQk5JnKEZc9voZ718uFdH0Aoa
-	Osxq8RugVppb0r6/xPhM+hprpED1Q1ijVE0a/oag39RvE9sYLlqdZZWG+JuPwt/al7l0tdcksWj
-	ayzthcHlKSOyNpw9gOTNQc23iLWRPNBjDKgXRwEqgIySUZHpEo4Gd5uuTtSXP7a6aow4zQc94yX
-	Emn5CyZKITX/uvLsA8AN7m+gYSv6ZDctQnt3t/99Gk+GzKaVsqPltwhz4O/rpO2XkTSDZrPG9vH
-	FbKeBvPV6HS8mx6aZLgCMJPIzRaaVlrtK5Ik+NONlpWCoD+F+7jLvSQFdlC1gxMz4XcR+B9hEsJ
-	KuVs6h1YJYnRHu2u596c9o2r23yScJgkEQVfRmo/x14sB7kooTbl/HRjFPD3RsJxHbW4lzb9Ut7
-	Mb30cJJb04rv3sFnKqM4U242U6zmYcStk3bCrqCKZRKilS6u2t+Ipa4j7fbvUUnY93I8bFLaWeZ
-	d1oVS8PZcHAA0wG0rKdSUscb5gJlvGBTcPUIWrxbpKX9A==
-X-Received: by 2002:a05:690e:169b:b0:668:159:32d5 with SMTP id 956f58d0204a3-6680159343bmr1421801d50.87.1783982011683;
-        Mon, 13 Jul 2026 15:33:31 -0700 (PDT)
-Received: from pop-os.attlocal.net ([2600:1700:6476:1430:e472:ff2d:20b0:742d])
-        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-667877aaadesm14714239d50.7.2026.07.13.15.33.29
+        bh=edm+o1poLBaX+Zgd7MELrnQcglifvh/n77uGGSvqid0=;
+        b=OR0Amfjmptfca4Q5LvipN9VTnAXBo5dMokfkWIVgpYlgKaJrvlLd8j0QNcpxuxp6D1
+         wp4P2+PaM5O8fTyc3lQ8sNtaTwzTv14vdF/QccgjoOnDXD/d85qnoFhqJAH2O1f5m8Hi
+         dXRTq7236/X+l9qyYPzWPdhEg3VUnuk1AIHHCaeYIjZJAKvkXFFJjI3PJ+GtCz7ni0Vp
+         uBNf28+Tqm3lUPDZ7RP+o5fR8LFr3bxtk7amHw58SUNhQaIDhzVZyLBdqUnmAfwyWixL
+         m9TSvge00HwbOOT0LgQ1bCyf+LDPMJfsSuM3KlXxEHCnqEW+LuZgAd79eslI1y6AIL+g
+         EUag==
+X-Forwarded-Encrypted: i=1; AHgh+Rq+lEBAIclHrNy/71APQnCtv/1InYiZEKYBTRknx0WhuhFIYZeHL+niKkOvrModwMqEgKyKXDVAk9sCqw==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyM/jSHz3wliPMcrZUaAbdC3uJpfxneilC7Hoc6XczrHmFflwtL
+	MIlOJ0RIIY8w+V6IqWghPm6DwaehV1BK4xVO/xl+AVh3QJk6Nd1OEyzKlvoCN/yDYJQ=
+X-Gm-Gg: AfdE7cnMLYmumR9FyFeMVyShVX3lSqI+GakEF7mWifoL/j7JSUtqDegM4LLCJ0NDeAf
+	nYhwNQMkcLR0HspSNbRDA/NKebRnm9JKlwdDAE5XEnpsb94DEntIhwhqNnTpvpIScfSFm2zCnal
+	rhHneBYjjKg1sTc5ykWJitaJ5vT6QXtcIMOJRfsZ77LpLVxO7b2Ld/XIx/MpvKbL8zRFluiFfvJ
+	ConmHfdZyDBhxtU99o9Wvxr8HNJShQotP+nykEmMGZB2twCk2rwMQYZPRWWKRU9ZAfiJwORYgaF
+	kIxfeGRmV0ibtkwaHySXtfhWf2rmrapOEzIa1sobefn9RZOEfxZrCrbXFtNYph3VJR6YGAdhqM3
+	jfK1bcocyvlb5tff9SBTTsriIvs3JABBxVRaEX7N+ejDHTmd5UIiWBF0wS3em47nbvmXqUScqO3
+	dHKHd4wbU2IVqnkOyt1AwSRWb5gkX7ehoz/HzkLpqkIOF72pJMYjYC9ZkrepeMAxTbW6M+NEWdR
+	hjqq/zDjN1IQldovOq6bRh1/lgTVQaQAgZvS2uYfnuhxlw3C+UzyY6gXO4J301p9IK5bEE=
+X-Received: by 2002:a05:690c:4d0a:b0:80c:85b6:75bd with SMTP id 00721157ae682-81ec00d806fmr58924687b3.70.1784160534106;
+        Wed, 15 Jul 2026 17:08:54 -0700 (PDT)
+Received: from ?IPv6:2600:1700:6476:1430:3081:a422:f6f3:c07c? ([2600:1700:6476:1430:3081:a422:f6f3:c07c])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-81e6c201dc7sm182018617b3.41.2026.07.15.17.08.51
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 13 Jul 2026 15:33:31 -0700 (PDT)
-Message-ID: <af41e2dd178bbc4068317f1b9e09401cb49e7228.camel@dubeyko.com>
+        Wed, 15 Jul 2026 17:08:53 -0700 (PDT)
+Message-ID: <1421ca7e131663e594806f43cdad34f3282bd915.camel@dubeyko.com>
 Subject: Re: removing the remaining blockdev_direct_IO users
 From: Viacheslav Dubeyko <slava@dubeyko.com>
 To: Christoph Hellwig <hch@lst.de>
@@ -72,11 +72,12 @@ Cc: David Sterba <dsterba@suse.com>, OGAWA Hirofumi
  <joseph.qi@linux.alibaba.com>, Christian Brauner	 <brauner@kernel.org>,
  linux-fsdevel@vger.kernel.org, 	jfs-discussion@lists.sourceforge.net,
  linux-nilfs@vger.kernel.org, 	ocfs2-devel@lists.linux.dev
-Date: Mon, 13 Jul 2026 15:33:29 -0700
-In-Reply-To: <20260713095857.GB10501@lst.de>
+Date: Wed, 15 Jul 2026 17:08:49 -0700
+In-Reply-To: <af41e2dd178bbc4068317f1b9e09401cb49e7228.camel@dubeyko.com>
 References: <20260710050744.GA6720@lst.de>
-	 <fea4c4f25afb7711d1e8fbe6ca5ab654ec522186.camel@dubeyko.com>
-	 <20260713095857.GB10501@lst.de>
+		 <fea4c4f25afb7711d1e8fbe6ca5ab654ec522186.camel@dubeyko.com>
+		 <20260713095857.GB10501@lst.de>
+	 <af41e2dd178bbc4068317f1b9e09401cb49e7228.camel@dubeyko.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -131,42 +132,59 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Mon, 2026-07-13 at 11:58 +0200, Christoph Hellwig wrote:
-> On Fri, Jul 10, 2026 at 09:51:09AM -0700, Viacheslav Dubeyko wrote:
-> > On Fri, 2026-07-10 at 07:07 +0200, Christoph Hellwig wrote:
-> > > Hi all,
-> > >=20
-> > > we have 7 users of blockdev_direct_IO and one of the lower-level
-> > > __blockdev_direct_IO left, and I'd really like to get rid of
-> > > them.
-> > >=20
-> > > The filesystems are affs, fat, hfs, hfsplus, jfs, nilfs2, udf and
-> > > ocfs2,
-> > > and you are the relevant maintainers.=C2=A0 In 7.2 exfat converted
-> > > entirely
-> > > to iomap, which would be a really good example for a "simple"
-> > > file
-> > > system.=C2=A0 Another options especially for the file systems
-> > > supporting
-> > > foreign formats would be to just drop direct I/O support and
-> > > reduce
-> > > the support burden.
-> >=20
-> > I like the idea. I think we can try to switch HFS/HFS+ and NILFS2
-> > on
-> > iomap approach. Do you have some initial patches for this? Which
-> > particular commit(s) converted the exfat to iomap? It will be good
-> > to
-> > take a deeper look into this conversion to estimate the complexity
-> > of
-> > HFS/HFS+, NILFS2 modifications.
->=20
-> Almost all commits in fs/exfat/ in 7.2-rc1, starting with
-> 623f0aa1eca5c2a94ca1e4e5de719d062eac3b6c
+Hi Christoph,
 
-OK. Thanks for sharing this. :) Let me take a look and spend some time
-on this. I should have a time for checking commits during this week. I
-hope so. :)
+On Mon, 2026-07-13 at 15:33 -0700, Viacheslav Dubeyko wrote:
+> On Mon, 2026-07-13 at 11:58 +0200, Christoph Hellwig wrote:
+> > On Fri, Jul 10, 2026 at 09:51:09AM -0700, Viacheslav Dubeyko wrote:
+> > > On Fri, 2026-07-10 at 07:07 +0200, Christoph Hellwig wrote:
+> > > > Hi all,
+> > > >=20
+> > > > we have 7 users of blockdev_direct_IO and one of the lower-
+> > > > level
+> > > > __blockdev_direct_IO left, and I'd really like to get rid of
+> > > > them.
+> > > >=20
+> > > > The filesystems are affs, fat, hfs, hfsplus, jfs, nilfs2, udf
+> > > > and
+> > > > ocfs2,
+> > > > and you are the relevant maintainers.=C2=A0 In 7.2 exfat converted
+> > > > entirely
+> > > > to iomap, which would be a really good example for a "simple"
+> > > > file
+> > > > system.=C2=A0 Another options especially for the file systems
+> > > > supporting
+> > > > foreign formats would be to just drop direct I/O support and
+> > > > reduce
+> > > > the support burden.
+> > >=20
+> > > I like the idea. I think we can try to switch HFS/HFS+ and NILFS2
+> > > on
+> > > iomap approach. Do you have some initial patches for this? Which
+> > > particular commit(s) converted the exfat to iomap? It will be
+> > > good
+> > > to
+> > > take a deeper look into this conversion to estimate the
+> > > complexity
+> > > of
+> > > HFS/HFS+, NILFS2 modifications.
+> >=20
+> > Almost all commits in fs/exfat/ in 7.2-rc1, starting with
+> > 623f0aa1eca5c2a94ca1e4e5de719d062eac3b6c
+>=20
+> OK. Thanks for sharing this. :) Let me take a look and spend some
+> time
+> on this. I should have a time for checking commits during this week.
+> I
+> hope so. :)
+>=20
+
+I have a very initial state of patchset for HFS+ file system. I am
+testing it by xfstests now. As far as I can see, currently, this
+patchset introduced multiple xfstests failures. If you like I can share
+this patchset for discussion and review. Otherwise, let me fix the
+found xfstests failures at first and, then, I'll share the patchset for
+the review.
 
 Thanks,
 Slava.
