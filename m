@@ -1,190 +1,203 @@
-Received: from mail-yw1-f178.google.com (mail-yw1-f178.google.com [209.85.128.178])
+Received: from mail-oi1-f205.google.com (mail-oi1-f205.google.com [209.85.167.205])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35D563C2E
-	for <linux-nilfs@vger.kernel.org>; Thu, 16 Jul 2026 00:08:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2AAA353A6B
+	for <linux-nilfs@vger.kernel.org>; Thu, 16 Jul 2026 07:51:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.205
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784160536; cv=none; b=lS8zIrXBvliHDmkvebet+kwwLUDJ/EGc0ueCj8D2FOgr9VSJUXZNz/2z5flU8j9Uw1eZIyJPVfezD9aXihGWiYOVaOvX6x8W3zAr8w0gCgTermkySFpmIl/eLovmyUALAaPA5VLAdwpju9yseYsLYw5+B40seW71ZrAxhBqxQpc=
+	t=1784188293; cv=none; b=rSI4I84onfL07cSCxc2/yLj++h1eoV/w3n/PQVSsc0xb4C5dtbCkA4j3QGAxq0ko7qCnl3OcjE/oCgKIgHtHgPNCNtXpErq8h+WKGZTUmK8CiAv/cK2rf/9YPiUGXHK+RWUTHHNl7sCM4Y029JZGjphHILc860zTC5hiiEOg0Mw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784160536; c=relaxed/simple;
-	bh=edm+o1poLBaX+Zgd7MELrnQcglifvh/n77uGGSvqid0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=ETcSnkdTESyakDwcnBaVlprphcFUpxqTlz1avMt60co0MgRUbRLVp1uyC1/l2PY7b/eyDrGehWGnRm0SZMZCLTTOHGjhTpZroV6AMgRe3O4z950ILi5ccVhaWdwYBvmRfLNMaPGLoHL6g3kqA3Hv694Q2Ll2Y8+SyNoCiAFgbl0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=e2k0zjvb; arc=none smtp.client-ip=209.85.128.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="e2k0zjvb"
-Received: by mail-yw1-f178.google.com with SMTP id 00721157ae682-81e8fa1b8d6so52052247b3.1
-        for <linux-nilfs@vger.kernel.org>; Wed, 15 Jul 2026 17:08:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1784160534; x=1784765334; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=edm+o1poLBaX+Zgd7MELrnQcglifvh/n77uGGSvqid0=;
-        b=e2k0zjvbcII7uBHfGWN81zogklE6Duk0k7ku5kCoRMykbXxtxYLp+uowv5X/zUqOLk
-         cXzzq3Yi3nruaZn5+Mn04DRBm4zksgv9V3XabMPxUmcyCbXmGuZ1xdBwWyJoMOFcecvg
-         2t6ywh8eCUXLvqwmgoTRAIWZvX7oAJ/KXRtumtFriir0hlbMzUP/S1Flx/PWflgJJCEl
-         1rsViXUcTxugoS0PJp79Awl2K7AWGnUlTFSMNp+o1k97t5IPMCbgDH2zXmoBFpZ+90WA
-         Blb8ebR2BGZK87EDqAIRGHFHrSPwrJsbPrYfc3617NaaObd+W4nwgfTuf/nj7sOQnLdS
-         gagw==
+	s=arc-20240116; t=1784188293; c=relaxed/simple;
+	bh=MnUA7xvXhdzsDztXHSYSykI73Qz2dZupLilI6Mv8sNE=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=boKwvvFnTxvvEL+9YT7h8SV63JzwPNGosi7LLObO4eS6nPHLxDoDYyXomE3R95V7TiQ635m6bNU0PiAlO+qrJXgJ8bfRUyNVzG6GQSLTvv8AAL5SGlr70E8PsApyK7wLOZu/h7Gfo2haJfN10FWuOYq7zBsmFILFgda373D2EJ4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.167.205
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oi1-f205.google.com with SMTP id 5614622812f47-4959c49e054so6212692b6e.3
+        for <linux-nilfs@vger.kernel.org>; Thu, 16 Jul 2026 00:51:31 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784160534; x=1784765334;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=edm+o1poLBaX+Zgd7MELrnQcglifvh/n77uGGSvqid0=;
-        b=OR0Amfjmptfca4Q5LvipN9VTnAXBo5dMokfkWIVgpYlgKaJrvlLd8j0QNcpxuxp6D1
-         wp4P2+PaM5O8fTyc3lQ8sNtaTwzTv14vdF/QccgjoOnDXD/d85qnoFhqJAH2O1f5m8Hi
-         dXRTq7236/X+l9qyYPzWPdhEg3VUnuk1AIHHCaeYIjZJAKvkXFFJjI3PJ+GtCz7ni0Vp
-         uBNf28+Tqm3lUPDZ7RP+o5fR8LFr3bxtk7amHw58SUNhQaIDhzVZyLBdqUnmAfwyWixL
-         m9TSvge00HwbOOT0LgQ1bCyf+LDPMJfsSuM3KlXxEHCnqEW+LuZgAd79eslI1y6AIL+g
-         EUag==
-X-Forwarded-Encrypted: i=1; AHgh+Rq+lEBAIclHrNy/71APQnCtv/1InYiZEKYBTRknx0WhuhFIYZeHL+niKkOvrModwMqEgKyKXDVAk9sCqw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YyM/jSHz3wliPMcrZUaAbdC3uJpfxneilC7Hoc6XczrHmFflwtL
-	MIlOJ0RIIY8w+V6IqWghPm6DwaehV1BK4xVO/xl+AVh3QJk6Nd1OEyzKlvoCN/yDYJQ=
-X-Gm-Gg: AfdE7cnMLYmumR9FyFeMVyShVX3lSqI+GakEF7mWifoL/j7JSUtqDegM4LLCJ0NDeAf
-	nYhwNQMkcLR0HspSNbRDA/NKebRnm9JKlwdDAE5XEnpsb94DEntIhwhqNnTpvpIScfSFm2zCnal
-	rhHneBYjjKg1sTc5ykWJitaJ5vT6QXtcIMOJRfsZ77LpLVxO7b2Ld/XIx/MpvKbL8zRFluiFfvJ
-	ConmHfdZyDBhxtU99o9Wvxr8HNJShQotP+nykEmMGZB2twCk2rwMQYZPRWWKRU9ZAfiJwORYgaF
-	kIxfeGRmV0ibtkwaHySXtfhWf2rmrapOEzIa1sobefn9RZOEfxZrCrbXFtNYph3VJR6YGAdhqM3
-	jfK1bcocyvlb5tff9SBTTsriIvs3JABBxVRaEX7N+ejDHTmd5UIiWBF0wS3em47nbvmXqUScqO3
-	dHKHd4wbU2IVqnkOyt1AwSRWb5gkX7ehoz/HzkLpqkIOF72pJMYjYC9ZkrepeMAxTbW6M+NEWdR
-	hjqq/zDjN1IQldovOq6bRh1/lgTVQaQAgZvS2uYfnuhxlw3C+UzyY6gXO4J301p9IK5bEE=
-X-Received: by 2002:a05:690c:4d0a:b0:80c:85b6:75bd with SMTP id 00721157ae682-81ec00d806fmr58924687b3.70.1784160534106;
-        Wed, 15 Jul 2026 17:08:54 -0700 (PDT)
-Received: from ?IPv6:2600:1700:6476:1430:3081:a422:f6f3:c07c? ([2600:1700:6476:1430:3081:a422:f6f3:c07c])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-81e6c201dc7sm182018617b3.41.2026.07.15.17.08.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 15 Jul 2026 17:08:53 -0700 (PDT)
-Message-ID: <1421ca7e131663e594806f43cdad34f3282bd915.camel@dubeyko.com>
-Subject: Re: removing the remaining blockdev_direct_IO users
-From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Christoph Hellwig <hch@lst.de>
-Cc: David Sterba <dsterba@suse.com>, OGAWA Hirofumi	
- <hirofumi@mail.parknet.co.jp>, John Paul Adrian Glaubitz	
- <glaubitz@physik.fu-berlin.de>, Yangtao Li <frank.li@vivo.com>, Dave
- Kleikamp	 <shaggy@kernel.org>, Jan Kara <jack@suse.com>, Mark Fasheh
- <mark@fasheh.com>,  Joel Becker <jlbec@evilplan.org>, Joseph Qi
- <joseph.qi@linux.alibaba.com>, Christian Brauner	 <brauner@kernel.org>,
- linux-fsdevel@vger.kernel.org, 	jfs-discussion@lists.sourceforge.net,
- linux-nilfs@vger.kernel.org, 	ocfs2-devel@lists.linux.dev
-Date: Wed, 15 Jul 2026 17:08:49 -0700
-In-Reply-To: <af41e2dd178bbc4068317f1b9e09401cb49e7228.camel@dubeyko.com>
-References: <20260710050744.GA6720@lst.de>
-		 <fea4c4f25afb7711d1e8fbe6ca5ab654ec522186.camel@dubeyko.com>
-		 <20260713095857.GB10501@lst.de>
-	 <af41e2dd178bbc4068317f1b9e09401cb49e7228.camel@dubeyko.com>
-Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 (by Flathub.org) 
+        d=1e100.net; s=20251104; t=1784188291; x=1784793091;
+        h=content-type:to:from:subject:message-id:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=OVCfrtcYUm9cqZ42G2A6Oc73GeyR8UPAjNa9RWMEReU=;
+        b=gvwgRBKTvxE/bz+VEuXEzoq+XuxA8nE+xfpcsQIL3w7U8XA/J8ggm0iZOMkp3nTE5k
+         V46nfrm3BlDDLZ7KWYzx3dFLruo4GLOcl67kLY1PprbtMWp4uvOds8vqKmJu4Ma9Wv8Q
+         nroDw6h0yCPr7MdO8fQcUw5vmk2+d74PQt5OD8+OwoCUzzF1XhLZsXAQ7FBudqwXushS
+         aIwt7whnpbfTevGcDijObngt02lxRwjthb9JPOIuwAYsm+WqZS1UGEBmOmpNjEmzw/Ap
+         AFUMEpbK33VzFkRbUePAesvjYUX3g9DPVRlXfMHXBz8aiguQBK+NXhjFtppXE5lsVIZv
+         BzIw==
+X-Forwarded-Encrypted: i=1; AHgh+RodN5+IcY4S6ZivJOdYWiYLwWdjyjF0thRDjbNuVPhKLRzJ7vk3CMQpdPI1a3zc/zgnuP98h/6aOMABDQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YyXdsQOBL6AVy++zMQZvO892Ixx1bHgQrr5nJa35I6uRTWu/TZc
+	nR38BQXnvRshz7Lod1qoROh4ww5qXsEeRPxqniS+XIJ/uv/uTPmjgg8pBTd2zfmYd96h1tEWxba
+	SfRLa8W0J8qKx8MIsil8Yma1dwyoqCMLIm0nbpO1cxRbBkpiJzFMKBhfBK+s=
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+X-Received: by 2002:a05:6808:5145:b0:492:973e:1c23 with SMTP id
+ 5614622812f47-4a495f49ebdmr3933900b6e.15.1784188290873; Thu, 16 Jul 2026
+ 00:51:30 -0700 (PDT)
+Date: Thu, 16 Jul 2026 00:51:30 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6a588d82.c96faac9.59e0.0013.GAE@google.com>
+Subject: [syzbot] [nilfs?] INFO: task hung in nilfs_transaction_begin (3)
+From: syzbot <syzbot+cae54346a70bbceeff2c@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Hi Christoph,
+Hello,
 
-On Mon, 2026-07-13 at 15:33 -0700, Viacheslav Dubeyko wrote:
-> On Mon, 2026-07-13 at 11:58 +0200, Christoph Hellwig wrote:
-> > On Fri, Jul 10, 2026 at 09:51:09AM -0700, Viacheslav Dubeyko wrote:
-> > > On Fri, 2026-07-10 at 07:07 +0200, Christoph Hellwig wrote:
-> > > > Hi all,
-> > > >=20
-> > > > we have 7 users of blockdev_direct_IO and one of the lower-
-> > > > level
-> > > > __blockdev_direct_IO left, and I'd really like to get rid of
-> > > > them.
-> > > >=20
-> > > > The filesystems are affs, fat, hfs, hfsplus, jfs, nilfs2, udf
-> > > > and
-> > > > ocfs2,
-> > > > and you are the relevant maintainers.=C2=A0 In 7.2 exfat converted
-> > > > entirely
-> > > > to iomap, which would be a really good example for a "simple"
-> > > > file
-> > > > system.=C2=A0 Another options especially for the file systems
-> > > > supporting
-> > > > foreign formats would be to just drop direct I/O support and
-> > > > reduce
-> > > > the support burden.
-> > >=20
-> > > I like the idea. I think we can try to switch HFS/HFS+ and NILFS2
-> > > on
-> > > iomap approach. Do you have some initial patches for this? Which
-> > > particular commit(s) converted the exfat to iomap? It will be
-> > > good
-> > > to
-> > > take a deeper look into this conversion to estimate the
-> > > complexity
-> > > of
-> > > HFS/HFS+, NILFS2 modifications.
-> >=20
-> > Almost all commits in fs/exfat/ in 7.2-rc1, starting with
-> > 623f0aa1eca5c2a94ca1e4e5de719d062eac3b6c
->=20
-> OK. Thanks for sharing this. :) Let me take a look and spend some
-> time
-> on this. I should have a time for checking commits during this week.
-> I
-> hope so. :)
->=20
+syzbot found the following issue on:
 
-I have a very initial state of patchset for HFS+ file system. I am
-testing it by xfstests now. As far as I can see, currently, this
-patchset introduced multiple xfstests failures. If you like I can share
-this patchset for discussion and review. Otherwise, let me fix the
-found xfstests failures at first and, then, I'll share the patchset for
-the review.
+HEAD commit:    58717b2a1365 Merge tag 'sound-7.2-rc4' of git://git.kernel..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=10e344b9580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=5c4196ba0e33631d
+dashboard link: https://syzkaller.appspot.com/bug?extid=cae54346a70bbceeff2c
+compiler:       Debian clang version 22.1.8 (++20260613092233+e80beda6e255-1~exp1~20260613092250.77), Debian LLD 22.1.8
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=169b8c32580000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=10a454b9580000
 
-Thanks,
-Slava.
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/42eab9b1642d/disk-58717b2a.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/7c5a694b4f2d/vmlinux-58717b2a.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/348d72144bc9/bzImage-58717b2a.xz
+mounted in repro: https://storage.googleapis.com/syzbot-assets/d5827c24deaa/mount_0.gz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+cae54346a70bbceeff2c@syzkaller.appspotmail.com
+
+INFO: task syz.3.20:6062 blocked for more than 143 seconds.
+      Not tainted syzkaller #0
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+task:syz.3.20        state:D
+ stack:25640 pid:6062  tgid:6052  ppid:5793   task_flags:0x400040 flags:0x00080002
+Call Trace:
+ <TASK>
+ context_switch kernel/sched/core.c:5510 [inline]
+ __schedule+0x17d9/0x56c0 kernel/sched/core.c:7234
+ __schedule_loop kernel/sched/core.c:7311 [inline]
+ schedule+0x164/0x2b0 kernel/sched/core.c:7326
+ schedule_preempt_disabled+0x13/0x30 kernel/sched/core.c:7383
+ rwsem_down_read_slowpath+0x6ba/0x920 kernel/locking/rwsem.c:1114
+ __down_read_common kernel/locking/rwsem.c:1291 [inline]
+ __down_read kernel/locking/rwsem.c:1304 [inline]
+ down_read+0x9c/0x330 kernel/locking/rwsem.c:1576
+ nilfs_transaction_begin+0x364/0x710 fs/nilfs2/segment.c:221
+ nilfs_mkdir+0xd6/0x390 fs/nilfs2/namei.c:228
+ vfs_mkdir+0x406/0x620 fs/namei.c:5276
+ filename_mkdirat+0x285/0x510 fs/namei.c:5309
+ __do_sys_mkdirat fs/namei.c:5330 [inline]
+ __se_sys_mkdirat+0x35/0x150 fs/namei.c:5327
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x174/0x580 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f1613b9de59
+RSP: 002b:00007f16131fe028 EFLAGS: 00000246
+ ORIG_RAX: 0000000000000102
+RAX: ffffffffffffffda RBX: 00007f1613e26090 RCX: 00007f1613b9de59
+RDX: 00000000000001c0 RSI: 0000200000000040 RDI: ffffffffffffff9c
+RBP: 00007f1613c33e6f R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007f1613e26128 R14: 00007f1613e26090 R15: 00007ffd7ee97478
+ </TASK>
+INFO: task syz.2.19:6076 blocked for more than 147 seconds.
+      Not tainted syzkaller #0
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+task:syz.2.19        state:D stack:26920 pid:6076  tgid:6073  ppid:5797   task_flags:0x400040 flags:0x00080002
+Call Trace:
+ <TASK>
+ context_switch kernel/sched/core.c:5510 [inline]
+ __schedule+0x17d9/0x56c0 kernel/sched/core.c:7234
+ __schedule_loop kernel/sched/core.c:7311 [inline]
+ schedule+0x164/0x2b0 kernel/sched/core.c:7326
+ schedule_preempt_disabled+0x13/0x30 kernel/sched/core.c:7383
+ rwsem_down_read_slowpath+0x6ba/0x920 kernel/locking/rwsem.c:1114
+ __down_read_common kernel/locking/rwsem.c:1291 [inline]
+ __down_read kernel/locking/rwsem.c:1304 [inline]
+ down_read+0x9c/0x330 kernel/locking/rwsem.c:1576
+ nilfs_transaction_begin+0x364/0x710 fs/nilfs2/segment.c:221
+ nilfs_mkdir+0xd6/0x390 fs/nilfs2/namei.c:228
+ vfs_mkdir+0x406/0x620 fs/namei.c:5276
+ filename_mkdirat+0x285/0x510 fs/namei.c:5309
+ __do_sys_mkdirat fs/namei.c:5330 [inline]
+ __se_sys_mkdirat+0x35/0x150 fs/namei.c:5327
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x174/0x580 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7feb9c39de59
+RSP: 002b:00007feb9d17e028 EFLAGS: 00000246 ORIG_RAX: 0000000000000102
+RAX: ffffffffffffffda RBX: 00007feb9c626090 RCX: 00007feb9c39de59
+RDX: 00000000000001c0 RSI: 0000200000000040 RDI: ffffffffffffff9c
+RBP: 00007feb9c433e6f R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007feb9c626128 R14: 00007feb9c626090 R15: 00007fff8cce9fb8
+ </TASK>
+INFO: task syz.0.17:6080 blocked for more than 149 seconds.
+      Not tainted syzkaller #0
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+task:syz.0.17        state:D
+ stack:25640 pid:6080  tgid:6077  ppid:5784   task_flags:0x400040 flags:0x00080002
+Call Trace:
+ <TASK>
+ context_switch kernel/sched/core.c:5510 [inline]
+ __schedule+0x17d9/0x56c0 kernel/sched/core.c:7234
+ __schedule_loop kernel/sched/core.c:7311 [inline]
+ schedule+0x164/0x2b0 kernel/sched/core.c:7326
+ schedule_preempt_disabled+0x13/0x30 kernel/sched/core.c:7383
+ rwsem_down_read_slowpath+0x6ba/0x920 kernel/locking/rwsem.c:1114
+ __down_read_common kernel/locking/rwsem.c:1291 [inline]
+ __down_read kernel/locking/rwsem.c:1304 [inline]
+ down_read+0x9c/0x330 kernel/locking/rwsem.c:1576
+ nilfs_transaction_begin+0x364/0x710 fs/nilfs2/segment.c:221
+ nilfs_mkdir+0xd6/0x390 fs/nilfs2/namei.c:228
+ vfs_mkdir+0x406/0x620 fs/namei.c:5276
+ filename_mkdirat+0x285/0x510 fs/namei.c:5309
+ __do_sys_mkdirat fs/namei.c:5330 [inline]
+ __se_sys_mkdirat+0x35/0x150 fs/namei.c:5327
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x174/0x580 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f172919de59
+RSP: 002b:00007f172a11e028 EFLAGS: 00000246
+ ORIG_RAX: 0000000000000102
+RAX: ffffffffffffffda RBX: 00007f1729426090 RCX: 00007f172919de59
+RDX: 00000000000001c0 RSI: 0000200000000040 RDI: ffffffffffffff9c
+RBP: 00007f1729233e6f R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007f1729426128 R14: 00007f1729426090 R15: 00007ffcc8738ab8
+ </TASK>
+INFO: task syz.5.22:6086 blocked for more than 153 seconds.
+      Not tainted syzkaller #0
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
