@@ -1,57 +1,85 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f70.google.com (mail-oa1-f70.google.com [209.85.160.70])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3ABA31F0995;
-	Thu, 16 Jul 2026 08:18:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47F752749F1
+	for <linux-nilfs@vger.kernel.org>; Fri, 17 Jul 2026 04:32:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.70
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784189889; cv=none; b=mT14H3zfYqAWgQWJTdT3UZgVtvcfYmIBKis+CpFy2XHHaet+2oQr0uAAzBx1RP9xmUJqu9Nu4BIRjfVrci+2fwZSs8v0+3Skh/q8FV6yVDoqlxMd8qVQavVeULSlPT/wy3+vY3RIRyRtrM7I8/IZgqZkot2YmSlauRjPzWRs0lk=
+	t=1784262754; cv=none; b=Mw8ONZ6pfJH8V2ipkIBOqC0UZSOaiDtXCQMCYkKdef1qoRS14YsJv5qfsTVWBIT/v1OosxycfI8Kn0L83Io0HBIuyfLxbCbOfHfYFpsi5/JxHPDkjoFJV07W+/3zWr6E9SfkjD/w3Fl+oSZ8mf3+Dcmi+DObksHpA3C71LqM3JQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784189889; c=relaxed/simple;
-	bh=/vYo3E4kv4adEu0RnpYGmEXGdRHBbdrRYE3i7xymbIE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=g5W7oDbT5ornvMw+lngpTBVcWqa14YWspjhevOYEqrv77S8hBS3CenQ5LRXzXkPknCOXdNjLCt3PLtL05XdZNYIJlZoEx+C4NGXCEay8iRFMQ2lmb2hS2TnJ0grutQNZ6ft8vSVdjvaxa264yEBs4PdeHCwVqszsg5NVKdTn3gQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 638926732A; Thu, 16 Jul 2026 10:18:04 +0200 (CEST)
-Date: Thu, 16 Jul 2026 10:18:04 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: Christoph Hellwig <hch@lst.de>, David Sterba <dsterba@suse.com>,
-	OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
-	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
-	Yangtao Li <frank.li@vivo.com>, Dave Kleikamp <shaggy@kernel.org>,
-	Jan Kara <jack@suse.com>, Mark Fasheh <mark@fasheh.com>,
-	Joel Becker <jlbec@evilplan.org>,
-	Joseph Qi <joseph.qi@linux.alibaba.com>,
-	Christian Brauner <brauner@kernel.org>,
-	linux-fsdevel@vger.kernel.org, jfs-discussion@lists.sourceforge.net,
-	linux-nilfs@vger.kernel.org, ocfs2-devel@lists.linux.dev
-Subject: Re: removing the remaining blockdev_direct_IO users
-Message-ID: <20260716081804.GB12330@lst.de>
-References: <20260710050744.GA6720@lst.de> <fea4c4f25afb7711d1e8fbe6ca5ab654ec522186.camel@dubeyko.com> <20260713095857.GB10501@lst.de> <af41e2dd178bbc4068317f1b9e09401cb49e7228.camel@dubeyko.com> <1421ca7e131663e594806f43cdad34f3282bd915.camel@dubeyko.com>
+	s=arc-20240116; t=1784262754; c=relaxed/simple;
+	bh=W6+DL8QyEFOIJciGSZyUVwfHinDMc0vBmWwLRVk2doQ=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=UqY2+uaXephF+6lUXxUUv9ak0SjU7PYrHlxzX3lcE3+vPqznIwngsY3JNmK7aF9B3N+4es049u1NbPVuytz9DVJ4EbSAC/vSC7flOnUvgcjEDdbKsx+NNWE78UQRsNRQA59zC39ClFVyK+vo+2TE60kDfY4seLUNE6nqY+veDb0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.160.70
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oa1-f70.google.com with SMTP id 586e51a60fabf-43cd2d12617so6722243fac.3
+        for <linux-nilfs@vger.kernel.org>; Thu, 16 Jul 2026 21:32:33 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784262752; x=1784867552;
+        h=content-type:to:from:subject:message-id:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=dYKVAdtlZ8FkfrPHMA6x3Q1nm69M750nvzOkswBLacE=;
+        b=ozetj+yMsQrNUdZjComhCp0n8cODFVZ2SDzPuxpOtAVAkWMdrWCGJWmM5XsunC0jRW
+         mDqaGYxCCCf7EnK/kla0mAIbJrvgeeiSFK8w48H91SSlVUw2D7PT5D/tmbBfjGEthPJo
+         goV3z93viQ8tXu1jhky8Z3PY46Uw4r70C8fobYbKj9FmEE5ZQ7GsiN0rFr6t8j7MPEZ4
+         wnlqBIrjkSMkey+U0mVD7CUC9a5fgTtL3Lt58YhT0UR4fVLQPV73C3wQH4v0VI46HaUA
+         qIfnbhIqZ1rn5yyAcWXicSmgpoN3M7njmGMcaj1y0r0dTDegjNCWacpDc+DaeJPAbFBR
+         Sa8A==
+X-Forwarded-Encrypted: i=1; AHgh+RonBjhFZfGjRJvTv3NjgKOLTRuyKSWRB1vkgEj2fOhx19N/hcf4flg8qdWk85ac3DDWD8BA/PGICIDVPQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0Yzp2CLRN2LResTUp2wJxDnKmVE/SgDGPWl8NDtdBjb9RSeXaVfp
+	JE5Eig8XZTMbowTNtQcNg2ogUtkqhtOYepG09SET56xlN2JoPOaB0ied182rjF1OhatM1XDii+C
+	hulkZIVZlwkCC45ov8+gWaPfa2dQZJHGrhSMNQKSni/Z4E5a5mWrN+7zYkMY=
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1421ca7e131663e594806f43cdad34f3282bd915.camel@dubeyko.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+X-Received: by 2002:a05:6808:250f:b0:4a4:b3b0:d1e8 with SMTP id
+ 5614622812f47-4a4d040310emr475566b6e.34.1784262752064; Thu, 16 Jul 2026
+ 21:32:32 -0700 (PDT)
+Date: Thu, 16 Jul 2026 21:32:32 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6a59b060.5622734e.c905.003b.GAE@google.com>
+Subject: [syzbot] Monthly nilfs report (Jul 2026)
+From: syzbot <syzbot+listd7d30413511353328082@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-On Wed, Jul 15, 2026 at 05:08:49PM -0700, Viacheslav Dubeyko wrote:
-> I have a very initial state of patchset for HFS+ file system. I am
-> testing it by xfstests now. As far as I can see, currently, this
-> patchset introduced multiple xfstests failures. If you like I can share
-> this patchset for discussion and review. Otherwise, let me fix the
-> found xfstests failures at first and, then, I'll share the patchset for
-> the review.
+Hello nilfs maintainers/developers,
 
-The unfinished one isn't too interesting to review.  But if you're
-stuck on failures you need help with, feel free to send it along
-with the question.
+This is a 31-day syzbot report for the nilfs subsystem.
+All related reports/information can be found at:
+https://syzkaller.appspot.com/upstream/s/nilfs
 
+During the period, 2 new issues were detected and 0 were fixed.
+In total, 5 issues are still open and 69 have already been fixed.
+There are also 3 low-priority issues.
+
+Some of the still happening issues:
+
+Ref Crashes Repro Title
+<1> 2       No    kernel BUG in nilfs_copy_dirty_pages
+                  https://syzkaller.appspot.com/bug?extid=8baf9a79a3ffc6271cb6
+<2> 3       Yes   BUG: corrupted list in nilfs_lookup_dirty_data_buffers
+                  https://syzkaller.appspot.com/bug?extid=c37bed40868932d790e9
+<3> 3       No    WARNING in nilfs_segctor_abort_construction (3)
+                  https://syzkaller.appspot.com/bug?extid=5957361606d7b750b874
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+To disable reminders for individual bugs, reply with the following command:
+#syz set <Ref> no-reminders
+
+To change bug's subsystems, reply with:
+#syz set <Ref> subsystems: new-subsystem
+
+You may send multiple commands in a single email message.
