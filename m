@@ -1,69 +1,71 @@
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com [209.85.216.47])
+Received: from mail-yx1-f47.google.com (mail-yx1-f47.google.com [74.125.224.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0212D3DCDAB
-	for <linux-nilfs@vger.kernel.org>; Mon, 20 Jul 2026 14:17:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D973B30149F
+	for <linux-nilfs@vger.kernel.org>; Fri, 24 Jul 2026 22:28:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784557042; cv=none; b=cZtiIchGo23s5aDBtHUnuSkiq/pDyurZedfeuAifOMlzXeRusrensoVf1qegLKjqewfctyFx/iXRBxxJ6nL0BWUVBYY/kQ4OHq/ZqpT6bGbpulM0lTzAPQzhAzohgCLL125711qSnpYIOufC8qTPaqTcLURznif/nfJ44cLvozk=
+	t=1784932086; cv=none; b=ggGr939Jwb06rzvdInujSMbnWhkQH/l7Lic/h2CJ0GU6nfDXvgWvAHwe8CPRHPl8Yp454D0jvS1h7sryRjTeoQcCzqMSESmriJxppOVw3YR/NcgNKT7s8YL1iuav9F4ysoJDj3PMBiQKbzRZFI6nMp2fsNWgJnyCPAsG7gojXeM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784557042; c=relaxed/simple;
-	bh=1LTkvmZGmZwJt/B8VQrglyJCuBupUAzm+QAjG/yRD1Q=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=STjMq72EousM30COUZow1jAFQyIhecYEarlxBGf1kUz+f0U8yczk1M2t5VyKtITNFo3qcFJj+ErO403V95SEAxbmtObU6QxWFahqNYbMOol44jeDaTnTwD5fjI194QJEJhVy+61qlTB9aFC/pYSRVuGArWXoP42WAVubrhWjiYg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NZadcrQ/; arc=none smtp.client-ip=209.85.216.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1784932086; c=relaxed/simple;
+	bh=hosF7z1IjblzSdT4WinSYBZoR+ua9jNC4c9AyrOeQM8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cqQ6s9pGB3kLY+DJpRYb4RP8Ve+eiZxF5TrQeMGA6SHNppXuSHc6D3nHKMiAVYsJlSo2svBWWJM0Ixedze7aIG9u4Qh7lGvfRoqoH2X0TPztU2+9rH5V/YPUFL0wrbKwQAky6mNScRIqufu+kiYBLn7sAgVS2xqjIS8OQcTZmcI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=GZinzTpv; arc=none smtp.client-ip=74.125.224.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NZadcrQ/"
-Received: by mail-pj1-f47.google.com with SMTP id 98e67ed59e1d1-3811f512167so10015098a91.3
-        for <linux-nilfs@vger.kernel.org>; Mon, 20 Jul 2026 07:17:20 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="GZinzTpv"
+Received: by mail-yx1-f47.google.com with SMTP id 956f58d0204a3-6685001353fso735784d50.1
+        for <linux-nilfs@vger.kernel.org>; Fri, 24 Jul 2026 15:28:03 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784557040; x=1785161840; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1784932083; x=1785536883; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=uwzswtIIaxm5d4gI976jZ15OSTycJLbOOHw5koXtiWE=;
-        b=NZadcrQ/glP0ngITv3A2LgwhVrYtcYJEwvQoakObpgj535gDrJw8clH54rCHWmx1D1
-         apjRgdAIban6I+g+lghhDiZJVQQkcgJEq+fwys2sD7HneUp1G45WaSmVaK6UK/yDcUmD
-         THPtsjXZgB/s2OtBpyGJkEOftNC14P+DiCyvgTnFTHio8H09M/DbZrGi8OiPrkfVlToM
-         X2KkCY3ckE52YAoUCLwZIxFdISykZN+HhSpe+2dCe64cLWNRHVMfbzffzlurIn4dS+Pk
-         3OTlzVAqPehi9ZHhGr1NMYdcMkuXCWoid+vc3QX5Aj+1owN7bRXVCUIzwGz5c21lSMG0
-         WiZQ==
+        bh=MuRKRBkTVuDLBRY/ApmyBhrmpdyr3e8z0LFxN8l5L54=;
+        b=GZinzTpvjt9HHKW5UqLD052Am7zcw6AlSpI0G1jcUa+0HHhO5fu/KK6wHFhxGv8g5o
+         V1dHyKCEFlIu/tuaC+wDoFDvUB09p297rkGSvJJ0KJ5chpCiU89/OafFaUdlCoJ25RiV
+         jZ58er/DLDzp4ezevUjXnis5vTz4zK0CV+RO27IG+8JI4yb4N/NFDw/dt27rYZNVOQ0w
+         Xxt9eg9T/Qqz3VFazS7pa7NJsyt+Vu0ZpNc1MTKglYR1BpQF4AHCiBFc8k5eWL6khSvH
+         Uk3NljT/jSM77vr+Ni66QFNl7UF3JMUduvez5L14TiLecO8x8mgHujpPvLeU96tVfV/m
+         IAIA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784557040; x=1785161840;
+        d=1e100.net; s=20251104; t=1784932083; x=1785536883;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=uwzswtIIaxm5d4gI976jZ15OSTycJLbOOHw5koXtiWE=;
-        b=DAesn6cacvWmVaAbDwhy7QUgBH8FCz/+FDJ1uWwPtu8Xsz7UQwvRcGPszSrfSKjN14
-         U+AoY2mUiOxIJymLxsqWm+Sbqh9QWbcVKwQ0NorhUv/7M/jDe9wYKZuT0fjp73PABbiQ
-         jPa6QF1F8DWiRtgdGkKtXq6n9ngx5iwRMKqAPjq4szyXBJY1HChyRENmoPwPPcpNFf/J
-         JP1cK6PLk/+drPvHhwK4cs/HceS+2qx9CTo0jIYlxn4Kq1KtfH+ZyoND6wIDFGTSEYXd
-         6p/KQOdiILq2jYx+udwN/4B651HTAcEHIbEmLiqyixPlpPB9fVKLV9ucKtJIkT+QZjmN
-         63IQ==
-X-Gm-Message-State: AOJu0YxHi++B14oxiB0l240LYPaF5ZewbX1H7fIk2YYsVBxRqHRQscCM
-	DjX7C7ZBZgTTTWUxhUIayTp0+U5Q0b2NbBO37N7tI72X+R/S2VDfHrkF
-X-Gm-Gg: AR+sD105n6xOPLXVa97L/69WWS2kxNptekLN73hIeN/skWEaLOxBCzX6QFBN52cYAlJ
-	YlN8CRe764FdZKJdT1lO1318SXOjz6aZWbgTjYaNL1EY7JnaWTx4A6On72yJq4LPJZZxwSc/nhU
-	EOyCbW8jSdE4WbLAR1Sp34ZYUNYcwMJ7svIf+hF9P6NkfJcc9lp0TRX5aM0MsyzOPyNa1YWE70W
-	WNJ40SzKahY9RQwMKQVK5xblz6ifUAvy1+kXSroraT18gCj3yU+ndRShhnx91RkyWz6C094yO/A
-	umrIvUiqZeFqMVECZ1g2C5dMgt3/KCH757B6/Zhw5sh+3cbiHbZdoaXUWPOGA5b/5mjaRsW6ojh
-	0e5miCwdq4Gxyyz+IXK+++U1K3NsjFN3JPPsJtPJd8vKDqyiRiYcypalzIPaXbzuDmxSCqOG8aD
-	sY6ryXL1AQwTQg049p4kaPMApklBuVmeGTUjcS
-X-Received: by 2002:a17:90a:d405:b0:38e:712a:bb38 with SMTP id 98e67ed59e1d1-38e712ac393mr7122237a91.24.1784557040181;
-        Mon, 20 Jul 2026 07:17:20 -0700 (PDT)
-Received: from carrot.home.local (madb688455.ap.nuro.jp. [219.104.132.85])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-38e4b247f1bsm6076027a91.17.2026.07.20.07.17.18
+        bh=MuRKRBkTVuDLBRY/ApmyBhrmpdyr3e8z0LFxN8l5L54=;
+        b=ee3vKErtOrVnBiqbaXHSmQ/0H1ZpAgm698V4VBUece5N+Bq9eANynLjSAPxgoUU4Fi
+         eRd4V39NMlhaX4SM/Dgoow6IpyfyWdQqi1UzbUz1DPqQPUNPVXcUQTJA7MYRu0/1lSvv
+         obQ7I0xOElPtleJyIR8emBQKLBADRDUi0/CrMsVmTW9K7IcNxME/leY0u6FihgKzDdCA
+         TJQeayGUy2iTVUAqVvbTUeBb09IYRYtuQbHxL/+6medcSbzXjkfIxZHsN+9W+F4Fgq3Q
+         wml60pmu3++3UHpINv+3bQcGiu7uQ786dv72Y7fXNqGjdpq1tz+YR0HLCxJI9dTjy+l7
+         36dg==
+X-Gm-Message-State: AOJu0YxZ5jl7/ZzmuKVtJ9i0A8UGbwi3O4b0qPp1S8ek/JQtmHUkqey2
+	PnPD9LEZMYKnDiq8kgM4dVTgVXHRBHgHWuSQKPwXCObs4g6Dyv8UFdCfK8z2d6GJHbhnc+AI8Pq
+	KhnYEDgo=
+X-Gm-Gg: AR+sD11x8lhhAH2Rn2o7EmeLexXMMc/PK0oGjnnNWZ57YJ36i0SsaD7gVopi66Y76zM
+	NwlkxRw8AOGHuh5RWNlWUv1UvBhbv1rlb1VIHbG01d1GHfK3Wq2kgh+/pvyGDl/z949eYrDzA1L
+	eigM/Oy7jXWpgPX9eUlLsaDsRc8E2Pu4lNd7o87tHCSihv2uZyI/OdDwyouoohIBLjfNRNy6hzl
+	pl0NQoe7R4bvgdR/0lBC4pKlVOVDw49OOhOwp+g9tM831lkCxjRBkzCHrHzzmSO6/OAE/yK3M71
+	xblG45Q5CvIXWe0fWrP5hPMp0ffyjpt95b49jGYtTW/+mvYjw7GMGoweTaKY14X3dFcfq4qAPic
+	UYmxZHL6sf+gpZ9UpFhmrtKaeFa2I/LLorLftDNircrLLS5TrB44LEq6xv3isDtKcxXFjo8jo7C
+	aFq56vmM7uBdk6l1MMZjA0LeRRTQInDjhwV3g/08rS0Yk7+SQRxsD8WsEZcpNJ5jheLb5Z5Ckuy
+	lopJhcA/AjwLNyaBeUcjwvTgjgRp+9cMLk=
+X-Received: by 2002:a05:690e:13cc:b0:667:838f:cd2b with SMTP id 956f58d0204a3-668c7ab51b5mr35323d50.63.1784932082748;
+        Fri, 24 Jul 2026 15:28:02 -0700 (PDT)
+Received: from pop-os.attlocal.net ([2600:1700:6476:1430:62ee:74f6:cfbb:28e0])
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-668c7041256sm90525d50.19.2026.07.24.15.28.01
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 20 Jul 2026 07:17:19 -0700 (PDT)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	syzbot+8baf9a79a3ffc6271cb6@syzkaller.appspotmail.com,
-	syzkaller-bugs@googlegroups.com
-Subject: [PATCH] nilfs2: fix BUG in nilfs_copy_dirty_pages() on dirty state mismatch
-Date: Mon, 20 Jul 2026 23:16:52 +0900
-Message-ID: <20260720141716.205384-1-konishi.ryusuke@gmail.com>
+        Fri, 24 Jul 2026 15:28:02 -0700 (PDT)
+From: Viacheslav Dubeyko <slava@dubeyko.com>
+To: konishi.ryusuke@gmail.com,
+	hch@lst.de
+Cc: linux-nilfs@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	Viacheslav Dubeyko <slava@dubeyko.com>
+Subject: [PATCH 0/2] nilfs2: convert O_DIRECT reads to iomap
+Date: Fri, 24 Jul 2026 15:27:43 -0700
+Message-ID: <20260724222745.2107464-1-slava@dubeyko.com>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
@@ -73,79 +75,36 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Syzbot reported a kernel BUG triggered within nilfs_copy_dirty_pages(),
-which copies dirty DAT file folios/pages to its shadow page cache.  The
-BUG occurs when a retrieved dirty folio/page unexpectedly loses its
-'dirty' status.
+This series removes NILFS2 using of blockdev_direct_IO() by
+converting the O_DIRECT read path to iomap. NILFS2 is
+a log-structured, copy-on-write filesystem, which makes it
+a poor fit for a full iomap conversion. Newly allocated blocks
+are delay-allocated by nilfs_get_block() and only receive a real
+disk address when the segment constructor writes them out
+as part of a log. The segment constructor walks buffer_head lists
+directly and is not integrated with the generic address_space
+writeback path. First patch adds a new, read-only nilfs_iomap_ops
+wrapping the existing nilfs_bmap_lookup_contig() lookup.
+The second patch wires that ops table into O_DIRECT reads via
+iomap_dio_rw(), sets FMODE_CAN_ODIRECT explicitly on open, and
+removes nilfs_direct_IO() and the .direct_IO callback entirely.
+O_DIRECT writes are explicitly downgraded to the ordinary buffered
+write path in nilfs_file_write_iter().
 
-This issue arises because, since the commit referenced below, the 'dirty'
-flag of a folio/page can be cleared asynchronously after the filesystem
-detects metadata corruption and transitions to read-only mode.
+Viacheslav Dubeyko (2):
+  nilfs2: add iomap operations for direct I/O reads
+  nilfs2: switch O_DIRECT reads to iomap
 
-Resolve the issue by returning an -EROFS error if the filesystem has
-transitioned to read-only mode.  Also change the behavior to issue a
-kernel warning only once instead of triggering a kernel BUG when this
-unexpected 'dirty' state is detected while the filesystem is not in
-read-only mode.
+ fs/nilfs2/Kconfig  |  2 +-
+ fs/nilfs2/Makefile |  2 +-
+ fs/nilfs2/file.c   | 40 ++++++++++++++++++++++++--
+ fs/nilfs2/inode.c  | 13 ---------
+ fs/nilfs2/iomap.c  | 71 ++++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/iomap.h  | 13 +++++++++
+ 6 files changed, 123 insertions(+), 18 deletions(-)
+ create mode 100644 fs/nilfs2/iomap.c
+ create mode 100644 fs/nilfs2/iomap.h
 
-Reported-by: syzbot+8baf9a79a3ffc6271cb6@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=8baf9a79a3ffc6271cb6
-Fixes: 8c26c4e2694a ("nilfs2: fix issue with flush kernel thread after remount in RO mode because of driver's internal error or metadata corruption")
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
-Viacheslav, please apply this for the next cycle.
-
-This fixes an issue reported by syzbot where a kernel BUG could be
-triggered depending on timing after filesystem corruption is detected.
-
-Thanks,
-Ryusuke Konishi
-
- fs/nilfs2/page.c | 17 +++++++++++++++--
- 1 file changed, 15 insertions(+), 2 deletions(-)
-
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index a9d8aa65416f..1d00bce21c37 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -243,6 +243,7 @@ static void nilfs_copy_folio(struct folio *dst, struct folio *src,
- int nilfs_copy_dirty_pages(struct address_space *dmap,
- 			   struct address_space *smap)
- {
-+	struct inode *smap_inode = smap->host;
- 	struct folio_batch fbatch;
- 	unsigned int i;
- 	pgoff_t index = 0;
-@@ -258,8 +259,19 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
- 		struct folio *folio = fbatch.folios[i], *dfolio;
- 
- 		folio_lock(folio);
--		if (unlikely(!folio_test_dirty(folio)))
--			NILFS_FOLIO_BUG(folio, "inconsistent dirty state");
-+		if (unlikely(!folio_test_dirty(folio))) {
-+			if (WARN_ONCE(!sb_rdonly(smap_inode->i_sb),
-+					"inconsistent dirty state\n"))
-+				goto unlock_folio;
-+
-+			/*
-+			 * If the filesystem has been forced to read-only
-+			 * due to metadata corruption.
-+			 */
-+			folio_unlock(folio);
-+			err = -EROFS;
-+			break;
-+		}
- 
- 		dfolio = filemap_grab_folio(dmap, folio->index);
- 		if (IS_ERR(dfolio)) {
-@@ -277,6 +289,7 @@ int nilfs_copy_dirty_pages(struct address_space *dmap,
- 
- 		folio_unlock(dfolio);
- 		folio_put(dfolio);
-+unlock_folio:
- 		folio_unlock(folio);
- 	}
- 	folio_batch_release(&fbatch);
 -- 
 2.43.0
 
