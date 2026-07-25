@@ -1,265 +1,133 @@
-Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
+Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0D711AA797
-	for <linux-nilfs@vger.kernel.org>; Sat, 25 Jul 2026 23:00:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C121B36197D
+	for <linux-nilfs@vger.kernel.org>; Sat, 25 Jul 2026 23:12:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.43
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785020426; cv=pass; b=Y9jDLVOpAaACYU1QJRngdoe7sq8RVlAWo1yJSyBmnp1S2uKsm9gl/U4HXorvmT3d++tqCmsU3BHe8RFwBshITOcj0rseTAJUWi2e9ozMLQCnEgIyxq0vlBs08Gryh/IQXVKxmq+attzkUEpSqI1rTjtp3G0v6bMi12O/EWOb3e4=
+	t=1785021142; cv=pass; b=K90Qoz+iPnwGox2jWVhQb+i/X5G0zNi1y4kClEaKAFF2Mi3kDI2eYHMoK3td1TdWQa+QCIlfYEe93K4aOUaeNJVoD2CxKegBvxtRg66n57dKhSRkbTuogW89gOrKnMG3ZMXjpP73ESuEizI98meoAXk6KZk5/cAqkBgZsbi9C/M=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785020426; c=relaxed/simple;
-	bh=bDOet23ok2i+Vku4msUzUVIAH9gBfszWU+26BrATbeI=;
+	s=arc-20240116; t=1785021142; c=relaxed/simple;
+	bh=DAmD0jE2PK17f+xBvYiMfK6/+xI/1NO02XCtKo3Fu04=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=RIL3JGjyzicMQmzXIyhE0czsW18iazJgHI0aRaBvpSEVuM9UKmztv2A2KNcfQLo3P+AsKanPabEp0PuiCibDMjpZP2ekbH8NHX2QTepTbNVePRyA5RD5M0sbVz83AhKzfKwvLVB6yCcKgPRoWGPLy4ozMqoJONmQoPObpWq8O9k=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Wg4DyVVB; arc=pass smtp.client-ip=209.85.167.45
+	 To:Cc:Content-Type; b=OyPV5pacR4dHtpMAQU8o3YQodHhn7kj0fm+YNIOlpXAnk127/9d2lukbAGOr/b20uG9Xvr7gQLByFnN4nJr1gNuoXctcRH+8k87Hb3oG3atr3vQOm0/yqfp/IM82qm3kxA1BaU9p7sspixdyWpMgVcquF07duz4xj37WaLg95gY=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Fbtqa0Im; arc=pass smtp.client-ip=209.85.167.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Wg4DyVVB"
-Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-5aeb2bc82ccso1582192e87.2
-        for <linux-nilfs@vger.kernel.org>; Sat, 25 Jul 2026 16:00:24 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1785020423; cv=none;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Fbtqa0Im"
+Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-5aeb8c19017so1900949e87.0
+        for <linux-nilfs@vger.kernel.org>; Sat, 25 Jul 2026 16:12:20 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1785021139; cv=none;
         d=google.com; s=arc-20260327;
-        b=ZZnj2Pez4E8sbyx74w0dztmhe95fCJNtv3O02dWR/jn99EHXNObOKEpgea7iZBwtHp
-         JJDPIsatNajwxutzc+293RvyFP5fd6BOnoHq4jGEtF5o9SPBs+lpaeR+9XfXNcG+hFrU
-         l31wbZattWUWeP1NkTm95Vub5VgtCvzzdiulTKzNOpL6jlZNHl39PcF8AorIpM0ZvQ5O
-         +rBYFuNtdgO1RVSyFYPAwARk+2dSuWzbQc8U558v4q3w3fHAiZ0c1YX5upGWhkEhiqsx
-         ojYHlJBviWY8ICjgQZjBy3bRwy2dVy6vveV69cXHaqyL//KOmgXNJk0NduNDnyPvpr6w
-         Drkg==
+        b=lhoINIVHO8BQl/YI3ycRdylECeQpzDCs/pJUprv/gfN8M+PiCRJjfjmKqY12csQB78
+         v1+8sm6S2rQgXvx3+Ml4Vy96oEKBiVV3Nmwa8hvTHMb0MR/cJ0YQW1Y7VUigQk5hZVyw
+         oe3G1rpTj8/Ye8PDx6EU98UbLSuW34ViDhkiKkEFjeqBpjsrTCB6SCI8Xs8I5tAsP39b
+         y/V70H3qJbQ9L7buEmF3wFTYsMKrFa6V7VwDLYXWOxG9URRQqMc1CRWkpJbhV6A09eSL
+         1r+D46pSn0CueICOhnHAKcl+zfWk5gOwfQAk05SftGn3spwS2KnpewbxBCvVkO/gI85E
+         C3dQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:dkim-signature;
-        bh=4CrQ9yNHEvzBk4bKw+4QRIhsoZN6DsfehlXDZKDdCG4=;
-        fh=HcFAp9jwCSv0ghq0mepzANBwEt0dFJCwH9aC5gM18tc=;
-        b=VoaTHWj8yyEaWXX8smgY+6TvOyJaaG6ya2601fIY5+zeXWxxg+yQ1CZ4RVNBCcathX
-         dpXRSrhAreX9NujTh4/SvxeGcchALrWdxdnumVEOAezgxQ979+3Px3aK+0wRuatM468w
-         WvQ793wGmRMReOaZseWTYw67G2P2RqSn31nN6rP6TBXYP3aScBYy8lVrUeLAtf5jU4V9
-         C2bavh2qUO+cADHrBQKF+jQapUIMSCYbNFjdcCp/06ajyGe++TblQCQxzxyUv6wPSSTw
-         RbGuYoAY1fkVDtscIv3gBatL1beiRON0fBisyynaUMHlqg06N48NnFlO9Q2Eehb3ednB
-         inuw==;
+        bh=lk2bH0i2n8lot2p1pFmjvDciqXml1QGBbKWcb9+sKHI=;
+        fh=ECoDiQl4a31jm+8ZJwrr0qIPb5HrSZ/zByADqctFbc4=;
+        b=lnFgY1NFRpMCmX4N5URiTW/h2RDINovFzUgYfiK/cJbHYdRUxy3MiycD5rXyzMhiT4
+         bGsTK8HwPnVxBm2T0JGBBuX0G21Yj8hDqoVk+4bgEJMS+3w1DHFNhtFHIYzTi6aH2zbM
+         aNnumMiyIhqHHwLB01OeBD5YcZeSAQaPtnTXaUSg2qTFnT330/faMmOocrtHQ7UIlNBj
+         GHk56Sh5Js/GCxz5RH8wViLuGvskfiI/or60FGkUsX7CDkmaIDDD7IOttn2mkkUflLg6
+         zJmbvk4dL/OruGj+BkqraWk8pckiOV6FmGTa2eWrERDI7eBrptHF57I0PZnk4RYbhVA9
+         RWew==;
         darn=vger.kernel.org
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785020423; x=1785625223; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1785021139; x=1785625939; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=4CrQ9yNHEvzBk4bKw+4QRIhsoZN6DsfehlXDZKDdCG4=;
-        b=Wg4DyVVBwFaeWp2vTr2q/EpvwOrBLw7GDmXq2JH7pDt0aLYnHs0BDhiWxnpG4ALNX9
-         8iG5c/u9mm+jC9zo2GkKZtizvxsLBTHQduxjSfm3Y+FrL+f0uxzVhSoMYi2J6wVDOw/h
-         5VfcZV5TgbcNWcs4zoET5Ge1AhBNzMXTl8oZAhVxi3xUb4OjyeKprMcg+zn7HxV6qLe6
-         v6XUNfFFywYkTCWxIdLw/duZPiz2oziDMQewxjU5ozfU4XgDlOCnMejoqhivFbhizvwE
-         ZcQq9Mmpn/z4Kn/Scg9eksRgmDARG5D/4Wr6DV6tWoe8lBKzsEjMCVRpgjT78KnS1uLB
-         JxqQ==
+        bh=lk2bH0i2n8lot2p1pFmjvDciqXml1QGBbKWcb9+sKHI=;
+        b=Fbtqa0ImwZXH2c0g9nJEgrcQ7+GrYuuu+oosptTVAYew+Qd2W8ajOhpnCZ39xuyHZj
+         1U+oln2wnPJNLLUAUK9h3UEs0+90grj5nxwRxzOZyiSMcJAcWWqZWZKI71O21ZavRYa3
+         edoiwFcFRvLSmqpDN7xYzlaV+aOtBlCwX27JNxWpghrZQP4Xrjlj2FsC25OGf6oXCvxW
+         dlQZtVkUL11ekR/md78zRCHQ0d4IVK/40Nn252ryCuGSNctm37pUrU/CA+QzGGmCt3iK
+         XnTJ8SHUBB45nmsRXk2H9woA1S4p1GxuQyQT1oAiYVhHRBrRyO9WXLIYtNg5GzyFmIYc
+         pXdQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785020423; x=1785625223;
+        d=1e100.net; s=20251104; t=1785021139; x=1785625939;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=4CrQ9yNHEvzBk4bKw+4QRIhsoZN6DsfehlXDZKDdCG4=;
-        b=TSHAyLjoFU8k+x+rQPYMjqPEubOcU/om/lXWYE/+8ACM9qXX1bHHKR/JsZWRW+YSLJ
-         gp17gYVsjg7b4BY0CQ9+4mGZMdU53hL+BKuNVJFREOJ/UVXt9x0Dc5EMHcGVs/CqkF+m
-         3Lxnx28DYJt17zQdhn+l8efUQsiAtoCk7NjAfWW3OEOE1jCmljir+6YQv+CCOi63O3xx
-         m5n4ot2WE7dFX3Fxe9WdaBQGNZrPpNmzLvJf3+hmfX4G3jG/fppHXa9uq/UhnRbUjCHR
-         qtlB76uf/HauQzQc/sLptrG++z9Sg7woxIiH599LlqZvh3sAMpGnWq0yuwQlWsPmJODT
-         p84A==
-X-Forwarded-Encrypted: i=1; AHgh+RrSN9/uMQLs+xdL8edV+IKlfCamXrXqO7v83jvjo/SiYsYcgHRbA+q970ZNbOP7WxKqlh7ZO4qAXPicAw==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yz0s6KjvujyKnSh99op0wxGJd9x/TvYyfbWcAqo8awHpH749BXi
-	F8eJdQp5V+blL1HmtTwZqNRBb00qENYPCykAFfEcWvmiTPEjJjwyfyVbK1hrfRmQHfIunPEYl/m
-	TV+4GLXmcd4+OtwaoHdPwpiz29uQxeSA=
-X-Gm-Gg: AR+sD10QMphat8OiKPp5JoiIOjd1BtUaiiTASAkYj5i4mZ86zkWbKx4bk/oINmgxbXs
-	LFeYjuiUnZ7u+yPgzhu3ieI4fW1mfNvX+D6FoqA8F4/7F4N/U8GDmdK6vf5sVg3Z1DiMnYr2Wq4
-	u+oIV0vniXcUxHkb/yegYLwO2UTcV0t9AkAhDTXhASMHzkM/fjEe/CTypG1OEZs0C5YmV/sdJDJ
-	9xfTmtfx+81bka4yG2VGzXktlLOr4IaQ1GnrsM8diCn5OQerQKZLv+LIFo53dM=
-X-Received: by 2002:a05:6512:31cf:b0:5a8:88f8:9ed4 with SMTP id
- 2adb3069b0e04-5b2c1b26f68mr667769e87.30.1785020422785; Sat, 25 Jul 2026
- 16:00:22 -0700 (PDT)
+        bh=lk2bH0i2n8lot2p1pFmjvDciqXml1QGBbKWcb9+sKHI=;
+        b=IMhe0AKmC2nhUE+mkaJAHwR9Hf9mcXp2QtGjxq+9LO73VxtxE9hEA4KO3CKEInVv3M
+         j0I/VVttSSWJVzslGL4SqLKhOuTF5RyQKbVMWdXa+IasQdWikmp5USEKEW3UagJOK13+
+         otga6Rv9uRGKvD0KxmiIr/Owm5ujV/76Yid8vnVHrMPWISH320CgVUgRAbJdK/XRfygi
+         xjgDjt2Qhy7a67xBUP6/UlTBdZaz/3tF1oqiE3BY5Htjot4inETs5ZeycQ6SXQNm3w4V
+         +6h3Bt/b6BZ2++s7mFAspkQ3jFrekVwpJ5dayKX6vh9W8y0FOvclc2kfGaJsZYmrx60C
+         wOMg==
+X-Forwarded-Encrypted: i=1; AHgh+RoTVIOHAaS08s3SVy9GIsBE+1HMVA2Qnvao5rcWOkWMYjnqq61mnf3JHVs0UDxJslLiZqUy3I4PKIvuDQ==@vger.kernel.org
+X-Gm-Message-State: AOJu0YwPjznwdqNfKIzzqvPoz1O7AK9xf5Xmw+mYb8BedZq8CqW8+t9s
+	5603LA0E/EhCd/ppvce9ND6g5BcXIXQ63xl9smVH7L8CEryHmsi8J8jCMCttrsh0HgesS3vmWka
+	alVUitXzaSd7Wa5VrYrB6j+fYiQqNuiA=
+X-Gm-Gg: AR+sD1062jlUykRwTlmZaxjX7RmR1Lj0mh52aX/5xME+xUdHFH2crTxGE7wejREtqob
+	zMN9pWgqmkbBjMcHxqfTnVmQa1wbxEDDj/ub1fdhKNHEVISN9WyK54jTXJRHp6rooQJNFdlavn0
+	jf9Szmt46aFJwFoaAWYcAu+hqg00uT7GyYhJok0q8w0heU72mFfCK1IDpwVTNa/TuTfww5M4GsQ
+	yxbgW/IfQi1tWHzg4gReqaCYmgmu1abi7CGznb10WsdzwHzOBHpS9T/NsnxFVzYAfD1QutmaQ==
+X-Received: by 2002:a05:6512:159e:b0:5b0:1df9:2adf with SMTP id
+ 2adb3069b0e04-5b2c1b23c13mr536444e87.28.1785021138444; Sat, 25 Jul 2026
+ 16:12:18 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260724222745.2107464-1-slava@dubeyko.com> <20260724222745.2107464-3-slava@dubeyko.com>
-In-Reply-To: <20260724222745.2107464-3-slava@dubeyko.com>
+References: <20260725100658.1705-1-manojkm24dev@gmail.com>
+In-Reply-To: <20260725100658.1705-1-manojkm24dev@gmail.com>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Sun, 26 Jul 2026 08:00:06 +0900
-X-Gm-Features: AUfX_my3LXNIIx8rJnvq6M3TCwzbE49wvR2sRFr4oq_7dYhXZc8uM16YisFCH9c
-Message-ID: <CAKFNMokcPu6DC4hnF=--diBtWzDhU2rROCT-rDGcuoobNzb8xg@mail.gmail.com>
-Subject: Re: [PATCH 2/2] nilfs2: switch O_DIRECT reads to iomap
-To: Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: hch@lst.de, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Date: Sun, 26 Jul 2026 08:12:02 +0900
+X-Gm-Features: AUfX_mxFyNnlo3VPzMH4bN1g0GZY_Ni5XJHOJ1l_LeDcBVAW4ZagKbK1c2UAVdI
+Message-ID: <CAKFNMo=zApDzM10dv66TgcKcvJyzWmur=88zRpfK=br_BGY02w@mail.gmail.com>
+Subject: Re: [PATCH] Documentation: fix grammar in description of nilfs2
+ recovery code
+To: Manoj K M <manojkm24dev@gmail.com>, slava@dubeyko.com
+Cc: corbet@lwn.net, skhan@linuxfoundation.org, linux-nilfs@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, Jul 25, 2026 at 7:28=E2=80=AFAM Viacheslav Dubeyko  wrote:
+On Sat, Jul 25, 2026 at 7:07=E2=80=AFPM Manoj K M wrote:
 >
-> Wire the read-only nilfs_iomap_ops added in the previous patch into
-> the O_DIRECT read path, and eliminate blockdev_direct_IO() from
-> nilfs2 entirely:
+> Include the word 'at' to make the sentence grammatically correct
+> inside the description for nilfs2 recovery code. This improves
+> documentation without changing the original meaning.
 >
->  - nilfs_file_open() now sets FMODE_CAN_ODIRECT explicitly, since
->    permission to open the file O_DIRECT was previously implied by
->    aops->direct_IO being non-NULL.
->  - nilfs_file_read_iter() dispatches O_DIRECT reads to iomap_dio_rw()
->    using nilfs_iomap_ops; everything else still goes through
->    generic_file_read_iter() as before.
->  - nilfs_file_write_iter() strips IOCB_DIRECT and falls through to
->    generic_file_write_iter()'s ordinary buffered path. NILFS2 cannot
->    perform true direct I/O writes: new blocks are delay-allocated and
->    only given a real disk address by the segment constructor, which
->    works on buffer_head lists, not iomap. This reproduces today's
->    actual behavior: the old nilfs_direct_IO() already just returned 0
->    for WRITE.
->  - nilfs_direct_IO() and the .direct_IO callback on nilfs_aops are
->    removed.
->  - drop the unnecessary "select LEGACY_DIRECT_IO" from Kconfig
->    in favor of "select FS_IOMAP".
->
-> Signed-off-by: Viacheslav Dubeyko <slava@dubeyko.com>
-> cc: Christoph Hellwig <hch@lst.de>
-> cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> cc: linux-nilfs@vger.kernel.org
-> cc: linux-fsdevel@vger.kernel.org
+> Signed-off-by: Manoj K M <manojkm24dev@gmail.com>
 > ---
->  fs/nilfs2/Kconfig |  2 +-
->  fs/nilfs2/file.c  | 40 +++++++++++++++++++++++++++++++++++++---
->  fs/nilfs2/inode.c | 13 -------------
->  3 files changed, 38 insertions(+), 17 deletions(-)
+>  Documentation/filesystems/nilfs2.rst | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 >
-> diff --git a/fs/nilfs2/Kconfig b/fs/nilfs2/Kconfig
-> index 7dae168e346e..0a5ace60e6ab 100644
-> --- a/fs/nilfs2/Kconfig
-> +++ b/fs/nilfs2/Kconfig
-> @@ -3,7 +3,7 @@ config NILFS2_FS
->         tristate "NILFS2 file system support"
->         select BUFFER_HEAD
->         select CRC32
-> -       select LEGACY_DIRECT_IO
-> +       select FS_IOMAP
->         help
->           NILFS2 is a log-structured file system (LFS) supporting continu=
-ous
->           snapshotting.  In addition to versioning capability of the enti=
-re
-> diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
-> index f93b68c4877c..ad2e87c049c9 100644
-> --- a/fs/nilfs2/file.c
-> +++ b/fs/nilfs2/file.c
-> @@ -10,9 +10,12 @@
->  #include <linux/fs.h>
->  #include <linux/filelock.h>
->  #include <linux/mm.h>
-> +#include <linux/uio.h>
-> +#include <linux/iomap.h>
->  #include <linux/writeback.h>
->  #include "nilfs.h"
->  #include "segment.h"
-> +#include "iomap.h"
+> diff --git a/Documentation/filesystems/nilfs2.rst b/Documentation/filesys=
+tems/nilfs2.rst
+> index e3a5c8977..a0124d22a 100644
+> --- a/Documentation/filesystems/nilfs2.rst
+> +++ b/Documentation/filesystems/nilfs2.rst
+> @@ -252,7 +252,7 @@ The following figure shows a typical organization of =
+the logs::
+>  To stride over segment boundaries, this sequence of files may be split
+>  into multiple logs.  The sequence of logs that should be treated as
+>  logically one log, is delimited with flags marked in the segment
+> -summary.  The recovery code of nilfs2 looks this boundary information
+> +summary.  The recovery code of nilfs2 looks at this boundary information
+>  to ensure atomicity of updates.
 >
->  int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int dat=
-async)
->  {
-> @@ -133,20 +136,51 @@ static int nilfs_file_mmap_prepare(struct vm_area_d=
-esc *desc)
->         return 0;
->  }
->
-> +static int nilfs_file_open(struct inode *inode, struct file *file)
-> +{
-> +       file->f_mode |=3D FMODE_CAN_ODIRECT;
-> +       return generic_file_open(inode, file);
-> +}
-> +
-> +static ssize_t nilfs_file_read_iter(struct kiocb *iocb, struct iov_iter =
-*to)
-> +{
-> +       if (iocb->ki_flags & IOCB_DIRECT) {
-> +               return iomap_dio_rw(iocb, to, &nilfs_iomap_ops,
-> +                                   NULL, 0, NULL, 0);
-> +       } else
-> +               return generic_file_read_iter(iocb, to);
-> +}
-> +
-> +static ssize_t nilfs_file_write_iter(struct kiocb *iocb, struct iov_iter=
- *from)
-> +{
-> +       /*
-> +        * NILFS2 cannot perform true direct I/O writes: new blocks are
-> +        * delay-allocated and are only given a real disk address when
-> +        * the segment constructor writes them out as part of a log,
-> +        * which works directly on buffer_head lists rather than
-> +        * through iomap. Fall back to the ordinary buffered write path
-> +        * for O_DIRECT writes.
-> +        */
-> +       if (iocb->ki_flags & IOCB_DIRECT)
-> +               iocb->ki_flags &=3D ~IOCB_DIRECT;
-> +
-> +       return generic_file_write_iter(iocb, from);
-> +}
-> +
->  /*
->   * We have mostly NULL's here: the current defaults are ok for
->   * the nilfs filesystem.
->   */
->  const struct file_operations nilfs_file_operations =3D {
->         .llseek         =3D generic_file_llseek,
-> -       .read_iter      =3D generic_file_read_iter,
-> -       .write_iter     =3D generic_file_write_iter,
-> +       .read_iter      =3D nilfs_file_read_iter,
-> +       .write_iter     =3D nilfs_file_write_iter,
->         .unlocked_ioctl =3D nilfs_ioctl,
->  #ifdef CONFIG_COMPAT
->         .compat_ioctl   =3D nilfs_compat_ioctl,
->  #endif /* CONFIG_COMPAT */
->         .mmap_prepare   =3D nilfs_file_mmap_prepare,
-> -       .open           =3D generic_file_open,
-> +       .open           =3D nilfs_file_open,
->         /* .release     =3D nilfs_release_file, */
->         .fsync          =3D nilfs_sync_file,
->         .splice_read    =3D filemap_splice_read,
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index 51f7e125a311..f4a9d9ea9c3f 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -257,18 +257,6 @@ static int nilfs_write_end(const struct kiocb *iocb,
->         return err ? : copied;
->  }
->
-> -static ssize_t
-> -nilfs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
-> -{
-> -       struct inode *inode =3D file_inode(iocb->ki_filp);
-> -
-> -       if (iov_iter_rw(iter) =3D=3D WRITE)
-> -               return 0;
-> -
-> -       /* Needs synchronization with the cleaner */
-> -       return blockdev_direct_IO(iocb, inode, iter, nilfs_get_block);
-> -}
-> -
->  const struct address_space_operations nilfs_aops =3D {
->         .read_folio             =3D nilfs_read_folio,
->         .writepages             =3D nilfs_writepages,
-> @@ -277,7 +265,6 @@ const struct address_space_operations nilfs_aops =3D =
-{
->         .write_begin            =3D nilfs_write_begin,
->         .write_end              =3D nilfs_write_end,
->         .invalidate_folio       =3D block_invalidate_folio,
-> -       .direct_IO              =3D nilfs_direct_IO,
->         .migrate_folio          =3D buffer_migrate_folio_norefs,
->         .is_partially_uptodate  =3D block_is_partially_uptodate,
->  };
+>  The super root block is inserted for every checkpoints.  It includes
 > --
-> 2.43.0
+> 2.53.0
+>
 
-The conversion looks good to me.
-(Note: I haven't exhaustively checked for any iomap-specific caveats.)
+Thank you for the fix!
 
-I verified the build and basic operations in several local
-environments, and the changes have been working without any critical
-issues so far.
+Viacheslav, could you please pick this up directly into your tree?
 
 Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 
