@@ -1,200 +1,161 @@
-Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
+Received: from mail-yw1-f170.google.com (mail-yw1-f170.google.com [209.85.128.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF4233A6F05
-	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 04:32:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.53
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785213155; cv=pass; b=EJ42CeC5LvqX5B9LebyOeY7GLxLV6mM8Sb9MCsSaotqZgOrqL2VFl16Sped97ijptyKknq9yrJsAvhSW78mbvIlbTgyZr3G22ooVhChO2vvPJu0B1rDhqBlgwuC55tQWTU/uvKn+0rpHuldI84cjDlYOQ17cbPRs4vJGNm2hZSU=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785213155; c=relaxed/simple;
-	bh=1UkufzN6/HQktmucOUqc3rY+5btPzuxx+eE4g3cLiWU=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Gga4gdamnB4JJ+5u3lENbegGepxer99fAoclcp/4ROU4H56JXKLcowZwxwDUkKdFhTlv5UPupJAcEryhFB0AzlM2KlywITz/6rNhz4oTZzXkxP6yybFAl2Tyj+Ovc3j+naBBnemLFFOMS6fvpH7EKa03nDMeDCAd7hho7UPMtl0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UmMC6gEK; arc=pass smtp.client-ip=209.85.167.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C26913C3F75
+	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 23:19:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.170
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1785280750; cv=none; b=fn9V5eAWB2NDH2GLqnmRS7IIE0PC87vfiaiwvTOaEI8Vuu4GZJ/WgzJGdg37maydso5YWgFLEtLTXk60WYXQpUn6VfULjQYRVXOpmu+Y8De9fk5LzsNBjpBYYIN1yyuYhw3O5h3P133Pb6KtB3t52HJ5LKlKSGXciHpfUFG2BTo=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1785280750; c=relaxed/simple;
+	bh=IqzBT5md9d1L4b26Zj635oQbSo4fx+LTqdVqRSRXkmg=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=r1n83aP7o+FnL7F8QyzFE6KKW0NsSxFLEpBfTFrk6A7AtfgM4VKwMQiqn/Q5ZBDm04JpWMQFSMhGzK1OQxBzWeKcAE8gr6w/nLPSiT/1ioI1TfV2rpUN0aE4jOwKHH2J6z8+qiGDDAxAkAQvuoSEnpMf/0gvyVV78t+pH1ALnkk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=rrgI/OVj; arc=none smtp.client-ip=209.85.128.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UmMC6gEK"
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-5aeb98460c6so3577516e87.2
-        for <linux-nilfs@vger.kernel.org>; Mon, 27 Jul 2026 21:32:32 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1785213150; cv=none;
-        d=google.com; s=arc-20260327;
-        b=b8E0lMA8VwdVs+dA3Xpmg7lnpwdk8i2irF9IOu7PN54yA2+EgxfE82cdC8rj+fml+T
-         i/8HPgz3uPBQJUNPh8xVTVSD9cEc+f6/vrk0wr5z0I2AFfIn80qpkYYaevWJUP1Ex6Mv
-         BjgL9ItFAl0m7NljzCyxGbmBWLCmK23KZXtURn49I9nGCinDaCHPDNx3s8gMMHa5aNhe
-         UKk6zzGwqQ9A5M5V2MQ7THooMKYq8kFD73XqyR+EcrQVXohzD4U61G98TIIEe0M2veKz
-         iZyvzLGEyjOTmm4ePNMyUb4MlYO78rMtWBmQRdKikIRecWiMXOGc7Pr8d0OtKJNHc6Yi
-         Oizw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=1jdXMRFbiR+iapMOAzm62NakCWxCaZxTmnCQa4V1QoA=;
-        fh=osC5/wRwiFZuEUP4OC2eJoUPEp1ndItrUMoWsP4V4hA=;
-        b=KWRWMyz/yFwn3tuZmu63dhHywTcqOPUCYKatLnUZMhX2kfKn4jNESgHduA8oY62UAD
-         fqDR3GsrxWKI2HZ6pXfsu4b6iptVHiNXhzo8wahbv4r0sYCaRv6A+Fihu2wOsByK9gIM
-         FSc+O0ZrnzZWyLf5EJOlXZPEUZQ+NVany+wJR4iZUWbzDJYSIPdQGaFOjPW48IyXAhoZ
-         NupkM57O9R1qafh4mFYFG9pSjNhi8ugZ41N4xSPxmWTx+HV3tcjKxhl0tGLx/FSfFrqy
-         mF51XiUU6coPdrezMXWyzcdyq90aAA7PS/Bti5Ljt3OAbz2/sctNKPuLLR1rOu7JsVPh
-         PSnA==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="rrgI/OVj"
+Received: by mail-yw1-f170.google.com with SMTP id 00721157ae682-81f3b227a4aso7006917b3.1
+        for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 16:19:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785213150; x=1785817950; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=1jdXMRFbiR+iapMOAzm62NakCWxCaZxTmnCQa4V1QoA=;
-        b=UmMC6gEKJXKnSo9Lj/HWJ2vOi/6Su5yPoI/b+PsTfWs0Qn3R5IjJAKhE/tLy1qYopl
-         FqJKXAW35p606cp9spxgjYdtk6zp3hA7GSjnNvRV2wDZacnakZeXkxL0hesMuDUPr5EK
-         LonJqfz5St4O0dGgx2LEAiyIaJG0sxYpyZKaD2R32b1sQJmiX71q0BS+g6C9txJUA2u1
-         rKaZag3oq3uxkfcJ3GX2go6rEJrViJ9NXBVyYbjwGWsPT9H1AEXUtnOHBHfrevI93rG+
-         D/FhU4Qivhmt+g+WGR7yiQUIg6beHhf94sxdyCYZCgAV/uxsdy879U4es1+nOVB52Mqa
-         z4gg==
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785280748; x=1785885548; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
+         :from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=IqzBT5md9d1L4b26Zj635oQbSo4fx+LTqdVqRSRXkmg=;
+        b=rrgI/OVjHJHQppZlJRg5wcP5Dx0GCtHtQjvsdp843PVfOlOaj5GWbubwXqvD8mj0PZ
+         dr2s6acJJnIL1kYCS5tyvWDP5f0YCOexsnFObM1hYvw5F9qZ7idWmuBm+6Aq4gbyhBO0
+         mp1mBZ0Xs2ECWBWPr1eHJiR9Y2oVmcpB8dH6/hA60yGdOYRfEsIBlQ5t2iLDqum5NRPK
+         RSQRfUs3thlu4LAg89ffnBittKruOu2t/CNHRdH25ki+kT6Doz7iQvDjSI3ufO8eYFE8
+         CBFl+9VFkrOwuSb8ntiovBsHO+aJDh3FE32ex4GinclrRSVyb4O/TIJZ3GuTbiGGbien
+         4KMw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785213150; x=1785817950;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=1jdXMRFbiR+iapMOAzm62NakCWxCaZxTmnCQa4V1QoA=;
-        b=ZS9nhR3voKVM8XckRN21UF5xu/Nh+xfnacG08aNsCgKo0QUYh4eEHA+7a97i91fv/I
-         E5uEVRy86aP7EMiV6dgXccADN5D/iUmGCpIKY52nFToPJU2DBdQrX0iFv8uDSO42ZU6h
-         sq7cEPMv80blt8dIPePnjoj7m5qdiLp5eLIUnLka1q93Yk59oig0aaoi6K97qQ8Hd9iM
-         DjSdMTNHs+sNb71SnvQrKZvIY73Bro9/pxK83KPQ095kUDGL0BwkZYtSmq8qWoUhv+yj
-         URVXSyofO4jEc1G9aTUIaSLDi80/j3wR746THOgkfX4FAQSbgZnkusPy+HbxCpUeoiZl
-         6rdw==
-X-Gm-Message-State: AOJu0YyGgY/Z/IpXhm4sSnVE/2mBYPFDRut+OarpXs6qzjPjnh6xLZLO
-	9GnAtod0snGJvN9H8SkoIjhzj9GnIVZXy2tU/B0pncL6+b6/dDUK1YT1CzymSUnQXO/QffDIewM
-	RpSl/nFyPzidEIWAcGY1n5gtbNHi5xdA=
-X-Gm-Gg: AR+sD13SChOl1cVhz0ig8PAFAdp/idgosE36CjiigO9UtcLFwvB0bbybFTngGw98PQl
-	LnjR90zQ0cDDld4itroTYySgNzH9cV5dA10fuRcYQFLAh1Fof9qLV5XjwH1bnwbR95o+q4+sKFq
-	UdMdmHmxsm6FBE7xXR1+LQUtgEyUvVlg6zNGrTeHGToM4HRoXufkTrf1Z2o7z+/LxbmjQqDH4EJ
-	2HmUFXbk1JbnFuURgrs78PtzweFUVmml2phf3qZ550t3nh/ihq/JYAfqd+vl2K4KjFVq6pxFQ==
-X-Received: by 2002:a05:6512:3b98:b0:5b1:5457:a930 with SMTP id
- 2adb3069b0e04-5b2d0217aa6mr130420e87.16.1785213149636; Mon, 27 Jul 2026
- 21:32:29 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1785280748; x=1785885548;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=IqzBT5md9d1L4b26Zj635oQbSo4fx+LTqdVqRSRXkmg=;
+        b=VNB05RZk0lIOUtxZ4OPQOCO6UJcOFcisOaeVm+4uUdDfZbJfq8sIWNqzYRpo3dkM1F
+         3hqE1syoIA17sXnD1vk9UHITwce5eEqIfSWoxs/PQfYvH2YKUh+mhN/tzQ53Ph2RgwAC
+         oc82jaSjW2TFtPRT1A8alQUGaTf+/8P6p6QbfIfe9dabvSdnwZvkm2UOhLLGPEQiq3rX
+         GNrac0/sXqTm+CKTghjExcdkrT7sz3T2/FdLPPqL2m2DD4ggad8LKkR14A1bFKgfG5Ba
+         fkwKWLD963rB4Emc9rcXkevPGGKpvNnoEchBXCs1oWyAuRtun43Opk8uVuxplngjV1h6
+         YwOg==
+X-Forwarded-Encrypted: i=1; AHgh+RpbEkMVGNDx9REs+Vkr5Lbtms3hjekZz93ZCD/LnFqR/OHYqP1Ui0q9TItP1tRiBJVwS/qZODnTG4L6+g==@vger.kernel.org
+X-Gm-Message-State: AOJu0YzsNmVPzFCrvkZiApGKslGTB57d2FNeg6Q6ERBGvVw7wS+Y0M7b
+	nXgFZLnGCvy18Pj4bK8rxZXJM06ty2RPpgF8ilGgmOqZx3yebVFTkWSIdz/mdGvxpm2K2uqvG+u
+	Tsf/iGxvX+jBx
+X-Gm-Gg: AR+sD10aPtVKUO2uu2PGpe+Y15xo/szZRhy+NtVMhguYSpfStbI+11yq5pPuFBIWlE5
+	g7DtidVl1pQtyPJS5YKOBRs2J0AFE0hB/ijJmvaOTwW0lBKnURdT7WamLuMjD+a7axR3TDCWGMZ
+	apBL260hHMfPSR2IEVYNbWQ4xmHe2G+V9blyZxEfdhmih7klZ2M2r1qOl3wORcy7jUuycitLvux
+	K5P7pOGbs5p74oQ1oH345mdCsvPbyEoYdKGljRBAKua1tQKmNcp65ynuSe+cko94lXGK5UIG+1g
+	5TD2Wt0LnYxVV7+sRaWoDO6/8boufuCQWfrbQWOZNzVFIoMkhTZzYFnvgmu5wIZbBzCoezR/ppn
+	1qngLLhr0/jNISNz5iFNtHUGhV7qn5UdeKTY0BVAiWXBwHmyRIXZqA+Ju+tep8OMJ/G9DwlORfg
+	gQFuWnBYD7c/HviPRnj9cwOUDThicPEyiVqH8ZN7POpGRFnkrLzb8MrGI54nCyHZsVqizUTJL/U
+	ouTRspkSFnRakloD/IhntK1zSBJEwvyITGjaNzX58fp6bu1ERGfkUuQr87DtCxQuTfys9b+om7l
+	0cIopSOjagF42DW6wDG8QjEWPfZvOdFeT0LMKI4/JPGp+xgWyg4dd2o=
+X-Received: by 2002:a05:690c:7109:b0:81f:64cf:2c58 with SMTP id 00721157ae682-81f991e4f40mr21075417b3.6.1785280747667;
+        Tue, 28 Jul 2026 16:19:07 -0700 (PDT)
+Received: from [10.0.0.3] (162-197-212-70.lightspeed.sntcca.sbcglobal.net. [162.197.212.70])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-81fa29a5f53sm7474267b3.44.2026.07.28.16.19.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 28 Jul 2026 16:19:07 -0700 (PDT)
+Message-ID: <ec87fd45a7ec19dcddd0720a1634abd442a181d8.camel@dubeyko.com>
+Subject: Re: [PATCH 0/2] nilfs2: convert O_DIRECT reads to iomap
+From: Viacheslav Dubeyko <slava@dubeyko.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: konishi.ryusuke@gmail.com, linux-nilfs@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org
+Date: Tue, 28 Jul 2026 16:19:05 -0700
+In-Reply-To: <20260728035443.GB19245@lst.de>
+References: <20260724222745.2107464-1-slava@dubeyko.com>
+	 <20260728035443.GB19245@lst.de>
+Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
+ keydata=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
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.1 (by Flathub.org) 
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260720141716.205384-1-konishi.ryusuke@gmail.com>
-In-Reply-To: <20260720141716.205384-1-konishi.ryusuke@gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Tue, 28 Jul 2026 13:32:13 +0900
-X-Gm-Features: AUfX_mywGSjGVdTSfcKl54Dh93GDMDnt8o2-mjGNPiJ1P01p625c3LnGXoLrkFk
-Message-ID: <CAKFNMonu620z87=b=+9Xwn44Zr9-CssQkn=mes5EqEc=iJUm0g@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: fix BUG in nilfs_copy_dirty_pages() on dirty
- state mismatch
-To: Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, 
-	syzbot+8baf9a79a3ffc6271cb6@syzkaller.appspotmail.com, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Mon, Jul 20, 2026 at 11:17=E2=80=AFPM Ryusuke Konishi wrote:
->
-> Syzbot reported a kernel BUG triggered within nilfs_copy_dirty_pages(),
-> which copies dirty DAT file folios/pages to its shadow page cache.  The
-> BUG occurs when a retrieved dirty folio/page unexpectedly loses its
-> 'dirty' status.
->
-> This issue arises because, since the commit referenced below, the 'dirty'
-> flag of a folio/page can be cleared asynchronously after the filesystem
-> detects metadata corruption and transitions to read-only mode.
->
-> Resolve the issue by returning an -EROFS error if the filesystem has
-> transitioned to read-only mode.  Also change the behavior to issue a
-> kernel warning only once instead of triggering a kernel BUG when this
-> unexpected 'dirty' state is detected while the filesystem is not in
-> read-only mode.
->
-> Reported-by: syzbot+8baf9a79a3ffc6271cb6@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=3D8baf9a79a3ffc6271cb6
-> Fixes: 8c26c4e2694a ("nilfs2: fix issue with flush kernel thread after re=
-mount in RO mode because of driver's internal error or metadata corruption"=
-)
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> ---
-> Viacheslav, please apply this for the next cycle.
->
-> This fixes an issue reported by syzbot where a kernel BUG could be
-> triggered depending on timing after filesystem corruption is detected.
->
-> Thanks,
-> Ryusuke Konishi
->
->  fs/nilfs2/page.c | 17 +++++++++++++++--
->  1 file changed, 15 insertions(+), 2 deletions(-)
->
-> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-> index a9d8aa65416f..1d00bce21c37 100644
-> --- a/fs/nilfs2/page.c
-> +++ b/fs/nilfs2/page.c
-> @@ -243,6 +243,7 @@ static void nilfs_copy_folio(struct folio *dst, struc=
-t folio *src,
->  int nilfs_copy_dirty_pages(struct address_space *dmap,
->                            struct address_space *smap)
->  {
-> +       struct inode *smap_inode =3D smap->host;
->         struct folio_batch fbatch;
->         unsigned int i;
->         pgoff_t index =3D 0;
-> @@ -258,8 +259,19 @@ int nilfs_copy_dirty_pages(struct address_space *dma=
-p,
->                 struct folio *folio =3D fbatch.folios[i], *dfolio;
->
->                 folio_lock(folio);
-> -               if (unlikely(!folio_test_dirty(folio)))
-> -                       NILFS_FOLIO_BUG(folio, "inconsistent dirty state"=
-);
-> +               if (unlikely(!folio_test_dirty(folio))) {
-> +                       if (WARN_ONCE(!sb_rdonly(smap_inode->i_sb),
-> +                                       "inconsistent dirty state\n"))
-> +                               goto unlock_folio;
-> +
-> +                       /*
-> +                        * If the filesystem has been forced to read-only
-> +                        * due to metadata corruption.
-> +                        */
-> +                       folio_unlock(folio);
-> +                       err =3D -EROFS;
-> +                       break;
-> +               }
->
->                 dfolio =3D filemap_grab_folio(dmap, folio->index);
->                 if (IS_ERR(dfolio)) {
-> @@ -277,6 +289,7 @@ int nilfs_copy_dirty_pages(struct address_space *dmap=
-,
->
->                 folio_unlock(dfolio);
->                 folio_put(dfolio);
-> +unlock_folio:
->                 folio_unlock(folio);
->         }
->         folio_batch_release(&fbatch);
-> --
-> 2.43.0
->
+On Tue, 2026-07-28 at 05:54 +0200, Christoph Hellwig wrote:
+> On Fri, Jul 24, 2026 at 03:27:43PM -0700, Viacheslav Dubeyko wrote:
+> > This series removes NILFS2 using of blockdev_direct_IO() by
+> > converting the O_DIRECT read path to iomap.
+>=20
+> I think the important part here is that right now there are no
+> direct I/O writes in nilfs2, not that you only convert the read
+> path?
+>=20
+> > NILFS2 is
+> > a log-structured, copy-on-write filesystem, which makes it
+> > a poor fit for a full iomap conversion. Newly allocated blocks
+> > are delay-allocated by nilfs_get_block() and only receive a real
+> > disk address when the segment constructor writes them out
+> > as part of a log.
+>=20
+> That's just how zoned xfs and btrfs work.=C2=A0 In fact they only know
+> the disk address one the write returns, so even later.
+>=20
+> Take a look at the IOMAP_F_ANON_WRITE flag used by xfs.=C2=A0 btrfs
+> implements
+> a similar scheme, but hidden behind a few layers of cruft.
+>=20
+> > The segment constructor walks buffer_head lists
+> > directly and is not integrated with the generic address_space
+> > writeback path.
+>=20
+> This sounds like word-soup to me.
 
-Hi Viacheslav,
-
-Sorry for the disturbance while you are busy.
-
-Could you please pick up the following four pending patches -
-including this one - for the next cycle at your convenience?
-Excluding those already applied, these are the ones submitted by me or
-requested for direct pick-up since the weekend before last:
-
-- [PATCH] nilfs2: fix slab-out-of-bounds in nilfs_direct_propagate
-after truncation
-- [PATCH v2] nilfs2: fix infinite loop in nilfs_clean_segments()
-- [PATCH] nilfs2: prevent out-of-bounds read in super root block parsing
-- [PATCH] nilfs2: fix BUG in nilfs_copy_dirty_pages() on dirty state mismat=
-ch
+Are you suggesting to re-write the commit message?
 
 Thanks,
-Ryusuke Konishi
+Slava.
