@@ -1,77 +1,79 @@
-Received: from mail-yw1-f170.google.com (mail-yw1-f170.google.com [209.85.128.170])
+Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com [209.85.216.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C26913C3F75
-	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 23:19:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E61BB3191D3
+	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 23:28:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785280750; cv=none; b=fn9V5eAWB2NDH2GLqnmRS7IIE0PC87vfiaiwvTOaEI8Vuu4GZJ/WgzJGdg37maydso5YWgFLEtLTXk60WYXQpUn6VfULjQYRVXOpmu+Y8De9fk5LzsNBjpBYYIN1yyuYhw3O5h3P133Pb6KtB3t52HJ5LKlKSGXciHpfUFG2BTo=
+	t=1785281313; cv=none; b=UmveIYI60ijILek/yj6V5j+Ie9mWsCJMeyyIwFMPhgHBZKzsfqrZGyNsAI9/Z6y8Ba96YasTIkN8R/4M2U/zVZcGU0emXwkAcMXcKEFOA08TYAvNHS8QW9VuZj+8lAyEY7XmFyTmCgkkil//JjBPJG9MBxppnwCsbEu6kP6shqw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785280750; c=relaxed/simple;
-	bh=IqzBT5md9d1L4b26Zj635oQbSo4fx+LTqdVqRSRXkmg=;
+	s=arc-20240116; t=1785281313; c=relaxed/simple;
+	bh=4m6pWDn1HnETrR/DTSnPEE8CIGw4wwjQ8fI5TZHi/U8=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=r1n83aP7o+FnL7F8QyzFE6KKW0NsSxFLEpBfTFrk6A7AtfgM4VKwMQiqn/Q5ZBDm04JpWMQFSMhGzK1OQxBzWeKcAE8gr6w/nLPSiT/1ioI1TfV2rpUN0aE4jOwKHH2J6z8+qiGDDAxAkAQvuoSEnpMf/0gvyVV78t+pH1ALnkk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=rrgI/OVj; arc=none smtp.client-ip=209.85.128.170
+	 Content-Type:MIME-Version; b=Hc4/EGkhtXsgulLZIqqRYL/03IFb99TBBSWrczrn4UqICKm+Jf6E6V0JOa/NwEr9ujDzOzzFYrLcn4uK5V7UVouBqv65Hia1cxNu/Mly0aX9U2y8PO5MyspZvPRT7kI8IwDkH24yNd5EaDx/pN0LG5mQ0V49cYn1SYVoTWgoJZE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=KYt2opUx; arc=none smtp.client-ip=209.85.216.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="rrgI/OVj"
-Received: by mail-yw1-f170.google.com with SMTP id 00721157ae682-81f3b227a4aso7006917b3.1
-        for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 16:19:08 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="KYt2opUx"
+Received: by mail-pj1-f54.google.com with SMTP id 98e67ed59e1d1-38ec1402b05so280378a91.2
+        for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 16:28:31 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785280748; x=1785885548; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785281311; x=1785886111; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=IqzBT5md9d1L4b26Zj635oQbSo4fx+LTqdVqRSRXkmg=;
-        b=rrgI/OVjHJHQppZlJRg5wcP5Dx0GCtHtQjvsdp843PVfOlOaj5GWbubwXqvD8mj0PZ
-         dr2s6acJJnIL1kYCS5tyvWDP5f0YCOexsnFObM1hYvw5F9qZ7idWmuBm+6Aq4gbyhBO0
-         mp1mBZ0Xs2ECWBWPr1eHJiR9Y2oVmcpB8dH6/hA60yGdOYRfEsIBlQ5t2iLDqum5NRPK
-         RSQRfUs3thlu4LAg89ffnBittKruOu2t/CNHRdH25ki+kT6Doz7iQvDjSI3ufO8eYFE8
-         CBFl+9VFkrOwuSb8ntiovBsHO+aJDh3FE32ex4GinclrRSVyb4O/TIJZ3GuTbiGGbien
-         4KMw==
+        bh=4m6pWDn1HnETrR/DTSnPEE8CIGw4wwjQ8fI5TZHi/U8=;
+        b=KYt2opUxydhPinkGKxTkp+1wuX14wPyaWwv2AoNc4ZqNvEFMQcVvVy++B6GPq98PNg
+         RjzIlxV+6mYkVSrdvrSmLJ178A5iPKXZ5K1Ckmem6fphxSAGuwir6OV4CRu+qKCEMYtB
+         0uyoZYCtJUEDr9Tc0G4YbGH0Zaz97/uN6HBPQDsbRRe+ffSmBtt9pqpO8Xo7Z9DZh6j6
+         zMO1iyFQwskIXAyjlOMlXsYmMWfPFiLCZP/5fp+NxSCje6t1T10TSZsERdSMq17xCIWD
+         jMKolmFavDwi1ymQyw0r+QMrYQjBOxFWlHobn0kjS0r92hQq572sCxOVi7Gm8m2FO38C
+         RdVQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785280748; x=1785885548;
+        d=1e100.net; s=20251104; t=1785281311; x=1785886111;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=IqzBT5md9d1L4b26Zj635oQbSo4fx+LTqdVqRSRXkmg=;
-        b=VNB05RZk0lIOUtxZ4OPQOCO6UJcOFcisOaeVm+4uUdDfZbJfq8sIWNqzYRpo3dkM1F
-         3hqE1syoIA17sXnD1vk9UHITwce5eEqIfSWoxs/PQfYvH2YKUh+mhN/tzQ53Ph2RgwAC
-         oc82jaSjW2TFtPRT1A8alQUGaTf+/8P6p6QbfIfe9dabvSdnwZvkm2UOhLLGPEQiq3rX
-         GNrac0/sXqTm+CKTghjExcdkrT7sz3T2/FdLPPqL2m2DD4ggad8LKkR14A1bFKgfG5Ba
-         fkwKWLD963rB4Emc9rcXkevPGGKpvNnoEchBXCs1oWyAuRtun43Opk8uVuxplngjV1h6
-         YwOg==
-X-Forwarded-Encrypted: i=1; AHgh+RpbEkMVGNDx9REs+Vkr5Lbtms3hjekZz93ZCD/LnFqR/OHYqP1Ui0q9TItP1tRiBJVwS/qZODnTG4L6+g==@vger.kernel.org
-X-Gm-Message-State: AOJu0YzsNmVPzFCrvkZiApGKslGTB57d2FNeg6Q6ERBGvVw7wS+Y0M7b
-	nXgFZLnGCvy18Pj4bK8rxZXJM06ty2RPpgF8ilGgmOqZx3yebVFTkWSIdz/mdGvxpm2K2uqvG+u
-	Tsf/iGxvX+jBx
-X-Gm-Gg: AR+sD10aPtVKUO2uu2PGpe+Y15xo/szZRhy+NtVMhguYSpfStbI+11yq5pPuFBIWlE5
-	g7DtidVl1pQtyPJS5YKOBRs2J0AFE0hB/ijJmvaOTwW0lBKnURdT7WamLuMjD+a7axR3TDCWGMZ
-	apBL260hHMfPSR2IEVYNbWQ4xmHe2G+V9blyZxEfdhmih7klZ2M2r1qOl3wORcy7jUuycitLvux
-	K5P7pOGbs5p74oQ1oH345mdCsvPbyEoYdKGljRBAKua1tQKmNcp65ynuSe+cko94lXGK5UIG+1g
-	5TD2Wt0LnYxVV7+sRaWoDO6/8boufuCQWfrbQWOZNzVFIoMkhTZzYFnvgmu5wIZbBzCoezR/ppn
-	1qngLLhr0/jNISNz5iFNtHUGhV7qn5UdeKTY0BVAiWXBwHmyRIXZqA+Ju+tep8OMJ/G9DwlORfg
-	gQFuWnBYD7c/HviPRnj9cwOUDThicPEyiVqH8ZN7POpGRFnkrLzb8MrGI54nCyHZsVqizUTJL/U
-	ouTRspkSFnRakloD/IhntK1zSBJEwvyITGjaNzX58fp6bu1ERGfkUuQr87DtCxQuTfys9b+om7l
-	0cIopSOjagF42DW6wDG8QjEWPfZvOdFeT0LMKI4/JPGp+xgWyg4dd2o=
-X-Received: by 2002:a05:690c:7109:b0:81f:64cf:2c58 with SMTP id 00721157ae682-81f991e4f40mr21075417b3.6.1785280747667;
-        Tue, 28 Jul 2026 16:19:07 -0700 (PDT)
+        bh=4m6pWDn1HnETrR/DTSnPEE8CIGw4wwjQ8fI5TZHi/U8=;
+        b=PEQjwfMit3srAOiK7lbGhxjhouV0CMAM+9c1dU6knTe5xs+IZdS+aWbKPuPCeuZ7aD
+         oVMJeX3jV+Bsm2ZnSGDgLG0dDB1V1JpeWG4gZ+2EdQWddVt6VKU1QnBRqob1CJk0T7Gp
+         jEnZ3EUGBk/Goq0qI0uJ1qqdrA0nfMNJFKc01APTlZAjVAmC37HtCIj08E1QF4gxq3aP
+         co18Sa+JxvGrgtOgS1UONhqcllS+qylD1S/ceYlSTQrMy8VjOdkjUR0z4jcVW3TdEIFa
+         qLzlXnzC8iyL5/gZj9rmcD7xx3ktnilCS9e6TCMYgdG9DAnLV94HpEeV+eRZleRFYnRi
+         IjUA==
+X-Gm-Message-State: AOJu0YyJH046BriUjpBOIJ5azq/re3cJpJvZYMWfsmQEo498ZHntGWNL
+	H3Up4O5fpDs2Qb3vaXX8JovdrWbBClovN/Z8Ys/CevckVOJBcYnUhQr47dLJi8n+3UB/d73D8Z+
+	67xcRZXSuS+tB
+X-Gm-Gg: AR+sD11cPZryHxxHC2PCeFI3I8O6JEhRTW+KZccqLjZdx05BBJXEY1PuEG3RZ2H1T5u
+	NZuUPAG8hIQoGB2UMHkTmZJeFjf4MCu5sAvMpY83iXRbPtgoCXnOpFy5Rvsovy/V5VAvlLQV4or
+	OoiWl9fk1opa0UvMEndamug1f/II+D13gNF1EzfcWPS/cz7efxfa9feGOpodV2gNQXq6DOGx11S
+	d/5vdoL19qPP6+USivXO8e6OBwbhg3/w2TtNlVLtrwQfmqmGvxWuqWvnN6q4BLWZKva48Q7CwMP
+	8aStihM3uMjg6ChkatDxOk6ITdUpoCS8z9LPGCNBg/lA/u1EUlsKSr5ZVgS2jTKY8jMkdrKkiS+
+	6yMGeBRWEPbyGs36qvzjxahpeBI4hzva3Cg79rrhgmEjuzA1N4ubP1dXp5Wzotmzv7EM4/Y4MLY
+	E2j7/jboBVt+qUmz86uIy34AEKYqRHDRuNaMu6oPiB8XR//vZghcyyfN7Kj9mxhpv+Q9WmdKp0g
+	sSvdJ/QqK+BCFe23yyHmghe8/lQLWwV+LBBp8uzoaMTcL+qaoOw1JdqCPsUDxVk4h+6Vsb29Bgx
+	g/f/aCCgZmS3N5An+JlnlpRjot/3i9NVgKFwHUTNepKHjUvRiHBfaF8=
+X-Received: by 2002:a17:90b:2d4e:b0:38f:474f:e6b with SMTP id 98e67ed59e1d1-38f6a5ae1f2mr5159593a91.41.1785281311290;
+        Tue, 28 Jul 2026 16:28:31 -0700 (PDT)
 Received: from [10.0.0.3] (162-197-212-70.lightspeed.sntcca.sbcglobal.net. [162.197.212.70])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-81fa29a5f53sm7474267b3.44.2026.07.28.16.19.06
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-13e7262bc27sm3538601c88.2.2026.07.28.16.28.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Jul 2026 16:19:07 -0700 (PDT)
-Message-ID: <ec87fd45a7ec19dcddd0720a1634abd442a181d8.camel@dubeyko.com>
-Subject: Re: [PATCH 0/2] nilfs2: convert O_DIRECT reads to iomap
+        Tue, 28 Jul 2026 16:28:30 -0700 (PDT)
+Message-ID: <61617a0287d6e0bf0914088712d0b57d2e5cec75.camel@dubeyko.com>
+Subject: Re: [PATCH] nilfs2: fix BUG in nilfs_copy_dirty_pages() on dirty
+ state mismatch
 From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Christoph Hellwig <hch@lst.de>
-Cc: konishi.ryusuke@gmail.com, linux-nilfs@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org
-Date: Tue, 28 Jul 2026 16:19:05 -0700
-In-Reply-To: <20260728035443.GB19245@lst.de>
-References: <20260724222745.2107464-1-slava@dubeyko.com>
-	 <20260728035443.GB19245@lst.de>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML
+	 <linux-kernel@vger.kernel.org>, 
+	syzbot+8baf9a79a3ffc6271cb6@syzkaller.appspotmail.com, 
+	syzkaller-bugs@googlegroups.com
+Date: Tue, 28 Jul 2026 16:28:29 -0700
+In-Reply-To: <CAKFNMonu620z87=b=+9Xwn44Zr9-CssQkn=mes5EqEc=iJUm0g@mail.gmail.com>
+References: <20260720141716.205384-1-konishi.ryusuke@gmail.com>
+	 <CAKFNMonu620z87=b=+9Xwn44Zr9-CssQkn=mes5EqEc=iJUm0g@mail.gmail.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -126,36 +128,34 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Tue, 2026-07-28 at 05:54 +0200, Christoph Hellwig wrote:
-> On Fri, Jul 24, 2026 at 03:27:43PM -0700, Viacheslav Dubeyko wrote:
-> > This series removes NILFS2 using of blockdev_direct_IO() by
-> > converting the O_DIRECT read path to iomap.
->=20
-> I think the important part here is that right now there are no
-> direct I/O writes in nilfs2, not that you only convert the read
-> path?
->=20
-> > NILFS2 is
-> > a log-structured, copy-on-write filesystem, which makes it
-> > a poor fit for a full iomap conversion. Newly allocated blocks
-> > are delay-allocated by nilfs_get_block() and only receive a real
-> > disk address when the segment constructor writes them out
-> > as part of a log.
->=20
-> That's just how zoned xfs and btrfs work.=C2=A0 In fact they only know
-> the disk address one the write returns, so even later.
->=20
-> Take a look at the IOMAP_F_ANON_WRITE flag used by xfs.=C2=A0 btrfs
-> implements
-> a similar scheme, but hidden behind a few layers of cruft.
->=20
-> > The segment constructor walks buffer_head lists
-> > directly and is not integrated with the generic address_space
-> > writeback path.
->=20
-> This sounds like word-soup to me.
+Hi Ryusuke,
 
-Are you suggesting to re-write the commit message?
+On Tue, 2026-07-28 at 13:32 +0900, Ryusuke Konishi wrote:
+> >=20
+
+>=20
+> Hi Viacheslav,
+>=20
+> Sorry for the disturbance while you are busy.
+>=20
+> Could you please pick up the following four pending patches -
+> including this one - for the next cycle at your convenience?
+> Excluding those already applied, these are the ones submitted by me
+> or
+> requested for direct pick-up since the weekend before last:
+>=20
+> - [PATCH] nilfs2: fix slab-out-of-bounds in nilfs_direct_propagate
+> after truncation
+> - [PATCH v2] nilfs2: fix infinite loop in nilfs_clean_segments()
+> - [PATCH] nilfs2: prevent out-of-bounds read in super root block
+> parsing
+> - [PATCH] nilfs2: fix BUG in nilfs_copy_dirty_pages() on dirty state
+> mismatch
+>=20
+>=20
+
+Sorry, I think it was a glitch of the email client on my side. Let me
+apply the patches. I've missed it.
 
 Thanks,
 Slava.
