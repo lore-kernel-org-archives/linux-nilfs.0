@@ -1,75 +1,78 @@
-Received: from mail-yw1-f180.google.com (mail-yw1-f180.google.com [209.85.128.180])
+Received: from mail-yw1-f181.google.com (mail-yw1-f181.google.com [209.85.128.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8A61200110
-	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 00:46:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96F4623E33D
+	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 00:54:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785199567; cv=none; b=Vcd8ZJ/KftQzdfuOw7npu9pJLv6arbijf2J4wEzkYEchJ9mgsUW9lvQ9SUsnGLADBPRrrioAFuxzINc5at9zwjmAMZe/P0/SPlisMfzzwPHXnFuGw32SG4urhaNNfr8u29yad6NpsIir+h7tHkG0H567iOOU9OFSROKil7G1lFI=
+	t=1785200065; cv=none; b=fxDwqmYOMzWAziG4s7jTHj5zUqDRd/cAdnks1g5rxXVMWEzMyl82dIZ3zsTsXCKCOtwAVGretINnkfNEgynVpsIRYoU781ika1xfGTip77TNcPlYWvOSI7Fujl1PwFST0ktbWhEqBOcszhXyCC0GYyEZekXnh3VHewADuc4kVF0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785199567; c=relaxed/simple;
-	bh=3Ky5jrsDcGX7zuXSAqk3cHvj0f6WkOjzrywJuCL9AVc=;
+	s=arc-20240116; t=1785200065; c=relaxed/simple;
+	bh=/dx0mWAxIaVHUUWGsJAglMEC5vbZJ2jL6OThFOp3oaw=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=JtVdVYYipj6yyHj1ltaI5Wh0AnNOEnKbBMXPiD/W4U+1kPRvXd7rfiA+YjNOJoxba+uUiF2vcz9bw68cMgG34OV+LJ/EilfGeo+HoTT5WFGX2pMcJPpIe6xdWJ8i3rP5Xo7+5DCsTLDWaiT1QujyKJSwYooAjjYH+wt6TJGF2y8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=Krf+qLtw; arc=none smtp.client-ip=209.85.128.180
+	 Content-Type:MIME-Version; b=ksermCShtyi8mVC9Dy1Tfqdtz4dObQmvjRdscW3qCsR2TVb+d4sc3moJXd3TBFUURuYYIs3s3pC+dHLKAfAiqiJkl2wNhAnM1V+R9gB7naKUHSeXQ6nn4kZZ21Gx9fQmAganEXtEXvyYE7YslEQuYaEPtNRjosHbFXcOxPxOtcI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=lwjSPHtk; arc=none smtp.client-ip=209.85.128.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="Krf+qLtw"
-Received: by mail-yw1-f180.google.com with SMTP id 00721157ae682-7ff05e5d009so34429027b3.1
-        for <linux-nilfs@vger.kernel.org>; Mon, 27 Jul 2026 17:46:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="lwjSPHtk"
+Received: by mail-yw1-f181.google.com with SMTP id 00721157ae682-81ec29f1d07so40024987b3.1
+        for <linux-nilfs@vger.kernel.org>; Mon, 27 Jul 2026 17:54:23 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785199564; x=1785804364; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785200062; x=1785804862; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=3Ky5jrsDcGX7zuXSAqk3cHvj0f6WkOjzrywJuCL9AVc=;
-        b=Krf+qLtwgD7M1JtWaws70QizEod2p7MLDtvwM6xtzJuE0fBkcvlOwhEOBwiraukRkd
-         HlkFm6z2pvVUfQXMjVg8Knq5c7cZHzaxjbwV2oa726GqZqbf+cfC27l05WPsKiB6Vrhe
-         4+dGmQ6dgkJ8it0f+vNC/RYHS+VLbQSTBuFahzbu3jKkneUYgSwf/nun7Ir6tlX5HTmw
-         ThRwJVw4jo4bN4lD73w6aT6B0CAxSe0y9ijMs8Gn5y6PEMPZC2NUiTC1S/CTuNFslICe
-         OPPUNTfAcPUGpfLa95s6IIVWzwE6uzalWAsNQOcGNoqlBPMTN6ASefIIlqXAA62Ba+sV
-         0y1A==
+        bh=/dx0mWAxIaVHUUWGsJAglMEC5vbZJ2jL6OThFOp3oaw=;
+        b=lwjSPHtk0iFx/qAfXdw+tTt3c+SeI3ahGEpzoLeLxVUDgvfQ+V+yNUo6wrUJae8yLt
+         lW8+Hxs7cVrsHCkG8/fmXbgnhHPIOM77FIPCzikg4kIwJtebwGpMqhIltDeitWKx7Kvq
+         QzAnKaYUpSxK+Ge22Km25j9UGnuy9raqJDAYhs02EUpSKRvfCXLFkXO7299z+wnJRRZK
+         WtsggCkH4w6wtGhWcecHIAou93Tcn+G/GoytYfqzVNE4ZK7iegLMoEFiVMNjnx4U6vbO
+         TM4X5C8MWU9JuEVGvL7h4PgSjO24DU3DYTnPluxWqwvnBtFMzynZBDy8ZzGGw0f106UL
+         eBLA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785199564; x=1785804364;
+        d=1e100.net; s=20251104; t=1785200062; x=1785804862;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=3Ky5jrsDcGX7zuXSAqk3cHvj0f6WkOjzrywJuCL9AVc=;
-        b=CoHFCk883z5lFHN7Yhdg5BoCS9LnNM4t7tPCYy/KseRDLfqAkvcuAoA98x7M+ZNJ+5
-         PgbsSb3Kz4KmiXZHqnwILwbgNPRfui3s9oEtAgeWIRDp+GUdAqokX4v2Z95UNTMlfCR/
-         shEfPweRNKSwSmG2gklYkx/eDpid6B45xyJnnmHKc9mm0ta1zk6wbDBY7I8vPPjklyfW
-         pWS1/MqUHrZUCiRl13YX1IGcdT3KEnK2fwQJuVZJpJFnxhV5c96DO7h7lMRQD91R3/fP
-         W06usUaLoEEBiTQaIJPnwdLqXvVx7L9vELxsnMDmyIuOip6ZSl9dTDqcTrhLx8ST/5LF
-         VbDA==
-X-Forwarded-Encrypted: i=1; AHgh+RrcDsX66seewsL/2M9LiVOmzJrBpppo8bIbMvNK49GsF0zXHMDh5lmnJUpljRXMQjm4LmWqSOHaaYmnrw==@vger.kernel.org
-X-Gm-Message-State: AOJu0YylJmrMwjWEn7FXV8rMpj44D0Wx4Q6lg3gFas2vCuxlT5zE927I
-	9KihPfr23ZGbrUwk0T4Ro8B2QbcuAr22yaYDgbVJadT7mKIXCuwfMTJ+lh0+4pN9PeY=
-X-Gm-Gg: AR+sD12m5JHqjmUjI43dqUqeGjAkSPhjo1Xx3xSPTKsiKLcTODKmH2l5MwdCAQG71l/
-	9cECdTHF5iujDwzgGrEnC3JRU3Lr+lJEKH25Bj4rhHLd5ekBDQ5c1WNrk2dJBCAsFBD2Sg9bHZW
-	9QpOYAKS+Oaxb+CtLT/zva9AIepu1KcuCyaK7xdesn+yAddzwKaP6pO1zGCYajCwBnPt0LFHepy
-	BzN39jqR2MXw58+HTVG4ScpJcnpM6wG3720jbM+HnGw43Nij0lqe5gGdNa58xn6ntXaGiCWZz8k
-	OYJYtThj2Zgm0zjrBlegoxwFJqyzCuHEvTtcL73YTgc8EHS1h5BnnQ2wp/odAGboPPrPjK0dHsF
-	R4wXPp/eLxMTSsgiHPUztRU2vs4sX+mu4FCJvkhReJ4EXLcO+XbUk6Ys0sEuPCsF6a+MRpQdczZ
-	Ka6cLHBGyzEvp76QE5fKDBZPAPTWTMonkW37jvmcQ0l378SxEU7df1AMB2pQWXx+2yuEXxJaHPc
-	KKuyOM0OBgcCOumFhZjNg8c0OmrrdHOvA==
-X-Received: by 2002:a05:690c:4b0b:b0:7db:ccda:a409 with SMTP id 00721157ae682-81f991858eemr729237b3.9.1785199564339;
-        Mon, 27 Jul 2026 17:46:04 -0700 (PDT)
-Received: from pop-os.attlocal.net ([2600:1700:6476:1430:273a:c0af:6af:54a7])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-81f657a14d9sm40034897b3.13.2026.07.27.17.46.01
+        bh=/dx0mWAxIaVHUUWGsJAglMEC5vbZJ2jL6OThFOp3oaw=;
+        b=cV1aQ9mPo6pDdHfRK7Qb2VDyCPlk349mLgDav4Eyy1+pDE3t+V1xSc1lCcR+pYJq+3
+         HPpNhx1quIHq4V05D4bCk2bXyDlfxflUQVZ5O3f9jJOWLR7Agln+tuvksnGyTr0KAXVy
+         J0Q0SLJA/WY19dtJBL0gcLcK/a3XdIx64eOEyiM4RNve6op62ux13vBuvn3/1vxCt9qw
+         wrSQ5u7w/Rmcte3KOrOhkcOWTMYmyAN5kHNHbYcGaUwv7j9hB17mVTbsfP7hK1gQUQ3T
+         2Nmy4/OU83YAE7GFmb09COrT5ObYgyuE26sizZKavWfZkMJ9T4cFXHlOzwDVXa/yKDNR
+         s9Dg==
+X-Forwarded-Encrypted: i=1; AHgh+Rrh8JRgMjD17WHLO90tD0qZ7xGc0hkFMWxf9PdU0G8aGRZKTtvERsDpEVHNno89zfsxlMyiERrx27pm/g==@vger.kernel.org
+X-Gm-Message-State: AOJu0YxelhWkPf9Sd476CMBC6T9SzxBHz5b7tkqygV5qZtWSjr0CpBuf
+	SPfWYhI2u4vzAy/4wiShTc7r0C2t2S4tDe4QNYcxB/JzLHFczrNu4gFva9Y9dj6vnDfQXb6IjvG
+	qNiD/WQHElA==
+X-Gm-Gg: AR+sD12Aa+SYi4/z/qmtP0KhweiAQ5l4CSZOvp16e0+e+f8GQK1xpYcfOYEdapULudf
+	yt2I5l1w5zW+E8jtF3WGePTQXL+nr8a9yQE1eqDJfYhUOvCzYbOfyuKZjWE/o8GkEb6Wz5nTed2
+	Nlje0S3ERJiWi58CQ1Ubx5X/NnhPlKFD0i3d2/W2dVbYhR2q8G4Q6ow6shQSEM9jbACeLcO0tPm
+	QnqUgpeMJYyeNSOE4XMXo+USuPaPnNltxXxh+E693ZSFoKdulDQyzVO0Ctr4UkrVPGdFCcufUuy
+	yeh85DdkE7SlPdaAUQvKdv2qw9sKRuuEkVTSVq95W/OyqB5Rx0c6+N8nOjnk+lFlaDCung3MlIp
+	kbhHAJS1G+F4GzsUNd+tEmiW+0SHWfOuhCP2R+4v8dYBMjRuHieSRY8iuDX0tN6owRC4tJ4nBX5
+	A6z3MFJ8ufg6Qyco0T7WnqhAWh6luhTphty0BT2XPTxtnSYGWku1TqY43YSFPIhRd5YOtAZMKj2
+	sp9sB1UQ4e93Zj6AFeFb4u+yoTVRS0L7oxpByEbYyMyiJbGIUQU+7l2iJ6CUwhBPXyO
+X-Received: by 2002:a05:690c:f06:b0:806:b6ab:a410 with SMTP id 00721157ae682-81f98f0fe37mr914147b3.0.1785200062238;
+        Mon, 27 Jul 2026 17:54:22 -0700 (PDT)
+Received: from ?IPv6:2600:1700:6476:1430:273a:c0af:6af:54a7? ([2600:1700:6476:1430:273a:c0af:6af:54a7])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-81f6592eb29sm39767947b3.43.2026.07.27.17.54.20
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 27 Jul 2026 17:46:02 -0700 (PDT)
-Message-ID: <81011aff679fbb673a35a4b049f65b59eed7a233.camel@dubeyko.com>
-Subject: Re: [PATCH 1/2] nilfs2: add iomap operations for direct I/O reads
+        Mon, 27 Jul 2026 17:54:21 -0700 (PDT)
+Message-ID: <357b5cca187ddd4651b6079434b728c403748bec.camel@dubeyko.com>
+Subject: Re: [PATCH] Documentation: fix grammar in description of nilfs2
+ recovery code
 From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: hch@lst.de, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Date: Mon, 27 Jul 2026 17:46:00 -0700
-In-Reply-To: <CAKFNMok2Op3dAAU8zGWLNPLeh8wj42MgQZbEdP1wSj8jnsO_+Q@mail.gmail.com>
-References: <20260724222745.2107464-1-slava@dubeyko.com>
-	 <20260724222745.2107464-2-slava@dubeyko.com>
-	 <CAKFNMok2Op3dAAU8zGWLNPLeh8wj42MgQZbEdP1wSj8jnsO_+Q@mail.gmail.com>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Manoj K M
+	 <manojkm24dev@gmail.com>
+Cc: corbet@lwn.net, skhan@linuxfoundation.org, linux-nilfs@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
+Date: Mon, 27 Jul 2026 17:54:20 -0700
+In-Reply-To: <CAKFNMo=zApDzM10dv66TgcKcvJyzWmur=88zRpfK=br_BGY02w@mail.gmail.com>
+References: <20260725100658.1705-1-manojkm24dev@gmail.com>
+	 <CAKFNMo=zApDzM10dv66TgcKcvJyzWmur=88zRpfK=br_BGY02w@mail.gmail.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -124,164 +127,51 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-Hi Ryusuke,
-
-On Sun, 2026-07-26 at 07:33 +0900, Ryusuke Konishi wrote:
-> Hi Viacheslav,
->=20
-> On Sat, Jul 25, 2026 at 7:28=E2=80=AFAM Viacheslav Dubeyko wrote:
+On Sun, 2026-07-26 at 08:12 +0900, Ryusuke Konishi wrote:
+> On Sat, Jul 25, 2026 at 7:07=E2=80=AFPM Manoj K M wrote:
 > >=20
-> > Add iomap.c and iomap.h with a read-only nilfs_iomap_ops,
-> > wrapping the existing nilfs_bmap_lookup_contig() lookup
-> > to report a mapped range, a real hole, or an EOF-clamped
-> > range to iomap core.
+> > Include the word 'at' to make the sentence grammatically correct
+> > inside the description for nilfs2 recovery code. This improves
+> > documentation without changing the original meaning.
 > >=20
-> > NILFS2 is a log-structured, copy-on-write filesystem:
-> > newly allocated blocks are only given a real disk address
-> > when the segment constructor writes them out as part of a log,
-> > which walks buffer_head lists directly and is not integrated
-> > with the generic address_space writeback path. Because of that,
-> > only the read-only side of the mapping is added - buffered writes,
-> > writeback, and mmap's ->page_mkwrite() will stay on the existing
-> > buffer_head based path (nilfs_get_block(), nilfs_write_begin/end(),
-> > nilfs_writepages(), nilfs_dirty_folio(), block_page_mkwrite()).
-> >=20
-> > Signed-off-by: Viacheslav Dubeyko <slava@dubeyko.com>
-> > cc: Christoph Hellwig <hch@lst.de>
-> > cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> > cc: linux-nilfs@vger.kernel.org
-> > cc: linux-fsdevel@vger.kernel.org
+> > Signed-off-by: Manoj K M <manojkm24dev@gmail.com>
 > > ---
-> > =C2=A0fs/nilfs2/Makefile |=C2=A0 2 +-
-> > =C2=A0fs/nilfs2/iomap.c=C2=A0 | 71
-> > ++++++++++++++++++++++++++++++++++++++++++++++
-> > =C2=A0fs/nilfs2/iomap.h=C2=A0 | 13 +++++++++
-> > =C2=A03 files changed, 85 insertions(+), 1 deletion(-)
-> > =C2=A0create mode 100644 fs/nilfs2/iomap.c
-> > =C2=A0create mode 100644 fs/nilfs2/iomap.h
+> > =C2=A0Documentation/filesystems/nilfs2.rst | 2 +-
+> > =C2=A01 file changed, 1 insertion(+), 1 deletion(-)
 > >=20
-> > diff --git a/fs/nilfs2/Makefile b/fs/nilfs2/Makefile
-> > index 43b60b8a4d07..516e6b85a03c 100644
-> > --- a/fs/nilfs2/Makefile
-> > +++ b/fs/nilfs2/Makefile
-> > @@ -3,4 +3,4 @@ obj-$(CONFIG_NILFS2_FS) +=3D nilfs2.o
-> > =C2=A0nilfs2-y :=3D inode.o file.o dir.o super.o namei.o page.o mdt.o \
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 btnode.o bmap.o btree.o dire=
-ct.o dat.o recovery.o \
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 the_nilfs.o segbuf.o segment=
-.o cpfile.o sufile.o \
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ifile.o alloc.o gcinode.o ioctl.o=
- sysfs.o
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ifile.o alloc.o gcinode.o ioctl.o=
- sysfs.o iomap.o
-> > diff --git a/fs/nilfs2/iomap.c b/fs/nilfs2/iomap.c
-> > new file mode 100644
-> > index 000000000000..3ae3bf6ed368
-> > --- /dev/null
-> > +++ b/fs/nilfs2/iomap.c
-> > @@ -0,0 +1,71 @@
-> > +// SPDX-License-Identifier: GPL-2.0+
-> > +/*
-> > + * NILFS iomap support implementation.
-> > + *
-> > + * Written by Viacheslav Dubeyko.
-> > + */
-> > +
-> > +#include <linux/iomap.h>
-> > +#include <linux/pagemap.h>
-> > +#include "nilfs.h"
-> > +#include "mdt.h"
-> > +#include "iomap.h"
-> > +
-> > +static int nilfs_iomap_begin(struct inode *inode, loff_t offset,
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 loff_t length, unsigned int flags,
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 struct iomap *iomap, struct iomap
-> > *srcmap)
-> > +{
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct the_nilfs *nilfs =3D inode=
-->i_sb->s_fs_info;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct nilfs_inode_info *ii =3D N=
-ILFS_I(inode);
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sector_t blkoff =3D offset >> ino=
-de->i_blkbits;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 unsigned int maxblocks;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __u64 blknum =3D 0;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int ret;
-> > +
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* Completely beyond EOF. Treat a=
-s hole */
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (i_size_read(inode) <=3D offse=
-t) {
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->type =3D IOMAP_HOLE;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->addr =3D IOMAP_NULL_ADDR;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->offset =3D offset;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->length =3D length;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 return 0;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
-> > +
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* Clamp length if the requested =
-range goes beyond i_size
-> > */
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (offset + length > i_size_read=
-(inode)) {
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 loff_t i_size =3D i_size_read(inode);
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 unsigned int blocksize =3D i_blocksize(inode);
-> > +
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 length =3D round_up(i_size, blocksize) - offset;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
-> > +
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 maxblocks =3D min_t(loff_t, lengt=
-h >> inode->i_blkbits,
-> > INT_MAX);
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (maxblocks =3D=3D 0)
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 maxblocks =3D 1;
-> > +
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 down_read(&NILFS_MDT(nilfs->ns_da=
-t)->mi_sem);
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ret =3D nilfs_bmap_lookup_contig(=
-ii->i_bmap, blkoff, &blknum,
-> > maxblocks);
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 up_read(&NILFS_MDT(nilfs->ns_dat)=
-->mi_sem);
-> > +
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (ret =3D=3D -ENOENT) {
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->type =3D IOMAP_HOLE;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->addr =3D IOMAP_NULL_ADDR;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->offset =3D offset;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->length =3D min_t(loff_t, length,
-> > i_blocksize(inode));
+> > diff --git a/Documentation/filesystems/nilfs2.rst
+> > b/Documentation/filesystems/nilfs2.rst
+> > index e3a5c8977..a0124d22a 100644
+> > --- a/Documentation/filesystems/nilfs2.rst
+> > +++ b/Documentation/filesystems/nilfs2.rst
+> > @@ -252,7 +252,7 @@ The following figure shows a typical
+> > organization of the logs::
+> > =C2=A0To stride over segment boundaries, this sequence of files may be
+> > split
+> > =C2=A0into multiple logs.=C2=A0 The sequence of logs that should be tre=
+ated
+> > as
+> > =C2=A0logically one log, is delimited with flags marked in the segment
+> > -summary.=C2=A0 The recovery code of nilfs2 looks this boundary
+> > information
+> > +summary.=C2=A0 The recovery code of nilfs2 looks at this boundary
+> > information
+> > =C2=A0to ensure atomicity of updates.
+> >=20
+> > =C2=A0The super root block is inserted for every checkpoints.=C2=A0 It
+> > includes
+> > --
+> > 2.53.0
+> >=20
 >=20
-> After encountering a hole, I think we should use
-> nilfs_bmap_seek_key()
-> -- as nilfs_mdt_find_block() does for metadata files -- to
-> efficiently
-> determine its length.
+> Thank you for the fix!
 >=20
-> However, if you are short on time, I am fine with the current
-> approach as well.
+> Viacheslav, could you please pick this up directly into your tree?
+>=20
+> Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+>=20
 
-I think we can rework it later. I am starting a new job today and I am
-attending FMS 2026 next week. So, I am expecting to be really busy at
-minimum two weeks (probably, slightly more). So, let's keep it as TODO.
-Please, remind me to rework it later. :)
+Applied.
 
 Thanks,
 Slava.
-
