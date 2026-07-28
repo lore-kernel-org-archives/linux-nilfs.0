@@ -1,77 +1,76 @@
-Received: from mail-pj2-f10.google.com (mail-pj2-f10.google.com [74.125.227.138])
+Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com [209.85.216.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7AF5040A937
-	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 23:43:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.138
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CBBC3CB561
+	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 23:51:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785282207; cv=none; b=KhX9IVjxqrvqndrvp5MBb7dn78JtFbRrQGcwykvkYPMfcOHf2rHB1RFTMmtGe3vBUaTnlwtTyzUttIJd3dLuCIJ6eL8VPwXcxPxqw5E/bA1Yjdg+CE7RmdKyGZ3DJ3kDnqWrxFjf7dBSnkcmbE/SdqSCiS0QeeRNZpAy74gT0Ys=
+	t=1785282677; cv=none; b=D/omwrYZ/Yyq2fMX7Qc45sGoDsA7Cz523HRCKPZIXlH1+wE5PtZHCpngRaUGn4FxxYsf92O+lU00SyZintclEJQeMANNzpCN1zRdN45t2bZp4eQ/FFP5YJI8tMWJKI2CHjvNevRt1UpVQafR+HElcm/b4H5Kkc0/DMiyCkqjh5I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785282207; c=relaxed/simple;
-	bh=jsvdoBFORi/uh/Ufc1oNSmr5vWAoZP/Rmkso6sk9LbE=;
+	s=arc-20240116; t=1785282677; c=relaxed/simple;
+	bh=ajUzpkc2wT2rKsUtrIOzENhOhtVAYhqMQZ//RyKY3VQ=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=fYpxdQOojtFP4klo+PxWuKBAXzFJQPWf3F5dqEDNrlldGWQrcyT23vzWpX8XNRdMl9RAqT0jq7/aRZ3cYP+e0jWGGM+KVsKscF4p0vWXrDy85+/LDtLRO1ubeK2vqsOvLdbxACEfklcezwBWS/sCQbCV3rAwy2l+H9bsCQy8CyY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=DOKv677w; arc=none smtp.client-ip=74.125.227.138
+	 Content-Type:MIME-Version; b=F9M+gCZ4J2l1dUKX8rZ2G96Kr6ax/XYf070DPxuigpEOmMJz0RnxoZTqDxpi1a1mC0MxAe6lMd8jNVhCagJ6abqOISr+mjPhQ25LPraBYtRXY81d3s8mBK4dbzZHvG1lx5M82Vq9ZhioGxt1cjkBG7LV/Kfb1Fpo2FOal34lRV4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=QthAxwfS; arc=none smtp.client-ip=209.85.216.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="DOKv677w"
-Received: by mail-pj2-f10.google.com with SMTP id 98e67ed59e1d1-38dc4f9462cso118016a91.0
-        for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 16:43:25 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="QthAxwfS"
+Received: by mail-pj1-f48.google.com with SMTP id 98e67ed59e1d1-38e3efab7e0so350595a91.0
+        for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 16:51:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785282205; x=1785887005; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785282675; x=1785887475; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=jsvdoBFORi/uh/Ufc1oNSmr5vWAoZP/Rmkso6sk9LbE=;
-        b=DOKv677wRHHDuClF03HtX17GXm57DwB4UJ89j3BagkPBc0XZyoFzgvGnJr+WatVrTG
-         nfJPr0wRKEBJ1KhnwIMno/zRfJQRMeWK2eoEldaxbxYemtjYAOn2F7hS/YFuAoeVuC3q
-         DEmqMblSF9rV5qwkvdV25yNkPY05/pUmTqvjdBvr94kWdPC/718uMMzQBB30BWT8kiEf
-         W2KcA2aDsYXpBGgR43wU6GOcur7CBGA0g0L04wr0GLU+Lg0fW0rv6A1VFIyeW71XmNcz
-         7IqqAARLdaLwDgS10amMaHt2SrZd1EgOXFXH35OwE31YA+4xGCAM6kN3tZUTbb5A7+pl
-         3OpQ==
+        bh=4K+cmxTWwmfNZxuEdGpcpmlb33it0JRnk5PNxofjx84=;
+        b=QthAxwfSHY+YsF477A5cks3n970G5aza7jLI+FYicFpEQuLAILnIc0WqLr2GJrJYRL
+         GZPzhdIAoxXZEXdjov1jF1vHjBkcf2UVXlcSkw2ZDcnW1p81KbUtslDZpymfmw10X6Ba
+         JoNmDY7nE4O80SkIVL16zM2Pde33tzZEvFK6gyCyNBkXYi437MbmaK2djaaPV1Vo9DIV
+         z4smrXP11K9he3Z1EL/4HQYObpYYF+FsKzH3pAu2ZXDro7QdGgbo1bik3DIP9t0m69ft
+         exGWynvRzvdPnYHOlVtjjMlkMjLzUO6mGVNxuKs9nhCfgIL3+gAhf66mQlFQonW1oAHK
+         l86A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785282205; x=1785887005;
+        d=1e100.net; s=20251104; t=1785282675; x=1785887475;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=jsvdoBFORi/uh/Ufc1oNSmr5vWAoZP/Rmkso6sk9LbE=;
-        b=i1d5w+wdZUvUILU6p7uqwd4FMnLgxDPfuKC9oXw0FoxdJj6q8DkkDIfKPkWbyOHMX6
-         /GjLBk+phSJ8PjxivcmfhtBbT7PzSJ+CZKHdEPsQZkNucOFzVHMxEmTACpngUFUNoXae
-         ZQ2NlK+DmZt2ONpTLgdxPFc0IR+77HddgEWYzSn0WZ40TOswjwEfdFDJdo6YlGg45Xpk
-         XESN3bOjF1HpSTw08iJkFd2IktkDAe9hxsT079oRYQdCGYcDeQqNb06ZGieeQA2FM/Tz
-         Jjv0dhQOztb5IJqwIh9iic9NhNYwi+XCYfIhSbkORbZGE2/gjxh9Cu4Prj7syo3J+SYz
-         3liQ==
-X-Gm-Message-State: AOJu0YxVN2q7WDUzpkVQzvpFx5UhQOI4wZ7szMqfDJydTZs2c9XV8GLg
-	N66OeoYBh126Fn1tHizjmmewyCtch7gEkjIE32YryyaPO0fre5Asby3WVWMEqzn2B6tPXuU9zU/
-	JIc4D3RFQBEwMGGM=
-X-Gm-Gg: AR+sD11zD8KIKkU5m6VaKd1mo3cbTZQJkXsd98S1HpGsY7Qrx7v9FXBtz660dc4upyL
-	oo7Cmoisnx3ZUEcUIdoR4auH5HzjgCa5+q3lj2HsZnYJOwNzQNIG4KONNbB9k5JsoJ6rBHs5fKI
-	6DfKdQrgdwdsYzg6v7dpwOxbgSOJ4b7G2v1PzOlLRo5x2DIqxu1BfxK8BE3f3cD0JvroAAWb5Yh
-	ppubCSyaKcccDfFsU2OwxvvxSXdWkHxcThW6Y/eTOnDPuRZb7MxFpSn+7w0YsgOzdCdylMqhTn/
-	XJh5Ibv4+z08UazQbM8HE/IEqBeDdvANgmE/ZqhEKx79SmnjtHiAJn66urlUnx5qVN5jAfI+qpn
-	MmQS6wmPEVOS3/ezoBGOScghUvklZz6/k3UAZRgltzdPMZ1Jk01kPeMPzDvDC+hZXuMwyjW2Kpj
-	gRKo8QmaWgbOS7pL9chpXgSikweCQfmbJx4tGoOvs1fCYJ7oln7w9ZEcBRubnSMkPad7kZfIh4f
-	xuD5WnRdQ1ECdV+esmTXodkK0hyU6NQXj4f7aE3yPwj4mvisXP/ZfonIBYU4BG1ZUXC+TIOmwC5
-	qdJDD7QM4thWmehTj/d/+QqSD9TQ+pP0qAZlQNO+YwiyV3xepMs7aRs=
-X-Received: by 2002:a17:90b:4c42:b0:38e:a555:8fc3 with SMTP id 98e67ed59e1d1-38f6a484cf7mr4711418a91.41.1785282204809;
-        Tue, 28 Jul 2026 16:43:24 -0700 (PDT)
+        bh=4K+cmxTWwmfNZxuEdGpcpmlb33it0JRnk5PNxofjx84=;
+        b=EdegDTVMClchnbH8h+wmQ2KuSkbFxjG+nTqAhYMM+jDC6mBLwlzBLDmsFvailCrlSK
+         zRbR3vqxnmKFC+M1rhfNmbGsJJyzzNJNE7cXrxNWdn6nCWlFHcfCLGBbcAJ6SupcgTw0
+         A6eozFLtTM8twpUZdz69hlDJ51O40wcs3HPOGTtTQETyiy/F/CTQpMdRNVyRSpFx9LiG
+         QHnt5BN31v/mmqvNUoSsLN9gsM18cqnhIdLYB+wCMk5SGX81ENDy2e/d9yevV9DEhzB0
+         OlGD5mXO7ysVp0gkQyJ9ypAIlFEnSwk7hpHavIFQKuvknsewsRpQvNx3VoqyNZ7FrQ/Y
+         OVUA==
+X-Gm-Message-State: AOJu0YxNL6DoH3HDfdjosVDWr25hMsztrMomOQTCOH03rspnsBCi31FO
+	5ZchGzYTJoQBMb7Qitb/2voVv95FQPjJhek1y2z0YnhAoq0lER3FPsznBKlE5S0hEjo=
+X-Gm-Gg: AR+sD11Zpgio6hdP3tqJhhRBWFbUqvHGS3UavNeIdrtDXM4jfRDDBETHk1zenkTpbNn
+	W+0mtE1ulSNd7jhT6LItvGgTQGk8MZ7LOJXOka9vtELw1Hf612GRctGH+bNmmai2E/+1wJsMNRe
+	dmbv6SmsTYuHHjRpBsKCZMvKqUTauiLOK7IXVHkKAN1PDWzU7rS7Pnt3f/7KNZM6w2QpwjhOMzX
+	S6aQNAqFLJCotBIeDIvN86RUrugQUWXV+KTZ7RG7rRlkQUxRr3JcVOQOYAok+Wcrsq+a3XHPxMR
+	aN8uxB/iFKX5zEZHyLeJz68rTow1exlo6yWtd3w8VVs/rB1wFn8emhK8FkuAUjffjDJWQYEOlhT
+	7Mu/jvo4rWoNukZpzluqvQ1mR3IB/fMvr8QmMHxBX8JJWxhBJVsX5wKQ0X60Tw8XOnn+tPoApBU
+	yJ6MoPoXERctbCT1RlOCLuLpuKKCxjuRQy0I1JL0I5Vq9e379I9x/jD2bE8fkFXVQtFA2ihwyF1
+	P/66E39kM/3WjJaWpTmzRZHUrb+T/hFOCBixpum50wjbIbJhyQekiGgMo1EJwr2ELXHhTbPx1y4
+	BwT1/VbiCg5cp248yX3bGStUSC0sNn472C83gvD7Ek1pOX1jCye9q4KIqmnFpYQrd2XBhToKHag
+	RAQ==
+X-Received: by 2002:a17:90b:1b07:b0:36d:b12b:f57d with SMTP id 98e67ed59e1d1-38f83673e41mr42943a91.12.1785282674599;
+        Tue, 28 Jul 2026 16:51:14 -0700 (PDT)
 Received: from [10.0.0.3] (162-197-212-70.lightspeed.sntcca.sbcglobal.net. [162.197.212.70])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-31504b88e12sm3034148eec.11.2026.07.28.16.43.23
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-31504baa01dsm3182906eec.12.2026.07.28.16.51.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Jul 2026 16:43:24 -0700 (PDT)
-Message-ID: <cec4c380ffb60c6bbb3ee2a49394d53bab8ee5cc.camel@dubeyko.com>
-Subject: Re: [PATCH v2] nilfs2: fix infinite loop in nilfs_clean_segments()
+        Tue, 28 Jul 2026 16:51:13 -0700 (PDT)
+Message-ID: <b1fcb1381e88045b503c60890c99663c8cdc83ba.camel@dubeyko.com>
+Subject: Re: [PATCH] nilfs2: prevent out-of-bounds read in super root block
+ parsing
 From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Joshua Crofts
-	 <joshua.crofts1@gmail.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	syzbot+cae54346a70bbceeff2c@syzkaller.appspotmail.com
-Date: Tue, 28 Jul 2026 16:43:22 -0700
-In-Reply-To: <CAKFNMome_9P59vdiP0=kS33H3qKJCNVL--SE7tR1rsUJajBETw@mail.gmail.com>
-References: <20260717105854.1380-1-joshua.crofts1@gmail.com>
-	 <CAKFNMome_9P59vdiP0=kS33H3qKJCNVL--SE7tR1rsUJajBETw@mail.gmail.com>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML
+	 <linux-kernel@vger.kernel.org>, David Lee <david.lee@trailofbits.com>
+Date: Tue, 28 Jul 2026 16:51:12 -0700
+In-Reply-To: <20260717165654.151990-1-konishi.ryusuke@gmail.com>
+References: <20260717165654.151990-1-konishi.ryusuke@gmail.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -126,81 +125,58 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Fri, 2026-07-17 at 22:30 +0900, Ryusuke Konishi wrote:
-> On Fri, Jul 17, 2026 at 7:59=E2=80=AFPM Joshua Crofts wrote:
-> >=20
-> > syzbot reported a hung task in nilfs_transaction_begin(). This
-> > occurs
-> > because the cleaner ioctl falls into an infinite loop if
-> > nilfs_segctor_construct() repeatedly returns -EROFS (e.g. the
-> > device
-> > is remounted as read-only after an I/O error).
-> >=20
-> > Currently in nilfs_clean_segments(), if err is non-zero, it logs
-> > the
-> > error and sleeps but doesn't abort when it encounters a terminal
-> > error
-> > like -EROFS. This causes the thread to loop forever.
-> >=20
-> > Fix this by breaking out of the loop if nilfs_segctor_construct()
-> > returns -EROFS. This matches the behaviour in
-> > nilfs_segctor_write_out(), which also handles -EROFS.
-> >=20
-> > Reported-by: syzbot+cae54346a70bbceeff2c@syzkaller.appspotmail.com
-> > Closes:
-> > https://syzkaller.appspot.com/bug?extid=3Dcae54346a70bbceeff2c
-> > Fixes: 9ff05123e3bf ("nilfs2: segment constructor")
-> > Assisted-by: gemini:gemini-3.1-pro
-> > Signed-off-by: Joshua Crofts <joshua.crofts1@gmail.com>
-> > ---
-> > Changes in v2:
-> > - use `goto out_unlock` instead of break to prevent discard
-> > commands
-> > =C2=A0 from being sent
-> >=20
-> > As much as I've tried, syzbot is unable to test this and always
-> > fails
-> > with "FATAL: Kernel too old". Nevertheless, I've tested the patch
-> > with
-> > the same reproducer in QEMU and the system didn't hang.
-> > ---
-> > =C2=A0fs/nilfs2/segment.c | 4 ++++
-> > =C2=A01 file changed, 4 insertions(+)
-> >=20
-> > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> > index 9332f5ac6..218926789 100644
-> > --- a/fs/nilfs2/segment.c
-> > +++ b/fs/nilfs2/segment.c
-> > @@ -2561,6 +2561,10 @@ int nilfs_clean_segments(struct super_block
-> > *sb, struct nilfs_argv *argv,
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 break=
-;
-> >=20
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 nilfs_warn(sb, "error %d cleaning segments", err);
-> > +
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 if (unlikely(err =3D=3D -EROFS))
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 goto out_un=
-lock;
-> > +
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 set_current_state(TASK_INTERRUPTIBLE);
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 schedule_timeout(sci->sc_interval);
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
-> > --
-> > 2.47.3
+On Sat, 2026-07-18 at 01:56 +0900, Ryusuke Konishi wrote:
+> From: David Lee <david.lee@trailofbits.com>
 >=20
-> Looks good.
+> super-root inode metadata size is trusted before
+> nilfs_read_inode_common().
 >=20
-> Viacheslav, could you please pick this up for your queue?
+> Reject super-root inode sizes whose computed on-disk footprint
+> exceeds the
+> filesystem block size. This prevents malformed filesystem images from
+> making nilfs_read_inode_common() read past the end of the super-root
+> block.
 >=20
-> Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+> [ryusuke: clarify the commit title]
 >=20
+> Fixes: 8a9d2191e9f4 ("nilfs2: operations for the_nilfs core object")
+> Signed-off-by: David Lee <david.lee@trailofbits.com>
+> Assisted-by: Codex:gpt-5.5
+> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+> ---
+> Hi Viacheslav,
 >=20
+> please apply this for the next cycle.
+>=20
+> As described, this prevents out-of-bounds memory access that could
+> occur with a tampered file system image.
+>=20
+> Thanks,
+> Ryusuke Konishi
+>=20
+> =C2=A0fs/nilfs2/the_nilfs.c | 6 ++++++
+> =C2=A01 file changed, 6 insertions(+)
+>=20
+> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
+> index 7b23e373a106..f3805e7aabeb 100644
+> --- a/fs/nilfs2/the_nilfs.c
+> +++ b/fs/nilfs2/the_nilfs.c
+> @@ -461,6 +461,12 @@ static int nilfs_store_disk_layout(struct
+> the_nilfs *nilfs,
+> =C2=A0			=C2=A0 nilfs->ns_inode_size);
+> =C2=A0		return -EINVAL;
+> =C2=A0	}
+> +	if (NILFS_SR_BYTES(nilfs->ns_inode_size) > nilfs-
+> >ns_blocksize) {
+> +		nilfs_err(nilfs->ns_sb,
+> +			=C2=A0 "too large inode size for super root: %d
+> bytes",
+> +			=C2=A0 nilfs->ns_inode_size);
+> +		return -EINVAL;
+> +	}
+> =C2=A0
+> =C2=A0	nilfs->ns_first_ino =3D le32_to_cpu(sbp->s_first_ino);
+> =C2=A0	if (nilfs->ns_first_ino < NILFS_USER_INO) {
 
 Applied.
 
