@@ -1,76 +1,78 @@
-Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com [209.85.216.48])
+Received: from mail-yx2-f2.google.com (mail-yx2-f2.google.com [74.125.224.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CBBC3CB561
-	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 23:51:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 700E221ABC9
+	for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 23:57:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785282677; cv=none; b=D/omwrYZ/Yyq2fMX7Qc45sGoDsA7Cz523HRCKPZIXlH1+wE5PtZHCpngRaUGn4FxxYsf92O+lU00SyZintclEJQeMANNzpCN1zRdN45t2bZp4eQ/FFP5YJI8tMWJKI2CHjvNevRt1UpVQafR+HElcm/b4H5Kkc0/DMiyCkqjh5I=
+	t=1785283024; cv=none; b=rXZOlMF3MbWLcP+FxXWgrXZwxbJP4aCas2imKs7jNpEl1eOf1wceyGkXxh8fKu7XpP1JZgwN9AoeYfrObkB4WRv2exG2XKLR+zxIewJnS2VS3I06rbmf+rcY4EjpLiW3ipN6fUfNw8eT7WDYlVQpSymXXBZjfnPuCdb42IKjo1o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785282677; c=relaxed/simple;
-	bh=ajUzpkc2wT2rKsUtrIOzENhOhtVAYhqMQZ//RyKY3VQ=;
+	s=arc-20240116; t=1785283024; c=relaxed/simple;
+	bh=8naspTudp50xj0goy0S849XPvZ79RoJ4z+jOViVzzAk=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=F9M+gCZ4J2l1dUKX8rZ2G96Kr6ax/XYf070DPxuigpEOmMJz0RnxoZTqDxpi1a1mC0MxAe6lMd8jNVhCagJ6abqOISr+mjPhQ25LPraBYtRXY81d3s8mBK4dbzZHvG1lx5M82Vq9ZhioGxt1cjkBG7LV/Kfb1Fpo2FOal34lRV4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=QthAxwfS; arc=none smtp.client-ip=209.85.216.48
+	 Content-Type:MIME-Version; b=VlTqCX/x5ttibGVAYEXek7zw4fHKnb8gsT5/mVKA/yVxtTyHjvl9Glc02qHPDQe5JppJT9VcP+lvxnK3oHxh3jGce43wUCEsCoVgUl0jetEqKvpClNJ4sG/DtJwu1et5n2xYmKoPwRHCJjeIX4pvqQchQGO10ZOq/a7bd+/oNyQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=qqYEcBGv; arc=none smtp.client-ip=74.125.224.130
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="QthAxwfS"
-Received: by mail-pj1-f48.google.com with SMTP id 98e67ed59e1d1-38e3efab7e0so350595a91.0
-        for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 16:51:15 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="qqYEcBGv"
+Received: by mail-yx2-f2.google.com with SMTP id 00721157ae682-81f48ae80feso2579997b3.0
+        for <linux-nilfs@vger.kernel.org>; Tue, 28 Jul 2026 16:57:02 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785282675; x=1785887475; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785283021; x=1785887821; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=4K+cmxTWwmfNZxuEdGpcpmlb33it0JRnk5PNxofjx84=;
-        b=QthAxwfSHY+YsF477A5cks3n970G5aza7jLI+FYicFpEQuLAILnIc0WqLr2GJrJYRL
-         GZPzhdIAoxXZEXdjov1jF1vHjBkcf2UVXlcSkw2ZDcnW1p81KbUtslDZpymfmw10X6Ba
-         JoNmDY7nE4O80SkIVL16zM2Pde33tzZEvFK6gyCyNBkXYi437MbmaK2djaaPV1Vo9DIV
-         z4smrXP11K9he3Z1EL/4HQYObpYYF+FsKzH3pAu2ZXDro7QdGgbo1bik3DIP9t0m69ft
-         exGWynvRzvdPnYHOlVtjjMlkMjLzUO6mGVNxuKs9nhCfgIL3+gAhf66mQlFQonW1oAHK
-         l86A==
+        bh=32wKGwvjwqfLOfIf5NfxbpKtE655uaW4tNdfVjx28Qk=;
+        b=qqYEcBGv5sLus500zX2AnDTuQvmhPkqtOLdzytbL7x3JyF0xBFoLg9pBXbP5rrlUfr
+         3NhHP0w+qJM143AlUOINbm6tabe1yIwsMNVZ5x+Cukow2YNg/uO8V/REMquCpeW43YEs
+         +FlOucPGCnu0HuAJKPbvYXKjJW2Ipkqq54t3QIwK4+mNA5GCsnjmNoGUyfo9+PWHg9nP
+         X/EnaDRox3KJ9n6RlJRu3EmM//dyVIVC2A4A8bRaDIbnl7wd7bWPPfRfp7RQErLdv1kW
+         aiKNneIrp4xvYlAZyVsSv5UbxX57+UxU7aUFGW+IRrt9MHch+xNj21fuQwcxnXzdA4FT
+         Qmzg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785282675; x=1785887475;
+        d=1e100.net; s=20251104; t=1785283021; x=1785887821;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=4K+cmxTWwmfNZxuEdGpcpmlb33it0JRnk5PNxofjx84=;
-        b=EdegDTVMClchnbH8h+wmQ2KuSkbFxjG+nTqAhYMM+jDC6mBLwlzBLDmsFvailCrlSK
-         zRbR3vqxnmKFC+M1rhfNmbGsJJyzzNJNE7cXrxNWdn6nCWlFHcfCLGBbcAJ6SupcgTw0
-         A6eozFLtTM8twpUZdz69hlDJ51O40wcs3HPOGTtTQETyiy/F/CTQpMdRNVyRSpFx9LiG
-         QHnt5BN31v/mmqvNUoSsLN9gsM18cqnhIdLYB+wCMk5SGX81ENDy2e/d9yevV9DEhzB0
-         OlGD5mXO7ysVp0gkQyJ9ypAIlFEnSwk7hpHavIFQKuvknsewsRpQvNx3VoqyNZ7FrQ/Y
-         OVUA==
-X-Gm-Message-State: AOJu0YxNL6DoH3HDfdjosVDWr25hMsztrMomOQTCOH03rspnsBCi31FO
-	5ZchGzYTJoQBMb7Qitb/2voVv95FQPjJhek1y2z0YnhAoq0lER3FPsznBKlE5S0hEjo=
-X-Gm-Gg: AR+sD11Zpgio6hdP3tqJhhRBWFbUqvHGS3UavNeIdrtDXM4jfRDDBETHk1zenkTpbNn
-	W+0mtE1ulSNd7jhT6LItvGgTQGk8MZ7LOJXOka9vtELw1Hf612GRctGH+bNmmai2E/+1wJsMNRe
-	dmbv6SmsTYuHHjRpBsKCZMvKqUTauiLOK7IXVHkKAN1PDWzU7rS7Pnt3f/7KNZM6w2QpwjhOMzX
-	S6aQNAqFLJCotBIeDIvN86RUrugQUWXV+KTZ7RG7rRlkQUxRr3JcVOQOYAok+Wcrsq+a3XHPxMR
-	aN8uxB/iFKX5zEZHyLeJz68rTow1exlo6yWtd3w8VVs/rB1wFn8emhK8FkuAUjffjDJWQYEOlhT
-	7Mu/jvo4rWoNukZpzluqvQ1mR3IB/fMvr8QmMHxBX8JJWxhBJVsX5wKQ0X60Tw8XOnn+tPoApBU
-	yJ6MoPoXERctbCT1RlOCLuLpuKKCxjuRQy0I1JL0I5Vq9e379I9x/jD2bE8fkFXVQtFA2ihwyF1
-	P/66E39kM/3WjJaWpTmzRZHUrb+T/hFOCBixpum50wjbIbJhyQekiGgMo1EJwr2ELXHhTbPx1y4
-	BwT1/VbiCg5cp248yX3bGStUSC0sNn472C83gvD7Ek1pOX1jCye9q4KIqmnFpYQrd2XBhToKHag
-	RAQ==
-X-Received: by 2002:a17:90b:1b07:b0:36d:b12b:f57d with SMTP id 98e67ed59e1d1-38f83673e41mr42943a91.12.1785282674599;
-        Tue, 28 Jul 2026 16:51:14 -0700 (PDT)
+        bh=32wKGwvjwqfLOfIf5NfxbpKtE655uaW4tNdfVjx28Qk=;
+        b=K/6q72N81bcz6pkypkLucyijxPTq3YPYp4V3XTwcYZV+oaqm2S+DT7pWgneMAOBFZG
+         SKDnLMgy+yzCs+XXjRJEp35D+LC7o6IiRWdFHVwECAIRvMbjqgTz7DoCUagnzfcIWNEx
+         qRzysGYJud0Yh7vfxPUmonSt7TMEgclNwV7ka0bvKk5kSfOxSIrZMlJRsWqg7XohC+xF
+         oKOwDxJUc6yBT7rp5fk3U2w1dLTpT7bXH/oafZ5T5CHEv1Psm4P3hcDvySiRGz2yoZdW
+         +m/+N8qYIlCMfppLJKUua/ng91poQD3NyD5l68k22E/pQ2KaHNV5FFSdTgNG2xQSW2VW
+         VZAQ==
+X-Gm-Message-State: AOJu0Yxh4S7XGXQLBiNEnVX+W9O5bCzgbZSfTV/vE6pz/Dya4CvkHEG6
+	vHfJ2MjHurUH+AtP7PHL1495elqlw6ooowxD1Uh3/B/btV9qLITJn8jU2sVC168fQV5v9SMKKyo
+	8ZCyVtkR0bs8iC+M=
+X-Gm-Gg: AR+sD122vfoHJCfWYdqmvp0Aw6voyA8dJTbLE/0f+AJtoBlTatFqyQvomWV3ZYBP/x8
+	qStvubhdwokNLpyQfpzwpuVoogNgvQVkS5fEEeI8I23DjN49LrCs8cpVC9xXGixXWe+8X6RZ43J
+	1zC4wne2Uam4nxIk9opnX3s1F/5vd8cZRSoidQ+/DcikhDNZG+djbVi7JXzv6uF9RmhfWGIj57N
+	LtjxG+uzmqSMNF3C9nwKsol7tB0M6hi8DUzTivTHKIdGordQfpHBvUP6F8yX//Th4CiPFX64GlL
+	pAxMGcg+OGeIPeT89AvcOhUqQjClmJnlLeObKf1PqOnRLKQty3siriApPucKTGyX+WAYbarWmil
+	TrXtIesayBfFE8ZSitFkRf+rtEZtPNFGdPawLh3QbI0wIxxN3o6vFCPXSZqpJkkqjLUGg8Pug/e
+	Nmf5rOeZD8Gz8fq76KvAN/amhNr0uRekGtmjrTxaZ0dXQqwx90OJJFwtz+KwYVfzmlPIQbjsq40
+	P6UH6jmo9bRAOhJdRsOu+YU+6RTAGrQuHx5Fc+ZnZgRUiVenoqSqp18KDoRbF1biJ6eDG+oyXbK
+	ZGE5dsv//t5c5R0PRE6jc2hWJ0MEm6IMo2WwNRjUgUrr2hMzoEZfihA=
+X-Received: by 2002:a05:690c:3681:b0:81e:d8ec:d855 with SMTP id 00721157ae682-81f9936c55dmr20768427b3.62.1785283021318;
+        Tue, 28 Jul 2026 16:57:01 -0700 (PDT)
 Received: from [10.0.0.3] (162-197-212-70.lightspeed.sntcca.sbcglobal.net. [162.197.212.70])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-31504baa01dsm3182906eec.12.2026.07.28.16.51.13
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-81fa27592e9sm8541417b3.8.2026.07.28.16.57.00
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Jul 2026 16:51:13 -0700 (PDT)
-Message-ID: <b1fcb1381e88045b503c60890c99663c8cdc83ba.camel@dubeyko.com>
-Subject: Re: [PATCH] nilfs2: prevent out-of-bounds read in super root block
- parsing
+        Tue, 28 Jul 2026 16:57:00 -0700 (PDT)
+Message-ID: <66ad542bb23dbc1798b7c69f7912bf86cb79c8f7.camel@dubeyko.com>
+Subject: Re: [PATCH] nilfs2: fix BUG in nilfs_copy_dirty_pages() on dirty
+ state mismatch
 From: Viacheslav Dubeyko <slava@dubeyko.com>
 To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML
-	 <linux-kernel@vger.kernel.org>, David Lee <david.lee@trailofbits.com>
-Date: Tue, 28 Jul 2026 16:51:12 -0700
-In-Reply-To: <20260717165654.151990-1-konishi.ryusuke@gmail.com>
-References: <20260717165654.151990-1-konishi.ryusuke@gmail.com>
+	 <linux-kernel@vger.kernel.org>, 
+	syzbot+8baf9a79a3ffc6271cb6@syzkaller.appspotmail.com, 
+	syzkaller-bugs@googlegroups.com
+Date: Tue, 28 Jul 2026 16:56:59 -0700
+In-Reply-To: <20260720141716.205384-1-konishi.ryusuke@gmail.com>
+References: <20260720141716.205384-1-konishi.ryusuke@gmail.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -125,58 +127,93 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Sat, 2026-07-18 at 01:56 +0900, Ryusuke Konishi wrote:
-> From: David Lee <david.lee@trailofbits.com>
+On Mon, 2026-07-20 at 23:16 +0900, Ryusuke Konishi wrote:
+> Syzbot reported a kernel BUG triggered within
+> nilfs_copy_dirty_pages(),
+> which copies dirty DAT file folios/pages to its shadow page cache.=C2=A0
+> The
+> BUG occurs when a retrieved dirty folio/page unexpectedly loses its
+> 'dirty' status.
 >=20
-> super-root inode metadata size is trusted before
-> nilfs_read_inode_common().
+> This issue arises because, since the commit referenced below, the
+> 'dirty'
+> flag of a folio/page can be cleared asynchronously after the
+> filesystem
+> detects metadata corruption and transitions to read-only mode.
 >=20
-> Reject super-root inode sizes whose computed on-disk footprint
-> exceeds the
-> filesystem block size. This prevents malformed filesystem images from
-> making nilfs_read_inode_common() read past the end of the super-root
-> block.
+> Resolve the issue by returning an -EROFS error if the filesystem has
+> transitioned to read-only mode.=C2=A0 Also change the behavior to issue a
+> kernel warning only once instead of triggering a kernel BUG when this
+> unexpected 'dirty' state is detected while the filesystem is not in
+> read-only mode.
 >=20
-> [ryusuke: clarify the commit title]
->=20
-> Fixes: 8a9d2191e9f4 ("nilfs2: operations for the_nilfs core object")
-> Signed-off-by: David Lee <david.lee@trailofbits.com>
-> Assisted-by: Codex:gpt-5.5
+> Reported-by: syzbot+8baf9a79a3ffc6271cb6@syzkaller.appspotmail.com
+> Closes: https://syzkaller.appspot.com/bug?extid=3D8baf9a79a3ffc6271cb6
+> Fixes: 8c26c4e2694a ("nilfs2: fix issue with flush kernel thread
+> after remount in RO mode because of driver's internal error or
+> metadata corruption")
 > Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 > ---
-> Hi Viacheslav,
+> Viacheslav, please apply this for the next cycle.
 >=20
-> please apply this for the next cycle.
->=20
-> As described, this prevents out-of-bounds memory access that could
-> occur with a tampered file system image.
+> This fixes an issue reported by syzbot where a kernel BUG could be
+> triggered depending on timing after filesystem corruption is
+> detected.
 >=20
 > Thanks,
 > Ryusuke Konishi
 >=20
-> =C2=A0fs/nilfs2/the_nilfs.c | 6 ++++++
-> =C2=A01 file changed, 6 insertions(+)
+> =C2=A0fs/nilfs2/page.c | 17 +++++++++++++++--
+> =C2=A01 file changed, 15 insertions(+), 2 deletions(-)
 >=20
-> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-> index 7b23e373a106..f3805e7aabeb 100644
-> --- a/fs/nilfs2/the_nilfs.c
-> +++ b/fs/nilfs2/the_nilfs.c
-> @@ -461,6 +461,12 @@ static int nilfs_store_disk_layout(struct
-> the_nilfs *nilfs,
-> =C2=A0			=C2=A0 nilfs->ns_inode_size);
-> =C2=A0		return -EINVAL;
-> =C2=A0	}
-> +	if (NILFS_SR_BYTES(nilfs->ns_inode_size) > nilfs-
-> >ns_blocksize) {
-> +		nilfs_err(nilfs->ns_sb,
-> +			=C2=A0 "too large inode size for super root: %d
-> bytes",
-> +			=C2=A0 nilfs->ns_inode_size);
-> +		return -EINVAL;
-> +	}
+> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
+> index a9d8aa65416f..1d00bce21c37 100644
+> --- a/fs/nilfs2/page.c
+> +++ b/fs/nilfs2/page.c
+> @@ -243,6 +243,7 @@ static void nilfs_copy_folio(struct folio *dst,
+> struct folio *src,
+> =C2=A0int nilfs_copy_dirty_pages(struct address_space *dmap,
+> =C2=A0			=C2=A0=C2=A0 struct address_space *smap)
+> =C2=A0{
+> +	struct inode *smap_inode =3D smap->host;
+> =C2=A0	struct folio_batch fbatch;
+> =C2=A0	unsigned int i;
+> =C2=A0	pgoff_t index =3D 0;
+> @@ -258,8 +259,19 @@ int nilfs_copy_dirty_pages(struct address_space
+> *dmap,
+> =C2=A0		struct folio *folio =3D fbatch.folios[i], *dfolio;
 > =C2=A0
-> =C2=A0	nilfs->ns_first_ino =3D le32_to_cpu(sbp->s_first_ino);
-> =C2=A0	if (nilfs->ns_first_ino < NILFS_USER_INO) {
+> =C2=A0		folio_lock(folio);
+> -		if (unlikely(!folio_test_dirty(folio)))
+> -			NILFS_FOLIO_BUG(folio, "inconsistent dirty
+> state");
+> +		if (unlikely(!folio_test_dirty(folio))) {
+> +			if (WARN_ONCE(!sb_rdonly(smap_inode->i_sb),
+> +					"inconsistent dirty
+> state\n"))
+> +				goto unlock_folio;
+> +
+> +			/*
+> +			 * If the filesystem has been forced to
+> read-only
+> +			 * due to metadata corruption.
+> +			 */
+> +			folio_unlock(folio);
+> +			err =3D -EROFS;
+> +			break;
+> +		}
+> =C2=A0
+> =C2=A0		dfolio =3D filemap_grab_folio(dmap, folio->index);
+> =C2=A0		if (IS_ERR(dfolio)) {
+> @@ -277,6 +289,7 @@ int nilfs_copy_dirty_pages(struct address_space
+> *dmap,
+> =C2=A0
+> =C2=A0		folio_unlock(dfolio);
+> =C2=A0		folio_put(dfolio);
+> +unlock_folio:
+> =C2=A0		folio_unlock(folio);
+> =C2=A0	}
+> =C2=A0	folio_batch_release(&fbatch);
 
 Applied.
 
