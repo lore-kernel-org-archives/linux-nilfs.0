@@ -1,16 +1,16 @@
-Received: from canpmsgout01.his.huawei.com (canpmsgout01.his.huawei.com [113.46.200.216])
+Received: from canpmsgout03.his.huawei.com (canpmsgout03.his.huawei.com [113.46.200.218])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A9E33EB81D
-	for <linux-nilfs@vger.kernel.org>; Thu, 30 Jul 2026 09:58:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=113.46.200.216
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DB4542B327
+	for <linux-nilfs@vger.kernel.org>; Thu, 30 Jul 2026 12:32:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=113.46.200.218
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785405512; cv=none; b=uf5mdUe8WU2zqLBN5aGOKA4liDkbmPyo07M11055g8yruSNUWJ3jnhTbfXuCLr1k7yOEKcycCUwN/aaunX07kgSz9UGKzi1Rnf+3pLDBPBIqS7xMejroG+0zx50FlSMO5h5p+PFn9EKeFOlZaoBhM/bSTC44NsfomM+rOMwr7CM=
+	t=1785414775; cv=none; b=h4Yfj2qzAIBxjEJN3pFb5WLtoK772aQEBMxY2/7K8EKBR/FIRJSfBVia92pDJRGS5I5Mmkcg6189kY8Lra8vqVM3KnnfXIyF+g9Hf4UEDjbI0PQjetg76JWNvElPSS1Nam9GVvzTmwL629DGZ4RAXsybmWF3uTM+2YSVUNJJYOU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785405512; c=relaxed/simple;
+	s=arc-20240116; t=1785414775; c=relaxed/simple;
 	bh=VWBCnsCdyvApk/xbx5c/j6/ig6q69++Ge/e0KKWZLYM=;
-	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=U93lP6sQUO/Wc084nkkz6bgGq8YgWeyMSrfykcKjN+For887xL1pTMwD1VoBovX33E6sUwfbscCat1W8YHWfe3UZ1oHiM6GfoLCp/c1EXkejP1bDVP02JDHoDLEWu9fp4rRKPbBUI+ERC/Kab58y9h0s3SZF8gbiUJ01RC8rZxc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=j+BXt+1h; arc=none smtp.client-ip=113.46.200.216
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=KAB0AYzgtasWlXw581iHUxfm+u/muuuQ5RDDQkQfEfQ01Ow2mKxZUL8lNkL18IsRE5HrygTlQpSAVQ2y72nAIWra5hOJ0r3YKwqFgy4ja2maHpddWVZtQOnti0F6JDoUeblbEuBWWpBvtkmTh0BFnm2Tx2KJVOLi0/DCQeSG8eM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=j+BXt+1h; arc=none smtp.client-ip=113.46.200.218
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
@@ -23,22 +23,22 @@ dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
 	CoKegCNVU4DU2zdjg31OcxFzbm1R9KMu1NHvdhLxEG7QGb2rc1yygk1gVBRRcfGFFn9krQ9WeG8
 	kg8gIJAPWEQIWXIZcZzY1dA=
 Received: from mail.maildlp.com (unknown [172.19.162.140])
-	by canpmsgout01.his.huawei.com (SkyGuard) with ESMTPS id 4h9ktC4tYtz1T4MG;
-	Thu, 30 Jul 2026 17:48:51 +0800 (CST)
+	by canpmsgout03.his.huawei.com (SkyGuard) with ESMTPS id 4h9pJc5SLxzpT0h;
+	Thu, 30 Jul 2026 20:23:28 +0800 (CST)
 Received: from kwepemf200016.china.huawei.com (unknown [7.202.181.9])
-	by mail.maildlp.com (Postfix) with ESMTPS id A21AB2025F;
-	Thu, 30 Jul 2026 17:58:23 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTPS id 161112025F;
+	Thu, 30 Jul 2026 20:32:48 +0800 (CST)
 Received: from huawei.com (10.113.213.244) by kwepemf200016.china.huawei.com
  (7.202.181.9) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.11; Thu, 30 Jul
- 2026 17:58:23 +0800
+ 2026 20:32:47 +0800
 From: Wang Jianjian <wangjianjian3@huawei.com>
 To: <konishi.ryusuke@gmail.com>, <slava@dubeyko.com>,
 	<linux-nilfs@vger.kernel.org>
 CC: Wang Jianjian <wangjianjian3@huawei.com>
-Subject: [PATCH] nilfs: enhance btree node keys check
-Date: Thu, 30 Jul 2026 17:26:40 +0800
-Message-ID: <20260730092640.1088530-1-wangjianjian3@huawei.com>
+Subject: [PATCH 1/2] nilfs: enhance btree node keys check
+Date: Thu, 30 Jul 2026 20:01:04 +0800
+Message-ID: <20260730120105.2746192-1-wangjianjian3@huawei.com>
 X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
@@ -48,7 +48,7 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain
-X-ClientProxiedBy: kwepems200001.china.huawei.com (7.221.188.67) To
+X-ClientProxiedBy: kwepems500001.china.huawei.com (7.221.188.70) To
  kwepemf200016.china.huawei.com (7.202.181.9)
 
 syzbot reported a warning on nilfs_btree_assign:
