@@ -1,247 +1,278 @@
-Received: from mail-pg1-f169.google.com (mail-pg1-f169.google.com [209.85.215.169])
+Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com [209.85.214.178])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C2AE11F1537
-	for <linux-nilfs@vger.kernel.org>; Mon,  3 Aug 2026 00:33:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.169
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D88263F482E
+	for <linux-nilfs@vger.kernel.org>; Thu,  6 Aug 2026 09:03:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.178
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785717204; cv=none; b=eTXVBQI83C7mEdbCXAAJ3cvPcwrdjWTrmHH3jHRBrJCkfy0v3o/3vf3M7D+ub7XTLx488TQ8RwMPEraFUZ2R90ER8RG5HdAQdpQ9lMBdFPpvVg8yjKJ64wQhRhCGzvx1EFITQKI6F1rfnoiZiCHQt4mkl8/7iWtDcEKAvmiCsxQ=
+	t=1786006997; cv=none; b=HW0/iPDUyx/J8dbSPGlSGLjhzat9W6fucL7D7eMB8InD2apbp3WUERqLjAM2vvg+xFIKPgle5v9uT6v5V+dxIwynrI8GGQ9E380kYQq+doxq/tbHBJEQYyA79HAa78iWkiw3ShrY1mEWSlTuKMEQQshkLbJNBis6f05o1Pqb4CY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785717204; c=relaxed/simple;
-	bh=LADF072cLdK/+64/Ekd02wL+MzoV9QyyfJmYLdsCsBs=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=V9JpLSZlzATfL0VU1pJpxKxkdpTAhW35sC9JSnNTjr3ZUZjbO1RRGJmcTQjNUig/+U8fE2smhq6LS0+wpz7s7O0nQa/UIsXN0AFsVEg53gvSVKN7dlogzb7iy58eZP3kKZ31CfDcVbyzIwUNF/8HvE7cY6Jh2s35GY57HCjHEn0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=bb7lkrWZ; arc=none smtp.client-ip=209.85.215.169
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
+	s=arc-20240116; t=1786006997; c=relaxed/simple;
+	bh=vlmYr8FZdam9m8IeQB9okPpPJXNoGZskZHh8i3FJGok=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=KSysql8SNgs4FrH2D0DU48cSbVmv3i0wdJklAUyI5wyp7E0PCsZVVKfBfWNEFJFDdqLSpTtlMCWrhh+Un/ACxYRruug3HM2GG4Lf+hZwVhKsL4ChWmcNNumwOuomj4fGJPx7M5+LkJGfvqA7zEAlSJoqJ/iTAKmzaZL973f99po=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XSzZcaev; arc=none smtp.client-ip=209.85.214.178
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="bb7lkrWZ"
-Received: by mail-pg1-f169.google.com with SMTP id 41be03b00d2f7-cbb85186d43so1248733a12.3
-        for <linux-nilfs@vger.kernel.org>; Sun, 02 Aug 2026 17:33:22 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XSzZcaev"
+Received: by mail-pl1-f178.google.com with SMTP id d9443c01a7336-2cedda2ce6fso16922105ad.1
+        for <linux-nilfs@vger.kernel.org>; Thu, 06 Aug 2026 02:03:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1785717202; x=1786322002; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=LADF072cLdK/+64/Ekd02wL+MzoV9QyyfJmYLdsCsBs=;
-        b=bb7lkrWZeVLFca3zBcZ3xnmhYJI1aErzgF/+ajxQ5EVfCV9c8pCAl8rLcp5zevbxLN
-         Anxjz8bcIXk2gEeD/6zoHa/nU4t4IJ2nB22TUrDO8wYLxvnUWh9VvERQhXIBFvGBSQS+
-         tElLUFX69/KzO1xaIYvw8eVpc+SZOuNN4sn1I6JdYDt6+lFlBIq7HYpKOvBTrTmlqouV
-         FBbi+0Z1udR0LsxcEl5aipnEVYrdiicUVq+224ZN5JTKYONx6k7R87nc6kEFKQLaIPpp
-         BN/eybNq4wAeJ9nFP1iWDJgbsHb1xz0vRpZBVX9OWSVtxTtj6cDIPedxrXOSs6TuSJq2
-         sIJQ==
+        d=gmail.com; s=20251104; t=1786006995; x=1786611795; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=8OhdDnLO8z1OVTh7Cja/MEj5ZqrQfY51g7lPg1wFyPw=;
+        b=XSzZcaevg5r+LEn1kLBox4BnAuNcZ8zYlmZpB20iQwh/2Hi/engXTEgfLII3OtJlYI
+         q3p5EbgXV9vFVNN0vmKEoqniW565YRzpDKDqIi8MBb/cRgnr/CPT3mi3A26ooctuaqHk
+         ESAERb8/ShhpxVKcFCm85KLQqBoMhkL3x/qcIl9dE285eAkI2v71FZq2tmx7fZvIqN7A
+         R/Pgenvc4tJGn+p1DBw7zesAAb4FJZLqciStG4Z1BQ+b+fBqGQBKZEWW64qZmCtu7lyh
+         YBKhB62o47NHiXRVxIt7r0ZBnsc4MOhlNDCM82XYwlDD/iAT2Voj9XtRn2RStDvwN+E+
+         zgmg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785717202; x=1786322002;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=LADF072cLdK/+64/Ekd02wL+MzoV9QyyfJmYLdsCsBs=;
-        b=KhxQ9lFPPX+aba3bXVgCqt5UX+TyK2Pen7opiQCv31Yo4sln3SKOgr89iCOL35PVKl
-         PZENRX7+PA8WMcQxd7x/d2dJFBK/9a/YiLTNjanbSP3YJ6koO2OC+foomwrUixAWL2k5
-         A8SK43k02BMQVsyQjujzStwJ6FMchmry17FGW3PxpwHl8rnRiy5vpFHmwPbWtZf7ci6B
-         R/g/dX+bOm41LrpIB9DEzybQCr3XdoJji7gMglr791FHLWCFfDId61QdTM/DUIeiJ+rN
-         scI4tmto1OKIYtUgqAZ5GW84CLdNQqTKPVd/2ubeKAfnPMRDGDdR0QujOqwP9as5pbN0
-         ldzQ==
-X-Forwarded-Encrypted: i=1; AHgh+RqvXcsZ4T3LIXjaOtzUrmmuyFB7wV2+N2/2tYCE0/9n2wGK6eX7VIaFFFWJJIY7NBQWTQQJpMg/qssd0A==@vger.kernel.org
-X-Gm-Message-State: AOJu0Yzyoi4J4Q5ZoTKEAAj60pFu2H7NQN6YPK6RC5rQ04tXxTLG7S6+
-	8G2DdNflw5JPG9RbpMmVruzZHvuxP7pd6YaB9jhdwloPj7NUhaRblibDseQBBU/0U/A=
-X-Gm-Gg: AR+sD10mumXlpG6sI+vuyiPDTQ2w3YLXwfo2ckpVHyhm4tIyJFcaBhdIbpG3gdakBeJ
-	r/4mgnFRgmlO9VMQQt4CYCXar2jMBCcjftnEYkkcNe4MBQkzGkmioVqjV/9MCmI3wtuyQnaNNQ5
-	6dJcfgVMDgXJw9KowRJRK6oStz+Wqg2VqkaleaWAZcb7X14TlpgCBS0znMpmKz1BzMAwScS1pDR
-	xrDNfymhCwJ4AbiwCA0bluGYG25Xeq/BsB3lwTSsCJI5Gn1/WGsBzHR4m3zlQdI3MEY7ANWsqo6
-	ifdScpkxmzzRzVUv7opWBYV13ZggXryoUVCdzo6Y3nc/jza/tRpBF0GZ2mfLl+K3d1RFXRgMxlq
-	PubYcZdOM1Dr4KH8sZxZdFKWaR7nRO6X1f6hwCru2wr7Eexyjw+2pTtYe1uYGWxgplWTAGBKeto
-	Ly3Ilq+MWBdZT9MvKdGFnwQdbGuJc+mKxfsJac6H7QEm4aLrpk/UAiLmTOVTFYDPZwAnSkxR0Ge
-	O8pSGcTwE3w9GNqIF90p0Eupv9peKZ/iBHfziX6hIhkMfcAh0jgqh1cxWn3Huz5LJGEfUdWcSsm
-	e87bslKmxu4kpPTSKgDGFahX9fasDmYDPcsOIuIdDGlzBjIG5CnXIWg=
-X-Received: by 2002:a05:6a21:103:b0:3bf:ab4b:2d34 with SMTP id adf61e73a8af0-3c92a8f3f72mr7354169637.53.1785717202100;
-        Sun, 02 Aug 2026 17:33:22 -0700 (PDT)
-Received: from [10.0.0.3] (162-197-212-70.lightspeed.sntcca.sbcglobal.net. [162.197.212.70])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-13fab4f83c3sm21441376c88.14.2026.08.02.17.33.20
+        d=1e100.net; s=20251104; t=1786006995; x=1786611795;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=8OhdDnLO8z1OVTh7Cja/MEj5ZqrQfY51g7lPg1wFyPw=;
+        b=nojcmuclLU0ln84VieRzvLBluUW8+J1XSssXCHBsJxKkLzoMMNrSuBwrJLl0hWL7wn
+         L2YQq3vrLVLpw+yVHmQoxanpWkJerJFv+T7IeY/7nPJ3WkyFzVbIsQsHI8jG3a8tB5hT
+         j0Bnol53fKYcDtaP6z/P05Z+RBzoV/79Fd0pxKoL7q4pvt64vQ4LaHpZ98QT654OA9yj
+         KgCT/9cpt67fgYEieKvEB8FtaH4ChX8rmRfY+U7PtfXud0KCMdYDwIGxxqIFZBsseOmO
+         LE4erXTZy6ieIc8OXd1QjGTiuQB4235/lNQFZxyahNk4MX0L+RtadFnaizew08KITqiO
+         i34w==
+X-Gm-Message-State: AOJu0YzSZMbGXrVF7Y+8mP0Tiv3xrEu4yM6H2Git8Kj6Yyc8EIRB5mD2
+	4KhoP8vB9A4srkud7v+HJP4i9xMiqMpUaWF8v0NIhoiCeusvxxZRJEzk
+X-Gm-Gg: AR+sD116rpn6LugZBqfora39IN1jjkeE9MwdSNK3sL0fffNxi0+cxpKKJbSMRBusOUC
+	U0TKjUkd1/qM4N7rNcmhuV55aZLGpbSEL1Yp6YBzEPmxu9u+LJgjFavv0FXRkIq/KAKKa+ZxUGt
+	IGUG4HOYswpvZ/5Ztigc2KdQ6Bkx47KYV9jBBm4irhpoDWQIXJ7KfFtEM4WHKKY18amw20kBU2t
+	SrKIbHyyhWOdO9C9Wn22ADDevr+HYb2V156PtieLwzkohF2wXN8ZdKaFp1Ej5GfLWs97qGDdJ2u
+	SjoY/Km0k4pb10f32MUpUlr9bTBd8vS3sEApB16XyVYJamcB5UIsiDUURVAQhf6TbmMLABX5lT/
+	NY53M9kbg3WnkYmDg6YCeA7l28Su53tTaP3UYHVRio8Srsp5BPwIta88TH7o97VycF+s3o6gKdM
+	ID49n8nK2eymI1jmg9wc3SGxP8jUadhHdd8pLtcv3bMibNybB7D0zRKfO2o+oXiGjLwA8kKCTiI
+	dhVYeSLHzMEohfsdtRSWT61qzLbODzP
+X-Received: by 2002:a17:903:3201:b0:2d0:401c:2ebb with SMTP id d9443c01a7336-2d0ca7125cemr166761795ad.4.1786006995091;
+        Thu, 06 Aug 2026 02:03:15 -0700 (PDT)
+Received: from carrot.taila25129.ts.net (madb688455.ap.nuro.jp. [219.104.132.85])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2d0aa4bbc5csm27965115ad.62.2026.08.06.02.03.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 02 Aug 2026 17:33:21 -0700 (PDT)
-Message-ID: <0235657dcf690b2cf67181d10b4b0086437449db.camel@dubeyko.com>
-Subject: Re: [PATCH] nilfs2: fix block-offset handling in iomap reads
-From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Linmao Li
- <lilinmao@kylinos.cn>
-Cc: Christian Brauner <brauner@kernel.org>, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Date: Sun, 02 Aug 2026 17:33:18 -0700
-In-Reply-To: <CAKFNMokGmCHO65JVxFwuETFiKE6k10xs4bqfdgu4Gkq1PS9iSg@mail.gmail.com>
-References: <20260731083840.3643821-1-lilinmao@kylinos.cn>
-	 <CAKFNMokGmCHO65JVxFwuETFiKE6k10xs4bqfdgu4Gkq1PS9iSg@mail.gmail.com>
-Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 (by Flathub.org) 
+        Thu, 06 Aug 2026 02:03:14 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Viacheslav Dubeyko <slava@dubeyko.com>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	syzbot+5957361606d7b750b874@syzkaller.appspotmail.com,
+	syzkaller-bugs@googlegroups.com
+Subject: [PATCH] nilfs2: suppress false positive WARN_ONs for sufile after an FS error
+Date: Thu,  6 Aug 2026 18:02:00 +0900
+Message-ID: <20260806090311.32633-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-On Fri, 2026-07-31 at 21:05 +0900, Ryusuke Konishi wrote:
-> On Fri, Jul 31, 2026 at 5:38=E2=80=AFPM Linmao Li wrote:
-> >=20
-> > nilfs_iomap_begin() looks up the filesystem block containing the
-> > requested
-> > offset and returns the physical address of that block.=C2=A0 However, i=
-t
-> > sets
-> > iomap->offset to the original, possibly sub-block, offset while
-> > leaving
-> > iomap->addr at the start of the physical block.
-> >=20
-> > iomap_sector() adds the difference between the I/O position and
-> > iomap->offset to iomap->addr.=C2=A0 For an O_DIRECT read at offset 512
-> > on a
-> > filesystem with 4 KiB blocks, the two file offsets are equal and
-> > the I/O is
-> > therefore submitted at the start of the physical block instead of
-> > 512 bytes
-> > into it.=C2=A0 iomap direct I/O permits this alignment when the device
-> > logical
-> > block size is 512 bytes.
-> >=20
-> > Describe mapped and hole extents from the filesystem-block-aligned
-> > file
-> > offset.=C2=A0 This makes the physical and file offsets refer to the sam=
-e
-> > byte.
-> > It also prevents a one-block hole mapping from extending into the
-> > following
-> > block.
-> >=20
-> > Fixes: b924d8d4e54f ("nilfs2: switch O_DIRECT reads to iomap")
-> > Signed-off-by: Linmao Li <lilinmao@kylinos.cn>
-> > ---
-> > =C2=A0fs/nilfs2/iomap.c | 9 +++++----
-> > =C2=A01 file changed, 5 insertions(+), 4 deletions(-)
-> >=20
-> > diff --git a/fs/nilfs2/iomap.c b/fs/nilfs2/iomap.c
-> > index 3ae3bf6ed3686..e130ed63abd9a 100644
-> > --- a/fs/nilfs2/iomap.c
-> > +++ b/fs/nilfs2/iomap.c
-> > @@ -18,6 +18,7 @@ static int nilfs_iomap_begin(struct inode *inode,
-> > loff_t offset,
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct the_nilfs *nilfs =3D =
-inode->i_sb->s_fs_info;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct nilfs_inode_info *ii =
-=3D NILFS_I(inode);
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sector_t blkoff =3D offset >=
-> inode->i_blkbits;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 loff_t iomap_offset =3D (loff_t)b=
-lkoff << inode->i_blkbits;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 unsigned int maxblocks;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __u64 blknum =3D 0;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 int ret;
-> > @@ -50,15 +51,15 @@ static int nilfs_iomap_begin(struct inode
-> > *inode, loff_t offset,
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (ret =3D=3D -ENOENT) {
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 iomap->type =3D IOMAP_HOLE;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 iomap->addr =3D IOMAP_NULL_ADDR;
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->offset =3D offset;
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->length =3D min_t(loff_t, length,
-> > i_blocksize(inode));
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->offset =3D iomap_offset;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 iomap->length =3D i_blocksize(inode);
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 return 0;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 } else if (ret < 0)
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 return ret;
-> >=20
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->bdev =3D inode->i_sb-=
->s_bdev;
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->offset =3D offset;
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->length =3D min_t(loff_t, l=
-ength, (loff_t)ret << inode-
-> > >i_blkbits);
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->offset =3D iomap_offset;
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->length =3D (loff_t)ret << =
-inode->i_blkbits;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->addr =3D (loff_t)blkn=
-um << inode->i_blkbits;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->type =3D IOMAP_MAPPED=
-;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 iomap->flags =3D IOMAP_F_MER=
-GED;
-> >=20
-> > base-commit: d5c57d9bf03516d625521cd6cf5acfd93e3e63c7
-> > --
-> > 2.25.1
->=20
-> Hi Linmao,
->=20
-> Since the O_DIRECT iomap conversion patch series is currently under
-> review and subject to revision, please post your finding as comments
-> on the original patch thread in the future, rather than sending a
-> standalone patch with a premature Fixes tag.
->=20
-> Hi Viacheslav,
-> I believe the point being made is that a misalignment occurs because
-> iomap->addr is adjusted to the block boundary, whereas iomap->offset
-> is not.=C2=A0 Could you take a look at his points ?
->=20
+After applying the commit associated with the Fixes tag, metadata file
+buffers can be evicted from memory even after being marked dirty.
 
-Hi Ryusuke,
+Consequently, operations such as rolling back sufile changes upon
+error - which modify the buffer and were previously assumed incapable
+of failure - can now fail.
 
-The fix makes sense to me. I am attending FMS 2026 (August 4th - 6th).
-So, I don't have time for preparing v2 of the patchset with adding
-Linmao's fix during this week. Let me try to find the time for pathset
-reworking around the end of this week.
+This behavior causes syzbot to trigger a WARN_ON check immediately
+following sufile function calls within the log writer.
+
+Resolve this issue by introducing a macro, nilfs_sufile_warn_on_error(),
+which uses WARN_ONCE to report unexpected errors only when the filesystem
+has not degraded to read-only mode, returning -EIO or -EROFS accordingly.
+Replace existing WARN_ON checks for unexpected errors following sufile
+operations with this new macro.
+
+Additionally, for nilfs_segctor_truncate_segments() - where an error must
+be propagated to halt log writing if a sufile operation fails - modify
+the function to return the error code appropriately.
+
+Reported-by: syzbot+5957361606d7b750b874@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=5957361606d7b750b874
+Fixes: 8c26c4e2694a ("nilfs2: fix issue with flush kernel thread after remount in RO mode because of driver's internal error or metadata corruption")
+Cc: <stable+noautosel@kernel.org> # Warning suppression primarily; will request backport individually if needed
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Hi Viacheslav,
+
+Please apply this for the next cycle at your convenience.
+
+This fixes an issue where a WARN_ON check is triggered by sufile functions
+within the log writer after the filesystem degrades to read-only mode.
+This is a false-positive warning reported by syzbot this June (and likely
+reported previously as well), which can occur as a normal consequence
+after degradation.
 
 Thanks,
-Slava.
+Ryusuke Konishi
+
+ fs/nilfs2/segment.c | 36 ++++++++++++++++++++----------------
+ fs/nilfs2/sufile.h  | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 48 insertions(+), 16 deletions(-)
+
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 2189267894d2..4345b4a226e8 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1433,7 +1433,7 @@ static int nilfs_segctor_extend_segments(struct nilfs_sc_info *sci,
+  failed:
+ 	list_for_each_entry(segbuf, &list, sb_list) {
+ 		ret = nilfs_sufile_free(sufile, segbuf->sb_nextnum);
+-		WARN_ON(ret); /* never fails */
++		nilfs_sufile_warn_on_error(sufile, ret);
+ 	}
+ 	nilfs_destroy_logs(&list);
+ 	return err;
+@@ -1449,7 +1449,7 @@ static void nilfs_free_incomplete_logs(struct list_head *logs,
+ 	segbuf = NILFS_FIRST_SEGBUF(logs);
+ 	if (nilfs->ns_nextnum != segbuf->sb_nextnum) {
+ 		ret = nilfs_sufile_free(sufile, segbuf->sb_nextnum);
+-		WARN_ON(ret); /* never fails */
++		nilfs_sufile_warn_on_error(sufile, ret);
+ 	}
+ 	if (atomic_read(&segbuf->sb_err)) {
+ 		/* Case 1: The first segment failed */
+@@ -1468,7 +1468,7 @@ static void nilfs_free_incomplete_logs(struct list_head *logs,
+ 	list_for_each_entry_continue(segbuf, logs, sb_list) {
+ 		if (prev->sb_nextnum != segbuf->sb_nextnum) {
+ 			ret = nilfs_sufile_free(sufile, segbuf->sb_nextnum);
+-			WARN_ON(ret); /* never fails */
++			nilfs_sufile_warn_on_error(sufile, ret);
+ 		}
+ 		if (atomic_read(&segbuf->sb_err) &&
+ 		    segbuf->sb_segnum != nilfs->ns_nextnum)
+@@ -1491,7 +1491,7 @@ static void nilfs_segctor_update_segusage(struct nilfs_sc_info *sci,
+ 		ret = nilfs_sufile_set_segment_usage(sufile, segbuf->sb_segnum,
+ 						     live_blocks,
+ 						     sci->sc_seg_ctime);
+-		WARN_ON(ret); /* always succeed because the segusage is dirty */
++		nilfs_sufile_warn_on_error(sufile, ret);
+ 	}
+ }
+ 
+@@ -1504,28 +1504,32 @@ static void nilfs_cancel_segusage(struct list_head *logs, struct inode *sufile)
+ 	ret = nilfs_sufile_set_segment_usage(sufile, segbuf->sb_segnum,
+ 					     segbuf->sb_pseg_start -
+ 					     segbuf->sb_fseg_start, 0);
+-	WARN_ON(ret); /* always succeed because the segusage is dirty */
++	nilfs_sufile_warn_on_error(sufile, ret);
+ 
+ 	list_for_each_entry_continue(segbuf, logs, sb_list) {
+ 		ret = nilfs_sufile_set_segment_usage(sufile, segbuf->sb_segnum,
+ 						     0, 0);
+-		WARN_ON(ret); /* always succeed */
++		nilfs_sufile_warn_on_error(sufile, ret);
+ 	}
+ }
+ 
+-static void nilfs_segctor_truncate_segments(struct nilfs_sc_info *sci,
+-					    struct nilfs_segment_buffer *last,
+-					    struct inode *sufile)
++static int nilfs_segctor_truncate_segments(struct nilfs_sc_info *sci,
++					struct nilfs_segment_buffer *last,
++					struct inode *sufile)
+ {
+ 	struct nilfs_segment_buffer *segbuf = last;
+-	int ret;
++	int ret, err = 0;
+ 
+ 	list_for_each_entry_continue(segbuf, &sci->sc_segbufs, sb_list) {
+ 		sci->sc_segbuf_nblocks -= segbuf->sb_rest_blocks;
+-		ret = nilfs_sufile_free(sufile, segbuf->sb_nextnum);
+-		WARN_ON(ret);
++
++		ret = nilfs_sufile_warn_on_error(
++			sufile, nilfs_sufile_free(sufile, segbuf->sb_nextnum));
++		if (ret && err != -EROFS)
++			err = ret;
+ 	}
+ 	nilfs_truncate_logs(&sci->sc_segbufs, last);
++	return err;
+ }
+ 
+ 
+@@ -1564,7 +1568,7 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
+ 							sci->sc_freesegs,
+ 							sci->sc_nfreesegs,
+ 							NULL);
+-			WARN_ON(err); /* do not happen */
++			nilfs_sufile_warn_on_error(nilfs->ns_sufile, err);
+ 			sci->sc_stage.flags &= ~NILFS_CF_SUFREED;
+ 		}
+ 
+@@ -1576,8 +1580,8 @@ static int nilfs_segctor_collect(struct nilfs_sc_info *sci,
+ 		sci->sc_stage = prev_stage;
+ 	}
+ 	nilfs_segctor_zeropad_segsum(sci);
+-	nilfs_segctor_truncate_segments(sci, sci->sc_curseg, nilfs->ns_sufile);
+-	return 0;
++	err = nilfs_segctor_truncate_segments(sci, sci->sc_curseg,
++					nilfs->ns_sufile);
+ 
+  failed:
+ 	return err;
+@@ -1878,7 +1882,7 @@ static void nilfs_segctor_abort_construction(struct nilfs_sc_info *sci,
+ 						sci->sc_freesegs,
+ 						sci->sc_nfreesegs,
+ 						NULL);
+-		WARN_ON(ret); /* do not happen */
++		nilfs_sufile_warn_on_error(nilfs->ns_sufile, ret);
+ 	}
+ 
+ 	nilfs_destroy_logs(&logs);
+diff --git a/fs/nilfs2/sufile.h b/fs/nilfs2/sufile.h
+index cd6f28ab3521..a2e05d9584a0 100644
+--- a/fs/nilfs2/sufile.h
++++ b/fs/nilfs2/sufile.h
+@@ -10,6 +10,7 @@
+ #ifndef _NILFS_SUFILE_H
+ #define _NILFS_SUFILE_H
+ 
++#include <linux/errno.h>
+ #include <linux/fs.h>
+ #include <linux/buffer_head.h>
+ #include "mdt.h"
+@@ -54,6 +55,33 @@ int nilfs_sufile_read(struct super_block *sb, size_t susize,
+ 		      struct nilfs_inode *raw_inode, struct inode **inodep);
+ int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range);
+ 
++/**
++ * nilfs_sufile_warn_on_error - warn on unexpected sufile error
++ * @sufile: inode of segment usage file
++ * @err: status code returned by a sufile function
++ *
++ * Even if buffer heads of blocks containing segment usage entries have
++ * been dirtied in advance by calling functions such as
++ * nilfs_sufile_mark_dirty() or nilfs_sufile_{alloc,free}(), those buffers
++ * can be discarded from memory after the file system detects corruption and
++ * degrades to read-only mode, which may cause sufile operations, including
++ * cancel operations, to return errors.  nilfs_sufile_warn_on_error() is used
++ * to detect unexpected errors other than during read-only degradation.
++ *
++ * Return: 0 if @err is 0, %-EROFS if in read-only degraded mode, and %-EIO
++ * otherwise.
++ */
++#define nilfs_sufile_warn_on_error(sufile, err)				\
++	({								\
++		int _err = (err);					\
++									\
++		if (unlikely(_err))					\
++			_err = WARN_ONCE(!sb_rdonly((sufile)->i_sb),	\
++				"unexpected sufile error %d\n", _err) ? \
++				-EIO : -EROFS;				\
++		unlikely(_err);						\
++	})
++
+ /**
+  * nilfs_sufile_scrap - make a segment garbage
+  * @sufile: inode of segment usage file
+-- 
+2.43.0
+
