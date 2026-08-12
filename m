@@ -1,64 +1,65 @@
-Received: from mail-yw1-f170.google.com (mail-yw1-f170.google.com [209.85.128.170])
+Received: from mail-yw1-f180.google.com (mail-yw1-f180.google.com [209.85.128.180])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 66AA140BCDB
-	for <linux-nilfs@vger.kernel.org>; Wed, 12 Aug 2026 22:12:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1739734B43F
+	for <linux-nilfs@vger.kernel.org>; Wed, 12 Aug 2026 22:12:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786572756; cv=none; b=Ck7WN+z/+Q9HKYe1qZbCPtW+T/w5GJgE5tlQHBmcTXhUTJsodgL2wsnE28I3p2lQmFK1M9ljm6HPxytYo3SZ8lE/HqHjX0FphLgAHYY9SbNiRyscFIEBjHwXix2kpdZz2gsLojZ06RBJEjvv4qvSH2qsQdByiflYU81fdj+Xegs=
+	t=1786572767; cv=none; b=gztxnQ2QfwqlU19DM4ZT/tHlqcXU0/sIWHDkrnxl/b2xWedTPBhHuWMXqdNYwE8Q6neo/LoPf1pE3HxLFkcStb9S2g5Zs/gA3MfZFgWhAM2tzw3m5kUX0XpHSSkppjQyDN24P0aEINwmok7vkQWXSIs1j1t3X4wCXBgXBL4pmzI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786572756; c=relaxed/simple;
-	bh=59RWqJsio1nPj2W1r+lB1kt+zvnkFT4OfxTo1o6d3I0=;
+	s=arc-20240116; t=1786572767; c=relaxed/simple;
+	bh=Is376u66NJUVEICdZZjhQwQBbazkaX1ZEK94fGGowVQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=LHZgweudOJhdaVhOZkYpcEic2WPdneQ4dlMvW1Zc5QXtniJPvWUtXCy4VlVPdfb0ADOtXgxXZxeBcc3i87+S8LKSWmLIeuxpvncAf8SqjMOcoGypTSHtTHLHcClqnW9mouX6UUhhdMsREsXygNmFo8pQuFhRMMAtvD6mStCROBE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=k0B5U+o5; arc=none smtp.client-ip=209.85.128.170
+	 MIME-Version; b=oRDqt2TZ3Qft1V0uNvqNzQ77h3yWxoN/UoB+yJD4byS8j1fqDfA5knrUtfPPy+PwmWEluzPm6IsJ/VCycmlzB8Z5FU5UVS6EvZEw8j2UKNwIQIdRqJtuA2NHZLXNPod5y4szSk0aUKif+4vR3U6CI2tPKmIpvuVTMfrEJPN+N3c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=qFcl04QA; arc=none smtp.client-ip=209.85.128.180
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="k0B5U+o5"
-Received: by mail-yw1-f170.google.com with SMTP id 00721157ae682-81e9f7491ffso21656437b3.0
-        for <linux-nilfs@vger.kernel.org>; Wed, 12 Aug 2026 15:12:35 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="qFcl04QA"
+Received: by mail-yw1-f180.google.com with SMTP id 00721157ae682-82011c59e66so24695677b3.0
+        for <linux-nilfs@vger.kernel.org>; Wed, 12 Aug 2026 15:12:45 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1786572754; x=1787177554; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1786572765; x=1787177565; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=vx6j+PNuXPtNCAhHvs/xK91ts4OMPwcyyq+VucjW0hU=;
-        b=k0B5U+o5lwdpVggGTNU5DHiXEMxurb0YNTu1nR3K/0MuNguaLjB12MAJ43ViEyGxJ1
-         t84Rop+qGV7jQYAeZFqV1WZeEZ/fjHjBcTACnZFn18JiP4dBQMRkTcGsP16g40iik8W1
-         4b7rM1rx6P7s8H0WCUGRm12BMU6rW38cH7fgHn65jxEwiLtF6n7BIDHvKAV6ZIXSvNKY
-         Ol4fYj+rwSkfhz6Q79fL81bmu2X2XeOssQ3X2/L+Ze6anlo+Nu2xTtruKtQzK3lIBFYv
-         SKusfk8uVxE+IApl7neRuZCT38sdHfFnO26t8GVNRxwMtHasekpbR2sKvpc4oggVX56a
-         4vsw==
+        bh=wEHrc7cVeGQDhtOs+7YjJxGekyx66Vw8oTm0JbZT1ss=;
+        b=qFcl04QAb15RjFeJ1JsSVShTZYcsRZXo+W5CJ2s34/c1FPVOrWmRwC+Ko91tYcu+cA
+         gcU7jjNPqYP2IBF+h4KRcnm8FqES5XlyAsmi189adsSkdePcXfSdRsC3C4WTLaL6grW6
+         +1J/M4NmIkE2xtorx4pzp/pSTFG87kWV4OZNtCSHxHy72lHHzkk5ny3SUzz/mTfeJyb2
+         9Egx/1cXcgQdo5v4FyB65kHria5Tu25aSaOm1BGGLBqGZA80JNEP1O7MIek7QRcpQdnn
+         xn6sV4dthroyz7GiC5iClASxdjfLfNJw3MSHxu3L4wjWA46pq+pSviNUwg3epVxQqSvJ
+         0KIA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1786572754; x=1787177554;
+        d=1e100.net; s=20251104; t=1786572765; x=1787177565;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=vx6j+PNuXPtNCAhHvs/xK91ts4OMPwcyyq+VucjW0hU=;
-        b=ihqeFvTZoikPfjVBhFNUbvRmlgFRM/jw2Gc/B7QJ7Tm2hhUiYWfF73YK8eQFkkdtXk
-         N3RngGNea03F5qCSQu6ZwJFHGvzahrNzPojenKvEV2xP4zndwfwQ6rD9PtZQIu4ubYBq
-         VhZUyOA1a0axaZT0+jcI7+8XboPXXTAE75aDLH4tXfW3Bc0X1aTjcKerh2rzXSjQtXVQ
-         j4ZSJs0EUenluAqS8j73urARHDHI17hZw8mz6qwKeqppgkhJeY5AmmJSYctF9oY3KtFc
-         LQkCObm+9ENZPb+RB4Lg5yHMXiWtgn2Mh6ssZtRzkm1xBW4mdZhm44Y0uf8N2mjLE8rT
-         +Rwg==
-X-Gm-Message-State: AOJu0YyONmWbBCe4HbBrB7Q32vBGAuvt6AmgTLZ9rG5EHdgQyDkd/EVl
-	3JoXs3OzQyK708xVdkS+B1sEXd22c7DSXz/yHjs0L8nx5Crn/L4Hlk6F1UtAB2tbBFo=
-X-Gm-Gg: AR+sD11zct+poyj/e/7SztGCedP3PZXA/uoSa2gTt4ChLZKFm9s+SWzWPsWkObE9R2C
-	xEUWbEoYHZsllurTDTwd0tsh23chTZwocUjviMoegzppwv+22FWZH0nGZCKNeI+lb7vOPrwioBU
-	tXlt0o209Kz8A/b6E/eRoBPVNkfor7LSlh3fYs7/fgvlf1aPGW81torybc5rBsvqnlEt081LNRj
-	wukERTF812diXlhOfAQ/QTa0jplRam4dW7HbbluLhbDZYyGiRod8IQAlCLDVt7Pf7tzuwbJtzQt
-	jVEW17ybbUeF9wpqeEiyWX+Vu/AIB4r9NZPzT6YYwah1XKcXQKqCqLfmiAnzRUvsRHnTv4l8XSp
-	994CRvHCPD0jSJD7Fe/+9Hrgt4jj1y7AUyJmqeDR2ISe1NS6a1zovolN5VsLq/m48FByNYceOmP
-	SzL6hUcfCq+O9nh9/zEIa+mmzn0KcejXmG2Ilf3QyYmSZgr5k+ArucTTWKbqNVNRBkwMcVOHqF/
-	SqhcAM0OW86+0aIaVkTFm/9pySxVWu4m9DP9OTJpvzZEhdy+6a/kZX1zW4H8JHilvcCrvqVCkap
-	DSmnuuTheQP9Xa329A==
-X-Received: by 2002:a05:690c:e145:b0:81e:eaaa:535b with SMTP id 00721157ae682-834772d1cc5mr3961987b3.35.1786572754081;
-        Wed, 12 Aug 2026 15:12:34 -0700 (PDT)
+        bh=wEHrc7cVeGQDhtOs+7YjJxGekyx66Vw8oTm0JbZT1ss=;
+        b=b3BR30OYE19b3vPA9kKol1tzqs3pRgJe5aZRW+exSkqWW/PVbbxXz87JFM+exLSZuT
+         g1+d92yKs8BfWAF/czdkGQhwxTSY0YWO3rGhoyAmC0Um7VRhmK/1+bdKQfhJm7BcMwWg
+         LMy2ijzHI2DlmE98PRzVuHbL4C2WuDO+SxKPuieFkPOJmGoTp1uMrPlHjIuvYMyvRT+m
+         wMcze+mwVk37HtP8tpBSJ+erJvB9AMigm4yX3TAd8UVafII0pKq+b8ruq6vzhnHLyTsN
+         INqsiJl55Zp7P/9uOhVVpCMB1r9ciTLeXtYypUmQ37VKWphSoLPpZqih6lWotL7zB03H
+         TjIg==
+X-Gm-Message-State: AOJu0Yy1OeJZ0TMMz9/w7Y6Spn1EBaYNsVmVYGt4R7PpBdpMin+rFXZo
+	XnYsuhKH0YQzbAa8//5ktPp2z+xDMO/JE13P21wXlnft9O5DIqIUxkdqhOi/tnSd+sg/b1y4YuQ
+	w6HKvhiGgZg==
+X-Gm-Gg: AR+sD10vU3SfX3s1wl9O1Zk8TIKYHhldlI+2WLUT+IgPJZ0SfA+hI3M7Tt5OWeL0b9V
+	VPxdrvfRd0sQMOZ5N4NMmFmVovMfxJKWLDpyRJmSDJTKjLV2lFuBUJW/IMSTYATnvMovQbcbOIl
+	MWhUJ1ajzizn3MjDMp/kCc20dAwpW4aQZpaVJ3+48Mhn59SNk5OGSGAYvSV9SE0HmwIkQb6Jpmw
+	XYTbNkHwnTVvdT/8csYvVSR7gQuCIUV+2jcx5J+SotagTpNymDPatCTviapbCSyxYIIXBp0Kwww
+	qjaPUFjzR6cM3GOEDyzW/lTRRSwWOD4u3pHb3ds5xzR91g8DIOxySgS9NNvZnYlqgT9hsf5c239
+	YcatKSgKNyztTfAjxaBtxp813Vw6Y7RnfTUydGXtpE1qXrSMsah3gro9e2enpl34VN2KTGgCdJK
+	RSzsmosTChAIOYMsj3UMpnkFFcFTWjCZuaa5ZsywVVtdWEpw/2aXy7BFcvVzsze6Kssd4TVJBGy
+	8rtvjBidJEZE3MqkrplEyoYjJRg3SGx4tl6gt/qHwYyhs67cBq0k8K+aSZ9K4yxEVa7EgoTPV72
+	KxZbzFhuvZyPzmmzuA==
+X-Received: by 2002:a05:690c:c510:b0:81f:4247:de16 with SMTP id 00721157ae682-83477c87641mr5117327b3.24.1786572764785;
+        Wed, 12 Aug 2026 15:12:44 -0700 (PDT)
 Received: from pop-os.attlocal.net ([2600:1700:6476:1430:8bd1:139b:3c08:1f5b])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8346e1a08b7sm2365367b3.37.2026.08.12.15.12.32
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8346e1a08b7sm2365367b3.37.2026.08.12.15.12.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 12 Aug 2026 15:12:33 -0700 (PDT)
+        Wed, 12 Aug 2026 15:12:44 -0700 (PDT)
 From: Viacheslav Dubeyko <slava@dubeyko.com>
 To: konishi.ryusuke@gmail.com,
 	hch@lst.de,
@@ -67,9 +68,9 @@ Cc: linux-nilfs@vger.kernel.org,
 	linux-fsdevel@vger.kernel.org,
 	lilinmao@kylinos.cn,
 	Viacheslav Dubeyko <slava@dubeyko.com>
-Subject: [PATCH v3 1/2] nilfs2: add iomap operations for direct I/O
-Date: Wed, 12 Aug 2026 15:11:53 -0700
-Message-ID: <20260812221154.1119137-2-slava@dubeyko.com>
+Subject: [PATCH v3 2/2] nilfs2: switch O_DIRECT to iomap based operations
+Date: Wed, 12 Aug 2026 15:11:54 -0700
+Message-ID: <20260812221154.1119137-3-slava@dubeyko.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20260812221154.1119137-1-slava@dubeyko.com>
 References: <20260812221154.1119137-1-slava@dubeyko.com>
@@ -81,141 +82,156 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The patch adds iomap.h with declaration of iomaps
-operations and iomap.c with implementation of
-nilfs_iomap_begin(). This method is based on calling
-the nilfs_bmap_lookup_contig() method. It resolves
-the file's block-mapping to find the sequence of
-physically-contiguous blocks starting at starting
-block. Offsets at or beyond i_size are reported
-as a hole. For offsets within i_size, the requested
-length is first clamped to the block-aligned end of the file.
-Both the hole and mapped cases then report iomap->offset
-aligned to the containing block (blkoff << i_blkbits)
-rather than the raw request offset.
+The patch eliminates blockdev_direct_IO() from
+nilfs2 entirely:
+
+ - nilfs_file_open() now sets FMODE_CAN_ODIRECT explicitly, since
+   permission to open the file O_DIRECT was previously implied by
+   aops->direct_IO being non-NULL.
+ - nilfs_file_read_iter() dispatches O_DIRECT reads to iomap_dio_rw()
+   using nilfs_iomap_ops; everything else still goes through
+   generic_file_read_iter() as before.
+ - nilfs_file_write_iter() strips IOCB_DIRECT and falls through to
+   generic_file_write_iter()'s ordinary buffered path. NILFS2 cannot
+   perform true direct I/O writes: new blocks are delay-allocated and
+   only given a real disk address by the segment constructor, which
+   works on buffer_head lists, not iomap. This reproduces today's
+   actual behavior: the old nilfs_direct_IO() already just returned 0
+   for WRITE.
+ - nilfs_direct_IO() and the .direct_IO callback on nilfs_aops are
+   removed.
+ - drop the unnecessary "select LEGACY_DIRECT_IO" from Kconfig
+   in favor of "select FS_IOMAP".
 
 Signed-off-by: Viacheslav Dubeyko <slava@dubeyko.com>
-Co-developed-by: Linmao Li <lilinmao@kylinos.cn>
-Signed-off-by: Linmao Li <lilinmao@kylinos.cn>
 cc: Christoph Hellwig <hch@lst.de>
 cc: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 cc: linux-nilfs@vger.kernel.org
 cc: linux-fsdevel@vger.kernel.org
 ---
- fs/nilfs2/Makefile |  2 +-
- fs/nilfs2/iomap.c  | 72 ++++++++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/iomap.h  | 13 +++++++++
- 3 files changed, 86 insertions(+), 1 deletion(-)
- create mode 100644 fs/nilfs2/iomap.c
- create mode 100644 fs/nilfs2/iomap.h
+ fs/nilfs2/Kconfig |  2 +-
+ fs/nilfs2/file.c  | 42 +++++++++++++++++++++++++++++++++++++++---
+ fs/nilfs2/inode.c | 13 -------------
+ 3 files changed, 40 insertions(+), 17 deletions(-)
 
-diff --git a/fs/nilfs2/Makefile b/fs/nilfs2/Makefile
-index 43b60b8a4d07..516e6b85a03c 100644
---- a/fs/nilfs2/Makefile
-+++ b/fs/nilfs2/Makefile
-@@ -3,4 +3,4 @@ obj-$(CONFIG_NILFS2_FS) += nilfs2.o
- nilfs2-y := inode.o file.o dir.o super.o namei.o page.o mdt.o \
- 	btnode.o bmap.o btree.o direct.o dat.o recovery.o \
- 	the_nilfs.o segbuf.o segment.o cpfile.o sufile.o \
--	ifile.o alloc.o gcinode.o ioctl.o sysfs.o
-+	ifile.o alloc.o gcinode.o ioctl.o sysfs.o iomap.o
-diff --git a/fs/nilfs2/iomap.c b/fs/nilfs2/iomap.c
-new file mode 100644
-index 000000000000..e130ed63abd9
---- /dev/null
-+++ b/fs/nilfs2/iomap.c
-@@ -0,0 +1,72 @@
-+// SPDX-License-Identifier: GPL-2.0+
-+/*
-+ * NILFS iomap support implementation.
-+ *
-+ * Written by Viacheslav Dubeyko.
-+ */
-+
+diff --git a/fs/nilfs2/Kconfig b/fs/nilfs2/Kconfig
+index 7dae168e346e..0a5ace60e6ab 100644
+--- a/fs/nilfs2/Kconfig
++++ b/fs/nilfs2/Kconfig
+@@ -3,7 +3,7 @@ config NILFS2_FS
+ 	tristate "NILFS2 file system support"
+ 	select BUFFER_HEAD
+ 	select CRC32
+-	select LEGACY_DIRECT_IO
++	select FS_IOMAP
+ 	help
+ 	  NILFS2 is a log-structured file system (LFS) supporting continuous
+ 	  snapshotting.  In addition to versioning capability of the entire
+diff --git a/fs/nilfs2/file.c b/fs/nilfs2/file.c
+index f93b68c4877c..30dd8e5ebe5b 100644
+--- a/fs/nilfs2/file.c
++++ b/fs/nilfs2/file.c
+@@ -10,9 +10,12 @@
+ #include <linux/fs.h>
+ #include <linux/filelock.h>
+ #include <linux/mm.h>
++#include <linux/uio.h>
 +#include <linux/iomap.h>
-+#include <linux/pagemap.h>
-+#include "nilfs.h"
-+#include "mdt.h"
+ #include <linux/writeback.h>
+ #include "nilfs.h"
+ #include "segment.h"
 +#include "iomap.h"
-+
-+static int nilfs_iomap_begin(struct inode *inode, loff_t offset,
-+			     loff_t length, unsigned int flags,
-+			     struct iomap *iomap, struct iomap *srcmap)
+ 
+ int nilfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+ {
+@@ -133,20 +136,53 @@ static int nilfs_file_mmap_prepare(struct vm_area_desc *desc)
+ 	return 0;
+ }
+ 
++static int nilfs_file_open(struct inode *inode, struct file *file)
 +{
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
-+	struct nilfs_inode_info *ii = NILFS_I(inode);
-+	sector_t blkoff = offset >> inode->i_blkbits;
-+	loff_t iomap_offset = (loff_t)blkoff << inode->i_blkbits;
-+	unsigned int maxblocks;
-+	__u64 blknum = 0;
-+	int ret;
-+
-+	/* Completely beyond EOF. Treat as hole */
-+	if (i_size_read(inode) <= offset) {
-+		iomap->type = IOMAP_HOLE;
-+		iomap->addr = IOMAP_NULL_ADDR;
-+		iomap->offset = offset;
-+		iomap->length = length;
-+		return 0;
-+	}
-+
-+	/* Clamp length if the requested range goes beyond i_size */
-+	if (offset + length > i_size_read(inode)) {
-+		loff_t i_size = i_size_read(inode);
-+		unsigned int blocksize = i_blocksize(inode);
-+
-+		length = round_up(i_size, blocksize) - offset;
-+	}
-+
-+	maxblocks = min_t(loff_t, length >> inode->i_blkbits, INT_MAX);
-+	if (maxblocks == 0)
-+		maxblocks = 1;
-+
-+	down_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
-+	ret = nilfs_bmap_lookup_contig(ii->i_bmap, blkoff, &blknum, maxblocks);
-+	up_read(&NILFS_MDT(nilfs->ns_dat)->mi_sem);
-+
-+	if (ret == -ENOENT) {
-+		iomap->type = IOMAP_HOLE;
-+		iomap->addr = IOMAP_NULL_ADDR;
-+		iomap->offset = iomap_offset;
-+		iomap->length = i_blocksize(inode);
-+		return 0;
-+	} else if (ret < 0)
-+		return ret;
-+
-+	iomap->bdev = inode->i_sb->s_bdev;
-+	iomap->offset = iomap_offset;
-+	iomap->length = (loff_t)ret << inode->i_blkbits;
-+	iomap->addr = (loff_t)blknum << inode->i_blkbits;
-+	iomap->type = IOMAP_MAPPED;
-+	iomap->flags = IOMAP_F_MERGED;
-+
-+	return 0;
++	file->f_mode |= FMODE_CAN_ODIRECT;
++	return generic_file_open(inode, file);
 +}
 +
-+const struct iomap_ops nilfs_iomap_ops = {
-+	.iomap_begin = nilfs_iomap_begin,
-+};
-diff --git a/fs/nilfs2/iomap.h b/fs/nilfs2/iomap.h
-new file mode 100644
-index 000000000000..adef3e22346d
---- /dev/null
-+++ b/fs/nilfs2/iomap.h
-@@ -0,0 +1,13 @@
-+/* SPDX-License-Identifier: GPL-2.0+ */
-+/*
-+ * NILFS iomap support declarations.
-+ *
-+ * Written by Viacheslav Dubeyko.
-+ */
++static ssize_t nilfs_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
++{
++	struct inode *inode = file_inode(iocb->ki_filp);
++	ssize_t ret;
 +
-+#ifndef _NILFS_IOMAP_H
-+#define _NILFS_IOMAP_H
++	if (iocb->ki_flags & IOCB_DIRECT) {
++		inode_lock_shared(inode);
++		ret = iomap_dio_rw(iocb, to, &nilfs_iomap_ops,
++				   NULL, 0, NULL, 0);
++		inode_unlock_shared(inode);
++	} else
++		ret = generic_file_read_iter(iocb, to);
 +
-+extern const struct iomap_ops nilfs_iomap_ops;
++	return ret;
++}
 +
-+#endif /* _NILFS_IOMAP_H */
++static ssize_t nilfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
++{
++	/*
++	 * NILFS2 lacks direct I/O write support: fall back to buffered writes.
++	 */
++	if (iocb->ki_flags & IOCB_DIRECT)
++		iocb->ki_flags &= ~IOCB_DIRECT;
++
++	return generic_file_write_iter(iocb, from);
++}
++
+ /*
+  * We have mostly NULL's here: the current defaults are ok for
+  * the nilfs filesystem.
+  */
+ const struct file_operations nilfs_file_operations = {
+ 	.llseek		= generic_file_llseek,
+-	.read_iter	= generic_file_read_iter,
+-	.write_iter	= generic_file_write_iter,
++	.read_iter	= nilfs_file_read_iter,
++	.write_iter	= nilfs_file_write_iter,
+ 	.unlocked_ioctl	= nilfs_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= nilfs_compat_ioctl,
+ #endif	/* CONFIG_COMPAT */
+ 	.mmap_prepare	= nilfs_file_mmap_prepare,
+-	.open		= generic_file_open,
++	.open		= nilfs_file_open,
+ 	/* .release	= nilfs_release_file, */
+ 	.fsync		= nilfs_sync_file,
+ 	.splice_read	= filemap_splice_read,
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 34e6096069ad..cbe9658ae065 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -257,18 +257,6 @@ static int nilfs_write_end(const struct kiocb *iocb,
+ 	return err ? : copied;
+ }
+ 
+-static ssize_t
+-nilfs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+-{
+-	struct inode *inode = file_inode(iocb->ki_filp);
+-
+-	if (iov_iter_rw(iter) == WRITE)
+-		return 0;
+-
+-	/* Needs synchronization with the cleaner */
+-	return blockdev_direct_IO(iocb, inode, iter, nilfs_get_block);
+-}
+-
+ const struct address_space_operations nilfs_aops = {
+ 	.read_folio		= nilfs_read_folio,
+ 	.writepages		= nilfs_writepages,
+@@ -277,7 +265,6 @@ const struct address_space_operations nilfs_aops = {
+ 	.write_begin		= nilfs_write_begin,
+ 	.write_end		= nilfs_write_end,
+ 	.invalidate_folio	= block_invalidate_folio,
+-	.direct_IO		= nilfs_direct_IO,
+ 	.migrate_folio		= buffer_migrate_folio_norefs,
+ 	.is_partially_uptodate  = block_is_partially_uptodate,
+ };
 -- 
 2.43.0
 
