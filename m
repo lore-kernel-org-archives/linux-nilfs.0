@@ -1,190 +1,154 @@
-Received: from mail-yw1-f175.google.com (mail-yw1-f175.google.com [209.85.128.175])
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5E29503BE7
-	for <linux-nilfs@vger.kernel.org>; Thu,  3 Sep 2026 20:30:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD82E32B133
+	for <linux-nilfs@vger.kernel.org>; Sat,  5 Sep 2026 04:49:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788467432; cv=none; b=SO0A2HC0lz6xTMdapnDXOQ3x3Am98aJOEiVdvoS/Dtyze/UOwaV2YKJAd6hK1JA2KJ6Pqoq4B/0YCOXBbsKaZ2V/H/m5E4zaCTfaSYA20h7Cv7gBUWIC986Y+bF6gzaczdnRAG/mfZYxw0bmnfyPyUJIZGeQodtwRl5vR/Ebmlw=
+	t=1788583761; cv=none; b=TBVjXTBuIp0j/JzRvd539aKUT1fjGdZ7GIp8SJiY3AO+tPwFyKnP0I035KkjoK8h86FKtf8bX987cHxddRPY/vLT4DhxFrlZ9bfMjMRcuFtz+nToOEyGLA8OYDIxU6vkoIPxsrwdK90M5s2jEi41eV4lf53yQO/BdddG+DJFfkk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788467432; c=relaxed/simple;
-	bh=2E9w1aqzF66RZURnTfgMHXRSpmJeluzd3kwgBHEa5DY=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=dYsRPjPgKTusRLpH2b1IFwOcYV5Q3Ar9ObK9jGVVtMEDA1Ey+WBRvvJLMiOT52WyhRm6KRl1li+8YnkyYnSwuV2xST7tRZPld1Wcb5iW2fn5RV95dvCtltKvvauDlCROSSz8cfLBv3RkxA3BKvI+7zBxJl93dgT3OqfbX7FW3y8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=jLaL570o; arc=none smtp.client-ip=209.85.128.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
+	s=arc-20240116; t=1788583761; c=relaxed/simple;
+	bh=Jj9kUn5qhvVJUdifRsunS/tN56R4uuxK9bdK99KID7M=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=iOIbgoTWFyX018j0Ku3vb0idaP09DMFhVNZh8QdDiN5udJ4LlH1tMCSJofnR9Y6+zB440JUTz4+GUx3jjJtMFN8+EdTKTL6J/YUf4uktxoCNmvLjF+MF8Bz//ypzmcq921o/UMTN8qcdOto2vGEA/OURD5UF0vYkHoA6+fuR1ww=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CmAu3dHT; arc=none smtp.client-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="jLaL570o"
-Received: by mail-yw1-f175.google.com with SMTP id 00721157ae682-855de2d0d4dso3548397b3.0
-        for <linux-nilfs@vger.kernel.org>; Thu, 03 Sep 2026 13:30:19 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CmAu3dHT"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-482dd6ee390so1833928f8f.3
+        for <linux-nilfs@vger.kernel.org>; Fri, 04 Sep 2026 21:49:19 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1788467415; x=1789072215; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=rwkmZsQHsgzSLObYQT2/MFZyLzJswR6lF4jrfX1emmg=;
-        b=jLaL570o9mEf3zE8vj6f8PZS4J1Hs0T79g+vlPM5W/9K580ot2iABJb6JcmMd017Zf
-         OvfhsCWPUvN6I7R+QVjT9XkY8v/FP9lUrLJrza9JcwXA/dx7jV6q4vKN81fLZM1cTGq2
-         ANlZQocDyqHY62zVsmV9v82MQ8/ojjWTa3qPDK+TvDmFJzj1G6R55cyaLq/OxMyE7YxS
-         QgYPnHW0AjSN4AXrXYtn1Sl7J8mlfBIavf3SIEbTOogkj5FjaurjF0SeKpDvG0cIgZGF
-         w+bSSYEw3VuIfK9aZdVv6/eNi5xBIU5H7CKGzYsqfX4YSsGdgmnvcl3ckKQfb/PEx3YE
-         CKqw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788467415; x=1789072215;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+        d=gmail.com; s=20251104; t=1788583758; x=1789188558; darn=vger.kernel.org;
+        h=cc:to:message-id:content-transfer-encoding:content-type
+         :mime-version:subject:date:from:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=rwkmZsQHsgzSLObYQT2/MFZyLzJswR6lF4jrfX1emmg=;
-        b=lx1PbMMXX3/DhLZVmM45+vHVHEiIO7/Zg+7K9QY6VCCAYuy7Lt340+VBpRjhY2utSg
-         yxJwnS3BkoP70DoWzwB6c2iOeLj8jxUM/ZwEwGy3KT29eVcQsgVFTIFCdJSlGr67H915
-         jdYAa/IkEY5iv5gZ9JqsBJIENs3GdClh0nKb8kB3x2NPATy8XqyCVd3tTAeMXYKF2+I0
-         L6Usazp62rY6O0KzgeAwp8twRyp7UoypTb38YpEJENdX38H1nKGEEPCqC1TzgtRONHtg
-         2vi1pHzCygxPVVuBpHtge1aVz0m1n3N2L+2hj5W6oOx/rmlBNPrIbKmszJLnOhsP7X6e
-         dDAg==
-X-Gm-Message-State: AFuF++lnPFc0+3Qz9S3OaYJRVPFhhxOxudYVIOochfpdHbTvZkdHkGqV
-	Yc6WTQE4Wdp1mfxgN5ZIlep8wcdJX4BmfkvplcytBNgZQtAyrQexgSm+s3LhVnAxbG0=
-X-Gm-Gg: AYBFou1RGEYcUsn4EgF7fmQO+xFFHmzY9NkHAPv+yWvPTfRYChiYZBYqRStxEtEHh9W
-	3o+hZXeUhPEW7tJiuUhJEzKu4Kw1ZCoREaKAv4CIM6Nx2HpDCLnDOU36yybC9NKbJN3du2VSCaJ
-	ds23o6Q3q7+BytK1VdOwcBgoH/8CwWR7zGpHITp6OPvKxECumHRWYNqYXc19qcZpExy/21TUk4x
-	D4uBc/WR5X8/tA1tMgibVJOYZ7lpBcuhFn4XhFJfX5XlwrHuRh60oIAUq6nBCb8pP4eR1myC3cG
-	bs1BevW7mokhCQrJ757u5YDFNDpiNhhSXSMX5AjsFwbFpy8y8wc1YBpSt1lqKv6Fj7q1MbVNeCf
-	vo6Xt74YrXbtVNWJslPGhfSgW2jBENNm5gHCIvog04GIoJwNAcXuQpSTKyTwjDXgJLKFEV4fyrK
-	GbC0DF+6JYaPCrXJrnG8x2nWLoMU93Gccvhsz1JsJc0QZ0AFCwPspVElQYfcO138XvTcO5fXCeh
-	Rpro1NroahECXHcWiUTmU4F6Qv8SrQ1DWQvKHqGxjx8pnXIW1QHl/ORCZYy3XodpsUtaSMDI0Qg
-	mfrBCfXFlKE2wp2s1tgJ8x5Z+9s+GMU9tT+AWWbby3HPVNSubdNYsZ9UpQvXTgANUQ==
-X-Received: by 2002:a05:690c:4aa6:b0:80e:dc2:873b with SMTP id 00721157ae682-871a04e7ffemr214507b3.16.1788467414578;
-        Thu, 03 Sep 2026 13:30:14 -0700 (PDT)
-Received: from ?IPv6:2600:1700:6476:1430:afbb:9d16:d2da:18a9? ([2600:1700:6476:1430:afbb:9d16:d2da:18a9])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8714c1e1eacsm3714937b3.49.2026.09.03.13.30.13
+        bh=Cazmnr8+WSnK+Laj1qZm2xa964waI/P+EGpnlZ4TgYM=;
+        b=CmAu3dHTyB/ii+ZHQ1EE3t/v8s/xWfm3rWRxbBb5DaewKsWDJMQTFOiAGZGiLDSjmz
+         4VUduiDpmR9vV0grRmYC7b/UHw8IzgHwfvOASxmKT5vcLJPe5dhIuomZ/PuS44I31bHi
+         398enntDs0Oqs4q0Zw5LJs7mLUBWDTgggSoSQZTJFvI0Mf4ln2CqWbH7Sd8yUGa3qrkF
+         j4CDoq5uxuRXnyvH8i5+gQcciUPAgZ2m1xo6rLknIP9aG/bK8wTl6TYo0HsK3J55iIWH
+         KBvsF/zK13W3u6jWlPtrlJABA9OEBJbEbRmsF91zlMD1YHLwvetcXbTh/62k7vk/RTqC
+         Iegg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1788583758; x=1789188558;
+        h=cc:to:message-id:content-transfer-encoding:content-type
+         :mime-version:subject:date:from:x-gm-gg:x-gm-message-state:from:to
+         :cc:subject:date:message-id:reply-to:content-type;
+        bh=Cazmnr8+WSnK+Laj1qZm2xa964waI/P+EGpnlZ4TgYM=;
+        b=fCM60MSIX5rygxFaQwdOI34/C/mWJlOaMsI9HlO4rZETPGSeESR0hrU9e1GNq2kFw6
+         9R4/F2+tPfVAopioF3wY7GDHNqC2zzrefVrdFq0LqJK6/sefVJkOgK4uVZ55Axf4CuvD
+         UwHgBfQFtFGPL4u1xgUih52NMN2wllHg32m0IAKP0qmmv4fG+iC/739Ohs9fXBDyirGV
+         dL7QlG8PtB4Ebp2M/ejcPQ6HgHF0pTB7uRJzCxVXfvPpIjK3yk8AQppsER7kcKu/AYGb
+         yymhD2PNBKfIpL+gohgyvtD1Tk+Nd8pBdksroWQ5EbX7LqMLPl8OUa89KMpwtTDw/P3o
+         /MOA==
+X-Gm-Message-State: AFuF++kwi8m7IL4roQ+N20ZbysCtzkmWDBaKXo2pBT54fJVPkT2IiCLy
+	wWskjIzhdSEpZBHUZ4SbgDi6sUxnvgEMKrtij6AJ5zqtUiWQHbyN2Fnw
+X-Gm-Gg: AYBFou1l/GukxjbMJ/UMOEOHO4475SvIcdcjpI1TS9H9b7l11eRqopUEPevKYCsm7RN
+	9MQMiY8T3D6vM9dCBum6kQOijToMFJLxigQWd/JILB/WgbHZHbXoejKMhhlnijRicALzC4/3qj+
+	ZMSr8oLR7E57LGz1LGW9Ti4NItJUWIuwY1WU8CuT9OupgYEBab0f53wNdyszfBJ1uBfazYw71OB
+	JXrNgpb7K/u2lq+RuSvd9TE/tlrKSr6P1qsPhuIN22FAmtdUG/rwqD1KiRgyncsNjuQzyUF55J6
+	XP2+smTlOwM5uaaLVedy9aeMtbHiCJywnL0WtIn2MM2od3v01IflYwCPcF7zyAxO3b/B3DKghzO
+	hXoB9GzYK1BhwYXr7yxIOd7N2t4FVwbuWgWt0WhXaBD934GoruAN254wVymis54Gu06mC+sg4bo
+	AevszmXCZNfz4s+b9KrZ2M0MQLWCEgkLJzJ0eSzz4SF8BYdiUx3p8sBuX5OBEwsOwxF9+zsIQSr
+	6hbE7U8rHnZSBKUjRuMJAnAQK+leTm6UU0CDeJMOirGmcHIi/0x6/DMFTJHuiCoaPUu+JtJ2XO9
+	jm8AojaJjqrBueexdR9bM2p5L7How2XcudqakoOFjfZlRn9oT4kinjkdhOw2TvN9jLzsOkkUTD+
+	G4RFz7npQDZB04XCUYjSvz2y8AC6vEYN0L5gmdQQ=
+X-Received: by 2002:a05:6000:41cb:b0:484:4880:449d with SMTP id ffacd0b85a97d-4858703f685mr12931827f8f.3.1788583757828;
+        Fri, 04 Sep 2026 21:49:17 -0700 (PDT)
+Received: from [10.200.7.52] ([212.89.239.241])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48594172546sm492537f8f.15.2026.09.04.21.49.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 03 Sep 2026 13:30:14 -0700 (PDT)
-Message-ID: <cdfe97ab759d5b667b5fee9061f3e77f6c0b36ac.camel@dubeyko.com>
-Subject: Re: [PATCH] nilfs2: strengthen consistency checks in
- nilfs_direct_propagate()
-From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: linux-nilfs <linux-nilfs@vger.kernel.org>, LKML
-	 <linux-kernel@vger.kernel.org>
-Date: Thu, 03 Sep 2026 13:30:12 -0700
-In-Reply-To: <20260903172557.9446-1-konishi.ryusuke@gmail.com>
-References: <20260903172557.9446-1-konishi.ryusuke@gmail.com>
-Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 (by Flathub.org) 
+        Fri, 04 Sep 2026 21:49:17 -0700 (PDT)
+From: Joshua Crofts <joshua.crofts1@gmail.com>
+Date: Sat, 05 Sep 2026 06:48:59 +0200
+Subject: [PATCH] nilfs2: remove '#if 0' code blocks
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20260905-nilfs2-dead-code-cleanup-v1-1-348ed97b2443@gmail.com>
+X-B4-Tracking: v=1; b=H4sIAAAAAAAC/x3MQQqDMBBG4avIrB2IUzS0VxEXafJHByRKgqUg3
+ t3g8lu8d1JBVhT6NCdl/LToliq6tiG/uDSDNVSTGBnM2/ScdI1FOMAF9lsA+xUuHTt7xC/E2ld
+ nhWq+Z0T9P+txuq4b++CfcmoAAAA=
+X-Change-ID: 20260905-nilfs2-dead-code-cleanup-cefbe2773172
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, 
+ Viacheslav Dubeyko <slava@dubeyko.com>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
+ Joshua Crofts <joshua.crofts1@gmail.com>
+X-Mailer: b4 0.14.3
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1788583756; l=2031;
+ i=joshua.crofts1@gmail.com; s=20260530; h=from:subject:message-id;
+ bh=Jj9kUn5qhvVJUdifRsunS/tN56R4uuxK9bdK99KID7M=;
+ b=ggr3TRRy5Y4ktJh/EqYQmoSEzlveccNOC+M28nZ72TOgjUfw4GcxHAHr76TEtHDEBwen51Ru9
+ Mk27HEWTBVcDDu4c3x5GvZPmVTFoUXwPhahrG/j6X/PGStyebcLlnby
+X-Developer-Key: i=joshua.crofts1@gmail.com; a=ed25519;
+ pk=RTDOoVwgeL4oFdASj9U+cxJuIjXuXk73zkjnGOJKbEo=
 
-On Fri, 2026-09-04 at 02:23 +0900, Ryusuke Konishi wrote:
-> nilfs_direct_propagate() is responsible for updating the virtual
-> block
-> number associated with a dirty data block in the direct mapping.
->=20
-> It is not designed to handle intermediate node blocks.=C2=A0 Furthermore,
-> it
-> assumes that the block offset of the passed buffer head is within the
-> range of NILFS_DIRECT_KEY_MAX; otherwise, an out-of-bounds memory
-> access
-> could occur within the inode containing the bmap root.
->=20
-> While such inconsistencies stem from bugs, they can cause silent,
-> harmful side effects unless a debug kernel is used - as was the case
-> with a recent slab out-of-bounds access issue found in this function.
->=20
-> Therefore, issue a kernel warning via WARN_ON_ONCE() and return -
-> EINVAL
-> for these anomalies, allowing the bmap layer to handle the situation
-> as
-> a filesystem error.
->=20
-> Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> ---
-> Hi Viacheslav,
->=20
-> Please queue this for the next cycle.
->=20
-> While the recent out-of-bounds memory access issue in
-> nilfs_direct_propagate() has already been fixed, this adds extra
-> checks
-> to catch and gracefully handle similar potential bugs.
->=20
-> Thanks,
-> Ryusuke Konishi
->=20
-> =C2=A0fs/nilfs2/direct.c | 6 ++++++
-> =C2=A01 file changed, 6 insertions(+)
->=20
-> diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
-> index b8643d3aa2f8..64da677dc8d4 100644
-> --- a/fs/nilfs2/direct.c
-> +++ b/fs/nilfs2/direct.c
-> @@ -270,8 +270,14 @@ static int nilfs_direct_propagate(struct
-> nilfs_bmap *bmap,
-> =C2=A0	if (!NILFS_BMAP_USE_VBN(bmap))
-> =C2=A0		return 0;
-> =C2=A0
-> +	if (WARN_ON_ONCE(buffer_nilfs_node(bh)))
-> +		return -EINVAL;
-> +
-> =C2=A0	dat =3D nilfs_bmap_get_dat(bmap);
-> =C2=A0	key =3D nilfs_bmap_data_get_key(bmap, bh);
-> +	if (WARN_ON_ONCE(key > NILFS_DIRECT_KEY_MAX))
-> +		return -EINVAL;
-> +
-> =C2=A0	ptr =3D nilfs_direct_get_ptr(bmap, key);
-> =C2=A0	if (ptr =3D=3D NILFS_BMAP_INVALID_PTR)
-> =C2=A0		return -EINVAL;
+There are two instances of '#if 0' code blocks that are dead code.
+Remove these code blocks.
 
-Applied.
+Additionally, remove unnecessary brackets around a single-statement
+if per checkpatch rules.
 
-Thanks,
-Slava.
+Signed-off-by: Joshua Crofts <joshua.crofts1@gmail.com>
+---
+Stumbled upon these blocks when grepping the kernel for #if 0. Not sure
+if they are actually used for debugging; if so, I have no issues with
+the patch being dropped.
+
+Thanks!
+---
+ fs/nilfs2/inode.c | 5 -----
+ fs/nilfs2/super.c | 8 ++------
+ 2 files changed, 2 insertions(+), 11 deletions(-)
+
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 34e6096069ad..c5b0e9f272b7 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -422,11 +422,6 @@ int nilfs_read_inode_common(struct inode *inode,
+ 
+ 	inode->i_blocks = le64_to_cpu(raw_inode->i_blocks);
+ 	ii->i_flags = le32_to_cpu(raw_inode->i_flags);
+-#if 0
+-	ii->i_file_acl = le32_to_cpu(raw_inode->i_file_acl);
+-	ii->i_dir_acl = S_ISREG(inode->i_mode) ?
+-		0 : le32_to_cpu(raw_inode->i_dir_acl);
+-#endif
+ 	ii->i_dir_start_lookup = 0;
+ 	inode->i_generation = le32_to_cpu(raw_inode->i_generation);
+ 
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 893a504cb80c..89fa6faa34d2 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -824,13 +824,9 @@ static int nilfs_setup_super(struct super_block *sb, int is_mount)
+ 	max_mnt_count = le16_to_cpu(sbp[0]->s_max_mnt_count);
+ 	mnt_count = le16_to_cpu(sbp[0]->s_mnt_count);
+ 
+-	if (nilfs->ns_mount_state & NILFS_ERROR_FS) {
++	if (nilfs->ns_mount_state & NILFS_ERROR_FS)
+ 		nilfs_warn(sb, "mounting fs with errors");
+-#if 0
+-	} else if (max_mnt_count >= 0 && mnt_count >= max_mnt_count) {
+-		nilfs_warn(sb, "maximal mount count reached");
+-#endif
+-	}
++
+ 	if (!max_mnt_count)
+ 		sbp[0]->s_max_mnt_count = cpu_to_le16(NILFS_DFL_MAX_MNT_COUNT);
+ 
+
+---
+base-commit: 4d7d9486c04d917265f64c55bd23b2cc4fe7749c
+change-id: 20260905-nilfs2-dead-code-cleanup-cefbe2773172
+
+Best regards,
+-- 
+Kind regards,
+Joshua Crofts
+
