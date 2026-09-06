@@ -1,154 +1,150 @@
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
+Received: from mail-oi1-f206.google.com (mail-oi1-f206.google.com [209.85.167.206])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD82E32B133
-	for <linux-nilfs@vger.kernel.org>; Sat,  5 Sep 2026 04:49:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 610673B6C17
+	for <linux-nilfs@vger.kernel.org>; Sun,  6 Sep 2026 04:19:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.206
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788583761; cv=none; b=TBVjXTBuIp0j/JzRvd539aKUT1fjGdZ7GIp8SJiY3AO+tPwFyKnP0I035KkjoK8h86FKtf8bX987cHxddRPY/vLT4DhxFrlZ9bfMjMRcuFtz+nToOEyGLA8OYDIxU6vkoIPxsrwdK90M5s2jEi41eV4lf53yQO/BdddG+DJFfkk=
+	t=1788668374; cv=none; b=HeM+DfQtFTpgNd4U3wrYh16OLXFCYeX9nXEaUGR5qn69PmBQRMZIURy6vt0deepLDlmpCGaAOsyFu+r/3kEUVYkL+h2m4imSYR97mS/s/ytkOMQzY91uk/aqCi+0XpfWGrX7E1iu+o0NJy+o8vsstmN5N6RmpcnV15HORui5dtI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788583761; c=relaxed/simple;
-	bh=Jj9kUn5qhvVJUdifRsunS/tN56R4uuxK9bdK99KID7M=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=iOIbgoTWFyX018j0Ku3vb0idaP09DMFhVNZh8QdDiN5udJ4LlH1tMCSJofnR9Y6+zB440JUTz4+GUx3jjJtMFN8+EdTKTL6J/YUf4uktxoCNmvLjF+MF8Bz//ypzmcq921o/UMTN8qcdOto2vGEA/OURD5UF0vYkHoA6+fuR1ww=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CmAu3dHT; arc=none smtp.client-ip=209.85.221.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CmAu3dHT"
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-482dd6ee390so1833928f8f.3
-        for <linux-nilfs@vger.kernel.org>; Fri, 04 Sep 2026 21:49:19 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1788583758; x=1789188558; darn=vger.kernel.org;
-        h=cc:to:message-id:content-transfer-encoding:content-type
-         :mime-version:subject:date:from:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=Cazmnr8+WSnK+Laj1qZm2xa964waI/P+EGpnlZ4TgYM=;
-        b=CmAu3dHTyB/ii+ZHQ1EE3t/v8s/xWfm3rWRxbBb5DaewKsWDJMQTFOiAGZGiLDSjmz
-         4VUduiDpmR9vV0grRmYC7b/UHw8IzgHwfvOASxmKT5vcLJPe5dhIuomZ/PuS44I31bHi
-         398enntDs0Oqs4q0Zw5LJs7mLUBWDTgggSoSQZTJFvI0Mf4ln2CqWbH7Sd8yUGa3qrkF
-         j4CDoq5uxuRXnyvH8i5+gQcciUPAgZ2m1xo6rLknIP9aG/bK8wTl6TYo0HsK3J55iIWH
-         KBvsF/zK13W3u6jWlPtrlJABA9OEBJbEbRmsF91zlMD1YHLwvetcXbTh/62k7vk/RTqC
-         Iegg==
+	s=arc-20240116; t=1788668374; c=relaxed/simple;
+	bh=PGPzWHwAirtV0I+Q8QKmVU0Rq2BRThx0qhC8Ybjwf/U=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=lMaNsXWi+6m+FvVa99yOsemf0IOBHoW4+BYm9pfqyduvrx0hS2U+jJpvoWSxUruJOMVq9xKuER76lG/7FEWto51tZn0JrSrnNFNzLnBuq6GU1IcLc7Eb3Ieqsdg84CUyE+kSmCrROAKiYdZbdOCU1k0+MRwvg+TIF0QgcDPUrbA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.167.206
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oi1-f206.google.com with SMTP id 5614622812f47-4ab260600easo4167022b6e.1
+        for <linux-nilfs@vger.kernel.org>; Sat, 05 Sep 2026 21:19:32 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788583758; x=1789188558;
-        h=cc:to:message-id:content-transfer-encoding:content-type
-         :mime-version:subject:date:from:x-gm-gg:x-gm-message-state:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=Cazmnr8+WSnK+Laj1qZm2xa964waI/P+EGpnlZ4TgYM=;
-        b=fCM60MSIX5rygxFaQwdOI34/C/mWJlOaMsI9HlO4rZETPGSeESR0hrU9e1GNq2kFw6
-         9R4/F2+tPfVAopioF3wY7GDHNqC2zzrefVrdFq0LqJK6/sefVJkOgK4uVZ55Axf4CuvD
-         UwHgBfQFtFGPL4u1xgUih52NMN2wllHg32m0IAKP0qmmv4fG+iC/739Ohs9fXBDyirGV
-         dL7QlG8PtB4Ebp2M/ejcPQ6HgHF0pTB7uRJzCxVXfvPpIjK3yk8AQppsER7kcKu/AYGb
-         yymhD2PNBKfIpL+gohgyvtD1Tk+Nd8pBdksroWQ5EbX7LqMLPl8OUa89KMpwtTDw/P3o
-         /MOA==
-X-Gm-Message-State: AFuF++kwi8m7IL4roQ+N20ZbysCtzkmWDBaKXo2pBT54fJVPkT2IiCLy
-	wWskjIzhdSEpZBHUZ4SbgDi6sUxnvgEMKrtij6AJ5zqtUiWQHbyN2Fnw
-X-Gm-Gg: AYBFou1l/GukxjbMJ/UMOEOHO4475SvIcdcjpI1TS9H9b7l11eRqopUEPevKYCsm7RN
-	9MQMiY8T3D6vM9dCBum6kQOijToMFJLxigQWd/JILB/WgbHZHbXoejKMhhlnijRicALzC4/3qj+
-	ZMSr8oLR7E57LGz1LGW9Ti4NItJUWIuwY1WU8CuT9OupgYEBab0f53wNdyszfBJ1uBfazYw71OB
-	JXrNgpb7K/u2lq+RuSvd9TE/tlrKSr6P1qsPhuIN22FAmtdUG/rwqD1KiRgyncsNjuQzyUF55J6
-	XP2+smTlOwM5uaaLVedy9aeMtbHiCJywnL0WtIn2MM2od3v01IflYwCPcF7zyAxO3b/B3DKghzO
-	hXoB9GzYK1BhwYXr7yxIOd7N2t4FVwbuWgWt0WhXaBD934GoruAN254wVymis54Gu06mC+sg4bo
-	AevszmXCZNfz4s+b9KrZ2M0MQLWCEgkLJzJ0eSzz4SF8BYdiUx3p8sBuX5OBEwsOwxF9+zsIQSr
-	6hbE7U8rHnZSBKUjRuMJAnAQK+leTm6UU0CDeJMOirGmcHIi/0x6/DMFTJHuiCoaPUu+JtJ2XO9
-	jm8AojaJjqrBueexdR9bM2p5L7How2XcudqakoOFjfZlRn9oT4kinjkdhOw2TvN9jLzsOkkUTD+
-	G4RFz7npQDZB04XCUYjSvz2y8AC6vEYN0L5gmdQQ=
-X-Received: by 2002:a05:6000:41cb:b0:484:4880:449d with SMTP id ffacd0b85a97d-4858703f685mr12931827f8f.3.1788583757828;
-        Fri, 04 Sep 2026 21:49:17 -0700 (PDT)
-Received: from [10.200.7.52] ([212.89.239.241])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48594172546sm492537f8f.15.2026.09.04.21.49.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 04 Sep 2026 21:49:17 -0700 (PDT)
-From: Joshua Crofts <joshua.crofts1@gmail.com>
-Date: Sat, 05 Sep 2026 06:48:59 +0200
-Subject: [PATCH] nilfs2: remove '#if 0' code blocks
+        d=1e100.net; s=20251104; t=1788668371; x=1789273171;
+        h=content-type:to:from:subject:message-id:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=WJYM/ngiHGbwrinobd7mC8mmqG7Yhx352LAc7Qn4uMI=;
+        b=R988GLPBryMdHve3hRbC1+nZUwrYDAtr41WIzOOh9vYV/7qd5xa4KrTwMwdg9GquOF
+         1NYzR1tdiqBx3V76fceffob42h4zi4FAV1heUAhJsBysfRAO9nMJ9uf8X8b30fXTZ9PV
+         SAyEhu4CNctU4v44mjIqWUi8vHihB3JaJJ470hUK0ZpnUoHrLBO5f/GSrqCHVzpnL0rw
+         SUKHJjC4sMKrLWMQ33HAc/HWeWB4zhVi4bo+cxSsMrqi8T2FFI89AnKs0rXROQytA9D3
+         fIo/uUwpo34cQa7EuihIsVMcDN6QNxEBmNQ6TzkI9Ofd/7GwLud+9UPPUuUShu0Dt0e9
+         f/7A==
+X-Forwarded-Encrypted: i=1; AKwUvBwIYesMh6RlyVK8xO/abpgB563ZuTdKyzthc9rXLR9CjldabkTIg6x4CA2QNsKRVlP/EjIASacKOrbHIA==@vger.kernel.org
+X-Gm-Message-State: AFuF++mL4LmGuBrDBmvqTw9uI764srd5rsbBlhzNuqGTP806WsZLQ7Kb
+	oKGgdI9zZMQ/w6S5PNBP9QTApraOFVjHZ/+7v0sZdCNC8uE+GEVhrxnA7VB1cglmyN7F15W5hrm
+	GdX2GhC6IZfYGMYNr7eALBBa/t+59bKrkRxQAKb9pvHJ9fdt3c7aSvtTZoU4=
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20260905-nilfs2-dead-code-cleanup-v1-1-348ed97b2443@gmail.com>
-X-B4-Tracking: v=1; b=H4sIAAAAAAAC/x3MQQqDMBBG4avIrB2IUzS0VxEXafJHByRKgqUg3
- t3g8lu8d1JBVhT6NCdl/LToliq6tiG/uDSDNVSTGBnM2/ScdI1FOMAF9lsA+xUuHTt7xC/E2ld
- nhWq+Z0T9P+txuq4b++CfcmoAAAA=
-X-Change-ID: 20260905-nilfs2-dead-code-cleanup-cefbe2773172
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, 
- Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
- Joshua Crofts <joshua.crofts1@gmail.com>
-X-Mailer: b4 0.14.3
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1788583756; l=2031;
- i=joshua.crofts1@gmail.com; s=20260530; h=from:subject:message-id;
- bh=Jj9kUn5qhvVJUdifRsunS/tN56R4uuxK9bdK99KID7M=;
- b=ggr3TRRy5Y4ktJh/EqYQmoSEzlveccNOC+M28nZ72TOgjUfw4GcxHAHr76TEtHDEBwen51Ru9
- Mk27HEWTBVcDDu4c3x5GvZPmVTFoUXwPhahrG/j6X/PGStyebcLlnby
-X-Developer-Key: i=joshua.crofts1@gmail.com; a=ed25519;
- pk=RTDOoVwgeL4oFdASj9U+cxJuIjXuXk73zkjnGOJKbEo=
+X-Received: by 2002:a05:6820:1c9f:b0:6b8:2b7a:674e with SMTP id
+ 006d021491bc7-6b82b7a6a58mr4413455eaf.5.1788668370586; Sat, 05 Sep 2026
+ 21:19:30 -0700 (PDT)
+Date: Sat, 05 Sep 2026 21:19:30 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6a9ce9d2.0a3344eb.391530.0018.GAE@google.com>
+Subject: [syzbot] [nilfs?] WARNING in nilfs_copy_dirty_pages
+From: syzbot <syzbot+5aea413a54e976f31725@syzkaller.appspotmail.com>
+To: konishi.ryusuke@gmail.com, linux-kernel@vger.kernel.org, 
+	linux-nilfs@vger.kernel.org, slava@dubeyko.com, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-There are two instances of '#if 0' code blocks that are dead code.
-Remove these code blocks.
+Hello,
 
-Additionally, remove unnecessary brackets around a single-statement
-if per checkpatch rules.
+syzbot found the following issue on:
 
-Signed-off-by: Joshua Crofts <joshua.crofts1@gmail.com>
+HEAD commit:    89a312991dc6 Merge tag 'cifs-fixes-7.3-rc2' of https://git..
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=11a5f349580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=e909ffe6b35dddb7
+dashboard link: https://syzkaller.appspot.com/bug?extid=5aea413a54e976f31725
+compiler:       Debian clang version 22.1.8 (++20260613092233+e80beda6e255-1~exp1~20260613092250.77), Debian LLD 22.1.8
+
+Unfortunately, I don't have any reproducer for this issue yet.
+
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-89a31299.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/114a4744ab8e/vmlinux-89a31299.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/c65021627f2c/bzImage-89a31299.xz
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+5aea413a54e976f31725@syzkaller.appspotmail.com
+
+NILFS (loop0): mounting fs with errors
+------------[ cut here ]------------
+inconsistent dirty state
+WARNING: fs/nilfs2/page.c:263 at nilfs_copy_dirty_pages+0x49f/0x6a0 fs/nilfs2/page.c:262, CPU#0: syz.0.0/5326
+Modules linked in:
+CPU: 0 UID: 0 PID: 5326 Comm: syz.0.0 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+RIP: 0010:nilfs_copy_dirty_pages+0x49f/0x6a0 fs/nilfs2/page.c:262
+Code: c7 ae 60 fe 4d 8b 36 44 89 f6 83 e6 01 31 ff e8 b7 4c ef fd 41 f6 c6 01 0f 85 f1 00 00 00 e8 e8 46 ef fd 48 8d 3d 01 5c aa 0c <67> 48 0f b9 3a e9 67 ff ff ff e8 d2 46 ef fd 48 c7 c7 60 7a 31 8f
+RSP: 0018:ffffc9000f4274e0 EFLAGS: 00010287
+RAX: ffffffff83d88548 RBX: ffffea00010e0080 RCX: 0000000000100000
+RDX: ffffc9000f689000 RSI: 00000000000003d0 RDI: ffffffff9082e150
+RBP: ffffc9000f4276f8 R08: ffffea00010e0087 R09: 1ffffd400021c010
+R10: dffffc0000000000 R11: fffff9400021c011 R12: dffffc0000000000
+R13: ffffea00010e0088 R14: 0000000062000400 R15: 0000000000000000
+FS:  00007f95373936c0(0000) GS:ffff88808c2cf000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000020000000b038 CR3: 0000000040631000 CR4: 0000000000352ef0
+Call Trace:
+ <TASK>
+ nilfs_mdt_save_to_shadow_map+0xbb/0x1c0 fs/nilfs2/mdt.c:552
+ nilfs_clean_segments+0x28d/0xbe0 fs/nilfs2/segment.c:2546
+ nilfs_ioctl_clean_segments fs/nilfs2/ioctl.c:938 [inline]
+ nilfs_ioctl+0x2619/0x2780 fs/nilfs2/ioctl.c:1368
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:597 [inline]
+ __se_sys_ioctl+0xfc/0x170 fs/ioctl.c:583
+ do_syscall_x64 arch/x86/entry/syscall_64.c:61 [inline]
+ do_syscall_64+0x166/0x520 arch/x86/entry/syscall_64.c:84
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f953659e159
+Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 e8 ff ff ff f7 d8 64 89 01 48
+RSP: 002b:00007f9537392fe8 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+RAX: ffffffffffffffda RBX: 00007f9536826090 RCX: 00007f953659e159
+RDX: 0000200000000040 RSI: 0000000040786e88 RDI: 0000000000000006
+RBP: 00007f9536635024 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
+R13: 00007f9536826128 R14: 00007f9536826090 R15: 00007fff3c0fc038
+ </TASK>
+----------------
+Code disassembly (best guess), 3 bytes skipped:
+   0:	fe 4d 8b             	decb   -0x75(%rbp)
+   3:	36 44 89 f6          	ss mov %r14d,%esi
+   7:	83 e6 01             	and    $0x1,%esi
+   a:	31 ff                	xor    %edi,%edi
+   c:	e8 b7 4c ef fd       	call   0xfdef4cc8
+  11:	41 f6 c6 01          	test   $0x1,%r14b
+  15:	0f 85 f1 00 00 00    	jne    0x10c
+  1b:	e8 e8 46 ef fd       	call   0xfdef4708
+  20:	48 8d 3d 01 5c aa 0c 	lea    0xcaa5c01(%rip),%rdi        # 0xcaa5c28
+* 27:	67 48 0f b9 3a       	ud1    (%edx),%rdi <-- trapping instruction
+  2c:	e9 67 ff ff ff       	jmp    0xffffff98
+  31:	e8 d2 46 ef fd       	call   0xfdef4708
+  36:	48 c7 c7 60 7a 31 8f 	mov    $0xffffffff8f317a60,%rdi
+
+
 ---
-Stumbled upon these blocks when grepping the kernel for #if 0. Not sure
-if they are actually used for debugging; if so, I have no issues with
-the patch being dropped.
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
-Thanks!
----
- fs/nilfs2/inode.c | 5 -----
- fs/nilfs2/super.c | 8 ++------
- 2 files changed, 2 insertions(+), 11 deletions(-)
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 34e6096069ad..c5b0e9f272b7 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -422,11 +422,6 @@ int nilfs_read_inode_common(struct inode *inode,
- 
- 	inode->i_blocks = le64_to_cpu(raw_inode->i_blocks);
- 	ii->i_flags = le32_to_cpu(raw_inode->i_flags);
--#if 0
--	ii->i_file_acl = le32_to_cpu(raw_inode->i_file_acl);
--	ii->i_dir_acl = S_ISREG(inode->i_mode) ?
--		0 : le32_to_cpu(raw_inode->i_dir_acl);
--#endif
- 	ii->i_dir_start_lookup = 0;
- 	inode->i_generation = le32_to_cpu(raw_inode->i_generation);
- 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index 893a504cb80c..89fa6faa34d2 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -824,13 +824,9 @@ static int nilfs_setup_super(struct super_block *sb, int is_mount)
- 	max_mnt_count = le16_to_cpu(sbp[0]->s_max_mnt_count);
- 	mnt_count = le16_to_cpu(sbp[0]->s_mnt_count);
- 
--	if (nilfs->ns_mount_state & NILFS_ERROR_FS) {
-+	if (nilfs->ns_mount_state & NILFS_ERROR_FS)
- 		nilfs_warn(sb, "mounting fs with errors");
--#if 0
--	} else if (max_mnt_count >= 0 && mnt_count >= max_mnt_count) {
--		nilfs_warn(sb, "maximal mount count reached");
--#endif
--	}
-+
- 	if (!max_mnt_count)
- 		sbp[0]->s_max_mnt_count = cpu_to_le16(NILFS_DFL_MAX_MNT_COUNT);
- 
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
 
----
-base-commit: 4d7d9486c04d917265f64c55bd23b2cc4fe7749c
-change-id: 20260905-nilfs2-dead-code-cleanup-cefbe2773172
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
 
-Best regards,
--- 
-Kind regards,
-Joshua Crofts
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
 
+If you want to undo deduplication, reply with:
+#syz undup
