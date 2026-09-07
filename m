@@ -1,76 +1,76 @@
-Received: from mail-vs1-f44.google.com (mail-vs1-f44.google.com [209.85.217.44])
+Received: from mail-vk1-f181.google.com (mail-vk1-f181.google.com [209.85.221.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C9E0251D53E
-	for <linux-nilfs@vger.kernel.org>; Mon,  7 Sep 2026 17:17:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.217.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC5CC51FCCD
+	for <linux-nilfs@vger.kernel.org>; Mon,  7 Sep 2026 17:18:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788801446; cv=none; b=REKDfTTA+PmJQM7p7nf9syALFx98Q1W8m8g+t6A/+EFxd72bEIw1nnfkp4uBP7uipPZXfP2FDdFzFFqQtfOvNQdrgjN4jXTd2xj1fbnW3DiVFBAcq7Jbh5tT9uYJvVrHEw155JHvITkFzCdvvvR4p7j3uaLvnRsqVwu6TF0oYJY=
+	t=1788801483; cv=none; b=TQpUxbUm/b59N0Pc6SzLW7cWkgkHy+RIg6ZkqUJli/tzPSlhDNZn7ZEyIaeTPHuV/S7PkDuLkR4W975d63qDczaLjPkF+SzJQ1zhqVIzYMBHg9pI1XRR1TA/MtngrBleC/sDo9S65WCfIbKhC8nai6Rw8IWBXuCxapSU0pmiMkI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788801446; c=relaxed/simple;
-	bh=yiCzprvqT+GPoB0Yp/H5+zGOh8MIQdm4mTZzlW78Fm0=;
+	s=arc-20240116; t=1788801483; c=relaxed/simple;
+	bh=bI8Yp0e0/f/vnKBx7xlsGswepzbqAuf/L6YMuVSCcto=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Gmow1I7npPe6bijAQB7MWQilpXxq1CLuoRZEGuOMb5GNzI9YQIhqyEZI5d73tJaeIlb49LTz3rQX40Dls0O1mhkKkPWAT5kxV+h/eby+c81eUBiierAi5e/fuqf3MPTwzMS8duZZPipR9KtideJ1HPaGTV20t7gC3/KX4xOpQ6k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=N+8r9VTs; arc=none smtp.client-ip=209.85.217.44
+	 Content-Type:MIME-Version; b=JYom6wO6yFwRCWnotqSBpefrxb1kO0mCI4wrQmv+ouLa27ZS/4wYfTG2aoRcTWa/762T0AuYjsEo/R+eStzAAaRp5HGi2Ru/dbZA3pwLhVwz5s0S8Jg2UTQu/WnHJN0JwFZSB/3PLkYTPvAYwW7NQSgbc+zYX1zU63utx8lQeLY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=zDO91GlC; arc=none smtp.client-ip=209.85.221.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="N+8r9VTs"
-Received: by mail-vs1-f44.google.com with SMTP id ada2fe7eead31-77bf3334d14so2525675137.1
-        for <linux-nilfs@vger.kernel.org>; Mon, 07 Sep 2026 10:17:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="zDO91GlC"
+Received: by mail-vk1-f181.google.com with SMTP id 71dfb90a1353d-5bfc54558d5so5160420e0c.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 07 Sep 2026 10:18:01 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1788801439; x=1789406239; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1788801481; x=1789406281; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=yiCzprvqT+GPoB0Yp/H5+zGOh8MIQdm4mTZzlW78Fm0=;
-        b=N+8r9VTskDSffc2qqKJI0azUIIa1VT9TRgysSIfRpHNAV58cQ27AA99FLwtcaxFLiY
-         2TrAJ1fu5PS5p5e48wp0w8wn/J8mMxj2GgscAmXEuESPCZrm4YyCISeWpQcUBy6asVgE
-         do+mpcbzEzK5EeDPaxVqisF1Zf5RlumNjW18UHLDZDw8WgtkW6KqO1FlcMZ5VE+rSIgw
-         0emNx2fmJ9hGyib7XMoTy+musAPiVjGJ6o0hjhDjSImDvLrIagg9mJR49Ox9Fz3eazLX
-         Y1fWbbv+uwk6GK2xr8oHXhCxn5AYKiKeoXlb27dJv5cQfZEn+VugnbBi0BEmvRMYLbCa
-         E1tQ==
+        bh=bI8Yp0e0/f/vnKBx7xlsGswepzbqAuf/L6YMuVSCcto=;
+        b=zDO91GlC9uac1R9g3mjIRvC4W3x9fw1Hk3oFcYJ2X7i1qdOiIqZH9479UI8YlbXRd5
+         h0vag2g/1TtAY0A1RVsZQS5ssWsEymIFVU5oS8g7cT+W9cGJQ3Xte9LpEtfHGuCWC18M
+         ohxYUMcOczVP1+zPsbv/a3/9Jm1sWOGFQNqdVi5xXFZtiELdU6YCTJB312SrCJeQeuGd
+         Kw6h5rzvN1UQdMnvHHJ7C1XFPT5r8HboQfP2WgwCgrJ0nUofD9Er3RBeUeKz2h7Z29a7
+         OwPaizGqomoE1GwNwptbGPChylHmfTB1Eu0L3bc+uJDwx3+DuGUpha7RrLpuNx3K9b3k
+         jVug==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788801439; x=1789406239;
+        d=1e100.net; s=20251104; t=1788801481; x=1789406281;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=yiCzprvqT+GPoB0Yp/H5+zGOh8MIQdm4mTZzlW78Fm0=;
-        b=X2wFDU8vi2NFPW637AVr9Rmhu0GLSM7XJa/ESK9pqGCwLEwEibXfK0qEtfcojyQRFv
-         p454fCftNNH/4QhGGRd7sRGvbwZvN1gBE/oLn4cYncQpSelwyPvuMo/tomTJJUXhdvB5
-         BaU58orPFxkSn/y1pjg7vqfafiKgLVaMTAH1nXYOAXKXOXGHtnlUsHKgf0j64LzH2sDV
-         hbGgEwyIg/US4J9pzP8lOh2VT3Nhow7jAgXiV1PdfPk2xau3afxOYexUeovJomlNZMdM
-         k7rj9WroCm8nZn9h5rrVLK9CCamUewyb9gELNQiKT7iHNCSl0vHcJiCq+2S99lANbcXF
-         Tgcg==
-X-Forwarded-Encrypted: i=1; AKwUvBzsFuqL6tUd2mqoLIHH2YLmwODvKVjoyPr38xIS7i1/rjeb7HxiCmgxcUG08bOrHmk2gW+3++NwC6QIyg==@vger.kernel.org
-X-Gm-Message-State: AFuF++mt6uH+c19dwJgz9vXAFJ9YhDspHivu5PGFqeVoYkbN7uTp7d96
-	MYtE+c3LzQmhR3hEG/vcUvoY+DG+NvC6HkH5nkKtPXUFspdzZU3+UChWjfDl7uMAlog=
-X-Gm-Gg: AYBFou1UdQ6/+IFTsfn5h3pPRUMaKtKwVrkxH6bp+HIGCFfZat9+Y6gSODsGvbK0DtP
-	3RoqlkTUHSvv7ibelHjnpTFJFZeJSFJwrmdp74lBOS5G7OHREqmiBWnCqTLdepdCaiizCzDFbuK
-	jvqBE4WhgvrQbYlW95erwL7wLRCYQLBflGPNWBGMWaEZt3IEzejkDoWYS5lBmSN9Yz5nXMaMp8F
-	/vya0qHXLRqEi/+lXn0IYhUEln5innkOxX/W0Rv6fflRh6k1XFCkl6c4lmgXRi90n6uYhmLVnrQ
-	0StFCCUrofbHpyuqnEfOJB3ATqz6EkN8mBxLa+fYfmYfOi2TQVmkGZIywLxlhVuxkuerOgEileJ
-	uXTtp7e/Wf19Iw4jsPDldFw3ff1cYMyjJLXxmEG+IHOJfZtII+FQ4NMcC4kmZr2mPfhHr+7jXXG
-	MkA+7p7PyMz8eWPGaU11zRBqvQ+1XxBgoYYY7d+EC17mLndWUdLK/2UWC8saHAs/aHOGB6ZSUMu
-	wN1UDHxo3fRoWK1I3pqxXxOj/fl2Ole4MRylQEYNT+S1QSFT2vs/AVBHLh0LfqYZyM9V56wb5Oh
-	xiEgIi2ic8aGdn4Z50/gr+/zdrcDf0LhpFH9J0rf+Gn0+yiVhtkWQw==
-X-Received: by 2002:a05:6102:334f:b0:786:dfc0:2ece with SMTP id ada2fe7eead31-78a4ab0d88emr9516251137.11.1788801439421;
-        Mon, 07 Sep 2026 10:17:19 -0700 (PDT)
+        bh=bI8Yp0e0/f/vnKBx7xlsGswepzbqAuf/L6YMuVSCcto=;
+        b=nmrBQDuh3bb2KFHIMaDiFqpFUG56D9kbXFVcDzgzkJ1D3ra9TUbkQEjfldRUKUd6Yu
+         ZmMzRuqRMnNCKc1V9G6NW+oYLntLMJ0hXsKokg37AbwmN+bOainc5Gj9/SfALEenGO6b
+         3DMc123MPVxOHG9LIuND63i2raoax+prGSK9NAKQWmOXeEJbN31I02UzdlT+RmJqZ0XG
+         F1GYGkYQiPhWrS4+YxfX/l62lO2btq8AP21nLpLH5Vd7LCN07hpmqLiW/2gr5SJH5kfS
+         rqcniDGddFlRrIXPHQ2nSTdSsWo4tWJlr+Pq93SgTf6lLBGEQ7XK4eyriZY4/HPsPsnT
+         E+iA==
+X-Gm-Message-State: AFuF++lEhg5NLNBe3QCSpNWuTowNf0FmULLw5H2iibxsb5d6wRQECfy0
+	nbF/bsGSc3PPGHlfKNg04lZSI3B/2nfnIoeor4YefdLvoCmNmQz7+WP9QK2YhtmK1rTkhPI/0M7
+	Df+67WO8=
+X-Gm-Gg: AYBFou3ssBGaD9UeXhpMn3FYTBGFg79RF1F8Mrha3SItlBu5OHFpbAGx7iXfBoSxOIq
+	41ujcQ/LQ/VxcpQgF3INYxA+G+42IvFI8cUw6BaCwQda4FjLlBZRALsGXFrP954YkiuuhhHdX5m
+	rxnAjR1lUkZsf4e4f1thN3Jr2s21m78DDUKZzN4azyvcDW/YuVCiR17mOyGKfjUQoySycmi7dpR
+	RiuZViUqMlQmMs2KHLONFV2LSOJG2+d6o5qF83FMOikYey2dAL+UdGnpWhnAWbi2vuQDS1lrI5Y
+	5HALJ4jbc81kGaB2/zq9QStRZ4bKOzprw/s/qGXLxwk9YYy7LDMrR67yopSZpVWHf6Pbldru/Hb
+	pyInv6a8j87mzZVnmRv7D8kVXqXo+hutMa8Izfr41QKVMtwmYWbH1Aw2RJGfEugYthMstHs4JZ7
+	wfnc5H63WGtHSLLyaMfXr/XauyJdeMy0z0FtMe+HDaBnaeShiIS7Uk0WZgTUmnwTuRHTDvHVWTG
+	jgqbJqOS2CukDjE1WGJAM+Moj0uwzK2KkO1b19ax/NkqMW9mUnwRIV532JjAUgOjdkD7lJajL8i
+	x5n7YUKomR+7306YBr6fa9BFzqI/Xbh6uXsv04dRIxUdTu+NTI/ccOA=
+X-Received: by 2002:ac5:cacc:0:b0:5c2:a30a:1a08 with SMTP id 71dfb90a1353d-5c7dcdea6e8mr6330780e0c.2.1788801480693;
+        Mon, 07 Sep 2026 10:18:00 -0700 (PDT)
 Received: from ?IPv6:2600:1700:6476:1430:51d3:d0fc:6793:303f? ([2600:1700:6476:1430:51d3:d0fc:6793:303f])
-        by smtp.gmail.com with ESMTPSA id a1e0cc1a2514c-9808ed1dc86sm7633385241.5.2026.09.07.10.17.18
+        by smtp.gmail.com with ESMTPSA id 71dfb90a1353d-5c7ebf559cbsm8207989e0c.0.2026.09.07.10.17.58
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 07 Sep 2026 10:17:18 -0700 (PDT)
-Message-ID: <e38d46ab4f54b8622ee13a6d42ad070a9a91f474.camel@dubeyko.com>
-Subject: Re: [PATCH v2] nilfs2: remove '#if 0' code blocks
+        Mon, 07 Sep 2026 10:18:00 -0700 (PDT)
+Message-ID: <8f5f256ff990d747edbed26240e8e9ffdfe8ea83.camel@dubeyko.com>
+Subject: Re: [PATCH] nilfs2: fix typos in comments
 From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Joshua Crofts <joshua.crofts1@gmail.com>, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Date: Mon, 07 Sep 2026 10:17:17 -0700
-In-Reply-To: <CAKFNMo=AHjHpQdzMXtH-TbE-1OFCRmRLaOcSm=87YJYHo2M=EA@mail.gmail.com>
-References: <20260907-nilfs2-dead-code-cleanup-v2-1-fa1ab5b0abd6@gmail.com>
-	 <CAKFNMo=AHjHpQdzMXtH-TbE-1OFCRmRLaOcSm=87YJYHo2M=EA@mail.gmail.com>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>, Hemanth Selam
+	 <hemanth.selam@gmail.com>
+Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Date: Mon, 07 Sep 2026 10:17:56 -0700
+In-Reply-To: <CAKFNMok3MaD+fRcG6VbBRND3gZa+APt_jV63KtQzXzpX6vdCCw@mail.gmail.com>
+References: <20260907062427.11910-1-hemanth.selam@gmail.com>
+	 <CAKFNMok3MaD+fRcG6VbBRND3gZa+APt_jV63KtQzXzpX6vdCCw@mail.gmail.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -116,7 +116,7 @@ Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  nf8SP+uxkTTDKcPHOa5rYRaeNj7T/NClRSd4z6aV3F6pKEJnEGvv/DFMXtSHlbylhyiGKN2Amd0b4
  9jg+DW85oNN7q2UYzYuPwkHsFFq5iyF1QggiwYYTpoVXsw
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: base64
 User-Agent: Evolution 3.60.1 (by Flathub.org) 
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
@@ -125,118 +125,49 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Mon, 2026-09-07 at 17:23 +0900, Ryusuke Konishi wrote:
-> On Mon, Sep 7, 2026 at 2:34=E2=80=AFPM Joshua Crofts wrote:
-> >=20
-> > There are two instances of '#if 0' code blocks that are dead code.
-> > Remove these code blocks.
-> >=20
-> > Additionally, remove a commented out section containing similar
-> > code
-> > as the '#if 0' block and unnecessary brackets around a single-
-> > statement
-> > if per checkpatch rules.
-> >=20
-> > Signed-off-by: Joshua Crofts <joshua.crofts1@gmail.com>
-> > ---
-> > Changes in v2:
-> > - remove block of commented out code (Ryusuke).
->=20
-> Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
->=20
-> Viacheslav, could you please apply this directly to your tree for the
-> next cycle?
->=20
-> Thanks,
-> Ryusuke Konishi
->=20
-> > ---
-> > =C2=A0fs/nilfs2/inode.c | 7 -------
-> > =C2=A0fs/nilfs2/super.c | 8 ++------
-> > =C2=A02 files changed, 2 insertions(+), 13 deletions(-)
-> >=20
-> > diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> > index 34e6096069ad..778274203f4c 100644
-> > --- a/fs/nilfs2/inode.c
-> > +++ b/fs/nilfs2/inode.c
-> > @@ -342,8 +342,6 @@ struct inode *nilfs_new_inode(struct inode
-> > *dir, umode_t mode)
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ii->i_flags =3D nilfs_mask_f=
-lags(
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 mode, NILFS_I(dir)->i_flags & NILFS_FL_INHERITED);
-> >=20
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* ii->i_file_acl =3D 0; */
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* ii->i_dir_acl =3D 0; */
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ii->i_dir_start_lookup =3D 0=
-;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nilfs_set_inode_flags(inode)=
-;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode->i_generation =3D get_=
-random_u32();
-> > @@ -422,11 +420,6 @@ int nilfs_read_inode_common(struct inode
-> > *inode,
-> >=20
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode->i_blocks =3D le64_to_=
-cpu(raw_inode->i_blocks);
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ii->i_flags =3D le32_to_cpu(=
-raw_inode->i_flags);
-> > -#if 0
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ii->i_file_acl =3D le32_to_cpu(ra=
-w_inode->i_file_acl);
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ii->i_dir_acl =3D S_ISREG(inode->=
-i_mode) ?
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 0 : le32_to_cpu(raw_inode->i_dir_acl);
-> > -#endif
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ii->i_dir_start_lookup =3D 0=
-;
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode->i_generation =3D le32=
-_to_cpu(raw_inode->i_generation);
-> >=20
-> > diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> > index 893a504cb80c..89fa6faa34d2 100644
-> > --- a/fs/nilfs2/super.c
-> > +++ b/fs/nilfs2/super.c
-> > @@ -824,13 +824,9 @@ static int nilfs_setup_super(struct
-> > super_block *sb, int is_mount)
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 max_mnt_count =3D le16_to_cp=
-u(sbp[0]->s_max_mnt_count);
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 mnt_count =3D le16_to_cpu(sb=
-p[0]->s_mnt_count);
-> >=20
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (nilfs->ns_mount_state & NILFS=
-_ERROR_FS) {
-> > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (nilfs->ns_mount_state & NILFS=
-_ERROR_FS)
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 nilfs_warn(sb, "mounting fs with errors");
-> > -#if 0
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 } else if (max_mnt_count >=3D 0 &=
-& mnt_count >=3D
-> > max_mnt_count) {
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 nilfs_warn(sb, "maximal mount count reached");
-> > -#endif
-> > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
-> > +
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!max_mnt_count)
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 sbp[0]->s_max_mnt_count =3D
-> > cpu_to_le16(NILFS_DFL_MAX_MNT_COUNT);
-> >=20
-> >=20
-> > ---
-> > base-commit: 4d7d9486c04d917265f64c55bd23b2cc4fe7749c
-> > change-id: 20260905-nilfs2-dead-code-cleanup-cefbe2773172
-> >=20
-> > Best regards,
-> > --
-> > Kind regards,
-> > Joshua Crofts
-> >=20
+T24gTW9uLCAyMDI2LTA5LTA3IGF0IDE3OjI2ICswOTAwLCBSeXVzdWtlIEtvbmlzaGkgd3JvdGU6
+Cj4gT24gTW9uLCBTZXAgNywgMjAyNiBhdCAzOjI04oCvUE0gSGVtYW50aCBTZWxhbSB3cm90ZToK
+PiA+IAo+ID4gRml4IHR5cG9zIGluIGNvbW1lbnRzLCByZXBvcnRlZCBieSBzY3JpcHRzL2NoZWNr
+cGF0Y2gucGwgdXNpbmcgdGhlCj4gPiBtaXNzcGVsbGluZyBsaXN0IGluIHNjcmlwdHMvc3BlbGxp
+bmcudHh0LsKgIE9ubHkgdG91Y2hlcyBjb21tZW50cywKPiA+IG5vIGNvZGUKPiA+IGNoYW5nZXMu
+Cj4gPiAKPiA+IEFzc2lzdGVkLWJ5OiBDdXJzb3I6Y2xhdWRlLW9wdXMtNQo+ID4gU2lnbmVkLW9m
+Zi1ieTogSGVtYW50aCBTZWxhbSA8aGVtYW50aC5zZWxhbUBnbWFpbC5jb20+Cj4gPiAtLS0KPiAK
+PiBBY2tlZC1ieTogUnl1c3VrZSBLb25pc2hpIDxrb25pc2hpLnJ5dXN1a2VAZ21haWwuY29tPgo+
+IAo+IEhlbWFudGggU2VsYW0sIHRoYW5rIHlvdSBmb3IgdGhlIHBhdGNoLgo+IAo+IFZpYWNoZXNs
+YXYsIGNvdWxkIHlvdSBwbGVhc2UgYWRkIHRoaXMgdG8gdGhlIHF1ZXVlIGZvciB0aGUgbmV4dCBj
+eWNsZQo+IGFzIHdlbGw/Cj4gCj4gVGhhbmtzLAo+IFJ5dXN1a2UgS29uaXNoaQo+IAo+ID4gwqBm
+cy9uaWxmczIvc3VmaWxlLmMgfCAyICstCj4gPiDCoGZzL25pbGZzMi9zdXBlci5jwqAgfCAyICst
+Cj4gPiDCoDIgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQo+
+ID4gCj4gPiBkaWZmIC0tZ2l0IGEvZnMvbmlsZnMyL3N1ZmlsZS5jIGIvZnMvbmlsZnMyL3N1Zmls
+ZS5jCj4gPiBpbmRleCBlY2VlZGNhMDI2OTcuLjY5MThiZTZmY2UyZSAxMDA2NDQKPiA+IC0tLSBh
+L2ZzL25pbGZzMi9zdWZpbGUuYwo+ID4gKysrIGIvZnMvbmlsZnMyL3N1ZmlsZS5jCj4gPiBAQCAt
+MTA1MCw3ICsxMDUwLDcgQEAgc3NpemVfdCBuaWxmc19zdWZpbGVfc2V0X3N1aW5mbyhzdHJ1Y3Qg
+aW5vZGUKPiA+ICpzdWZpbGUsIHZvaWQgKmJ1ZiwKPiA+IMKgICogbGVuOsKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoCBudW1iZXIgb2YgQnl0ZXMgdG8gdHJpbSBmcm9tIHN0YXJ0Cj4gPiDC
+oCAqIG1pbmxlbjrCoMKgwqDCoCBtaW5pbXVtIGV4dGVudCBsZW5ndGggaW4gQnl0ZXMKPiA+IMKg
+ICoKPiA+IC0gKiBEZWNyaXB0aW9uOiBuaWxmc19zdWZpbGVfdHJpbV9mcyBnb2VzIHRocm91Z2gg
+YWxsIHNlZ21lbnRzCj4gPiBjb250YWluaW5nIGJ5dGVzCj4gPiArICogRGVzY3JpcHRpb246IG5p
+bGZzX3N1ZmlsZV90cmltX2ZzIGdvZXMgdGhyb3VnaCBhbGwgc2VnbWVudHMKPiA+IGNvbnRhaW5p
+bmcgYnl0ZXMKPiA+IMKgICogZnJvbSBzdGFydCB0byBzdGFydCtsZW4uIHN0YXJ0IGlzIHJvdW5k
+ZWQgdXAgdG8gdGhlIG5leHQgYmxvY2sKPiA+IGJvdW5kYXJ5Cj4gPiDCoCAqIGFuZCBzdGFydCts
+ZW4gaXMgcm91bmRlZCBkb3duLiBGb3IgZWFjaCBjbGVhbiBzZWdtZW50Cj4gPiBibGtkZXZfaXNz
+dWVfZGlzY2FyZAo+ID4gwqAgKiBmdW5jdGlvbiBpcyBpbnZva2VkLgo+ID4gZGlmZiAtLWdpdCBh
+L2ZzL25pbGZzMi9zdXBlci5jIGIvZnMvbmlsZnMyL3N1cGVyLmMKPiA+IGluZGV4IDg5M2E1MDRj
+YjgwYy4uNjVmNDRmZjY3NzllIDEwMDY0NAo+ID4gLS0tIGEvZnMvbmlsZnMyL3N1cGVyLmMKPiA+
+ICsrKyBiL2ZzL25pbGZzMi9zdXBlci5jCj4gPiBAQCAtNjU0LDcgKzY1NCw3IEBAIHN0YXRpYyBp
+bnQgbmlsZnNfc3RhdGZzKHN0cnVjdCBkZW50cnkgKmRlbnRyeSwKPiA+IHN0cnVjdCBrc3RhdGZz
+ICpidWYpCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+IC8qCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAg
+KiBJZiBuaWxmc19wYWxsb2NfY291bnRfbWF4X2VudHJpZXMoKQo+ID4gcmV0dXJucwo+ID4gwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgICogLUVSQU5HRSBl
+cnJvciBjb2RlIHRoZW4gd2Ugc2ltcGx5IHRyZWF0Cj4gPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAqIGN1cmVudCBpbm9kZXMgY291bnQgYXMgbWF4aW11
+bSBwb3NzaWJsZQo+ID4gYW5kCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoCAqIGN1cnJlbnQgaW5vZGVzIGNvdW50IGFzIG1heGltdW0gcG9zc2libGUK
+PiA+IGFuZAo+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgICogemVybyBhcyBmcmVlIGlub2RlcyB2YWx1ZS4KPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAqLwo+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBubWF4aW5vZGVzID0gYXRvbWljNjRfcmVhZCgmcm9v
+dC0KPiA+ID5pbm9kZXNfY291bnQpOwo+ID4gLS0KPiA+IDIuNDguMQo+ID4gCgpBcHBsaWVkLgoK
+VGhhbmtzLApTbGF2YS4K
 
-Applied.
-
-Thanks,
-Slava.
