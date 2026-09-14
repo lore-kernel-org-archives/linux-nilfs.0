@@ -1,325 +1,335 @@
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
+Received: from mail-yw1-f173.google.com (mail-yw1-f173.google.com [209.85.128.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2EDC626A0D5
-	for <linux-nilfs@vger.kernel.org>; Mon, 14 Sep 2026 06:33:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.218.41
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789367629; cv=pass; b=ooF7kpfheJHiBNDKLpJ5dcUxoC/QZnzGt8ukom/RVv9XOmFBt53DhXFydcGg9MXJvHVcBgmf58OOoDQzEgi0u3E9OPQZpZaoDmvy8Sgd/lvEK6Tlbl69oTNOmID4BnEXse6whaYmAr85cfr9m00est4XQix2z+PfOUYzeivP9R4=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789367629; c=relaxed/simple;
-	bh=qVSQb5UUFlpMpFF0qmD+S8EfZnmOQhZUseo8tX+4a6Y=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=pGls20epTk15QERMjGpYmIL0wmwc3LrGcZiv3PEVbh8v19ZqH1Q5JducbPHkpjhYrhtRjVWPZ8j1Bh/fxdR6Ii0n1ynplJx4xFb7ox1WHNdEStJHiteDyp8c53k5KQ5LYed3sN3z4wQ+5rStZhg8I1pJ+Sj2NuiBb2kh7n1pOyc=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JK0H0Ff+; arc=pass smtp.client-ip=209.85.218.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9040646C4C5
+	for <linux-nilfs@vger.kernel.org>; Mon, 14 Sep 2026 21:12:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.173
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1789420350; cv=none; b=mk9XbdZpAGZ7j6SGaBNrHxFK3TGO0PQ7HNQQL6wdoQU82Xc8b8CLvM0uUZwxdheMonbWb5juhUT+Dr5cj9LnyiLIHvM7M75FFjHolFIluNTqgb1N+rLvoeu/icXCJ8mgPfFh4jEhSu0nk8QWMDf41NT8uPlw0laSJbSdzp7gDu4=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1789420350; c=relaxed/simple;
+	bh=one0VBy4ro2Y/WytmHIgXYK4ByZI48r1YwT7UXwzlvM=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=m5Qk+XWjSvnX4ycUfQaFj+f0tL57Jxdd1EdS2xeIJjc7uoVWhACIWk+TX6Lxu+ZFEaHETGGRiXxShsETHokvL2neXvmSzZBMFBKHh4415CVn86uWbtUEQ3noocw1h0Bynw5cYq5AyNCOfXAY2olVWTBHNd7jCaFUZo6pkGM8k0o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=kl45Cpoo; arc=none smtp.client-ip=209.85.128.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JK0H0Ff+"
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-c2940d16190so402910966b.3
-        for <linux-nilfs@vger.kernel.org>; Sun, 13 Sep 2026 23:33:46 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1789367625; cv=none;
-        d=google.com; s=arc-20260327;
-        b=MeD7CfMHfIB0aY1aiZJark8mUd7D1qq3Q3p2Am4hSyzRGicQk8QWruKie2SwL3drVr
-         6F7etcbSlQrso9yHflDiBmkclkU82/L3fLxqS/6C1bpMPSSUqp9+/3S8zvrOpBafik5q
-         2afaQx0HPJXLD765bwT+fhv+trCWCd1cqzEiT1AYudLdpTc7pDLqRM2cglsRWJ4yp9JE
-         Q4TieCE8ljr1r0ywj93wK1V1QdP/8ra+6UhUJovl6JzUb5mNqQm307T7jvJf2tGY3Wij
-         BUTaqtO9cu0vjkyp+PoS/cOj9x94wvLNfETg4kwUOg5aDeILPTXG6FbGqXqyZ/JeKGWJ
-         UYAg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=L1bl/zgD2IYrG14tFUreeapLVdf9wP0XTfEPxuKsnHs=;
-        fh=uJVOEPtp1fBsqNmDSRNylb65kU4x+6x5B/lduNecpAA=;
-        b=rzTGE2fLCh+SmS+Zj1unXGKBjicvOsfEBSNQ2JasTnCwcaMyqoWI4lP000KWPXJpDY
-         r1Hj8y9aNVRMcn5ldX/iMaL5SHq2zmMKYbREShEiPih5cup3XFeTj9ge0eq2ceBbT+51
-         XOrIrdXhcq9RJ8DwfYG5qB0atdFi1uxyJ1w7193zlrqZKYYY5+PWf8IrgbfA0EUCsgBB
-         Kd9OTHk0edtvt/Jxai72TTHc1H3slafHsZDge/54B1kClLtYNHZ2foSfR9tSs5i3qVRN
-         UO1y73j331jXirWS5cWCAdUOB55ZXEInxRT3KsF+n9ASc6258f7s9y7o0qLLuoUgq/NQ
-         hriQ==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="kl45Cpoo"
+Received: by mail-yw1-f173.google.com with SMTP id 00721157ae682-86d43cdee51so36059377b3.2
+        for <linux-nilfs@vger.kernel.org>; Mon, 14 Sep 2026 14:12:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789367625; x=1789972425; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=L1bl/zgD2IYrG14tFUreeapLVdf9wP0XTfEPxuKsnHs=;
-        b=JK0H0Ff+FyAQnZmfdGZDax2f7sDpxEi+EHJU8oXziFlzHW/vxw4YzGfZOlegD+AizZ
-         KBpK1dR+xewxTndkOc5DUXOz7kHiXKZdfctyZUx9XKn+vsuiefBRIF440QyszywTuCO+
-         R+BSyLF74m5EkXPKVrU1iG0EpcMDMc/ijKlIb6JIAz0Yhmo5ofma8dwcQ7vE7pQMsKtw
-         cykBsjFbPEo8acMj2xqQj+/HEaQyNh6nrgPixlhfoH9Rpnh/4yrlwYpAHhhMCZA+VgZr
-         +mP3KtXG3pNbI9DqsQjO8CPWQQ+Xvw0EXBtNGMVHMU2/ic88b/RGGVVbPwmrMKXCzXBh
-         y89g==
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1789420345; x=1790025145; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
+         :from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=one0VBy4ro2Y/WytmHIgXYK4ByZI48r1YwT7UXwzlvM=;
+        b=kl45Cpoo9YZofH8j0wclYCeUhL/QcKMsP/G0puPmbl6q9XHhtwGLoSL/W7gkt91blE
+         M7vcpGQS4qnSo2uiuiPdyb2XP50MhKZvsFDu31QNU93po39H40Y19d9FxGrxb+DSYdGJ
+         dgoP1t3kGO+mbq947DVbRNIo11QSBJiukOoF+SoUb6ePAFZ95whiWOjRtwoJ8RC1coQf
+         Ken+axiwRMs4QLQBUpUa7Hk47D+KsotelovR7H4yprnU31mDIjj6bs/nfEuW67LL8XPW
+         nKVJyZXf5ct4dbpUViWucwtefUGBoAemjGgV+ELzrpNapDW0F7iUiKuHQ9LYMc+EaDLz
+         8OrQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789367625; x=1789972425;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=L1bl/zgD2IYrG14tFUreeapLVdf9wP0XTfEPxuKsnHs=;
-        b=EUFFCWZOGTuPuwviXXLWuYjO6raQ6iMjMIQK9vx8LkP+8Lb5QfBdv+W4VvyHEf0yri
-         FjRHOEllSqIP1Wruhy9VGjYhWvTgJ5l9hOoPtxg6hN8i7oII8sJQ4x5tClxDDGyTkcJs
-         waCzpKuEjUdQGlT3MtIZufb8B+CiF1eViO8HfMrlIQ+Z984drZ8QfYdRT2meY+ip/33y
-         nXYM+9wDG5JaYVD+UvSNvQs/srbyUjHgtd82n96U0LiajIbQQtVf8tNqPBSDFc3Dzr9Z
-         rmMpYiAKvoDVNbECjRCZHiCo1wdvUwTt6UGYkGLS9nmnv6HITWs4zqgeLi7cAaVZLdgW
-         TCTQ==
-X-Forwarded-Encrypted: i=1; AKwUvByU2Z9LJcIeJfKFjg7UEAcAZlsWtnIDriYGZxB9m4+mqAOFMOKUnEYsNmkDMiY0/DdCW3zlY5JGfYofmQ==@vger.kernel.org
-X-Gm-Message-State: AFuF++kmj5owxNxo8vTCYrh0V4/67/7Tp2LqndW3ImtXxeoiCPXbxZno
-	vMed5v6DdGt9myjDpQBqSd85FFYTYjF3g3fXDUvqudPltv2HEoNY1J64Ff864VSVPKCS2BGiLaO
-	VSZmi9mMh5wl9fZzUafoZ+B7xW87XljE=
-X-Gm-Gg: AYBFou3aj8qFsoBvcAc1Xy4Rnh7we5h8KJLezMCeLs8PvzVj/dbqoCRPTgOQB27/HpQ
-	nFwi5KmrmumemALe4Addr39ydcRvnOx6j5e+BAl0aRdVuktUeVa+M1db13HgRw1f137s9/YT5n5
-	AC5RTGWJ8tRzONspTyCk764IXP3kya8TsuvFAUe9G/pctgysRg24aE8dIvMXPnHYqD9Vh0Ivg/7
-	yWyth6WJR4IGplQoH5NfFIRA9/j0KZSZncmaztkwFfcWKxdHwjVqY6omzrgNBgDKmrcx5JjPzYI
-	oVcSacfpwpQioiM9aYZczJG1kzzgA8Q24dP5ZGcsLTjadDfydqgaD5tX
-X-Received: by 2002:a17:906:c141:b0:c25:8fdf:5d with SMTP id
- a640c23a62f3a-c29b86437f4mr74739566b.13.1789367624974; Sun, 13 Sep 2026
- 23:33:44 -0700 (PDT)
+        d=1e100.net; s=20260707; t=1789420345; x=1790025145;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=one0VBy4ro2Y/WytmHIgXYK4ByZI48r1YwT7UXwzlvM=;
+        b=eLTBjN3iDgQHzcuSX3cIrwiJNbG3klTPhEcOfmEf7uq8/h4M5Oyn75pQH79wAhbWMV
+         5tvy+FmJPhjgwEvEuJOh2X/mz4DUftL3xZZLt0Isb0V95kfn0G16dps3UzvoR23+S0g3
+         t5ueFvcFwPtNlgVjhUYHl08dITap+lpr8ujtUBXvMSSM4xohLd8sG1N/mXJvuKPOEbnZ
+         O8I90Apm7pM25tn7AGK5nttR4zTsSuvLc5hoIaRO/zBXsYpYVwN5s2gYS6f0oCE/s/0D
+         mD4QJqoDZ3bTrYiCIHHZeL6O6uVDJ7wKE+xy7EzSLo5VW2X1V2q2PptWFPPS9Hn8X/FY
+         OKzQ==
+X-Forwarded-Encrypted: i=1; AKwUvBwKoFSR6BF+1WdDdb5+MXQ+W4hjrrLP86zCPw+R/DFmybjfS7GvCU98nXFfJ1bufrI3AVvzSJ+ZArOHHQ==@vger.kernel.org
+X-Gm-Message-State: AFuF++kdpMq9LgrSyn01kxn89TKfhtN90qAfgdor6C/htHAq7LyvCMFN
+	FYoKvbcbDu40ZIq8uFKO1hrhd8kas1mviKXs0sQd62jiTfCqn7VQy16Wqqm9eLyf4T4=
+X-Gm-Gg: AYBFou0ORK/oxP6Mb2E7Y9vcVf3xaLBy+zJ+Tywcyq+RxHoeaTqSbJ5Nb+NZs8JHNDg
+	n+BAZHAY/6SffASDWra3mFtcE6x+IVVlOPSB1X622NQpW4SfTCFf4N9JC951i35EWhB8U5WouFn
+	7VEz6CZzB9pcQzhNz8lTfe238uXIRaNPPGE9io62NmuIpSYiKGI6zoYjcgKo87XtPxzXdQCFkCB
+	qVmXjzwBzD3XpgEtWHI0ODpUV3aPa4bsR/61xI0CognVMUjdgvdF8MMHyQyL7lTzlp/GF5JKWHY
+	LIUghyUzqg73RH8tYp/s4HhqGaSdSRCL8o0AqiskFaoFLv5CkTq9AIzqqmX6ZCe7ylI2xWEWeQU
+	ovBB0OYbh9pg7bK2b9krNQK4wCaNZ748AxxEDWN6RU4TId23U15I3ZIA8MtzD8RmDb6z7V1Ra2s
+	ysU/9HarZXMT0cWXk2XdmptQfZlzTmnhu0Khu7IbXHgMtfS7kBLRLdkYX6oAFdmFCEol++JG0dc
+	m4zqTDO9NrgGOOjDcrd9a2eRcRGyLnUoyYSLHmWQL4o+YjhQ2LwzA1qXF3/5Gyyu+Y4PajGAbij
+	Y58F3fj8Q16qmxLaW6Cq6E44iNZ9
+X-Received: by 2002:a05:690c:e1d6:20b0:873:5bb2:6c39 with SMTP id 00721157ae682-88d2436ade2mr10996257b3.64.1789420345438;
+        Mon, 14 Sep 2026 14:12:25 -0700 (PDT)
+Received: from pop-os.attlocal.net ([2600:1700:6476:1430:df87:8743:655b:3824])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-88489dbb067sm41720137b3.49.2026.09.14.14.12.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 14 Sep 2026 14:12:24 -0700 (PDT)
+Message-ID: <a4c590020db13f0cc023cf9faeeb08c174b56085.camel@dubeyko.com>
+Subject: Re: [PATCH v2] nilfs2: force clear dirty state when restoring from
+ the shadow map
+From: Viacheslav Dubeyko <slava@dubeyko.com>
+To: Jiaming Zhang <r772577952@gmail.com>, konishi.ryusuke@gmail.com, 
+	linux-nilfs@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Date: Mon, 14 Sep 2026 14:12:21 -0700
+In-Reply-To: <CANypQFbTTggAnGvdw_O7zxxZ1JNY5_eUBBBPxTW4aW2dqYxQ4Q@mail.gmail.com>
+References: <20260902112121.2125383-1-r772577952@gmail.com>
+	 <CANypQFbTTggAnGvdw_O7zxxZ1JNY5_eUBBBPxTW4aW2dqYxQ4Q@mail.gmail.com>
+Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
+ keydata=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
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: base64
+User-Agent: Evolution 3.60.1 (by Flathub.org) 
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260902112121.2125383-1-r772577952@gmail.com>
-In-Reply-To: <20260902112121.2125383-1-r772577952@gmail.com>
-From: Jiaming Zhang <r772577952@gmail.com>
-Date: Mon, 14 Sep 2026 14:33:06 +0800
-X-Gm-Features: AcwNN1V6HA7__x-qs1jz9zxjUs2k93iWNhWdQUddsFYjpV1H5xAynXB3NocEWPg
-Message-ID: <CANypQFbTTggAnGvdw_O7zxxZ1JNY5_eUBBBPxTW4aW2dqYxQ4Q@mail.gmail.com>
-Subject: Re: [PATCH v2] nilfs2: force clear dirty state when restoring from
- the shadow map
-To: konishi.ryusuke@gmail.com, linux-nilfs@vger.kernel.org, slava@dubeyko.com
-Cc: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-Jiaming Zhang <r772577952@gmail.com> =E4=BA=8E2026=E5=B9=B49=E6=9C=882=E6=
-=97=A5=E5=91=A8=E4=B8=89 19:21=E5=86=99=E9=81=93=EF=BC=9A
->
-> When garbage collection fails, nilfs2 rolls the DAT metadata file's page
-> cache back to a shadow copy taken before GC started.
-> nilfs_clear_dirty_pages() drops the dirty state of the folios in the DAT
-> cache, then nilfs_copy_back_pages() overwrites them with the saved
-> contents and warns if one is still dirty:
->
->         /* overwrite existing folio in the destination cache */
->         WARN_ON(folio_test_dirty(dfolio));
->
-> nilfs_clear_dirty_pages() used to clear the dirty state unconditionally,
-> which is safe here because the rollback runs with the log writer
-> stopped, so nothing else can dirty the cache while it runs.  The same
-> helper is also used when writeback finds dirty folios after the
-> filesystem has degraded to read-only, where it does run concurrently
-> with the log writer, so commit ca76bb226bf4 ("nilfs2: do not force clear
-> folio if buffer is referenced") made nilfs_clear_folio_dirty() skip a
-> folio if any of its buffer heads is busy.  The rollback caller shares
-> that helper, so its clearing step can now return with a folio still
-> dirty.
->
-> A DAT folio can hold a busy buffer head without anyone modifying the
-> folio: nilfs_mdt_read_block() submits read-ahead for the blocks
-> following the one it was asked for and waits only for the first, so the
-> read-ahead buffers are still locked when it returns.  With a block size
-> smaller than the page size, a locked read-ahead buffer can share a folio
-> with a block that GC dirtied and keep the whole folio dirty past the
-> clearing step.
->
-> Add a force flag to nilfs_clear_dirty_pages() and
-> nilfs_clear_folio_dirty() that skips the busy buffer check, and set it
-> in the two calls from nilfs_mdt_restore_from_shadow_map().  The
-> read-only fallback callers keep passing false, so that commit still
-> protects them and the WARN_ON() is left alone.
->
-> Fixes: ca76bb226bf4 ("nilfs2: do not force clear folio if buffer is refer=
-enced")
-> Closes: https://lore.kernel.org/lkml/CANypQFZSYrtcshnUzOPiqatyLd-M8_OReOe=
-wQoAi_V5yY0dTtg@mail.gmail.com/
-> Cc: stable@vger.kernel.org
-> Suggested-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-> Assisted-by: Claude Code:claude-opus-5
-> Signed-off-by: Jiaming Zhang <r772577952@gmail.com>
-> ---
-> Changes in v2:
-> - Keep the WARN_ON() in nilfs_copy_back_pages() untouched.
-> - Add a bool force argument to nilfs_clear_dirty_pages() and
->   nilfs_clear_folio_dirty(), and set it to true in the two calls from
->   nilfs_mdt_restore_from_shadow_map().
->
-> v1: https://lore.kernel.org/lkml/20260901134430.1292467-1-r772577952@gmai=
-l.com/
->
->  fs/nilfs2/inode.c |  2 +-
->  fs/nilfs2/mdt.c   |  6 +++---
->  fs/nilfs2/page.c  | 50 +++++++++++++++++++++++++++--------------------
->  fs/nilfs2/page.h  |  4 ++--
->  4 files changed, 35 insertions(+), 27 deletions(-)
->
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index 34e6096069ad..64437aed8390 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -163,7 +163,7 @@ static int nilfs_writepages(struct address_space *map=
-ping,
->         int err =3D 0;
->
->         if (sb_rdonly(inode->i_sb)) {
-> -               nilfs_clear_dirty_pages(mapping);
-> +               nilfs_clear_dirty_pages(mapping, false);
->                 return -EROFS;
->         }
->
-> diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
-> index 2a435349fd21..b50c88b65183 100644
-> --- a/fs/nilfs2/mdt.c
-> +++ b/fs/nilfs2/mdt.c
-> @@ -405,7 +405,7 @@ static int nilfs_mdt_write_folio(struct folio *folio,
->                  * have dirty folios that try to be flushed in background=
-.
->                  * So, here we simply discard this dirty folio.
->                  */
-> -               nilfs_clear_folio_dirty(folio);
-> +               nilfs_clear_folio_dirty(folio, false);
->                 folio_unlock(folio);
->                 return -EROFS;
->         }
-> @@ -648,10 +648,10 @@ void nilfs_mdt_restore_from_shadow_map(struct inode=
- *inode)
->         if (mi->mi_palloc_cache)
->                 nilfs_palloc_clear_cache(inode);
->
-> -       nilfs_clear_dirty_pages(inode->i_mapping);
-> +       nilfs_clear_dirty_pages(inode->i_mapping, true);
->         nilfs_copy_back_pages(inode->i_mapping, shadow->inode->i_mapping)=
-;
->
-> -       nilfs_clear_dirty_pages(ii->i_assoc_inode->i_mapping);
-> +       nilfs_clear_dirty_pages(ii->i_assoc_inode->i_mapping, true);
->         nilfs_copy_back_pages(ii->i_assoc_inode->i_mapping,
->                               NILFS_I(shadow->inode)->i_assoc_inode->i_ma=
-pping);
->
-> diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-> index cf4f1c6798f5..857926da9f21 100644
-> --- a/fs/nilfs2/page.c
-> +++ b/fs/nilfs2/page.c
-> @@ -369,8 +369,9 @@ void nilfs_copy_back_pages(struct address_space *dmap=
-,
->  /**
->   * nilfs_clear_dirty_pages - discard dirty pages in address space
->   * @mapping: address space with dirty pages for discarding
-> + * @force: whether to clear the dirty state regardless of busy buffer he=
-ads
->   */
-> -void nilfs_clear_dirty_pages(struct address_space *mapping)
-> +void nilfs_clear_dirty_pages(struct address_space *mapping, bool force)
->  {
->         struct folio_batch fbatch;
->         unsigned int i;
-> @@ -391,7 +392,7 @@ void nilfs_clear_dirty_pages(struct address_space *ma=
-pping)
->                          * was acquired.  Skip processing in that case.
->                          */
->                         if (likely(folio->mapping =3D=3D mapping))
-> -                               nilfs_clear_folio_dirty(folio);
-> +                               nilfs_clear_folio_dirty(folio, force);
->
->                         folio_unlock(folio);
->                 }
-> @@ -403,13 +404,16 @@ void nilfs_clear_dirty_pages(struct address_space *=
-mapping)
->  /**
->   * nilfs_clear_folio_dirty - discard dirty folio
->   * @folio: dirty folio that will be discarded
-> + * @force: whether to clear the states regardless of busy buffer heads
->   *
->   * nilfs_clear_folio_dirty() clears working states including dirty state=
- for
-> - * the folio and its buffers.  If the folio has buffers, clear only if i=
-t is
-> - * confirmed that none of the buffer heads are busy (none have valid
-> - * references and none are locked).
-> + * the folio and its buffers.  If the folio has buffers and force is fal=
-se,
-> + * clear only if it is confirmed that none of the buffer heads are busy =
-(none
-> + * have valid references and none are locked).  If force is true, the st=
-ates
-> + * are cleared unconditionally, the caller should guarantee that the fol=
-io is
-> + * not being modified concurrently.
->   */
-> -void nilfs_clear_folio_dirty(struct folio *folio)
-> +void nilfs_clear_folio_dirty(struct folio *folio, bool force)
->  {
->         struct buffer_head *bh, *head;
->
-> @@ -422,24 +426,28 @@ void nilfs_clear_folio_dirty(struct folio *folio)
->                          BIT(BH_Async_Write) | BIT(BH_NILFS_Volatile) |
->                          BIT(BH_NILFS_Checked) | BIT(BH_NILFS_Redirected)=
- |
->                          BIT(BH_Delay));
-> -               bool busy, invalidated =3D false;
-> +
-> +               if (!force) {
-> +                       bool busy, invalidated =3D false;
->
->  recheck_buffers:
-> -               busy =3D false;
-> -               bh =3D head;
-> -               do {
-> -                       if (atomic_read(&bh->b_count) | buffer_locked(bh)=
-) {
-> -                               busy =3D true;
-> -                               break;
-> +                       busy =3D false;
-> +                       bh =3D head;
-> +                       do {
-> +                               if (atomic_read(&bh->b_count) |
-> +                                   buffer_locked(bh)) {
-> +                                       busy =3D true;
-> +                                       break;
-> +                               }
-> +                       } while (bh =3D bh->b_this_page, bh !=3D head);
-> +
-> +                       if (busy) {
-> +                               if (invalidated)
-> +                                       return;
-> +                               invalidate_bh_lrus();
-> +                               invalidated =3D true;
-> +                               goto recheck_buffers;
->                         }
-> -               } while (bh =3D bh->b_this_page, bh !=3D head);
-> -
-> -               if (busy) {
-> -                       if (invalidated)
-> -                               return;
-> -                       invalidate_bh_lrus();
-> -                       invalidated =3D true;
-> -                       goto recheck_buffers;
->                 }
->
->                 bh =3D head;
-> diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
-> index 136cd1c143c9..c3ba3468af5c 100644
-> --- a/fs/nilfs2/page.h
-> +++ b/fs/nilfs2/page.h
-> @@ -41,8 +41,8 @@ void nilfs_folio_bug(struct folio *);
->
->  int nilfs_copy_dirty_pages(struct address_space *, struct address_space =
-*);
->  void nilfs_copy_back_pages(struct address_space *, struct address_space =
-*);
-> -void nilfs_clear_folio_dirty(struct folio *folio);
-> -void nilfs_clear_dirty_pages(struct address_space *mapping);
-> +void nilfs_clear_folio_dirty(struct folio *folio, bool force);
-> +void nilfs_clear_dirty_pages(struct address_space *mapping, bool force);
->  unsigned int nilfs_page_count_clean_buffers(struct folio *folio,
->                 unsigned int from, unsigned int to);
->  unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
-> --
-> 2.43.0
->
+T24gTW9uLCAyMDI2LTA5LTE0IGF0IDE0OjMzICswODAwLCBKaWFtaW5nIFpoYW5nIHdyb3RlOgo+
+IEppYW1pbmcgWmhhbmcgPHI3NzI1Nzc5NTJAZ21haWwuY29tPiDkuo4yMDI25bm0OeaciDLml6Xl
+kajkuIkgMTk6MjHlhpnpgZPvvJoKPiA+IAo+ID4gV2hlbiBnYXJiYWdlIGNvbGxlY3Rpb24gZmFp
+bHMsIG5pbGZzMiByb2xscyB0aGUgREFUIG1ldGFkYXRhIGZpbGUncwo+ID4gcGFnZQo+ID4gY2Fj
+aGUgYmFjayB0byBhIHNoYWRvdyBjb3B5IHRha2VuIGJlZm9yZSBHQyBzdGFydGVkLgo+ID4gbmls
+ZnNfY2xlYXJfZGlydHlfcGFnZXMoKSBkcm9wcyB0aGUgZGlydHkgc3RhdGUgb2YgdGhlIGZvbGlv
+cyBpbgo+ID4gdGhlIERBVAo+ID4gY2FjaGUsIHRoZW4gbmlsZnNfY29weV9iYWNrX3BhZ2VzKCkg
+b3ZlcndyaXRlcyB0aGVtIHdpdGggdGhlIHNhdmVkCj4gPiBjb250ZW50cyBhbmQgd2FybnMgaWYg
+b25lIGlzIHN0aWxsIGRpcnR5Ogo+ID4gCj4gPiDCoMKgwqDCoMKgwqDCoCAvKiBvdmVyd3JpdGUg
+ZXhpc3RpbmcgZm9saW8gaW4gdGhlIGRlc3RpbmF0aW9uIGNhY2hlICovCj4gPiDCoMKgwqDCoMKg
+wqDCoCBXQVJOX09OKGZvbGlvX3Rlc3RfZGlydHkoZGZvbGlvKSk7Cj4gPiAKPiA+IG5pbGZzX2Ns
+ZWFyX2RpcnR5X3BhZ2VzKCkgdXNlZCB0byBjbGVhciB0aGUgZGlydHkgc3RhdGUKPiA+IHVuY29u
+ZGl0aW9uYWxseSwKPiA+IHdoaWNoIGlzIHNhZmUgaGVyZSBiZWNhdXNlIHRoZSByb2xsYmFjayBy
+dW5zIHdpdGggdGhlIGxvZyB3cml0ZXIKPiA+IHN0b3BwZWQsIHNvIG5vdGhpbmcgZWxzZSBjYW4g
+ZGlydHkgdGhlIGNhY2hlIHdoaWxlIGl0IHJ1bnMuwqAgVGhlCj4gPiBzYW1lCj4gPiBoZWxwZXIg
+aXMgYWxzbyB1c2VkIHdoZW4gd3JpdGViYWNrIGZpbmRzIGRpcnR5IGZvbGlvcyBhZnRlciB0aGUK
+PiA+IGZpbGVzeXN0ZW0gaGFzIGRlZ3JhZGVkIHRvIHJlYWQtb25seSwgd2hlcmUgaXQgZG9lcyBy
+dW4KPiA+IGNvbmN1cnJlbnRseQo+ID4gd2l0aCB0aGUgbG9nIHdyaXRlciwgc28gY29tbWl0IGNh
+NzZiYjIyNmJmNCAoIm5pbGZzMjogZG8gbm90IGZvcmNlCj4gPiBjbGVhcgo+ID4gZm9saW8gaWYg
+YnVmZmVyIGlzIHJlZmVyZW5jZWQiKSBtYWRlIG5pbGZzX2NsZWFyX2ZvbGlvX2RpcnR5KCkgc2tp
+cAo+ID4gYQo+ID4gZm9saW8gaWYgYW55IG9mIGl0cyBidWZmZXIgaGVhZHMgaXMgYnVzeS7CoCBU
+aGUgcm9sbGJhY2sgY2FsbGVyCj4gPiBzaGFyZXMKPiA+IHRoYXQgaGVscGVyLCBzbyBpdHMgY2xl
+YXJpbmcgc3RlcCBjYW4gbm93IHJldHVybiB3aXRoIGEgZm9saW8gc3RpbGwKPiA+IGRpcnR5Lgo+
+ID4gCj4gPiBBIERBVCBmb2xpbyBjYW4gaG9sZCBhIGJ1c3kgYnVmZmVyIGhlYWQgd2l0aG91dCBh
+bnlvbmUgbW9kaWZ5aW5nCj4gPiB0aGUKPiA+IGZvbGlvOiBuaWxmc19tZHRfcmVhZF9ibG9jaygp
+IHN1Ym1pdHMgcmVhZC1haGVhZCBmb3IgdGhlIGJsb2Nrcwo+ID4gZm9sbG93aW5nIHRoZSBvbmUg
+aXQgd2FzIGFza2VkIGZvciBhbmQgd2FpdHMgb25seSBmb3IgdGhlIGZpcnN0LCBzbwo+ID4gdGhl
+Cj4gPiByZWFkLWFoZWFkIGJ1ZmZlcnMgYXJlIHN0aWxsIGxvY2tlZCB3aGVuIGl0IHJldHVybnMu
+wqAgV2l0aCBhIGJsb2NrCj4gPiBzaXplCj4gPiBzbWFsbGVyIHRoYW4gdGhlIHBhZ2Ugc2l6ZSwg
+YSBsb2NrZWQgcmVhZC1haGVhZCBidWZmZXIgY2FuIHNoYXJlIGEKPiA+IGZvbGlvCj4gPiB3aXRo
+IGEgYmxvY2sgdGhhdCBHQyBkaXJ0aWVkIGFuZCBrZWVwIHRoZSB3aG9sZSBmb2xpbyBkaXJ0eSBw
+YXN0Cj4gPiB0aGUKPiA+IGNsZWFyaW5nIHN0ZXAuCj4gPiAKPiA+IEFkZCBhIGZvcmNlIGZsYWcg
+dG8gbmlsZnNfY2xlYXJfZGlydHlfcGFnZXMoKSBhbmQKPiA+IG5pbGZzX2NsZWFyX2ZvbGlvX2Rp
+cnR5KCkgdGhhdCBza2lwcyB0aGUgYnVzeSBidWZmZXIgY2hlY2ssIGFuZCBzZXQKPiA+IGl0Cj4g
+PiBpbiB0aGUgdHdvIGNhbGxzIGZyb20gbmlsZnNfbWR0X3Jlc3RvcmVfZnJvbV9zaGFkb3dfbWFw
+KCkuwqAgVGhlCj4gPiByZWFkLW9ubHkgZmFsbGJhY2sgY2FsbGVycyBrZWVwIHBhc3NpbmcgZmFs
+c2UsIHNvIHRoYXQgY29tbWl0IHN0aWxsCj4gPiBwcm90ZWN0cyB0aGVtIGFuZCB0aGUgV0FSTl9P
+TigpIGlzIGxlZnQgYWxvbmUuCj4gPiAKPiA+IEZpeGVzOiBjYTc2YmIyMjZiZjQgKCJuaWxmczI6
+IGRvIG5vdCBmb3JjZSBjbGVhciBmb2xpbyBpZiBidWZmZXIgaXMKPiA+IHJlZmVyZW5jZWQiKQo+
+ID4gQ2xvc2VzOgo+ID4gaHR0cHM6Ly9sb3JlLmtlcm5lbC5vcmcvbGttbC9DQU55cFFGWlNZcnRj
+c2huVXpPUGlxYXR5TGQtTThfT1JlT2V3UW9BaV9WNXlZMGRUdGdAbWFpbC5nbWFpbC5jb20vCj4g
+PiBDYzogc3RhYmxlQHZnZXIua2VybmVsLm9yZwo+ID4gU3VnZ2VzdGVkLWJ5OiBSeXVzdWtlIEtv
+bmlzaGkgPGtvbmlzaGkucnl1c3VrZUBnbWFpbC5jb20+Cj4gPiBBc3Npc3RlZC1ieTogQ2xhdWRl
+IENvZGU6Y2xhdWRlLW9wdXMtNQo+ID4gU2lnbmVkLW9mZi1ieTogSmlhbWluZyBaaGFuZyA8cjc3
+MjU3Nzk1MkBnbWFpbC5jb20+Cj4gPiAtLS0KPiA+IENoYW5nZXMgaW4gdjI6Cj4gPiAtIEtlZXAg
+dGhlIFdBUk5fT04oKSBpbiBuaWxmc19jb3B5X2JhY2tfcGFnZXMoKSB1bnRvdWNoZWQuCj4gPiAt
+IEFkZCBhIGJvb2wgZm9yY2UgYXJndW1lbnQgdG8gbmlsZnNfY2xlYXJfZGlydHlfcGFnZXMoKSBh
+bmQKPiA+IMKgIG5pbGZzX2NsZWFyX2ZvbGlvX2RpcnR5KCksIGFuZCBzZXQgaXQgdG8gdHJ1ZSBp
+biB0aGUgdHdvIGNhbGxzCj4gPiBmcm9tCj4gPiDCoCBuaWxmc19tZHRfcmVzdG9yZV9mcm9tX3No
+YWRvd19tYXAoKS4KPiA+IAo+ID4gdjE6Cj4gPiBodHRwczovL2xvcmUua2VybmVsLm9yZy9sa21s
+LzIwMjYwOTAxMTM0NDMwLjEyOTI0NjctMS1yNzcyNTc3OTUyQGdtYWlsLmNvbS8KPiA+IAo+ID4g
+wqBmcy9uaWxmczIvaW5vZGUuYyB8wqAgMiArLQo+ID4gwqBmcy9uaWxmczIvbWR0LmPCoMKgIHzC
+oCA2ICsrKy0tLQo+ID4gwqBmcy9uaWxmczIvcGFnZS5jwqAgfCA1MCArKysrKysrKysrKysrKysr
+KysrKysrKysrKystLS0tLS0tLS0tLS0tLS0tCj4gPiAtLS0tCj4gPiDCoGZzL25pbGZzMi9wYWdl
+LmjCoCB8wqAgNCArKy0tCj4gPiDCoDQgZmlsZXMgY2hhbmdlZCwgMzUgaW5zZXJ0aW9ucygrKSwg
+MjcgZGVsZXRpb25zKC0pCj4gPiAKPiA+IGRpZmYgLS1naXQgYS9mcy9uaWxmczIvaW5vZGUuYyBi
+L2ZzL25pbGZzMi9pbm9kZS5jCj4gPiBpbmRleCAzNGU2MDk2MDY5YWQuLjY0NDM3YWVkODM5MCAx
+MDA2NDQKPiA+IC0tLSBhL2ZzL25pbGZzMi9pbm9kZS5jCj4gPiArKysgYi9mcy9uaWxmczIvaW5v
+ZGUuYwo+ID4gQEAgLTE2Myw3ICsxNjMsNyBAQCBzdGF0aWMgaW50IG5pbGZzX3dyaXRlcGFnZXMo
+c3RydWN0Cj4gPiBhZGRyZXNzX3NwYWNlICptYXBwaW5nLAo+ID4gwqDCoMKgwqDCoMKgwqAgaW50
+IGVyciA9IDA7Cj4gPiAKPiA+IMKgwqDCoMKgwqDCoMKgIGlmIChzYl9yZG9ubHkoaW5vZGUtPmlf
+c2IpKSB7Cj4gPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBuaWxmc19jbGVhcl9kaXJ0
+eV9wYWdlcyhtYXBwaW5nKTsKPiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIG5pbGZz
+X2NsZWFyX2RpcnR5X3BhZ2VzKG1hcHBpbmcsIGZhbHNlKTsKPiA+IMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoCByZXR1cm4gLUVST0ZTOwo+ID4gwqDCoMKgwqDCoMKgwqAgfQo+ID4gCj4g
+PiBkaWZmIC0tZ2l0IGEvZnMvbmlsZnMyL21kdC5jIGIvZnMvbmlsZnMyL21kdC5jCj4gPiBpbmRl
+eCAyYTQzNTM0OWZkMjEuLmI1MGM4OGI2NTE4MyAxMDA2NDQKPiA+IC0tLSBhL2ZzL25pbGZzMi9t
+ZHQuYwo+ID4gKysrIGIvZnMvbmlsZnMyL21kdC5jCj4gPiBAQCAtNDA1LDcgKzQwNSw3IEBAIHN0
+YXRpYyBpbnQgbmlsZnNfbWR0X3dyaXRlX2ZvbGlvKHN0cnVjdCBmb2xpbwo+ID4gKmZvbGlvLAo+
+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgKiBoYXZlIGRpcnR5IGZvbGlvcyB0
+aGF0IHRyeSB0byBiZSBmbHVzaGVkIGluCj4gPiBiYWNrZ3JvdW5kLgo+ID4gwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqAgKiBTbywgaGVyZSB3ZSBzaW1wbHkgZGlzY2FyZCB0aGlzIGRp
+cnR5IGZvbGlvLgo+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgKi8KPiA+IC3C
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIG5pbGZzX2NsZWFyX2ZvbGlvX2RpcnR5KGZvbGlv
+KTsKPiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIG5pbGZzX2NsZWFyX2ZvbGlvX2Rp
+cnR5KGZvbGlvLCBmYWxzZSk7Cj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgZm9s
+aW9fdW5sb2NrKGZvbGlvKTsKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCByZXR1
+cm4gLUVST0ZTOwo+ID4gwqDCoMKgwqDCoMKgwqAgfQo+ID4gQEAgLTY0OCwxMCArNjQ4LDEwIEBA
+IHZvaWQgbmlsZnNfbWR0X3Jlc3RvcmVfZnJvbV9zaGFkb3dfbWFwKHN0cnVjdAo+ID4gaW5vZGUg
+Kmlub2RlKQo+ID4gwqDCoMKgwqDCoMKgwqAgaWYgKG1pLT5taV9wYWxsb2NfY2FjaGUpCj4gPiDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbmlsZnNfcGFsbG9jX2NsZWFyX2NhY2hlKGlu
+b2RlKTsKPiA+IAo+ID4gLcKgwqDCoMKgwqDCoCBuaWxmc19jbGVhcl9kaXJ0eV9wYWdlcyhpbm9k
+ZS0+aV9tYXBwaW5nKTsKPiA+ICvCoMKgwqDCoMKgwqAgbmlsZnNfY2xlYXJfZGlydHlfcGFnZXMo
+aW5vZGUtPmlfbWFwcGluZywgdHJ1ZSk7Cj4gPiDCoMKgwqDCoMKgwqDCoCBuaWxmc19jb3B5X2Jh
+Y2tfcGFnZXMoaW5vZGUtPmlfbWFwcGluZywgc2hhZG93LT5pbm9kZS0KPiA+ID5pX21hcHBpbmcp
+Owo+ID4gCj4gPiAtwqDCoMKgwqDCoMKgIG5pbGZzX2NsZWFyX2RpcnR5X3BhZ2VzKGlpLT5pX2Fz
+c29jX2lub2RlLT5pX21hcHBpbmcpOwo+ID4gK8KgwqDCoMKgwqDCoCBuaWxmc19jbGVhcl9kaXJ0
+eV9wYWdlcyhpaS0+aV9hc3NvY19pbm9kZS0+aV9tYXBwaW5nLAo+ID4gdHJ1ZSk7Cj4gPiDCoMKg
+wqDCoMKgwqDCoCBuaWxmc19jb3B5X2JhY2tfcGFnZXMoaWktPmlfYXNzb2NfaW5vZGUtPmlfbWFw
+cGluZywKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqAgTklMRlNfSShzaGFkb3ctPmlub2RlKS0KPiA+ID5pX2Fzc29jX2lub2RlLT5p
+X21hcHBpbmcpOwo+ID4gCj4gPiBkaWZmIC0tZ2l0IGEvZnMvbmlsZnMyL3BhZ2UuYyBiL2ZzL25p
+bGZzMi9wYWdlLmMKPiA+IGluZGV4IGNmNGYxYzY3OThmNS4uODU3OTI2ZGE5ZjIxIDEwMDY0NAo+
+ID4gLS0tIGEvZnMvbmlsZnMyL3BhZ2UuYwo+ID4gKysrIGIvZnMvbmlsZnMyL3BhZ2UuYwo+ID4g
+QEAgLTM2OSw4ICszNjksOSBAQCB2b2lkIG5pbGZzX2NvcHlfYmFja19wYWdlcyhzdHJ1Y3QgYWRk
+cmVzc19zcGFjZQo+ID4gKmRtYXAsCj4gPiDCoC8qKgo+ID4gwqAgKiBuaWxmc19jbGVhcl9kaXJ0
+eV9wYWdlcyAtIGRpc2NhcmQgZGlydHkgcGFnZXMgaW4gYWRkcmVzcyBzcGFjZQo+ID4gwqAgKiBA
+bWFwcGluZzogYWRkcmVzcyBzcGFjZSB3aXRoIGRpcnR5IHBhZ2VzIGZvciBkaXNjYXJkaW5nCj4g
+PiArICogQGZvcmNlOiB3aGV0aGVyIHRvIGNsZWFyIHRoZSBkaXJ0eSBzdGF0ZSByZWdhcmRsZXNz
+IG9mIGJ1c3kKPiA+IGJ1ZmZlciBoZWFkcwo+ID4gwqAgKi8KPiA+IC12b2lkIG5pbGZzX2NsZWFy
+X2RpcnR5X3BhZ2VzKHN0cnVjdCBhZGRyZXNzX3NwYWNlICptYXBwaW5nKQo+ID4gK3ZvaWQgbmls
+ZnNfY2xlYXJfZGlydHlfcGFnZXMoc3RydWN0IGFkZHJlc3Nfc3BhY2UgKm1hcHBpbmcsIGJvb2wK
+PiA+IGZvcmNlKQo+ID4gwqB7Cj4gPiDCoMKgwqDCoMKgwqDCoCBzdHJ1Y3QgZm9saW9fYmF0Y2gg
+ZmJhdGNoOwo+ID4gwqDCoMKgwqDCoMKgwqAgdW5zaWduZWQgaW50IGk7Cj4gPiBAQCAtMzkxLDcg
+KzM5Miw3IEBAIHZvaWQgbmlsZnNfY2xlYXJfZGlydHlfcGFnZXMoc3RydWN0Cj4gPiBhZGRyZXNz
+X3NwYWNlICptYXBwaW5nKQo+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgICogd2FzIGFjcXVpcmVkLsKgIFNraXAgcHJvY2Vzc2luZyBpbiB0aGF0Cj4g
+PiBjYXNlLgo+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgICovCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+IGlmIChsaWtlbHkoZm9saW8tPm1hcHBpbmcgPT0gbWFwcGluZykpCj4gPiAtwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIG5pbGZzX2Ns
+ZWFyX2ZvbGlvX2RpcnR5KGZvbGlvKTsKPiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbmlsZnNfY2xlYXJfZm9saW9fZGlydHko
+Zm9saW8sCj4gPiBmb3JjZSk7Cj4gPiAKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqAgZm9saW9fdW5sb2NrKGZvbGlvKTsKPiA+IMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoCB9Cj4gPiBAQCAtNDAzLDEzICs0MDQsMTYgQEAgdm9pZCBuaWxmc19j
+bGVhcl9kaXJ0eV9wYWdlcyhzdHJ1Y3QKPiA+IGFkZHJlc3Nfc3BhY2UgKm1hcHBpbmcpCj4gPiDC
+oC8qKgo+ID4gwqAgKiBuaWxmc19jbGVhcl9mb2xpb19kaXJ0eSAtIGRpc2NhcmQgZGlydHkgZm9s
+aW8KPiA+IMKgICogQGZvbGlvOiBkaXJ0eSBmb2xpbyB0aGF0IHdpbGwgYmUgZGlzY2FyZGVkCj4g
+PiArICogQGZvcmNlOiB3aGV0aGVyIHRvIGNsZWFyIHRoZSBzdGF0ZXMgcmVnYXJkbGVzcyBvZiBi
+dXN5IGJ1ZmZlcgo+ID4gaGVhZHMKPiA+IMKgICoKPiA+IMKgICogbmlsZnNfY2xlYXJfZm9saW9f
+ZGlydHkoKSBjbGVhcnMgd29ya2luZyBzdGF0ZXMgaW5jbHVkaW5nIGRpcnR5Cj4gPiBzdGF0ZSBm
+b3IKPiA+IC0gKiB0aGUgZm9saW8gYW5kIGl0cyBidWZmZXJzLsKgIElmIHRoZSBmb2xpbyBoYXMg
+YnVmZmVycywgY2xlYXIKPiA+IG9ubHkgaWYgaXQgaXMKPiA+IC0gKiBjb25maXJtZWQgdGhhdCBu
+b25lIG9mIHRoZSBidWZmZXIgaGVhZHMgYXJlIGJ1c3kgKG5vbmUgaGF2ZQo+ID4gdmFsaWQKPiA+
+IC0gKiByZWZlcmVuY2VzIGFuZCBub25lIGFyZSBsb2NrZWQpLgo+ID4gKyAqIHRoZSBmb2xpbyBh
+bmQgaXRzIGJ1ZmZlcnMuwqAgSWYgdGhlIGZvbGlvIGhhcyBidWZmZXJzIGFuZCBmb3JjZQo+ID4g
+aXMgZmFsc2UsCj4gPiArICogY2xlYXIgb25seSBpZiBpdCBpcyBjb25maXJtZWQgdGhhdCBub25l
+IG9mIHRoZSBidWZmZXIgaGVhZHMgYXJlCj4gPiBidXN5IChub25lCj4gPiArICogaGF2ZSB2YWxp
+ZCByZWZlcmVuY2VzIGFuZCBub25lIGFyZSBsb2NrZWQpLsKgIElmIGZvcmNlIGlzIHRydWUsCj4g
+PiB0aGUgc3RhdGVzCj4gPiArICogYXJlIGNsZWFyZWQgdW5jb25kaXRpb25hbGx5LCB0aGUgY2Fs
+bGVyIHNob3VsZCBndWFyYW50ZWUgdGhhdAo+ID4gdGhlIGZvbGlvIGlzCj4gPiArICogbm90IGJl
+aW5nIG1vZGlmaWVkIGNvbmN1cnJlbnRseS4KPiA+IMKgICovCj4gPiAtdm9pZCBuaWxmc19jbGVh
+cl9mb2xpb19kaXJ0eShzdHJ1Y3QgZm9saW8gKmZvbGlvKQo+ID4gK3ZvaWQgbmlsZnNfY2xlYXJf
+Zm9saW9fZGlydHkoc3RydWN0IGZvbGlvICpmb2xpbywgYm9vbCBmb3JjZSkKPiA+IMKgewo+ID4g
+wqDCoMKgwqDCoMKgwqAgc3RydWN0IGJ1ZmZlcl9oZWFkICpiaCwgKmhlYWQ7Cj4gPiAKPiA+IEBA
+IC00MjIsMjQgKzQyNiwyOCBAQCB2b2lkIG5pbGZzX2NsZWFyX2ZvbGlvX2RpcnR5KHN0cnVjdCBm
+b2xpbwo+ID4gKmZvbGlvKQo+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgIEJJVChCSF9Bc3luY19Xcml0ZSkgfAo+ID4gQklUKEJIX05JTEZTX1ZvbGF0
+aWxlKSB8Cj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqAgQklUKEJIX05JTEZTX0NoZWNrZWQpIHwKPiA+IEJJVChCSF9OSUxGU19SZWRpcmVjdGVkKSB8
+Cj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgQklU
+KEJIX0RlbGF5KSk7Cj4gPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBib29sIGJ1c3ks
+IGludmFsaWRhdGVkID0gZmFsc2U7Cj4gPiArCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoCBpZiAoIWZvcmNlKSB7Cj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqAgYm9vbCBidXN5LCBpbnZhbGlkYXRlZCA9IGZhbHNlOwo+ID4gCj4gPiDCoHJl
+Y2hlY2tfYnVmZmVyczoKPiA+IC3CoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGJ1c3kgPSBm
+YWxzZTsKPiA+IC3CoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGJoID0gaGVhZDsKPiA+IC3C
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGRvIHsKPiA+IC3CoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBpZiAoYXRvbWljX3JlYWQoJmJoLT5iX2NvdW50KSB8
+Cj4gPiBidWZmZXJfbG9ja2VkKGJoKSkgewo+ID4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBidXN5ID0gdHJ1ZTsKPiA+IC3CoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAg
+YnJlYWs7Cj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAg
+YnVzeSA9IGZhbHNlOwo+ID4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgIGJoID0gaGVhZDsKPiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoCBkbyB7Cj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGlmIChhdG9taWNfcmVhZCgmYmgtPmJfY291bnQpIHwK
+PiA+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoCBidWZmZXJfbG9ja2VkKGJoKSkgewo+ID4gK8KgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqAgYnVzeSA9IHRydWU7Cj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBicmVhazsKPiA+ICvC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqAgfQo+ID4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIH0g
+d2hpbGUgKGJoID0gYmgtPmJfdGhpc19wYWdlLCBiaCAhPSBoZWFkKTsKPiA+ICsKPiA+ICvCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBpZiAoYnVzeSkgewo+ID4g
+K8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoCBpZiAoaW52YWxpZGF0ZWQpCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCByZXR1cm47Cj4g
+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgIGludmFsaWRhdGVfYmhfbHJ1cygpOwo+ID4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBpbnZhbGlkYXRlZCA9IHRydWU7
+Cj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgIGdvdG8gcmVjaGVja19idWZmZXJzOwo+ID4gwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB9Cj4gPiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoCB9IHdoaWxlIChiaCA9IGJoLT5iX3RoaXNfcGFnZSwgYmggIT0gaGVhZCk7Cj4gPiAtCj4g
+PiAtwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBpZiAoYnVzeSkgewo+ID4gLcKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGlmIChpbnZhbGlkYXRlZCkKPiA+
+IC3CoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqAgcmV0dXJuOwo+ID4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgIGludmFsaWRhdGVfYmhfbHJ1cygpOwo+ID4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgIGludmFsaWRhdGVkID0gdHJ1ZTsKPiA+IC3CoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBnb3RvIHJlY2hlY2tfYnVmZmVyczsK
+PiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB9Cj4gPiAKPiA+IMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoCBiaCA9IGhlYWQ7Cj4gPiBkaWZmIC0tZ2l0IGEvZnMvbmlsZnMy
+L3BhZ2UuaCBiL2ZzL25pbGZzMi9wYWdlLmgKPiA+IGluZGV4IDEzNmNkMWMxNDNjOS4uYzNiYTM0
+NjhhZjVjIDEwMDY0NAo+ID4gLS0tIGEvZnMvbmlsZnMyL3BhZ2UuaAo+ID4gKysrIGIvZnMvbmls
+ZnMyL3BhZ2UuaAo+ID4gQEAgLTQxLDggKzQxLDggQEAgdm9pZCBuaWxmc19mb2xpb19idWcoc3Ry
+dWN0IGZvbGlvICopOwo+ID4gCj4gPiDCoGludCBuaWxmc19jb3B5X2RpcnR5X3BhZ2VzKHN0cnVj
+dCBhZGRyZXNzX3NwYWNlICosIHN0cnVjdAo+ID4gYWRkcmVzc19zcGFjZSAqKTsKPiA+IMKgdm9p
+ZCBuaWxmc19jb3B5X2JhY2tfcGFnZXMoc3RydWN0IGFkZHJlc3Nfc3BhY2UgKiwgc3RydWN0Cj4g
+PiBhZGRyZXNzX3NwYWNlICopOwo+ID4gLXZvaWQgbmlsZnNfY2xlYXJfZm9saW9fZGlydHkoc3Ry
+dWN0IGZvbGlvICpmb2xpbyk7Cj4gPiAtdm9pZCBuaWxmc19jbGVhcl9kaXJ0eV9wYWdlcyhzdHJ1
+Y3QgYWRkcmVzc19zcGFjZSAqbWFwcGluZyk7Cj4gPiArdm9pZCBuaWxmc19jbGVhcl9mb2xpb19k
+aXJ0eShzdHJ1Y3QgZm9saW8gKmZvbGlvLCBib29sIGZvcmNlKTsKPiA+ICt2b2lkIG5pbGZzX2Ns
+ZWFyX2RpcnR5X3BhZ2VzKHN0cnVjdCBhZGRyZXNzX3NwYWNlICptYXBwaW5nLCBib29sCj4gPiBm
+b3JjZSk7Cj4gPiDCoHVuc2lnbmVkIGludCBuaWxmc19wYWdlX2NvdW50X2NsZWFuX2J1ZmZlcnMo
+c3RydWN0IGZvbGlvICpmb2xpbywKPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB1
+bnNpZ25lZCBpbnQgZnJvbSwgdW5zaWduZWQgaW50IHRvKTsKPiA+IMKgdW5zaWduZWQgbG9uZyBu
+aWxmc19maW5kX3VuY29tbWl0dGVkX2V4dGVudChzdHJ1Y3QgaW5vZGUgKmlub2RlLAo+ID4gLS0K
+PiA+IDIuNDMuMAo+ID4gCj4gCj4gRnJpZW5kbHkgcGluZywgcGxlYXNlIHRlbGwgbWUgaWYgYW55
+IGZ1cnRoZXIgY2hhbmdlcyBpcyBuZWVkZWQuCgpBcyBmYXIgYXMgSSBrbm93LCBSeXVzdWtlIGlz
+IHRyYXZlbGluZyByaWdodCBub3cuIFBsZWFzZSwgZXhwZWN0IHNvbWUKZGVsYXkgd2l0aCB0aGUg
+cmV2aWV3LiBJIGRvbid0IHNlZSBhbnkgaXNzdWVzIHdpdGggdGhlIHBhdGNoLgoKVGhhbmtzLApT
+bGF2YS4K
 
-Friendly ping, please tell me if any further changes is needed.
