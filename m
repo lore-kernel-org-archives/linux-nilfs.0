@@ -1,76 +1,77 @@
-Received: from mail-yx2-f43.google.com (mail-yx2-f43.google.com [74.125.224.171])
+Received: from mail-yx2-f12.google.com (mail-yx2-f12.google.com [74.125.224.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E1AA4C8C60
-	for <linux-nilfs@vger.kernel.org>; Tue, 15 Sep 2026 18:49:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B79F4503F6
+	for <linux-nilfs@vger.kernel.org>; Tue, 15 Sep 2026 19:43:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.140
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789498170; cv=none; b=rQxe/lXvadhNeYRDmfSLsgPq38lvqtXoWF/lr/AcWZAthbkWP/EqK36phbEkDzayDXJQFOhk3F91xnRU3L6AsYRxk45nx4Q/77oD+wJ3oZvR2ukjDmSnXgSBxGr+HBx3R8Jy01U+IhrbXcXRh/ZuNyaQJP0CCeT8T/c8czFUDCg=
+	t=1789501419; cv=none; b=ecOCdGHGY7aD6divuFbhy5PV8c8uxf/sInfS4AIeU8oIv1Xf/NDaK5cpBjII8RJmpsUwNGjnn2uT01z7knEw0B7H1xkmtsjaZccAjo39NvJPTAX/QJm6+TAyZ4dc+Gb2utdQ8ZXA5XkIqCpVNB4PsQ04W/XM9iPnE3zulmJn4uo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789498170; c=relaxed/simple;
-	bh=dn0nYsAAmXuOK3R+wRJqX7TPcEmhQYGi/QPpsB0ZaEQ=;
+	s=arc-20240116; t=1789501419; c=relaxed/simple;
+	bh=cQDi/khXp22kaDJp+dEsEBqmjhvlz1g67boyZ/PQrd0=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=T9qu62SJwF5AZnCrCpRQ9GvXqdpRtZ72L89GBD5ColUE8sLd005lYQMbWz/EMe7EF2kMh4qaXvPWabxS2Xxg3yNC9o0CREf7iifOqld5ocyqjelPnRT3b/ns0PuJzOOd4lLZA5g70lN7b/kcoeSGo3Lte0/gO6z4KyN/s5s7n+U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=MSrt+0bs; arc=none smtp.client-ip=74.125.224.171
+	 Content-Type:MIME-Version; b=JsSk22h0Gz4MtozECVFQSzt/6PqWfOFXM0PDQWUUTbmx/Xi6Oi815ZyfuW1021wuYJooRMkqeP87e6lPDUjltZVNBZeWXkpF/ZFp9VHLh/41JL3r25UdyhaSw2GmgdqkzFXh7Gp507pRk9FeXa9q/w11jy+437MBJmyT+47m9n0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=Wc8TZqp2; arc=none smtp.client-ip=74.125.224.140
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="MSrt+0bs"
-Received: by mail-yx2-f43.google.com with SMTP id 956f58d0204a3-671017a4b55so100233d50.2
-        for <linux-nilfs@vger.kernel.org>; Tue, 15 Sep 2026 11:49:28 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="Wc8TZqp2"
+Received: by mail-yx2-f12.google.com with SMTP id 00721157ae682-85d4ddd17a0so1535767b3.0
+        for <linux-nilfs@vger.kernel.org>; Tue, 15 Sep 2026 12:43:37 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1789498167; x=1790102967; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1789501416; x=1790106216; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=8sOdqh+xMVjOPfQTmb4GlIFWW+djME37k9ELcXIHIfs=;
-        b=MSrt+0bsGkmYdM+x4/yC1LLmriZQ3N7OkDhwkkO+SHphTgw41hTRGswJvMaprNluLh
-         w1LoN3rEiv87JPHt4pUfbaPBIm9UabC/Q7p+2ep2YJ+AFXqhBvXDXTSZBmc/tu+4azkw
-         M1YzAagkIyFNMtfplLR5vfXDA2ejRqM7X/JTVD1b4ZbBh9bB9CSZDlLRzSoPm97xi2AQ
-         7MW0VS4Ooo3H9YzTp9ozdD6jLR0/N5wvOzJ/2HhVpnHVcb7Te88lgc8ZcMW+GWIybDqr
-         bvdQiFkYKxNlD+YkTuzWF+amwWcQLA9WSsjAcz1uvV7KMi60Z06O538GfOnBSyhA19Ml
-         7aCw==
+        bh=i2LOI0WXXV1VVEC/9ThlMXobGg1l5GAIdV/ERsV+q64=;
+        b=Wc8TZqp2fPQJ979amKHsD0hu7IeYyfoeXwMFVxXsXH7khIe6lWfHHuf1u1wcTvcw3f
+         ZkFhAfT5M5YPY2afFUKGQ/B7MzILkvkTqIpAo1BHYGdejVJFtNezhvj0GjflPjIl7Frk
+         nP2Vi+AHh+ISr3OlgTqbPAaMeV2ghY/6d3KPcQykLK/SZu04G2UlqQPZ/UaS3Gl8JMzo
+         QeFSL9JUl6q2f168LHzzQdn0aqtL8xQ8LfjQ0Z1qrD26AASbD/qNWoLmIvkwvaxQxv58
+         Kk6GYragnd+eb/W9PcRwoMW4bNXFmXKe5S3yW4iXx9ATzRCNjAlq2Z9HlnrgzZdLoMgJ
+         pjNw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789498167; x=1790102967;
+        d=1e100.net; s=20260707; t=1789501416; x=1790106216;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=8sOdqh+xMVjOPfQTmb4GlIFWW+djME37k9ELcXIHIfs=;
-        b=KO5xxrQJoxfU2VYzqYgg3YUfIoqhim8Rgc0C48n2ptzknp7MjWIcK1tV2kzO/qzqzz
-         xupZeKRdkByKoq1qWfn5Qe6Q/5UOKo9uZF//R2CmnNqjkYtuQKHVPb4T8r6JuVYXI2Rj
-         ZYTxbqmA6mYdMmZ2wHXdJxYrstOCxo9/B2p/L//MF4YAcgrQABcmxL96jtAyIwKKyzjv
-         U0Ly0DfFYnuGC9H3BvOMg/faYvPJFf4UGEovHWeaRo7AFHVdvdAKa8hL0KMUDG3a2dp5
-         3E52j2z7SXRwBRxqUdGnbFNdQFWIp595h4aW74vpmKEBr2a8Ms9BRExSkkOIbIftxHsu
-         mKcQ==
-X-Gm-Message-State: AFuF++m8VF+dgwCtxAesqTHOid5xSfPZ6W+YW6FRH0G6Oy0X5gDRuSBU
-	yKbOZu4TtoMJqf0m6rqw8Mq7EOOuXfmr5LQvUM5RdrSvI1F/viwWqhrV4wuVNk6g8k1APNDCFb9
-	pUW9l9XV7wQ==
-X-Gm-Gg: AYBFou3xU5AzQcAAkmm4faQVYM6okKfRHmpichliDlcrExi9q0jyXRGuzDWU6urSHcM
-	wMBqEoPCyf88bXg0XxkMMmNi6+Qy3xzobddwsjUv/UDf3GjNxK3TyZESDg7OI/HWMWGQjaRJ/gp
-	KFNSoYDTR9aT4A5htTiUwW+WhqRPToqYlgGpU4nl4K0RAtp6TDRQkPn06Vg7UC2ZndQGnGy9jfD
-	AoEba/287WOmfq658GpTEk1pgb5FrXfnA3I3mPNko3Y+96KJiZ70SxYfwaNeEK2PBQ3WxbP6+Iv
-	5ag+mZyeCguBr5FQC79s9dldixFWAV5cro7H9kme3wRNIdzf4RQkqI5fKsZC68PBxRiBXq3SL+b
-	Apq4l9xoFMJsj2y01Sgm/wMACtViK1moivV8iX3oeFd05AxKQUXiVSlRUiR7ukjJSIyakFGKe5Q
-	ie+GhYd3z++1EmbA+xlXcrqZgE4OnGUAaGJ1sJKD7vY6ZaXxN7xw+aj90A4wPAmjJHifzebjVWY
-	73F8haHyMETlJ/zAClRvTRrR58ySjHgl8uL0lWV+UY+f8OJVSpLYA2m4gGJfExVCN1HfWjFBgyH
-	9DuG2/5gg1AEDoJPiy5EEmS29SgWS80B2PHmPNkq9QCdkBkx35k2X/ZX26cZMXmu
-X-Received: by 2002:a05:690e:1208:b0:671:2d6e:b7ec with SMTP id 956f58d0204a3-6715c93e52cmr1270970d50.0.1789498167258;
-        Tue, 15 Sep 2026 11:49:27 -0700 (PDT)
+        bh=i2LOI0WXXV1VVEC/9ThlMXobGg1l5GAIdV/ERsV+q64=;
+        b=RkK8ZMwFZKb929Qlrrf1lVW2ufedMiRJEGIQp+vEJRUk96D7l2FUfBpRjwRsc6rKHa
+         PVh3j8JHbUl2lXR7ijMgAhGF3d+I4pyw+yuw7pvUfHLCe4wgIryojGBiJz3IH3zg4qcL
+         i1q3U5+IxfNNpuQlHuISw6z8X/na33IPVkWl38VpeKwNQwtoqbodMrpezJUjEIyzPHiY
+         KO/5b088o5j/UVQ4X3qzxZu6aFpQUY73AVJe5eOiIMSOlVIZ1ZQjQvGEeid6oVFWHj8d
+         fQEd73YEzVyE0Q5Zy30CHIoYJ0fMAWFtVclG+I3gxaVF3pKKVQwcPy3EtMLVOGknfbDB
+         0uoA==
+X-Gm-Message-State: AFuF++kLZRAAKvO8VN4RuGoIuohtjGytimE9EDh8YgakUpJdYhFiMhy2
+	3ws/nMIBdyIvTQJxsYsDNvuLxHInYRPwChLNErprJOw5yQ1cA8Mla5H+U/8Ly0i60ww=
+X-Gm-Gg: AYBFou1y1PTrIUAyaPt1nvymex82ci76qRvwSmmcXcCiyzqb7JbO0V6QmIyu1LRmeCL
+	ojtsl/LnAEtdBV9Y8loAYX+XfG1sCzTdsLkLJGG+ZndppFDHlmJSYHknfHNyfQg+eewPiq1DpJo
+	FLXAbVb1eZ0WJGH1rTtpYDgJpJutYElr8jKI5g296cD/F9WNfWwr34HBYFD199Cq5d1GTBAlRsR
+	0UomFfrmPqXptjdn6aY5aP5kJWTdorLSYv/hi0ETX1LOIwkUuH3GhDTOQGh/uAGbUfviEHjC+J7
+	9OApyj4fJ7POqmmMazriITf6r7CyhIpc8/L0rLAA8mxaXuUtb0aVhHLvjne+kiTICvkYFC13Mbt
+	u936i9jAXSac0frrhtTFrwhSNxO62aJIGTh+a/xo/bD0VZ3E5c6CxkrYnWwMoSgYEZRANh/nuF0
+	8QqRLJdqTvlMaf2v7NsDOXGa6VFg/WXC5IRfB5S2hdiXOK2XEuMWnbscDUDiBQpckEAKqt5tj4T
+	ifE+dn0ZKcrdp3OMkelO6CPwhUteyTz9aIt94NA0WZ/7LIRCxOSPRYSOt5XdHvexmPNYicrkRG7
+	bAPLfp6QEp+lwkhRc05KqatnhMLkwAKKEDA1xn9eH3ZecVfArXlecc1F98csodtdqgbEudtT9fo
+	=
+X-Received: by 2002:a05:690c:c511:b0:841:e9e4:8ab9 with SMTP id 00721157ae682-88d234ae9aemr34479907b3.25.1789501416583;
+        Tue, 15 Sep 2026 12:43:36 -0700 (PDT)
 Received: from ?IPv6:2600:1700:6476:1430:e9c6:4a77:70a9:9f1d? ([2600:1700:6476:1430:e9c6:4a77:70a9:9f1d])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-891ee4a536asm509227b3.10.2026.09.15.11.49.26
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-891ee4a536asm922997b3.10.2026.09.15.12.43.34
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 15 Sep 2026 11:49:26 -0700 (PDT)
-Message-ID: <e4f31d1ee16d537368a65c916597cdc1f28e32c1.camel@dubeyko.com>
-Subject: Re: [PATCH] nilfs2: fix checkpoint root lifetime on sysfs errors
+        Tue, 15 Sep 2026 12:43:35 -0700 (PDT)
+Message-ID: <6423c0290e4a92dd0ad4757b896dfebc570a7aae.camel@dubeyko.com>
+Subject: Re: [PATCH] nilfs2: validate segment number in
+ nilfs_sufile_get_suinfo()
 From: Viacheslav Dubeyko <slava@dubeyko.com>
 To: Aldo Ariel Panzardo <qwe.aldo@gmail.com>, Ryusuke Konishi
 	 <konishi.ryusuke@gmail.com>
 Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
 	stable@vger.kernel.org
-Date: Tue, 15 Sep 2026 11:49:25 -0700
-In-Reply-To: <20260915041206.2430937-1-qwe.aldo@gmail.com>
-References: <20260915041206.2430937-1-qwe.aldo@gmail.com>
+Date: Tue, 15 Sep 2026 12:43:34 -0700
+In-Reply-To: <20260915111304.2725651-1-qwe.aldo@gmail.com>
+References: <20260915111304.2725651-1-qwe.aldo@gmail.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -125,147 +126,63 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Tue, 2026-09-15 at 01:12 -0300, Aldo Ariel Panzardo wrote:
-> nilfs_find_or_create_root() publishes a new root in the checkpoint
-> tree before creating its sysfs object.=C2=A0 If sysfs registration fails,
-> the root is freed while it is still reachable from the tree.=C2=A0 Merely
-> erasing it in the error path is insufficient because a concurrent
-> lookup may already hold a reference.
+On Tue, 2026-09-15 at 08:13 -0300, Aldo Ariel Panzardo wrote:
+> nilfs_sufile_get_suinfo() subtracts the caller-provided segment
+> number
+> from the total number of segments without first checking its range.
+> If
+> the requested number is greater than the total, the unsigned
+> subtraction
+> wraps and the function may process segment numbers outside the
+> filesystem.
 >=20
-> Serialize root creation and removal, finish sysfs registration before
-> publishing the root, and wait for the embedded kobject release before
-> freeing its container.=C2=A0 The wait also makes normal root removal safe
-> when kobject release is delayed.
+> Cache the total while holding the metadata semaphore and return no
+> entries
+> when the starting segment number is at or beyond the end.
 >=20
-> Fixes: dd70edbde262 ("nilfs2: integrate sysfs support into driver")
+> Fixes: 6c98cd4ecb0a ("nilfs2: segment usage file")
 > Cc: stable@vger.kernel.org
 > Signed-off-by: Aldo Ariel Panzardo <qwe.aldo@gmail.com>
 > ---
-> =C2=A0fs/nilfs2/the_nilfs.c | 38 +++++++++++++++++++++++++-------------
-> =C2=A0fs/nilfs2/the_nilfs.h |=C2=A0 3 +++
-> =C2=A02 files changed, 28 insertions(+), 13 deletions(-)
+> =C2=A0fs/nilfs2/sufile.c | 10 ++++++++--
+> =C2=A01 file changed, 8 insertions(+), 2 deletions(-)
 >=20
-> diff --git a/fs/nilfs2/the_nilfs.c b/fs/nilfs2/the_nilfs.c
-> index 7b23e373a..01389dba2 100644
-> --- a/fs/nilfs2/the_nilfs.c
-> +++ b/fs/nilfs2/the_nilfs.c
-> @@ -71,6 +71,7 @@ struct the_nilfs *alloc_nilfs(struct super_block
-> *sb)
-> =C2=A0	spin_lock_init(&nilfs->ns_last_segment_lock);
-> =C2=A0	nilfs->ns_cptree =3D RB_ROOT;
-> =C2=A0	spin_lock_init(&nilfs->ns_cptree_lock);
-> +	mutex_init(&nilfs->ns_cptree_mutex);
-> =C2=A0	init_rwsem(&nilfs->ns_segctor_sem);
-> =C2=A0	nilfs->ns_sb_update_freq =3D NILFS_SB_FREQ;
-> =C2=A0
-> @@ -881,8 +882,15 @@ nilfs_find_or_create_root(struct the_nilfs
-> *nilfs, __u64 cno)
-> =C2=A0	if (!new)
-> =C2=A0		return NULL;
-> =C2=A0
-> -	spin_lock(&nilfs->ns_cptree_lock);
-> +	new->cno =3D cno;
-> +	new->ifile =3D NULL;
-> +	new->nilfs =3D nilfs;
-> +	refcount_set(&new->count, 1);
-> +	atomic64_set(&new->inodes_count, 0);
-> +	atomic64_set(&new->blocks_count, 0);
-> =C2=A0
-> +	mutex_lock(&nilfs->ns_cptree_mutex);
-> +	spin_lock(&nilfs->ns_cptree_lock);
-> =C2=A0	p =3D &nilfs->ns_cptree.rb_node;
-> =C2=A0	parent =3D NULL;
-> =C2=A0
-> @@ -897,29 +905,28 @@ nilfs_find_or_create_root(struct the_nilfs
-> *nilfs, __u64 cno)
-> =C2=A0		} else {
-> =C2=A0			refcount_inc(&root->count);
-> =C2=A0			spin_unlock(&nilfs->ns_cptree_lock);
-> +			mutex_unlock(&nilfs->ns_cptree_mutex);
-> =C2=A0			kfree(new);
-> =C2=A0			return root;
-> =C2=A0		}
-> =C2=A0	}
-> -
-> -	new->cno =3D cno;
-> -	new->ifile =3D NULL;
-> -	new->nilfs =3D nilfs;
-> -	refcount_set(&new->count, 1);
-> -	atomic64_set(&new->inodes_count, 0);
-> -	atomic64_set(&new->blocks_count, 0);
-> -
-> -	rb_link_node(&new->rb_node, parent, p);
-> -	rb_insert_color(&new->rb_node, &nilfs->ns_cptree);
-> -
-> =C2=A0	spin_unlock(&nilfs->ns_cptree_lock);
-> =C2=A0
-> =C2=A0	err =3D nilfs_sysfs_create_snapshot_group(new);
-> =C2=A0	if (err) {
-> +		mutex_unlock(&nilfs->ns_cptree_mutex);
-> +		wait_for_completion(&new->snapshot_kobj_unregister);
-> =C2=A0		kfree(new);
-> -		new =3D NULL;
-> +		return NULL;
-> =C2=A0	}
-> =C2=A0
-> +	spin_lock(&nilfs->ns_cptree_lock);
-> +	rb_link_node(&new->rb_node, parent, p);
-> +	rb_insert_color(&new->rb_node, &nilfs->ns_cptree);
-> +
-> +	spin_unlock(&nilfs->ns_cptree_lock);
-> +	mutex_unlock(&nilfs->ns_cptree_mutex);
-> +
-> =C2=A0	return new;
-> =C2=A0}
-> =C2=A0
-> @@ -927,13 +934,18 @@ void nilfs_put_root(struct nilfs_root *root)
-> =C2=A0{
-> =C2=A0	struct the_nilfs *nilfs =3D root->nilfs;
-> =C2=A0
-> +	mutex_lock(&nilfs->ns_cptree_mutex);
-> =C2=A0	if (refcount_dec_and_lock(&root->count, &nilfs-
-> >ns_cptree_lock)) {
-> =C2=A0		rb_erase(&root->rb_node, &nilfs->ns_cptree);
-> =C2=A0		spin_unlock(&nilfs->ns_cptree_lock);
-> =C2=A0
-> =C2=A0		nilfs_sysfs_delete_snapshot_group(root);
-> +		mutex_unlock(&nilfs->ns_cptree_mutex);
-> +		wait_for_completion(&root-
-> >snapshot_kobj_unregister);
-> =C2=A0		iput(root->ifile);
-> =C2=A0
-> =C2=A0		kfree(root);
-> +	} else {
-> +		mutex_unlock(&nilfs->ns_cptree_mutex);
-> =C2=A0	}
-> =C2=A0}
-> diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
-> index 4776a70f0..72affad9e 100644
-> --- a/fs/nilfs2/the_nilfs.h
-> +++ b/fs/nilfs2/the_nilfs.h
-> @@ -68,6 +68,7 @@ enum {
-> =C2=A0 * @ns_sufile: segusage file inode
-> =C2=A0 * @ns_cptree: rb-tree of all mounted checkpoints (nilfs_root)
-> =C2=A0 * @ns_cptree_lock: lock protecting @ns_cptree
-> + * @ns_cptree_mutex: mutex serializing checkpoint root creation and
-> removal
-> =C2=A0 * @ns_dirty_files: list of dirty files
-> =C2=A0 * @ns_inode_lock: lock protecting @ns_dirty_files
-> =C2=A0 * @ns_gc_inodes: dummy inodes to keep live blocks
-> @@ -151,6 +152,8 @@ struct the_nilfs {
-> =C2=A0	/* Checkpoint tree */
-> =C2=A0	struct rb_root		ns_cptree;
-> =C2=A0	spinlock_t		ns_cptree_lock;
-> +	/* Serialize root creation and removal. */
-> +	struct mutex		ns_cptree_mutex;
+> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
+> index eceedca026..e3733d2be1 100644
+> --- a/fs/nilfs2/sufile.c
+> +++ b/fs/nilfs2/sufile.c
+> @@ -864,15 +864,21 @@ ssize_t nilfs_sufile_get_suinfo(struct inode
+> *sufile, __u64 segnum, void *buf,
+> =C2=A0	struct the_nilfs *nilfs =3D sufile->i_sb->s_fs_info;
+> =C2=A0	size_t offset;
+> =C2=A0	void *kaddr;
+> -	unsigned long nsegs, segusages_per_block;
+> +	unsigned long nsegments, nsegs, segusages_per_block;
 
-Do we really need another lock here? If the ns_cptree_lock is not good
-enough, then, maybe, we need to change the lock type? But adding the
-another lock for ns_cptree looks strange for my taste.
+The nsegments has the same meaning as nsegs. Why not reuse it? I think
+we can do this. I think that introducing another local variable doesn't
+make sense.
 
 Thanks,
-Slava.
+Slava.=20
 
+> =C2=A0	ssize_t n;
+> =C2=A0	int ret, i, j;
 > =C2=A0
-> =C2=A0	/* Dirty inode list */
-> =C2=A0	struct list_head	ns_dirty_files;
+> =C2=A0	down_read(&NILFS_MDT(sufile)->mi_sem);
+> =C2=A0
+> +	nsegments =3D nilfs_sufile_get_nsegments(sufile);
+> +	if (segnum >=3D nsegments) {
+> +		ret =3D 0;
+> +		goto out;
+> +	}
+> +
+> =C2=A0	segusages_per_block =3D
+> nilfs_sufile_segment_usages_per_block(sufile);
+> =C2=A0	nsegs =3D min_t(unsigned long,
+> -		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nilfs_sufile_get_nsegments(sufile) - se=
+gnum,
+> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nsegments - segnum,
+> =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nsi);
+> =C2=A0	for (i =3D 0; i < nsegs; i +=3D n, segnum +=3D n) {
+> =C2=A0		n =3D min_t(unsigned long,
