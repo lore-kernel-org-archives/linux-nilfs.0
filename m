@@ -1,76 +1,76 @@
-Received: from mail-yx2-f12.google.com (mail-yx2-f12.google.com [74.125.224.140])
+Received: from mail-yx2-f43.google.com (mail-yx2-f43.google.com [74.125.224.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A4A4644C64D
-	for <linux-nilfs@vger.kernel.org>; Wed, 16 Sep 2026 19:06:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.140
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB031356749
+	for <linux-nilfs@vger.kernel.org>; Wed, 16 Sep 2026 19:10:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789585601; cv=none; b=BjFgtzoyXn+m2aAT0y0p3talMftX0MO0IJCurTH1Vd8Algdc+uxQVc3/S+2zWVt7J9JLnzjXuSZggU7SsPjSoWRe6lqOOd495DSceqNkvF88BWE3VzGWl+MGRR2zvEKhUcmq0tdskGRxEHdTtOIecUG4mPv+TCtzcyuuSuEzD00=
+	t=1789585836; cv=none; b=pp5Tkr20NBapxPUJwUx3+XVB3qE18FBQcJsGC/JG8WHFKZL/gYIaGw6MWLgzQDro6CGqvpfG4ztpCoz8tRn5Bt0CapmO+pCWGIcrTLJAM0+AyCL9ZGW8xI80HaaJN4egpYsyjGOUGEZUhjBBB76kj8gNht9SJcskgwf1xQSHhKs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789585601; c=relaxed/simple;
-	bh=at37MEHK1PoDpKTrPGD29SbuwXSfyiMebXazPTAKj48=;
+	s=arc-20240116; t=1789585836; c=relaxed/simple;
+	bh=dWhyAImIfrgrm+GktFBPHJ3oz0UcioWGpy6TiaEbbcY=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=jAnA2CIKEB7UQZPmIfTEoJ0nS/w2Ppd726Kria/JphdqzxYrDSq8PmmvIM8Sd/qQ9hboDbbQdNZ54sm010Z3pkDSclAnsPMfUVtwmyzwxg72/o1X/tqPZZI+dkL4/SsVaOxwvZfc8M0gNpSmQTA+GZb9RtTpU68QdiniKamqCCg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=FMHFlIdV; arc=none smtp.client-ip=74.125.224.140
+	 Content-Type:MIME-Version; b=VX4cxnRYySEaQn4xmrxI1JPoNCRMWdnDOfYeWXPMAxK55qshMw8wK+pWWo1RISA4cEwmVtJbT0v9iyKkgz2qA07redDleF8KkHcJZI1Bt/AS6mqN0IpTXd2JTr38mn5fgFAXsPeqz8Bb2/k2jqHLugpuVreWT6VW3T4y8yKBDpk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com; spf=pass smtp.mailfrom=dubeyko.com; dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b=AAztSuf1; arc=none smtp.client-ip=74.125.224.171
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="FMHFlIdV"
-Received: by mail-yx2-f12.google.com with SMTP id 956f58d0204a3-66e4ab19127so32621d50.1
-        for <linux-nilfs@vger.kernel.org>; Wed, 16 Sep 2026 12:06:22 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.b="AAztSuf1"
+Received: by mail-yx2-f43.google.com with SMTP id 00721157ae682-85d43daa8f4so11893467b3.3
+        for <linux-nilfs@vger.kernel.org>; Wed, 16 Sep 2026 12:10:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1789585580; x=1790190380; darn=vger.kernel.org;
+        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1789585808; x=1790190608; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Ca4yrRqL6+DdXUu9p1R9aXY14Me7n+gPWyjhGW+2Sug=;
-        b=FMHFlIdVI8Es+9oD00reBuLNkm8HT9JaW/cOr8zKkzIpcj3Mzh/TTyrMxqtrv7aB+S
-         ueO2iHI6db2h5J5DNUsiq2OKGXTn5jEglCdTVqJ9MiOCDcCYeZndLnAQ1nMaR6iz0DBS
-         gMd+gMIl3+OeIdwNzwN0Oche5igdQIb2innc5aRHbp67giMPmPbkVnfn9FDuPVof4v0W
-         qlGdXv9XyLSJF8NQrVRm5qJ61Bd5Y9g2kibJevDhU87hWc0fAZMx5KpjyAEqtXMeO+tM
-         bPYLdZrmed52fowoKk5M8fkXVA0PbUDpwnZQjb6GTeakwHfZAwoFkHNYIBblQXz1PVac
-         gqHA==
+        bh=nnX6TMlM7TkvtbK7Ln9VIw2FWzmoodBJCcoSVeS4ETw=;
+        b=AAztSuf1g4y4Pn7zC2B02/TsPk/pZSFhqpyrpJRvS6P3JbxOVQ81LSGL8ueoNsEytu
+         JOYCar++n3MOzCvbMKAiudY1I+V38jgT4L9rL62b+pp5lqhBDgzH8llYWCLr2EeR3y5n
+         CMvSwtggKS4bBKnPg1l+4qgmW8O9I/coYEZvBGuZMo+Usucm85BBxzz79JeYehfE71DB
+         BFyUvDS5WMzLxOMecyXg5RhR3jO7MqRrXp2n42Orxn5gTB9axDEgznT44OwEIyelHuqL
+         ii2y17JyRz6h43CasMYMpPXw+dV6ybd8S4SVoPE0jaEdf4f+NQpAtSLutYCR8fgLzjgr
+         2FgQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789585580; x=1790190380;
+        d=1e100.net; s=20260707; t=1789585808; x=1790190608;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=Ca4yrRqL6+DdXUu9p1R9aXY14Me7n+gPWyjhGW+2Sug=;
-        b=xnNsyHRboHfOMRZjqi5atZAwZuRiBtBdXYjMiMca1lRRQV1HL+56G/diXMLszKEwlI
-         lJ0YSvrXyLnuP5XFf4IX2HUfOWUAA6znlpuEF6zvtcaPI6Y9UBTctpiJKsk8NSfDq5iB
-         wVgoOPwJLcnVFo3Wvj2I3p1IT1KqZw7zuQtCuXY8PRg8+VeY1XLIZDLDOSXbtqSg08CS
-         Sho2SLudLYJcoLotLta6AxRInAEUjvfkyHtu2mu2gs6/5WbMigfx+RKfgy0x9gBtWYn0
-         2BF9xUh2MGBkrbF8zDQcQ7qHBWVeY3G7o7HefChk58lGVog9QxWbNIn2GtFKdXVnCVI6
-         /bxg==
-X-Gm-Message-State: AFuF++kHNe2sljxKmjUAQKbny/HBp/cJc7tkq5okyiAvLPYZlDOuZpy4
-	GL9kAStSAZ1OK0S+Y4H0jXAKe8whnzzqw4fZY5sUqB551YBzx7sw71avv0/9IFYLg68=
-X-Gm-Gg: AYBFou3Gjddfpjsi7BQ20o3YNWvO8kDvUIVAKq1e+LSBjsvaARYp/ngxO2u5mWlPF3A
-	UuMxK1WqlXr5fpRZwCEsxdkq+SVMRhFSOECccQYvLfKztRVmn4vlydBmxtAj95dHVnl2bDyKR7v
-	cM6690HJkk1jRZnITTNFsL0czpjPgsefKy7qeWmchm2N8SJ8EcPJ2sT825J/yFOxdy1KIQ/w2Zt
-	N6/65H5XOFyc33uIZe72PiX7umJ0EXCDysSB7qhyh2qAMKcveXH3yBtvfbv293swqaJLS64yT//
-	nQkiYX0RTc+LfCUOfFV90nAYUWXLUDVk4x/2t+KJkzQyz0Y72UDaEpv5e3Wa4ZNP/Prk72tRRvd
-	F0HwoGhvgO/l64VrKx9Ei33sKqvjOEGmyOqx23DLhF4xH0DzR8CUJB4gJEdy8YYqzKIg0FINvvx
-	/Z6CQVDL5RFnncrSqITavjE7+NgUO9zoP/Y7xVIX68hlN5UXAWjWIQF0xLWeSIFUVtEMfZjGgaz
-	YoF2qgln6wpCrev1a78lOrDQ79VLKoThhXXK5VIWi3zLVL1mvfPM25f72vimAoqQx1I1JxcGMVB
-	HZKDrG8rJ4UNpw2RHO316329oMmh7nvwBnKNh29j1koI3JDHy1VqrkxJXGm5kk+Z
-X-Received: by 2002:a05:690e:4391:b0:671:70d2:5285 with SMTP id 956f58d0204a3-67170d2542fmr87564d50.72.1789585579861;
-        Wed, 16 Sep 2026 12:06:19 -0700 (PDT)
+        bh=nnX6TMlM7TkvtbK7Ln9VIw2FWzmoodBJCcoSVeS4ETw=;
+        b=zfSganLZhoQoDnXN4FNK8EC6Uppb+mblR5127TEDjT/npzubxIPU1ck/XefUDEgYbL
+         xQiZyuynpKnfehwoPyGaJMBBza7B32oJ6JZKTuo8ME6xXkPSCE0q/YByF2b8GdU1czyi
+         o/AvXbrKfWdDZzzwuPMqUfL6bBLMvt2s8CF7J+oI6V9Oiule0ZI2qQxevo9Ok4wRr4PK
+         Tsxebc2StcBbgaEfZtIgmwaUpaZa1QKvEs3APAXQCLZc7virkKTSn/HLmzj2D7t3m4xJ
+         X8SzTist2eKo/AOxINcWL18Ic1K11wh6c3Fo9NlaSx+wJexFShxLWM5SiJ7Jvz78hwWg
+         mPXA==
+X-Gm-Message-State: AFuF++nhfwkB3EUIGxyfrudI/KYyYhXmdY2kbVE5n7/AZLibdNcOEMYO
+	stBj5fhtqyLDW8fysv61pIrgH/tpRl7VnOMJDLrN3KchHC8i2KKvtfKb4nOBI96zJUk=
+X-Gm-Gg: AYBFou1Nd6ZH+uHwK0no2Cmbnva8YHPz/Dgf5GRLvYvasM+8JI2t7Ju4mhXV51y/vgU
+	Jf/uL7MOwWj81QJl+yO8YEaEB2+vGm5ENnb2Z9TMQKY2E2b0I0026QhHqzTsEzwAX0td+7drrZK
+	L9gpwv+gbGsgxzEXeACmmxCLSSkN/DAmT5g/8y/rQbQdu1ZwCXvwj303PMLJFjcpgSusjYuZure
+	zrjGobSJ+8uEfLLkl1jXql8iZUm2VHb4st88Jspvl4volU07X+9fJU7S/OurYXpzvb7HxHZvR+I
+	MsZwEEkOa2pEIfZDY+eIi+UiiOVVZlqaQMtWY13wJe35ODa5S8K1xzjLigHDNv2Ay1Mn1EpPLMb
+	CjprdQ0J/Cg8wsN2rWOmEX5eE87SVoLQe3z8wvc09bJolGn0rS85qe0ZPhkFOaOfjTR6VUg7jj0
+	rPWnEMa0dHPdJ4INIPl908NTpGHnurlcBO4+rkzKAZfyyFx4t/sFSuWNeA3qvn3tFO5H4wI442U
+	L95PfZZn90N7mqa1P39fkg9mF/pl5MI8ZSunBU/50IGwFKKtLahV9w1zwp1Ty/aLLuQvJLn76FS
+	DK3Dhbp+m3Y7pAaGaZsnsxxy8UsOPs71eXPTt9LmrVSChs3WhUn0Aenr6RDy2CO0
+X-Received: by 2002:a05:690e:1685:b0:671:3f7:9cf1 with SMTP id 956f58d0204a3-6716321385dmr1421432d50.25.1789585808172;
+        Wed, 16 Sep 2026 12:10:08 -0700 (PDT)
 Received: from ?IPv6:2600:1700:6476:1430:f547:a2c0:72f7:6671? ([2600:1700:6476:1430:f547:a2c0:72f7:6671])
-        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-6715f79ca1asm1651972d50.21.2026.09.16.12.06.17
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-6715f79a963sm1664399d50.20.2026.09.16.12.10.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 16 Sep 2026 12:06:18 -0700 (PDT)
-Message-ID: <8eef80c6c8d21e863c5a3721b1ae681fc4ccf54f.camel@dubeyko.com>
-Subject: Re: [PATCH v2] nilfs2: validate segment number in
- nilfs_sufile_get_suinfo()
+        Wed, 16 Sep 2026 12:10:07 -0700 (PDT)
+Message-ID: <07b8c0e199af4df459668e6ddca0eee10a735956.camel@dubeyko.com>
+Subject: Re: [PATCH v2] nilfs2: validate file block counts during recovery
 From: Viacheslav Dubeyko <slava@dubeyko.com>
 To: Aldo Ariel Panzardo <qwe.aldo@gmail.com>, Ryusuke Konishi
 	 <konishi.ryusuke@gmail.com>
 Cc: linux-nilfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
 	stable@vger.kernel.org
-Date: Wed, 16 Sep 2026 12:06:16 -0700
-In-Reply-To: <20260915195223.3331909-1-qwe.aldo@gmail.com>
-References: <MSG-ID-sufile-v1> <20260915195223.3331909-1-qwe.aldo@gmail.com>
+Date: Wed, 16 Sep 2026 12:10:05 -0700
+In-Reply-To: <20260915195752.3337033-1-qwe.aldo@gmail.com>
+References: <20260915111351.2726334-1-qwe.aldo@gmail.com>
+	 <20260915195752.3337033-1-qwe.aldo@gmail.com>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -125,54 +125,43 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 
-On Tue, 2026-09-15 at 16:52 -0300, Aldo Ariel Panzardo wrote:
-> nilfs_sufile_get_suinfo() subtracts the caller-provided segment
-> number
-> from the total number of segments without first checking its range.
-> If
-> the requested number is greater than the total, the unsigned
+On Tue, 2026-09-15 at 16:57 -0300, Aldo Ariel Panzardo wrote:
+> nilfs_scan_dsync_log() trusts the block counts in each on-disk file
+> information entry. If fi_ndatablk is greater than fi_nblocks, the
+> data
+> block loop can consume excessive summary entries and the later
 > subtraction
-> wraps and the function may process segment numbers outside the
-> filesystem.
+> used to derive the number of node blocks underflows.
 >=20
-> Cache the total while holding the metadata semaphore and return no
-> entries
-> when the starting segment number is at or beyond the end.
+> Reject inconsistent file information entries before consuming their
+> block
+> information.
 >=20
-> Fixes: 6c98cd4ecb0a ("nilfs2: segment usage file")
+> Fixes: 0f3e1c7f23f8 ("nilfs2: recovery functions")
 > Cc: stable@vger.kernel.org
 > Signed-off-by: Aldo Ariel Panzardo <qwe.aldo@gmail.com>
 > ---
-> =C2=A0fs/nilfs2/sufile.c | 10 +++++++---
-> =C2=A01 file changed, 7 insertions(+), 3 deletions(-)
+> =C2=A0fs/nilfs2/recovery.c | 4 ++++
+> =C2=A01 file changed, 4 insertions(+)
 >=20
-> diff --git a/fs/nilfs2/sufile.c b/fs/nilfs2/sufile.c
-> index eceedca026..573646c5f7 100644
-> --- a/fs/nilfs2/sufile.c
-> +++ b/fs/nilfs2/sufile.c
-> @@ -870,10 +870,14 @@ ssize_t nilfs_sufile_get_suinfo(struct inode
-> *sufile, __u64 segnum, void *buf,
+> diff --git a/fs/nilfs2/recovery.c b/fs/nilfs2/recovery.c
+> index 4d5a6aa521..28200cef4d 100644
+> --- a/fs/nilfs2/recovery.c
+> +++ b/fs/nilfs2/recovery.c
+> @@ -359,6 +359,10 @@ static int nilfs_scan_dsync_log(struct the_nilfs
+> *nilfs, sector_t start_blocknr,
+> =C2=A0		ino =3D le64_to_cpu(finfo->fi_ino);
+> =C2=A0		nblocks =3D le32_to_cpu(finfo->fi_nblocks);
+> =C2=A0		ndatablk =3D le32_to_cpu(finfo->fi_ndatablk);
+> +		if (ndatablk > nblocks) {
+> +			err =3D -EIO;
+> +			goto out;
+> +		}
+> =C2=A0		nnodeblk =3D nblocks - ndatablk;
 > =C2=A0
-> =C2=A0	down_read(&NILFS_MDT(sufile)->mi_sem);
-> =C2=A0
-> +	nsegs =3D nilfs_sufile_get_nsegments(sufile);
-> +	if (segnum >=3D nsegs) {
-> +		ret =3D 0;
-> +		goto out;
-> +	}
-> +
-> =C2=A0	segusages_per_block =3D
-> nilfs_sufile_segment_usages_per_block(sufile);
-> -	nsegs =3D min_t(unsigned long,
-> -		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nilfs_sufile_get_nsegments(sufile) - se=
-gnum,
-> -		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nsi);
-> +	nsegs =3D min_t(unsigned long, nsegs - segnum, nsi);
-> =C2=A0	for (i =3D 0; i < nsegs; i +=3D n, segnum +=3D n) {
-> =C2=A0		n =3D min_t(unsigned long,
-> =C2=A0			=C2=A0 segusages_per_block -
+> =C2=A0		while (ndatablk-- > 0) {
 
-Looks good to me.
+Looks good.
 
 Reviewed-by: Viacheslav Dubeyko <slava@dubeyko.com>
 
