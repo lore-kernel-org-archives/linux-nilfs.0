@@ -1,104 +1,128 @@
-Received: from mail-vs2-f40.google.com (mail-vs2-f40.google.com [74.125.227.40])
+Received: from mail-lf1-f52.google.com (mail-lf1-f52.google.com [209.85.167.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84FAD52CCDC
-	for <linux-nilfs@vger.kernel.org>; Fri, 18 Sep 2026 21:22:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.40
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789766534; cv=none; b=VvwEh+7xMj9vsmR2Cr6S0kcoR67XnfajPLp3cAPIpHOtEZZhn5hcNoKft/RMuFpkFghXH6ME9tIIpyXunD+Oltq28yTvw15Y06TN9+i94iYnqwJFL4cr5k6zoA/ftYlw/7AOZ/kf8E3267xDfNwmCfV0afZIqg8RRaeFexPw6Wg=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789766534; c=relaxed/simple;
-	bh=X9OZRbLgJLOqk1WlSsd3gudo9f4gAyD1+kyq5qwCh/Y=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ZXNrtvBRLCuo6v1XuZYo62Ye+1lblBL1OMPYJ8tJ+n8LaqOjQO78W7nFBifGwFxRbrLwmJes1ejR+7imv7hHGeZF2gDeKBWX0++r1Q4+nt3KWbudtuze2CL5zX99l/ruaj4y/QTsEjBUkL7ixbzCD7QHDXpIG7WY4uC5HKvOAu0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Uowct0ls; arc=none smtp.client-ip=74.125.227.40
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73DC83264CB
+	for <linux-nilfs@vger.kernel.org>; Sat, 19 Sep 2026 00:47:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.52
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1789778837; cv=pass; b=BlLSN6zKj0htdC70w3zS//ZTF3w6Xjoz/rjSRk2goeeqkSE03cE6IFMMJCfUCs3eaprnRdJ0Vu3eyUn9UyN6tSGS7JSAVM8jxhLln7lAwwhQLLxrckxxNIqEISOSBpw8itd9BvBXzfbdQbW4MdlsJkOq+A9GxttMMpmDov2EDj4=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1789778837; c=relaxed/simple;
+	bh=ULS1O9H2vl1xXhjc8PA6+XCr3+Fn6BHRdst9HWjSmQs=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=DZ5cvoNCGRsOb7MyilpV8PXbKjWcapC3Q1GAAaQWoXbXbySedb3fC3jtuRy+dqdFTKwiO2xVgr3aZGWiUPQ84slfsVdLdcUSzNul6tbzvaNzC1mvS42IdJXzV+xbzOAOCkGV/z9fv9srRsKqrA/gMHWJvQ43vavDONnWFlThJFQ=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Kpn0g1O9; arc=pass smtp.client-ip=209.85.167.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Uowct0ls"
-Received: by mail-vs2-f40.google.com with SMTP id ada2fe7eead31-7a05d236f53so666695137.1
-        for <linux-nilfs@vger.kernel.org>; Fri, 18 Sep 2026 14:22:13 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Kpn0g1O9"
+Received: by mail-lf1-f52.google.com with SMTP id 2adb3069b0e04-5b8997bc6e6so885329e87.1
+        for <linux-nilfs@vger.kernel.org>; Fri, 18 Sep 2026 17:47:06 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1789778824; cv=none;
+        d=google.com; s=arc-20260327;
+        b=agHepyV+PLK21Zg/6JhMhf+aE+9ntbT5lLcDqNRPEX9ghyi1LWDGBDEF6KzhC1VLJc
+         P/fmbVnA2nLqs0pK5hG0pCFsCut0Z/hJmwrx2zj0AEBVSMtW/CkejZ6/qWg0ar42bGta
+         U/o4C1a3TiVSbVesp2MbZG8LQ35PGSh9eu8uh0ryujnkrHwFMYCRZtQa9JxDYVKFrxTA
+         /Her/RlgNkBAk6GNk0N+Xo928xS/Oc4Zg+q3r+VyeK/Y4KxnFEeLcbZwWQyuosRdj5OS
+         0ZNKaI5WXlFmibF83R1jRLAfCI1KltrOd4bZdWkvGFdMJCMoD2Cg4PH3HCpH7AQdR6Mf
+         FsYw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=ULS1O9H2vl1xXhjc8PA6+XCr3+Fn6BHRdst9HWjSmQs=;
+        fh=ON/i+DxuhERVoliaiHkGanr17ymcvrKVcySJpcsf8c4=;
+        b=NEgK7+GMAWHNN/yhuMOEYYfxtw4oeY/tNsoMF/1ZCX4rWZG2u3lcVGDnUix/GRD/O9
+         6y1jldRyGK3wGPDT+myBBE+tE6QmilMecTy4StbbnLfwNF2Q0a//STxaOJKCI/38wRn3
+         2CwgzeoK7HxRjYdvSdCWxXHBy4lw649LM7kEGF0l1ZMhlCtKQiQL6i4rnMhHjWwF/O1x
+         lBGvLHFUKdo5KvfcCWFWpO76FKqo3EyXB93ev1IJVbxna8PQwKlRxWOiRh2SSlDaggss
+         IOP9r6pjLDKzofyuj2BXM8nyu36tiUFlhhhYas5o7Jvvbqc9X+qax7oy4FQCW5KxpelQ
+         WOUA==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789766532; x=1790371332; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=X9OZRbLgJLOqk1WlSsd3gudo9f4gAyD1+kyq5qwCh/Y=;
-        b=Uowct0ls3LatVKgW4aDT9bGdjAu5eqAYiFi3pqhl25mwm9UaID1a6tlkTJ7F9W/Z2R
-         +XHVHBvIKKb5P/xKd3AjheebKtm0p+R4OxNFr5LHgWfkz4t3WVtt5iXnmLbfqoiOS2Fj
-         KFZnNj+hwvEC3DQKX2Uh72Zz9mdnaLwxpu0ZRi3DMgB6yvXjqpt34L1SM7c/5PQ7Db4w
-         P0irXiS6uZBGOVKwSEBKrDBacbYw98fMAMmtFZkAe4n4j0qgH6WpxrydxvI2Nj7MhLNO
-         EJCjOnq33uD9o10JqaMYis96vc8Irq6aqbi0Tz3Q4xoY2J/mzaDHkfFv1Wiga1W9zP//
-         +OZw==
+        d=gmail.com; s=20251104; t=1789778824; x=1790383624; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=ULS1O9H2vl1xXhjc8PA6+XCr3+Fn6BHRdst9HWjSmQs=;
+        b=Kpn0g1O9/UWfCTZBkJUmCb365BAxASdEW72zhbBFwtvvJ/oydoACBLO0Dt6FNC0S0c
+         4O1FhJIO66yaoCNjPx1lwDg2bmK6nMX1BAs8HjlTSsuGdUu9cxke5NogT72PLBUVENK4
+         ts4bMqbRZLbYWA1WS0bv/oFvzAPtBAmWhAe9mEE2f7Qd8DvnkLfNEfeCsV6Z9TuZ48B0
+         8ZRBMcU2B8YHtb59Qq8qzG9AewLT2kdCw+3Ck9XOlpIPRU6M2xihUnHQher5pnSosdzZ
+         bZ9ahl1YjKSgRRO0bvRbZ+JPW3zXWZjAJPcHh9z5Jr0UpiIV1agd4K0f+QCdLMo/+FzE
+         zXTA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789766532; x=1790371332;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=X9OZRbLgJLOqk1WlSsd3gudo9f4gAyD1+kyq5qwCh/Y=;
-        b=bvTijeJxTtzeQBci5cB88ywjyM1x2J42bqwd+tLALJkcOPzdIBRG9PiGlG8LxukkCb
-         n0i2wHd6St8IMuR/nQhSY/mlJPnRhHnoy+35MIzzh+Zy1mNB2t2wGGcKwMhylARRXwCL
-         Vwwd/gUHRYe2s8vj3/XA5WXqMIMLsnZ/0U0JOVws0bUHeR8kQoP1X2sp1ooEN4rO/Nmx
-         uj2VCdTsiY+Kip+PaN7bqXo1t7TZQ2tNjPrg443itqH7R9u4AXB0n/UZigah8o/V8kSe
-         8lMY8vEZgTdJQt9NgKk6s+sEzeTIl0KYZtpbKKhLC/r7THjUSF0YbX0pYb8SP6dNpGUs
-         Xl7A==
-X-Gm-Message-State: AFuF++ltYG3uo7QDL2dbfgvAdmA4o1mmdxAmt46nVMP9Uq98LB2+dJmC
-	dOrP+VSME5Mv/cJVqodqUIPLDTG14KxicW3ECK2v/E5YWMJyxgCXj0iC
-X-Gm-Gg: AYBFou0UKw8/4xPSu0R4llA5XjDzAkcmVKNWyEjopUGMoXZXCgvkG3kQeDwYLBnSETF
-	y7ctHrOhm0ya0xMdX26BN5zo81TlM35gJN52Xz1SY70mYl2IEHKiL7I6j2LuL0SOdKE3qqbmzxq
-	uk5YnpddZvp24f5m8gIpc5HZDG6bpjXXqOWj0Q7Olkff6xffArd/7kqeGzu/cv4lY/w2z3U+Rwg
-	VhEPxNwt/J9wVGGxZ8gtZS9OswbhoeEHB4MnMctywtE7Mm8eUhg0rmG3RApSmRB0vSmbrxzMzg5
-	FfzmYfTZpFdymsfIBIaD+gETgQcgcao/v5cRmNfneI6JI3Li7ppkTYCQfWl4Tit6fSJbOXGtkC0
-	AMyCy2/bsYxHAuws8/0r23vFyXpqMhukze7mTyMUBVvZGwx8h0iUwN+5KoMKO7eKDS5UV2dNEoM
-	8/uDFJR54NpJA6tGjOxohw8MpgTYKUsExYTdRzZiM0rIz5RDMha1ZjPmgo0gF1xw==
-X-Received: by 2002:a05:6102:5094:b0:7a1:f951:664e with SMTP id ada2fe7eead31-7a55d28698bmr2162620137.21.1789766532242;
-        Fri, 18 Sep 2026 14:22:12 -0700 (PDT)
-Received: from beelink.. ([186.22.57.86])
-        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-7a6ac1bfdd0sm649155137.3.2026.09.18.14.22.10
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 18 Sep 2026 14:22:11 -0700 (PDT)
-From: Aldo Ariel Panzardo <qwe.aldo@gmail.com>
-To: slava@dubeyko.com,
-	konishi.ryusuke@gmail.com
-Cc: linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	stable@vger.kernel.org
-Subject: Re: [PATCH v3] nilfs2: fix checkpoint root lifetime on sysfs errors
-Date: Fri, 18 Sep 2026 18:21:53 -0300
-Message-ID: <20260918212153.23651-1-qwe.aldo@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <13b330df140a2ee488952b4c7145e261ec884555.camel@dubeyko.com>
-References: <13b330df140a2ee488952b4c7145e261ec884555.camel@dubeyko.com>
+        d=1e100.net; s=20260707; t=1789778824; x=1790383624;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=ULS1O9H2vl1xXhjc8PA6+XCr3+Fn6BHRdst9HWjSmQs=;
+        b=ks6Ser5v9xECppbWkmrsCJeyAGDmQPk+0e452FU+9eROF9VU8iT+pXgyTDgah2jnaP
+         jSbxGwKk0qDfUH3cS29zmkO+PUsR4XM0s40sfA5+Co6bGdu9Qvb02Iki6lWt3z+ipJ3m
+         XyhBx+fmbXLuTbVEOcZknaJF5fX+dUBWXWKUVYerkYDmjB1ywkIBAzHarTcAAEexLTbh
+         2AgwZlQ0iw9T7IMeOnfCfDQZ7WAouw7H+dqgn7RlDQKQopLI3QWmNTBbPS7om/rwRyx/
+         5Tnov4VuiNsjyf3FEJbRdVS+G+ejgcLIz+1+Gxc+FLTMqzD5HAWqd5aLMJrPkSyoU9Q6
+         Kitw==
+X-Forwarded-Encrypted: i=1; AKwUvBy7lk3b0Kq2vmRvaCR5hS14tQBVewPfuR1yF32gH7AnyeRbqqL54QgzAY73VpWV8aE5lDjxZsRz3rHspQ==@vger.kernel.org
+X-Gm-Message-State: AFuF++m372KWrjyh3sREI52yXhpu70vceQJXb5iaJ2qqlb0PTW/znmdP
+	4wFGq7VaBuGWobHg6McN6bZ9zoA4MQ82Fw9N97xvoBI8wJcjLpZmpJyPYXSucvgDxufuvjETFvv
+	3LX5Zdpp2rsPxk3OGYmM76AqENHRz4xc=
+X-Gm-Gg: AYBFou3jcHPngyIxvKHrnPHfJNXFigBitDg0khkFL5eT7HOrpJeBWXrnUwAZ5oDH8xw
+	99gK9/M05eacler4fs6lQczFfdc+jEMiPdfP/exknYmqx+43hIzGCvrmNWN/sCwSqnJUJltDPUP
+	B+5GBs5aa+hc8D8B0KsfZwPcOfZir8fEAU7X2ZlSXDiEKu+Xn0j/uTZds3iRPESLaoaYaU5+DFQ
+	aDzrC+GYi/0zfprSSGUePI+x1aA2rvpUsaf38k66j0eCcutSnp92DPqzM4iX2v0JX8FmS/twDNL
+	LzZ4welcsG5I6Fu6rFdqpVgjNApvU9empe+2vvABLg2zAUvgFG6CWjvV
+X-Received: by 2002:a05:6512:219:b0:5b5:e2c0:510b with SMTP id
+ 2adb3069b0e04-5b8ba5d1c46mr1750846e87.4.1789778823638; Fri, 18 Sep 2026
+ 17:47:03 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20260915111351.2726334-1-qwe.aldo@gmail.com> <CAKFNMo=0hDANOd+DxxvKA=RNbiG-zygkWh6EUC6Vr2MYe4npLQ@mail.gmail.com>
+ <e197037b70377be78b296380bcb31b8c3e8f8d74.camel@dubeyko.com>
+In-Reply-To: <e197037b70377be78b296380bcb31b8c3e8f8d74.camel@dubeyko.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Sat, 19 Sep 2026 09:46:47 +0900
+X-Gm-Features: AcwNN1XvQ7oA7wJs8qNTVXqjcIufwo1diKErI4eQMLUq2UxbIuNp6roz-nIE5Rg
+Message-ID: <CAKFNMo=0-rxN0BKG1v+KhrGwnh2ZL_Hn2Jbcqc9sWRV8cwxPrQ@mail.gmail.com>
+Subject: Re: [PATCH] nilfs2: validate file block counts during recovery
+To: Viacheslav Dubeyko <slava@dubeyko.com>
+Cc: Aldo Ariel Panzardo <qwe.aldo@gmail.com>, linux-nilfs@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi Slava,
+On Sat, Sep 19, 2026 at 4:33=E2=80=AFAM Viacheslav Dubeyko wrote:
+>
+> On Sat, 2026-09-19 at 00:44 +0900, Ryusuke Konishi wrote:
+> > Also, please replace the 'Cc: stable' tag with the following tag, as
+> > with the previous patch:
+> >
+> > Cc: stable+noautosel@kernel.org # Non-fatal bug fix; defer backport
+> > until a real issue is reported
+>
+> Damn! I missed this request. I already pushed the commit. Are you OK
+> with that? :)
 
-No, wait_for_completion() without a timeout is intentional here.
+Viacheslav,
 
-The kobject subsystem guarantees that the release callback will
-eventually run -- CONFIG_DEBUG_KOBJECT_RELEASE only defers it, it
-never drops it. So the wait is bounded in practice.
+Since we haven't hit the merge window yet, and linux-next (the
+destination where your for-next branch is integrated) is a daily
+integration tree intended to be rebased before being pulled into
+Linus's tree, updating the commit message on your branch now should be
+completely fine.
 
-If we used wait_for_completion_killable_timeout() and the timeout
-fired (or a signal arrived) before the release callback ran, we
-would kfree() the root while the kobject release is still pending.
-When the callback finally runs it would access freed memory -- a
-use-after-free.
+As documented in Documentation/maintainer/rebasing-and-merging.rst:
+"Some trees (linux-next being a significant example) are frequently
+rebased by their nature..."
 
-wait_for_completion_killable() (without timeout) has the same
-problem: if the wait is interrupted by a fatal signal, we cannot
-safely free the container because the release callback may still
-reference it.
+I think it would be better to fix the tag and overwrite-push it now
+rather than leaving it as is, though of course it will need to be
+frozen once we hit the merge window (or after the official release).
 
-The unconditional wait_for_completion() is the only safe choice
-when the caller must free the container of an embedded kobject.
-This is the same pattern used by other subsystems (e.g.,
-blk_mq_tag_set, configfs subsystems).
-
-Aldo
+Thanks,
+Ryusuke Konishi
