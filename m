@@ -1,197 +1,170 @@
-Received: from mail-lr2-f12.google.com (mail-lr2-f12.google.com [74.125.230.76])
+Received: from mail-lr2-f24.google.com (mail-lr2-f24.google.com [74.125.230.88])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B282136351
-	for <linux-nilfs@vger.kernel.org>; Mon, 21 Sep 2026 03:32:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=74.125.230.76
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D2CC544A3E6
+	for <linux-nilfs@vger.kernel.org>; Mon, 21 Sep 2026 07:47:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=74.125.230.88
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789961561; cv=pass; b=ZKqzgG/tCV+3+7hv79Ps+tjv5JHIkKyrRmhD85m0sTJbwEYyb9GMO4oECCAs2R8c67CqM0oy1pwny/qIND7V1t7MESROCRkqs/mKeM41cBS+75efH+m3SfE/z9bR0g/qfDWooBCZfr6IpmL/ANZCv+qwP0Kr/Z080OcKmQUVeSk=
+	t=1789976866; cv=pass; b=jKggagPHVMHzEfK02O1bM8fSlFnd6r4rao6gdmLKkmKS1SKsU/Ohmli3Z2NOTYOpTi5WKl/yFBD5llRt4QNa9qb9FEmSuObchxuP0dh5Vq7MxrnfWTBlqNEDmDZ7YOy5QACELU3+TXNQHI0e45yUMDvJ4KsqUY06kDtHkHqruFM=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789961561; c=relaxed/simple;
-	bh=Tn1DcNUBiAuClZYqSqBZ88jUyppc2jXwxeH8hByKWcY=;
+	s=arc-20240116; t=1789976866; c=relaxed/simple;
+	bh=KXxGTuxzh5HQFPptUgQ65qoWgJYcpw7UQPKggFX9gnA=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=gYpkCa3B47OEyUX3pEFAbHSvzgR9BslblOg4DXUpNZrvMY8Gz7SXcjiA9/IT7mT1WIpKIOkH5hmvjyuOXf3wHeoIyeH2PfebKpQfiTb8rX+TB9zYEMQwXYyR3lUV0w8jCt/8fgUvyrVeX7GYs6tExPEgpUDhAuhu1Ih52KMrjCA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Z1jlsRlx; arc=pass smtp.client-ip=74.125.230.76
+	 To:Cc:Content-Type; b=eiRAFkGiUfTVFMG/8xPcdlmK+DrdR5myt1KjGMWzDUNQ3J3DtDpna9AtoiuMDdB2qgzlR1Xq1CX3i7TLUnVaLs3+8KMis4RVeoy3r7kPJTW7s9BqNeaX28H21s8Y6YYczvbaiKSKxbcBAtN2H9JWJJ05AKw6x06x0AoFT7eaVpo=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ESN3o5oy; arc=pass smtp.client-ip=74.125.230.88
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z1jlsRlx"
-Received: by mail-lr2-f12.google.com with SMTP id 38308e7fff4ca-3a5919af2eeso22257231fa.3
-        for <linux-nilfs@vger.kernel.org>; Sun, 20 Sep 2026 20:32:39 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1789961557; cv=none;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ESN3o5oy"
+Received: by mail-lr2-f24.google.com with SMTP id 38308e7fff4ca-3a2ff163f65so18109451fa.1
+        for <linux-nilfs@vger.kernel.org>; Mon, 21 Sep 2026 00:47:44 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1789976862; cv=none;
         d=google.com; s=arc-20260327;
-        b=Y/Dhhq5IZfyeqiUZU2rj+uDnNdNAQcW0oP5dKQcYU/TQtB/PWjU88r5hk1D+QGWiV9
-         OpfheX8UpoODh3ZqxySqFpz4tOMyqOaU34whxzx0eJQ4lbc9oixvUL7smXlaiqqZmd1A
-         3ZQDcQAyiCgPedsVEPTP+ydD1SO0kdq2R4MBTugXlBlJUJmBdyehhlm0PFbxNM/50y04
-         x8V899z521VNAYSOY/OLgAyHELAyz9sRHhy2U0y9wrEqN7dcbzDaSIuz/dgxBHQd0xwT
-         FA8QCmbROKgELXSjhqK8eey96p9t6aqa4YINvFmNsMpkiXaZUd40hhYT2+FBoMSfjG+b
-         PeIg==
+        b=CadMZJxSpzveWybkRGEe8QtydnBo1JoxzkN5Sv1TNCacNP/h/+ki/kCSuMNUn5KIRX
+         fQipNwqbyhFgme0zvvkHsxhvoXBOljKuvGd+52e7VNkY5lVL9VVp8loAFzFPxWHnjbX5
+         uLypVdv03A+HOFVTVuIKrIBwxtb5TPr2TWIFx9DmMc+ULDBI3uLoxqD10RL1WqaK8uzd
+         20LNqyatO31WSJ3U7+EK1SZQCaaVu8K2LXt4woHaCzr9ySWV+tFgHMX5o2rbGiCvvWK8
+         P+3aSEsObE7ykV2J0NuIBYIv/ITA/jhkSN8hiEglkEZrLv864swLfoQ/mzyI+OlE/z+o
+         y43Q==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:dkim-signature;
-        bh=oj1u6aVeBnceP3UlUHmxTCqWnZRFEUlpDWjZkUtcmP4=;
-        fh=jLl68OpOxNx8VlfOtUKuGcO4paqMaRw0a3bcpyJ1Efc=;
-        b=e6zUwFZZ5Ao187YzXaRHwLSA/J+2h4p/wFHY9BbQyDY7obw+WRW+F1NDLPyqFVuJQn
-         sFX3cFxlU7MYauz2AN/YWLFZPiW4GOP+CetsyXphd51Sfv45ixLvjFEsbHO5MDaa5hrj
-         Xm8FvA/EFGSDQqgfs88ugE++jDcAKrCjs4O4W7Rho2t/PG7s53ONjz/aR72m2PObKWES
-         sOmtLtlK/6PIXw5Vu6byCsSAQIIBUvPmbJkBCE4qwdCwGRc/v79ytaPTycxWyAacNctL
-         Y9EHMxQVguVpFYYhBOsYzd8zhj+PLEO49Svd2+hf3oK0pXH8TtJ/I1iy4kSQ+LZHiFQ2
-         E6Fw==;
+        bh=Ql+wH4qVovd9jAggtOkZvhGPFd9egOe0LH+fm0OHgS8=;
+        fh=Yvonrmt6MJx8r5c7CA5G/YPH1RyWvc5q6o2wNOkKr+Q=;
+        b=V+swLlaqn40+5hadqw9HflyhE2lWr4ok80hxmrtY2fzqcy37PkYQ5Hm5lZiyB/ZKwa
+         NV2fSDdu6KcQsmIH00hup9Y3Rw8CTMF8zQEp3jslf/k2TIxfKeIunNsI5opzoADajXY5
+         8Lph6cFJ4Y3ItP+C0CPUltYvBSmy5ZHjAOAQ42/urJCrpYfc0RC/oD6itpqTZavVCQcI
+         5LrfPWObNxhcS6XOJoW651sBh1Yx7fAHnhHIvL1sty3gvPds1DJRPjTHRbanEFb3nbkn
+         gXvu4WzBgQzUrpzs6vIrwLM5p4LBWM4M3q/f3GtHk8gEh783u1eVEBfiEvvXDFkuuKz8
+         dn9A==;
         darn=vger.kernel.org
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789961557; x=1790566357; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1789976862; x=1790581662; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=oj1u6aVeBnceP3UlUHmxTCqWnZRFEUlpDWjZkUtcmP4=;
-        b=Z1jlsRlxGYBG+ywzfChkwYFrUax6T4OB08Jop9kzzhSMCXQE7XVFzlRWQyQ7hSiXXR
-         2CeITujZMXgnZf/WrAiXS0e6BN0CNF/gRYR1afpN6JKLp1KDkguiKQdZpMyhOp5YZGvD
-         PfjSKuHnSae6OWRyBeb5PAVCXCshJZp7NGBo+W3jf/P/BWl0cLEVdVH/a0I0Lyjptchd
-         76/zuaTrqZ6wgYQ/3G+ez2f7ML+b4iOyTld7011NUCu/D7v44T/xOy0UHkpA6rddbTyG
-         pyP4LK6wuiVJCsSSnwbbXQuxfgj5R6baXuOVq6ZfRG5I8M4ZvI/UJJt97WQmkeC6Zk5D
-         0Hfw==
+        bh=Ql+wH4qVovd9jAggtOkZvhGPFd9egOe0LH+fm0OHgS8=;
+        b=ESN3o5oyt4hVhz3mwTfI+vJ6xtOiROi/WsTjZSeKXZ22ndjPtcfhVLpMT1qco6Y474
+         1Gf5q+RV8TcwLrmQgRt14p4VJmMmIYw0Za8RAcwBA9obV0RsXY8QPQ09GglIuni5Virm
+         /VxAUrduUQDfNZKL/GUcETPZXUP8mA+36Da8EhrIMyQAO5DjUdNA2fEOxEm2yZDwzRgG
+         PmQ0lJY9EG8EszQDYK4PWauiCbsO8Lb6WDcyuw68nov0Fvf+k2KZ/o7yDT2EUX32ccaj
+         JTOSkXCMLGgarEMXfXjHK+xsNORoJP5P5I5g4i06Grq4R1ZJkR6z0j6Tl9qleFVVwC6u
+         vIqA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789961557; x=1790566357;
+        d=1e100.net; s=20260707; t=1789976862; x=1790581662;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=oj1u6aVeBnceP3UlUHmxTCqWnZRFEUlpDWjZkUtcmP4=;
-        b=wTTZHtouB3g7tWR21O5Exwm2d4LsV+uDv+VJHWLRyOnS/LsuY2gX7Mp7M1bJkb9wh8
-         rFCe7Y4IqlPwJONZXZX9RQy+oipdYHgcwQu1i5s8OoXRsSRx8Zk6nq6vzD2aQI5X/Kfr
-         sHnfZzPG52KzuG1Y5U2jqbNx9Y5XQeWJTDxOwQHvo80Zaf7MFOPg2t110l7vdFNJImiK
-         goiCgz7rUi79h/4ZKBRK9fnCvkcK7p9VIRC60eDDHqQ/vWIJKodWpAmClT9TubWyeNWt
-         1AeBxdw6pr5opQL9JTUTw+pD0oE9EiDc3Fn9Y8kmrvvOVKfE4tV1U1U3Bmypl0R0NTAY
-         ZIog==
-X-Forwarded-Encrypted: i=1; AKwUvBz6iMtbYDUAKqRCBqFDWq14TS5PUHyrqq5qYxDksMsQEsAi0+CXNMoarOm9UiO2BPusspkD4NRuCH+tqA==@vger.kernel.org
-X-Gm-Message-State: AFuF++nvMnS54xLqw+oUuW9tpgYBf3arp+TuGy5DUCK3Uk0XJA3cYNdM
-	jeEZyJ4JIjtXzYhUZvBIly7J4UA3dsxFp5fvT+HcYSQxD+/DeMjIkljs/k7Hyw1aDQakHV0G8xS
-	yh6laHMnQFfwvbewTvA15YV4ok7iHiXfdb/32/Ls=
-X-Gm-Gg: AYBFou0IQkd3nBqKLiaXJwcJBxLAP3dKBcCCC5ZvFe9TcN7cwkuH2DSrwkl5J51uTPD
-	bRj9BdsS+Xz4Gke4UTMd83vR7/BXWhvHSNb8olVqZKsorsgLuvvzqCptBAZed7w0re5szLJG96L
-	VlqrxZHXLdC18W5lctvuu9YcbkN6F66htJbL7guBd2iT150uYWGhr8DDAmMDS2coBYW3LHUIvoA
-	ZOWeL6/ukzITquvywxgjbobtLYhveDUbW/5Ykp+xck0XlqAqsa9rG4+ZzunNT3JWlgtuAH9P7Ri
-	BbYo1Zsvq7r35NJdm7COEtU2auM7N7TREMzQkDJQs8TJ8tYa5+sY1gdExFRPgnsvkTg=
-X-Received: by 2002:a05:6512:3a8d:b0:5b0:11b4:fd7f with SMTP id
- 2adb3069b0e04-5b8c183378cmr2644982e87.10.1789961557135; Sun, 20 Sep 2026
- 20:32:37 -0700 (PDT)
+        bh=Ql+wH4qVovd9jAggtOkZvhGPFd9egOe0LH+fm0OHgS8=;
+        b=QO8TKKDqkwnocKCXwyTTevmbAiZMwbilIXfGxRNYohJ7H4tGG6764EWEcW4ngyDIfj
+         BPUN1vT6Tloao/ERsOZZa92V5ugMPTpIILoKPq/rX3mGqx4HFmuTvIsEyvGp1yp11eRh
+         eVAqOSWyGYDGAVkFUDuNSFnVLbAV8a2yuuwJbV/isivuy2ut1ce4ubHGK2/ZeLwpAmVJ
+         eEmK5a372TjT8nalyMpMFNtuLdSXXQyLW3mrtMAdQoQbWX23l9VUekW0vneiQmHE50J1
+         zdVoQg5eNRUTLubuXFzfPiHr5x+jW5Y+JrLQgdv9QrBvpq9dEFbj0K77TUuDl1qZ82v+
+         D26w==
+X-Forwarded-Encrypted: i=1; AKwUvBwzBHdmNZ8sw+7X3rd0urWZ8qSBcW8BZdrBMdJlYr8zmuvtrfgh6xTojZKRZFKZSgYdYi177+d4S3IRFw==@vger.kernel.org
+X-Gm-Message-State: AFuF++mE7HNYmsl4tmTRvADhgcqa3mo5Llrp7CFG9uIGZZoctGnTxvb2
+	8cDi9P0z+9LAmWfo9q/YrVzh1EqDki9luY34ZI4Zw7lnrRIreHd3zkyd3n/BgT5ildl2TMnlpGG
+	0n3ff55eJRTS4X3Fecy6uNt6Zv9HoSFNCZwOfsPY=
+X-Gm-Gg: AYBFou0dfB/QyLQ7wsNYEkesYPX78Uj/s96o9A6Ef6kAGQLWhVi39OsS68XqPLr3WF1
+	gf6M0+dFXhSI2GPzfe8ywi3k4z06Vf6P/yQfcj4bsqw7hA0el/B+sd+Ih3Q2tMjqvgaduUAXO5z
+	bz0/LXm2cokDnvJuc8X4EnDp/cVkesXs4ahlSGt4KHhUdf7GbXhofOs2SSqd6h7+5LAS/F7c0b0
+	Oyweu7k/D5e1DQ8n9zh8ZqLnwFj5qSHhvqk/VkUlsa7qwJfjvdEXMtJmivbEkcfR6P1uH+5K8K4
+	SbUIyk2ND8y4iklIZzQcl3pu8a02kQWj4IPN36va+L+ju6c853IyGWqA
+X-Received: by 2002:a2e:a9a5:0:b0:3a3:476:2e37 with SMTP id
+ 38308e7fff4ca-3a5fbe36d88mr21411961fa.6.1789976862279; Mon, 21 Sep 2026
+ 00:47:42 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260920205533.426028-1-southampton.jake.labelle@gmail.com> <20260920205533.426028-3-southampton.jake.labelle@gmail.com>
-In-Reply-To: <20260920205533.426028-3-southampton.jake.labelle@gmail.com>
+References: <13b330df140a2ee488952b4c7145e261ec884555.camel@dubeyko.com> <20260918212153.23651-1-qwe.aldo@gmail.com>
+In-Reply-To: <20260918212153.23651-1-qwe.aldo@gmail.com>
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Mon, 21 Sep 2026 12:32:19 +0900
-X-Gm-Features: AcwNN1UVa0nMxsBXi0Hs3alrN2tJ0WkZttgTFj285G7LMsJDxGM5mCEtjPeVJRk
-Message-ID: <CAKFNMokSzC5+=ZMBJgaG0aQqC4xQ1Bk-MWhOEA4T69g5sptT+A@mail.gmail.com>
-Subject: Re: [PATCH 2/2] nilfs2: validate directory position after llseek in readdir
-To: Jake Labelle <southampton.jake.labelle@gmail.com>
-Cc: Viacheslav Dubeyko <slava@dubeyko.com>, linux-nilfs@vger.kernel.org
+Date: Mon, 21 Sep 2026 16:47:24 +0900
+X-Gm-Features: AcwNN1XF1zg9V9W7pIcfaTTC797llgXNMo377_BEL2cpbxL6SjSpyOdv0GuJxt8
+Message-ID: <CAKFNMoneRHw=-hsGvzY+Mdktm3+EtodSU2vpNoaXZnheu+VjgQ@mail.gmail.com>
+Subject: Re: [PATCH v3] nilfs2: fix checkpoint root lifetime on sysfs errors
+To: Aldo Ariel Panzardo <qwe.aldo@gmail.com>
+Cc: slava@dubeyko.com, linux-nilfs@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, stable@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Sep 21, 2026 at 5:55=E2=80=AFAM Jake Labelle wrote:
+On Sat, Sep 19, 2026 at 6:22=E2=80=AFAM Aldo Ariel Panzardo wrote:
 >
-> nilfs_readdir() uses ctx->pos, which userspace can set to an arbitrary
-> value via llseek, as an offset into the directory folio and parses
-> whatever bytes sit there as a directory entry.  A position pointing
-> into the middle of an entry -- or at unused bytes of a corrupted image
-> that the page validator never inspected -- makes dir_emit() copy up to
-> 255 (name_len) bytes from a bogus entry, possibly reading past the end
-> of the folio and returning unrelated memory contents to userspace.
+> Hi Slava,
 >
-> Snap unaligned positions onto a valid entry boundary by walking the
-> rec_len chain from the chunk start before parsing, as ext2 does in
-> ext2_validate_entry().
+> No, wait_for_completion() without a timeout is intentional here.
 >
-> Fixes: 2ba466d74ed7 ("nilfs2: directory entry operations")
-> Co-Authored-By: Claude Mythos 5 <noreply@anthropic.com>
-> Signed-off-by: Jake Labelle <southampton.jake.labelle@gmail.com>
-> ---
->  fs/nilfs2/dir.c | 27 +++++++++++++++++++++++++++
->  1 file changed, 27 insertions(+)
+> The kobject subsystem guarantees that the release callback will
+> eventually run -- CONFIG_DEBUG_KOBJECT_RELEASE only defers it, it
+> never drops it. So the wait is bounded in practice.
 >
-> diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-> index 8b53802b6..bc8cb21c7 100644
-> --- a/fs/nilfs2/dir.c
-> +++ b/fs/nilfs2/dir.c
-> @@ -231,6 +231,21 @@ static struct nilfs_dir_entry *nilfs_next_entry(stru=
-ct nilfs_dir_entry *p)
->                                           nilfs_rec_len_from_disk(p->rec_=
-len));
->  }
+> If we used wait_for_completion_killable_timeout() and the timeout
+> fired (or a signal arrived) before the release callback ran, we
+> would kfree() the root while the kobject release is still pending.
+> When the callback finally runs it would access freed memory -- a
+> use-after-free.
 >
-> +static inline unsigned int
-> +nilfs_validate_entry(char *base, unsigned int offset, unsigned int mask)
-> +{
-> +       struct nilfs_dir_entry *de =3D (struct nilfs_dir_entry *)(base + =
-offset);
-> +       struct nilfs_dir_entry *p =3D
-> +               (struct nilfs_dir_entry *)(base + (offset & mask));
-> +
-> +       while ((char *)p < (char *)de) {
-> +               if (p->rec_len =3D=3D 0)
-> +                       break;
-> +               p =3D nilfs_next_entry(p);
-> +       }
-> +       return offset_in_page(p);
-> +}
-> +
->  static int nilfs_readdir(struct file *file, struct dir_context *ctx)
->  {
->         loff_t pos =3D ctx->pos;
-> @@ -254,6 +269,18 @@ static int nilfs_readdir(struct file *file, struct d=
-ir_context *ctx)
->                         ctx->pos +=3D PAGE_SIZE - offset;
->                         return -EIO;
->                 }
-> +               /*
-> +                * ctx->pos comes from userspace via llseek and may point
-> +                * into the middle of an entry =E2=80=94 or at unvalidate=
-d bytes of
-> +                * a crafted image. Snap it onto a real entry boundary
-> +                * before parsing, as ext2 does; otherwise dir_emit() cop=
-ies
-> +                * name_len bytes from a fake entry, reading past the fol=
-io.
-> +                */
-> +               if (offset & (nilfs_chunk_size(inode) - 1)) {
-> +                       offset =3D nilfs_validate_entry(kaddr, offset,
-> +                                       ~(nilfs_chunk_size(inode) - 1));
-> +                       ctx->pos =3D ((loff_t)n << PAGE_SHIFT) + offset;
-> +               }
+> wait_for_completion_killable() (without timeout) has the same
+> problem: if the wait is interrupted by a fatal signal, we cannot
+> safely free the container because the release callback may still
+> reference it.
+>
+> The unconditional wait_for_completion() is the only safe choice
+> when the caller must free the container of an embedded kobject.
+> This is the same pattern used by other subsystems (e.g.,
+> blk_mq_tag_set, configfs subsystems).
+>
+> Aldo
 
-Hi Jake,
+Hi Aldo,
 
-I understand your point that we need to handle file pointer
-misalignment caused by directory seeks.
+Thank you for the patch.
 
-However, since directory entries have variable record lengths based on
-name length as calculated by the NILFS_DIR_REC_LEN() macro, couldn't
-the pointer still land in the middle of an entry even if offset is on
-a chunk boundary calculated from nilfs_chunk_size()?
+However, in my view, introducing a mutex for synchronization (either
+by replacing the spinlock or adding a mutex alongside it) is
+unnecessary and suboptimal.
 
-Shouldn't calling nilfs_validate_entry() be done only during the
-initial check (checking offset directly derived from ctx->pos) and
-when offset is not on a page boundary (i.e. offset =3D=3D 0)?
+nilfs_sysfs_create_snapshot_group() performs memory allocations and
+sysfs node creation, which can sleep.  Holding 'ns_cptree_lock' across
+this operation causes concurrent read-only callers like
+nilfs_lookup_root() to block unnecessarily on a lock that originally
+protected a very fast, in-memory rbtree lookup.
 
-Also, as a minor nitpick, instead of calling nilfs_chunk_size(inode)
-repeatedly, could you declare and set a local variable named
-chunk_size at the beginning of the function and use it?  (Although the
-compiler probably optimizes it, doing so makes the code cleaner from a
-readability perspective.)
+Note that checkpoint and snapshot mounts themselves are serialized by
+'nilfs->ns_snapshot_mount_mutex', so strict mutual exclusion between
+concurrent insertions is not required; we only need to eliminate the
+race against nilfs_lookup_root().
+
+Instead of converting 'ns_cptree_lock' to a mutex, I think it would be
+cleaner to keep 'ns_cptree_lock' as a spinlock and structure the
+creation flow so that new is fully initialized and registered with
+sysfs *before* acquiring the spinlock:
+
+1. Allocate new and initialize the basic fields required for sysfs
+creation (cno, nilfs, etc.).
+2. Call nilfs_sysfs_create_snapshot_group(new) *before* taking the lock.
+    - On error, wait_for_completion(&new->snapshot_kobj_unregister),
+      kfree(new), and return NULL.
+3. If sysfs creation succeeds, acquire spin_lock(&nilfs->ns_cptree_lock),
+   link new into ns_cptree, and drop the spinlock.
+
+In nilfs_put_root(), we can keep refcount_dec_and_lock() with the
+spinlock, erase the node from the tree, drop the spinlock, delete the
+sysfs group, wait for completion, and free root.
+
+Could you please update the patch to keep 'ns_cptree_lock' as a
+spinlock and complete sysfs registration before inserting the root
+into ns_cptree?
+
+I think this approach should work, but please let me know if I've
+missed anything.
 
 Thanks,
 Ryusuke Konishi
-
-
->                 de =3D (struct nilfs_dir_entry *)(kaddr + offset);
->                 limit =3D kaddr + nilfs_last_byte(inode, n) -
->                         NILFS_DIR_REC_LEN(1);
-> --
-> 2.43.0
->
