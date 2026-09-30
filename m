@@ -1,171 +1,168 @@
-Received: from mail-qk2-f13.google.com (mail-qk2-f13.google.com [74.125.230.205])
+Received: from mail-pz2-f38.google.com (mail-pz2-f38.google.com [74.125.228.38])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6EC3881ACD
-	for <linux-nilfs@vger.kernel.org>; Wed, 30 Sep 2026 00:10:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.230.205
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790727060; cv=none; b=kIwYjY2ERyJoVy+IMuw3ve0Oaqhw1boRvY0Bj7uitKLgIlIbL6QwXuOGJ3c2ISYIi0Z9W0ilhvbfeN3U/R64Yq7BrBdAyP7USEHub7jtoZ9d/LzbgY9sC285cu3J5W0NAR/13xGCKKFEaLnzMcuQQCJxdI3aAbsrkOxWAlT7v6E=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790727060; c=relaxed/simple;
-	bh=A0vWtRFSAR/WeiwhE66ziw7fitXK+I3qI9eV5TITlB0=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=e/sHFupGe6/lcGG++B5z2XtULK8pnDEjVY4peAsoz+FrpC87Yal2KeC60NLheXdFHpwTyKMFAO8FcdCn43v+ZywN2uErMIIZVtjVUwbikA4VRpGO9pTkVcYRc5DLgwHC9I0ASg9VZSg6O2zpP/gr0U65VGaEfpkVH4Sy8tefWJg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UvXabkus; arc=none smtp.client-ip=74.125.230.205
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55D434DE717
+	for <linux-nilfs@vger.kernel.org>; Wed, 30 Sep 2026 12:53:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=74.125.228.38
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1790772832; cv=pass; b=W0DRIxMjlFLc3SikJITEtq3W8JV8T684pjSx2UwJyUmWLC9n5mR4lGPBtgX0EFxBHlJrXlsMH2nbDqTyardrE1tbaP/ozeQ7omxiaFin+lUgW+LPWnr0IdNoasHamPPg3s5Hxin41Dfyv68SVwQiGdN3VzzRTxRcDk/8wtMpio0=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1790772832; c=relaxed/simple;
+	bh=HtRYA/oIx1HZyxPQEdtvE7C5ErCCXkfBilzfxi70F8w=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=lAZeUAZFW/pzBcTYBLbDgTKfOMXjd8aJrNGMSHDm6DwBoXhOXFjLItE/K9bmNY8YMMd5+tcjvDMki43cHxihLACYXXxpVYYJJeqsY3gwnc6QVUtOumM/Ne/3de8o2WN1fIHheVGrUlTQQOgGKkUZEFM7Gx/l+q13V5opyVJ6Mis=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GmHvy0pU; arc=pass smtp.client-ip=74.125.228.38
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UvXabkus"
-Received: by mail-qk2-f13.google.com with SMTP id d75a77b69052e-52fb766bfd3so42065091cf.0
-        for <linux-nilfs@vger.kernel.org>; Tue, 29 Sep 2026 17:10:59 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GmHvy0pU"
+Received: by mail-pz2-f38.google.com with SMTP id d2e1a72fcca58-881d9da69b1so1283718b3a.0
+        for <linux-nilfs@vger.kernel.org>; Wed, 30 Sep 2026 05:53:37 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1790772813; cv=none;
+        d=google.com; s=arc-20260327;
+        b=sigoDGvwnDb1kfpdPkI2ryBmspib6IOHVmEM6Gq/IYjVvVzQKx7nFLY1COnQcPvvbS
+         gIcJ6QmpbVyUJ3lbi0pGB80iKLEBrsnY/Nqd4OOEFofASCgkA+rsVnYYpSjCQDckxUO9
+         ZL/pljKk4w8c2oMXX8yMdqASpKJR3Imx4Yb2dpaVakcFelpta5FjLqvg0FfVA+xeayIQ
+         YXZGnZ2OFt/ZqY5oRhwEuLxqLY+xlSv1NrFSG6vyzZcjQPQ0On+SH9JmmS3Iq/QIyssB
+         TkF2budjpgpELP9hv5bNBKgaQxK4b25Fn3uiJ8xVO5EgzUF5TV4w+coTfalixxMF19l1
+         CXmg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=3r2op7ustej8Hq87+A4jSKMFiZmknu+8/Rwrib1XfR0=;
+        fh=hrA1YNV5e97FwkDtWAikycnjIGlAmVt+TUXuUNPwyNg=;
+        b=dUt6RuUwwnVVw25noPJbyz9+Na2xriZJqFlGMVgLQHxPZWXpa57JexpT6OWGAiy/xN
+         acaoS+/UOJl6tFLhagKqxMQdgqxI0kqlo6psZtQz+6QVK5GowytNNAR1Dhsjg6OiwKky
+         B5aXwTMll9w9Ce2l807l/8oru3lIPjt2fLhY4fapCN0onAp/jzzjGIPI52sJz31HfFHo
+         ki/JRy7Wfq5461z83rmZuoDryZLQnRAi5ANWqeUznb2vTISHATPc0Z6GnaCDGtj5++1R
+         bgJY/6I9MvCXyuuwFETcRptmpstyUBQUtZT6z3waMCm+4SmF2ewzsxkE+2GPZ+HyF/wP
+         BEOQ==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790727058; x=1791331858; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=m5lq1/zsch83Vj1jZPD+5fvsLO0Q7TqbCppV8Kw0m7w=;
-        b=UvXabkusOiuE7yZzLQP6Y+XwTdFQJMadQoT4Yd/FyLeh2BrfoC7HLSJqwa0tROn6ZW
-         SpQOKWYrfLBbU/u7rHZVeR2plkK6/70NvaH77KmT2HxuHFAu/NoYryHFnj8ZROY5i8mZ
-         sKqxpGtiP75xYbMGbLWot4rt8FKTiGABXI0+9dOdaWs/D9AULK7oXZhkFT0FWkeh1Cu9
-         QJhUoQ2DXIYBzPqNgqPiFin/wHK7p0LGGB/RRR0r+hNZuIp62z/sWNAkDLpOdCMP9C9L
-         AIIq2AUQ0YsYH49oTyOeh27EGEV46jpgK24JLShG/sQsgVWhkvaDg7LhnV1a9ur4lxy1
-         Tgvg==
+        d=gmail.com; s=20251104; t=1790772813; x=1791377613; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=3r2op7ustej8Hq87+A4jSKMFiZmknu+8/Rwrib1XfR0=;
+        b=GmHvy0pU2k81tlDca4jDmT+iuZVT2vFdbmdcnMsKnEp0ayHC2hTrDnvIVdNTLO9NwA
+         A2M0Ee96ZJYAoPA+44iCYGgUxCLuzWVu+A8HMcwGhKdtlmsYYpKI41snHZHy6HMREGP7
+         UYvspUU5qLIU0IJUw+niqdXiUmv8zUEj7+qWdJ2hQb6bW1NhwHvmqP6kmhUJDZiXg1xT
+         UByQvOqmGXQvQMQUMy1knKl28VIK5mzOcSkAwrvXYHaJAE/5xts0y8g9PyHyl2kGftE5
+         8bBA8LZiSRwQXk8xdJISjbh2L1LKwFtp9WEji97UJbR/VQBZZXJH9XiWNP4+AUSBmV5M
+         7tUg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790727058; x=1791331858;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=m5lq1/zsch83Vj1jZPD+5fvsLO0Q7TqbCppV8Kw0m7w=;
-        b=F3R3MfCSr7UIgoNjnMiUGW3BDFSh0wGdby2CZ2Pg5LuVTcX6Yhjqe9yDOfc8FP+e3j
-         us8y9QP8gFAL7PmpC5zeFWlSXhAJ7gqXpCnwPPTqHXoJfw5Uh05NuoELf6G+3DnDya/P
-         mLlGwj1X3A8SJjF5pNLvb1S7FzvzF/SkCdkIrgQU/AY2hNTTFHlBcNWdNtZ/qcPKonIe
-         eVoWZJ0y2rvEOnREmEbtIizlhhb/riGYTg0Nq/3+WaXp5wld9uS1wf5fWQGdXtYiWo37
-         y0xc9fV89VsOq4ZVu7g58TF1UVk5x+ps0xrxTzYDWTPD8X30e1aqBrF/ObrfbhoTrx72
-         /WLg==
-X-Gm-Message-State: AFuF++l2wu0wMuwThoGdQCs2XpxrSgPPNgdd4nvVTj6XQzH0cvgG93w6
-	qaYgOBozzKGxUJVj6aC1Yzaef4sAhRVL1RVKcON/1iIs+jXwfCCcCfgDG15Teg==
-X-Gm-Gg: AYBFou26RoKraFG/y2MqFyw6OafR2g7n08cglQvsqKY+cI0f9uRY8ok9oZFaimq0MsW
-	wWQjippKsBDhIEzkswEd2EEI1foFLhQayKF+37O+JkBZC5rpnVY+EM7FXvkoVKGzVRJ0AhPjYVq
-	n9VeiXO2Ag73Ucuou6USonx/oR4CYWpc6wQuAkr8CN8QvMtFTsR2FOg0a/wDHlH2mNupilXq03r
-	Dk+OfOP8SATbUvso43TJtJ30ZQwVAKpgpwX74/3SfsEhZW3U+ghx4cUoz08+ZAzkZVHc8QNQJhK
-	zMV1XJqcr3Pb+9KLMR66NNewQEYFjCL/ctMX7FiyB2JAe+HatONiohtgBQDA5uo7L+5X/s0zgkF
-	qPzXte6egHrmvOchr25v+iRlUTyyNfucJUnvvcJ56nHhVXJJMMdRZTXStw4pqb5PL3X3cFnx/tV
-	jNJ0sFd28EtpTCQAQM7zcwujbmmc6S8u61O/37zvhHs5YToOzqoC4HSpCf4KmHpITeYFq9zvlzv
-	F73j8owmlKxwELphswDDrqFKEyymmmJguc9kQ==
-X-Received: by 2002:ac8:5986:0:b0:532:d18f:bd57 with SMTP id d75a77b69052e-5336a4d622emr18641261cf.18.1790727058280;
-        Tue, 29 Sep 2026 17:10:58 -0700 (PDT)
-Received: from jake-B450-I-AORUS-PRO-WIFI ([73.194.254.128])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-53369b9f477sm7175391cf.19.2026.09.29.17.10.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 29 Sep 2026 17:10:58 -0700 (PDT)
-From: Jake Labelle <southampton.jake.labelle@gmail.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: linux-nilfs@vger.kernel.org
-Subject: [PATCH v2 2/2] nilfs2: validate directory position after llseek in readdir
-Date: Tue, 29 Sep 2026 20:09:52 -0400
-Message-ID: <20260930000954.371774-3-southampton.jake.labelle@gmail.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260930000954.371774-1-southampton.jake.labelle@gmail.com>
-References: <20260920205533.426028-1-southampton.jake.labelle@gmail.com>
- <20260930000954.371774-1-southampton.jake.labelle@gmail.com>
+        d=1e100.net; s=20260707; t=1790772813; x=1791377613;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=3r2op7ustej8Hq87+A4jSKMFiZmknu+8/Rwrib1XfR0=;
+        b=fHYZPpPlkKMOaf77P6jskDOoNtYnjPTvnZQJf1e+WuYnC4EHm0D0wboHv1/qoh2jGB
+         hA2kwSR+f03b3oiWqEmXbsgTknXb6qf4G17erEkM7gEcWwvjii/17uCjHFKnbYc1ICwZ
+         /9+1Rl+dDpqs5AP2ufN7AsJgSw6++0YrAmlBpUYhlA5IUbdk+ULF6mmxFk/DlqI66F6G
+         3IATVVUxvwaR4N3yfX6fwGyNddRQkKNwP7fd5jti4clGyrxqEp/OVfZjihNi4WE0KIsP
+         FHxAyqHq2pRgmNgpFihZy74W08KX6KerMq3FmN3bILo1BqsoabTrOEOuhWaIT7kU5xfw
+         DFoA==
+X-Forwarded-Encrypted: i=1; AKwUvBwsQNzqKsF+W6VaDT9oyJ2r4AjjjGXm7ej55rVVv8OQDOTQ+RGdYRCi4xaS8OUhrGSnUJE/ddm4BrdAxg==@vger.kernel.org
+X-Gm-Message-State: AFuF++nTnAA46lRBRMDm+2gWYOhCUMSPwY6e/sQPUYFdX+V5N7BS+tEY
+	KkeQrPPtv0IGjP15IOrpVIQpX+j6QgUm36w+fg55/eb3y+w8u3sY1+35MxS+FsOtR+6pCTU9zDf
+	ChKHmM24uiVhLrpRyGl61cOCoJm7/wlc=
+X-Gm-Gg: AYBFou1LvMMbSYqUQIErvwTpso/MREvShbz5p4csKlaNYdn+wiraEObeqfznBnH2aqP
+	f9qGfUvB5YehQVDR/zxup9YXKgC+Fx5qq8nnASdCfPZ9l2X6YLjqYW5YHAy922isQZg9JLf3l8e
+	yCK4im46ReYUMi65BERCif0TznAW6Z9hQzf3WJU4mW1NyVw8jFe5G9frBjfYJvmBxJ8HMbEeyL3
+	yP1CHep2gu43aXYfYm39kIHp4rNzUqoxQEqjKRCYvEgaHxJve3rtiCcpn0CR/2op3LYWw9SwkDN
+	5xk1lRaSoNExXhQgP4SSPUyS7YWTfhCLNBtfq/fnbL8FWAFIqCYIOlGnZLI8sJJrDls=
+X-Received: by 2002:a05:6a00:1c9c:b0:84e:909:ac03 with SMTP id
+ d2e1a72fcca58-8874be0efa2mr954145b3a.10.1790772812901; Wed, 30 Sep 2026
+ 05:53:32 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20260920205533.426028-1-southampton.jake.labelle@gmail.com> <20260930000954.371774-1-southampton.jake.labelle@gmail.com>
+In-Reply-To: <20260930000954.371774-1-southampton.jake.labelle@gmail.com>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Wed, 30 Sep 2026 21:53:11 +0900
+X-Gm-Features: AclHuK9iKpcox0wF2tWtnN9se_xMgeGzwMlGkHWlEThdT0amhytrF9npSbMsCdo
+Message-ID: <CAKFNMonrWx8cftPWFYHwEcttezFqPpbycA9=y8mXaMcoQ2jKpg@mail.gmail.com>
+Subject: Re: [PATCH v2 0/2] nilfs2: harden dsync recovery and readdir
+To: Jake Labelle <southampton.jake.labelle@gmail.com>
+Cc: Viacheslav Dubeyko <slava@dubeyko.com>, linux-nilfs@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-nilfs_readdir() uses ctx->pos, which userspace can set to an arbitrary
-value via llseek, as an offset into the directory folio and parses
-whatever bytes sit there as a directory entry.  A position pointing
-into the middle of an entry -- or at unused bytes of a corrupted image
-that the page validator never inspected -- makes dir_emit() copy up to
-255 (name_len) bytes from a bogus entry, possibly reading past the end
-of the folio and returning unrelated memory contents to userspace.
+On Wed, Sep 30, 2026 at 9:10=E2=80=AFAM Jake Labelle wrote:
+>
+> Hi Ryusuke,
+>
+> Sorry for the late reply, busy getting the flu =F0=9F=98=84. I've put you=
+r
+> review comments from v1 into the changes below.
+>
+> While reviewing fs/nilfs2 I found two robustness issues with corrupted
+> (or malformed) filesystem images, both dating back to the initial merge
+> of nilfs2:
+>
+> Patch 1: roll-forward recovery replays dsync logs without checking that
+> the designated inode is one of the types that actually have a bmap. A
+> log entry naming some other inode type leads nilfs_get_block() to an
+> uninitialized bmap and an indirect call through uninitialized memory.
+> With the patch, mount of such an image fails cleanly with -EINVAL.
+>
+> Patch 2: nilfs_readdir() parses the directory folio at whatever offset
+> llseek left in ctx->pos, without snapping it onto an entry boundary the
+> way ext2's ext2_validate_entry() does.  dir_emit() can then emit bytes
+> from a bogus entry, reading past the end of the folio.
+>
+> Both patches were tested against current mainline (arm64): each issue
+> reproduces before and is resolved after, and a mount/list/create/write/
+> fsync/remount/read-back pass shows normal operation unaffected.  This
+> was initially reported through security@kernel.org; per Greg K.H. and
+> Ryusuke Konishi it is being resubmitted here for normal public review.
+> Reproducers (small Python scripts that generate the images) are
+> available on request.
+>
+> These patches were developed with AI assistance (Anthropic Claude) and
+> manually reviewed and tested.
+>
+> Changes in v2 (per Ryusuke Konishi's review of v1):
+> - Patch 1: also accept S_ISDIR/S_ISLNK (not just S_ISREG), wrap the
+>   check in likely(), return -EINVAL instead of -EIO.
+> - Patch 2: hoist nilfs_chunk_size(inode) into a local chunk_size
+>   variable; expanded the comment on why chunk-aligned offsets are
+>   already trustworthy without a chain walk.
 
-Snap unaligned positions onto a valid entry boundary by walking the
-rec_len chain from the chunk start before parsing, as ext2 does in
-ext2_validate_entry().
+Hi Jake,
 
-Fixes: 2ba466d74ed7 ("nilfs2: directory entry operations")
-Co-Authored-By: Claude Mythos 5 <noreply@anthropic.com>
-Signed-off-by: Jake Labelle <southampton.jake.labelle@gmail.com>
----
-v2:
-- Hoist the repeated nilfs_chunk_size(inode) calls into a local
-  chunk_size variable, matching the existing style elsewhere in
-  dir.c (Ryusuke Konishi).
-- Expanded the comment to explain why re-validation is only ever
-  reachable on the first page of the loop, and why any chunk-aligned
-  offset -- not just offset 0 -- is already a trustworthy entry
-  boundary: no on-disk rec_len chain crosses a chunk boundary, so
-  chunk alignment alone (regardless of the variable-length entries
-  within a chunk) is sufficient without a chain walk; a walk is only
-  needed to recover from a non-chunk-aligned offset (Ryusuke
-  Konishi's question, answered on-list rather than in code).
+Thank you for sending the v2 patch set.  I hope you are recovering
+well from the flu and that I didn't push you too hard.
 
- fs/nilfs2/dir.c | 33 +++++++++++++++++++++++++++++++++
- 1 file changed, 33 insertions(+)
+Both patches now look good to me, so I will run tests locally and aim
+to forward them upstream as soon as possible.
 
-diff --git a/fs/nilfs2/dir.c b/fs/nilfs2/dir.c
-index 8b53802b6..bc8cb21c7 100644
---- a/fs/nilfs2/dir.c
-+++ b/fs/nilfs2/dir.c
-@@ -231,11 +231,27 @@ static struct nilfs_dir_entry *nilfs_next_entry(struct nilfs_dir_entry *p)
- 					  nilfs_rec_len_from_disk(p->rec_len));
- }
+Regarding the offset check derived from the pos field of struct
+dir_context in nilfs_readdir(), I somehow confused records with chunks
+during the initial review and gave you an incorrect comment.  My
+apologies for that.
+As you reinforced in the comment, your first patch proposal was also correc=
+t.
 
-+static inline unsigned int
-+nilfs_validate_entry(char *base, unsigned int offset, unsigned int mask)
-+{
-+	struct nilfs_dir_entry *de = (struct nilfs_dir_entry *)(base + offset);
-+	struct nilfs_dir_entry *p =
-+		(struct nilfs_dir_entry *)(base + (offset & mask));
-+
-+	while ((char *)p < (char *)de) {
-+		if (p->rec_len == 0)
-+			break;
-+		p = nilfs_next_entry(p);
-+	}
-+	return offset_in_page(p);
-+}
-+
- static int nilfs_readdir(struct file *file, struct dir_context *ctx)
- {
- 	loff_t pos = ctx->pos;
- 	struct inode *inode = file_inode(file);
- 	struct super_block *sb = inode->i_sb;
-+	unsigned int chunk_size = nilfs_chunk_size(inode);
- 	unsigned int offset = pos & ~PAGE_MASK;
- 	unsigned long n = pos >> PAGE_SHIFT;
- 	unsigned long npages = dir_pages(inode);
-@@ -254,6 +270,24 @@ static int nilfs_readdir(struct file *file, struct dir_context *ctx)
- 			ctx->pos += PAGE_SIZE - offset;
- 			return -EIO;
- 		}
-+		/*
-+		 * ctx->pos comes from userspace via llseek and may point
-+		 * into the middle of an entry -- or at unvalidated bytes
-+		 * of a crafted image. offset is only nonzero here on the
-+		 * very first iteration (subsequent pages always start at
-+		 * offset 0, which -- like any chunk boundary -- is always
-+		 * a legitimate entry start, since no rec_len chain crosses
-+		 * a chunk boundary). Snap a non-chunk-aligned offset onto
-+		 * a real entry boundary by walking the chain from the
-+		 * enclosing chunk's start, as ext2 does; otherwise
-+		 * dir_emit() copies name_len bytes from a fake entry,
-+		 * reading past the end of the folio.
-+		 */
-+		if (offset & (chunk_size - 1)) {
-+			offset = nilfs_validate_entry(kaddr, offset,
-+					~(chunk_size - 1));
-+			ctx->pos = ((loff_t)n << PAGE_SHIFT) + offset;
-+		}
- 		de = (struct nilfs_dir_entry *)(kaddr + offset);
- 		limit = kaddr + nilfs_last_byte(inode, n) -
- 			NILFS_DIR_REC_LEN(1);
--- 
-2.43.0
+Thanks,
+Ryusuke Konishi
 
+
+>
+> Jake Labelle (2):
+>   nilfs2: reject non-regular inodes in dsync recovery
+>   nilfs2: validate directory position after llseek in readdir
+>
+>  fs/nilfs2/dir.c      | 33 +++++++++++++++++++++++++++++++++
+>  fs/nilfs2/recovery.c | 17 +++++++++++++++++
+>  2 files changed, 50 insertions(+)
+>
+> --
+> 2.43.0
+>
