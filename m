@@ -1,174 +1,188 @@
-Received: from mail-wm2-f13.google.com (mail-wm2-f13.google.com [74.125.225.141])
+Received: from mail-pj2-f43.google.com (mail-pj2-f43.google.com [74.125.227.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FFEB322A2E
-	for <linux-nilfs@vger.kernel.org>; Fri,  2 Oct 2026 03:57:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=74.125.225.141
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790913422; cv=pass; b=awfJXeKGKTM0C035LsAuteww0tIR2JxC18bz5D0mb+da/c/A9pY7/tHBHS72D/J6VmL1BBcz+JGxq0cADubfV/xCwfnq8V+0ivnudTcdwjprFXr0lMh3dbLD2DGPqQVcJb5IICwjFS8aLWFq0Dbx2IOZ2PW/bY/jDhD2yd93gyo=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790913422; c=relaxed/simple;
-	bh=o16IJPVWRZbPctbF6Ov13nKhFAjKehId0RQwBENOXP4=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=evrqGZAwGjdBWEO6Pbl0AYHbOomAjiouGdSwhxkhFqeXLvTcnKy9Hh3nP12Vt2B7yat0TL84VVzpNbprXK5wnP7p1SpPlIf2VlR6HJi288FNa3Ich/BIi3cVLw9Pu+sWF5dPWrG0MiASSfMw3Tc0Rc9Y5nJCvevlBhqVB8EXeao=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Gt9koEn3; arc=pass smtp.client-ip=74.125.225.141
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB1D93EB7F4
+	for <linux-nilfs@vger.kernel.org>; Sun,  4 Oct 2026 23:35:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.171
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1791156912; cv=none; b=WscPAY+dEeZVWhU2UiJfPGKpEPSc1lWpbn+eo16cfVGMQS8aAks4iepjtMU9rJjR2bT0PuvJ2DyuoY5S280UpIM9pLpeC4NrWA1Mil/lAC19v567gMXLQf8f06mm8J+ZMwbWJS/dtjQmuYVh1lGXQet/qxmBGa2apz2UZHPl8h0=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1791156912; c=relaxed/simple;
+	bh=agn/G9mTJy0n8+UIRRMgHsHvHBt/hWBfv5LbPKPmUGo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=uoXg2yQ8pbfOdYLeasGNmfZ6u+tXVcf3+yINIz36PI0Hi87raA61evI7hEnVL2pocuyjlySEfcnWEl49/Icnb5SDAMkr8jxhzjNp27qy88/1tUDisv4tv9Q8lFl9V1KsOwrjBRyvyi3rRsUU8L78w0uHu6Taf3eQQTlwkpXeCXs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=skNbuxTx; arc=none smtp.client-ip=74.125.227.171
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Gt9koEn3"
-Received: by mail-wm2-f13.google.com with SMTP id 5b1f17b1804b1-4a00d8bec5aso22865095e9.2
-        for <linux-nilfs@vger.kernel.org>; Thu, 01 Oct 2026 20:57:00 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1790913419; cv=none;
-        d=google.com; s=arc-20260327;
-        b=hLiIOjiaAHTbN9ZM66hQoG6eEt7UA/qlPIQaGlZgdpfGIApEbGmt4C12a3ki6Myq/d
-         0o7Go7/CfofBe0AyD7u+B2nuxmCmHRrFcbMU70FI+LRg8osYOIiaeOL4yoQx6XKVbuaP
-         dpvGYlD61r7c+vjHZCa6TxudzSeoPOpF8nXae1k9OvNXYAWI0S4lXn6oMK2jjw8F02Oe
-         zKbvPXX7WwciXVOZMY/+ItSElFBVra0mzJeiEC0rqHiZnCDLjaYGRuNRpbTi82SS8jcd
-         kRAdiJdT0et9X9/5ldM3usWmvD2U2piUDlqnO6r1HmI4JIAe2QFqUzaTF6xEZ+yUCB9s
-         NSNg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=0l8CkMr54y0b7W/DIQrVlXnOtMgAg59dAHWQIymno78=;
-        fh=Sm3OSXvFCyV7T2xxd3zPsVteGnSzUIeIAKXY7KsRcfY=;
-        b=kUgHqZCzZb6BsZ9ZMzmD3K19erBo+QppjFXEq6JAx47Hmmq4Yg2od/oPKjpjqG45jN
-         7PpBcLf0/zRjA857njYSUVhUItsY6ahKvaZ3i5Fbf590S73IuULWubWwxu0oLuO80KNN
-         +pLpKRSqQ264WT9FNmDTx1+ra9NYmZENK1IBvjT7DvkE+I7navzFzRa0t1ymWy3hPjuY
-         jBJeASQkwB52XAzq3EWrFdXZcgvIYvOHGD1B5s0y2+8h7HY1HlMqMHx2unAWTMxpLZbj
-         tf8O5U/8W56OefyeU9T33QMGG5/QBLwIT+1J9byX558lGFceK5MNNjG3wXlQDD/177SS
-         /bkw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="skNbuxTx"
+Received: by mail-pj2-f43.google.com with SMTP id 98e67ed59e1d1-396ccafb751so411647a91.2
+        for <linux-nilfs@vger.kernel.org>; Sun, 04 Oct 2026 16:35:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790913419; x=1791518219; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=0l8CkMr54y0b7W/DIQrVlXnOtMgAg59dAHWQIymno78=;
-        b=Gt9koEn3r4Uvbu8YyXTnwAswRRP5px4pptCFrFzeynYO4uXoJu0BajaWTSMSjG1TGJ
-         UBvqY8IcZ8MhEjoYOoSapwYtc4TTqIc12aVG+QgSHGtDw84/Ce357dhmL9wAsH+3zlFy
-         yyQ4ZgQk9m/WAD4ZneAfqG0gz4BRO2FvHuINDYxk27XW1TbcC3+xVg0ATkvRaNl+yhCv
-         hRe51pep4pfUgwSBibCGzEVCfXuYsP49vbErBcUgomtn8/D1AtRe3FMGRYbb2906oDgh
-         bkhQPw0lHEelKCiD6neHALfF8n/caO66Y/BCQtnbKXRqPDZtJMcljr92fpMCtO4MQoxS
-         /mrg==
+        d=gmail.com; s=20251104; t=1791156910; x=1791761710; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=i3ss4x2XY1NtegOb+bi9AVH4a9A9wdpQ5aQv2P3PhMI=;
+        b=skNbuxTxjfjT+e8OXvDAMjO2U6kkMBZGrdGBSEVNDEZjZIPbNp5SBT8jtN43DQI/rM
+         5h80GjK0s3Luhqm5RzxtDAPMgNF/XbNZJ2mJXidBAEXXAb87g6tOnVjICqioXzBpzkdZ
+         vKtVDB7vCn51mU8q6U/MnhoDOlqwIgJsdW3ihUKiehembyXHrBZsSbnbi0S5dw1EiMnl
+         e1p/GsOcyYL4VUhrMOXAMeNhRi0ylKYGvEpBMy6LAguQx0h+hLgtS1plqpEMrfzysI4o
+         AQwJAW3Ka634Bo0ggPRXG8cXmpbIqQeBBa350h7YC3npNq37BkV0JUKuHJct9r84Bnqk
+         /1Rg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790913419; x=1791518219;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=0l8CkMr54y0b7W/DIQrVlXnOtMgAg59dAHWQIymno78=;
-        b=MDEmuL5wed2IS+KfP6Lmlhnh4/sMoCYSEHBI+W0MdGEde4EGRVZ4wYaX/LvbIuN8T4
-         ipQM2x44NSWVBCOh1b92aIXdwx5s09sR420njZBhHAbuHS55IccxH3an86dBCi4/Uj0m
-         haCxWMQow8IQGvmya2tnhH7jthdrZjizOlevIUKVknzsv9P0xYExXpsLVXF4HYqbEn46
-         XGAJdE2KM0mk+3r8STzeNQDdAkej1gIxINppDF2CIITiAwGMbydeRJipDNRNIm70AAYz
-         YFr1MTm4LTuy0gWTg4Q9CWc7qKzvoe7tEAKuPNMYC/d6KuW/0I5NtC4NtLGK3Ge30Gp7
-         3YqA==
-X-Forwarded-Encrypted: i=1; AKwUvBwhbs5I/loveANZbe6rwoleKJ1uVhDyI05UldnbaOUCdzSk7b040FTGFn+me/9914eRdbWwFovsy3vKHA==@vger.kernel.org
-X-Gm-Message-State: AFuF++n0GQPkKfakVzm+zwqNxAQPd6JOD+zp8TzsbZcDgH32lnspq+XB
-	f3p7c5IByyIxz//WYkKz1Na72h3i5kTvUnRBu9LzIV2L64wtl0eisiKywqUZh4vD5mj0VMEEEC+
-	2tiELxhv3FHgWFH9daZAniVHIiURoaJviWw3t8nU=
-X-Gm-Gg: AYBFou0t25bJsXTdVruBpRZSxJ2IDRtNeKGMEGx4JIx9K8NU/IUY/MJA4Fy+m360qxd
-	7qDbO0viJPo+6/i2QWUrCiHZg2oviiWLVV8hKRZoIl8298RNhN2TwQ9D0Hti7vkgSmgaeVuuv+E
-	C8VUcR7YLUd4UXdbgxpv7PZ/ff91y4G7AnrLXegzEh9zqd/vS8wy+qJGJho/oKSwiYrKFxnHTvV
-	7wrQaGYZpavwujdXHsZwCF+2ueazE4blLNJLA9O+vYXvgSvzbsTklpMsrtKLAfw++30VX+e3oop
-	2VrytcBQ6AeS91ntdkdVDdG7q4+mun5V17HzJ0ECu9BfQgHGSlJXbsXnRWqbwPA5Gvg=
-X-Received: by 2002:a05:600c:871b:b0:49f:dc71:e609 with SMTP id
- 5b1f17b1804b1-4a0276cba9amr23096195e9.20.1790913419123; Thu, 01 Oct 2026
- 20:56:59 -0700 (PDT)
+        d=1e100.net; s=20260707; t=1791156910; x=1791761710;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=i3ss4x2XY1NtegOb+bi9AVH4a9A9wdpQ5aQv2P3PhMI=;
+        b=QN9NKMwmcAbgkuZ7bAIWLgyVY7Ks/MYT/HFFQdfeOlwzTa+oJXXd/FTiPSaPak/3WP
+         rl9NuWV040H5lmQ5XHDOMFa704FgfPgMc1B8YT173IjVtWQiuZqw3pOjpl69dxjNDLOl
+         dEsahcdjJV+tU6LQZWNvGdTjjnTyw2JieZJx1y2UQE3AZ6gF3EjbahI6flM/gJ/BJepp
+         8UWx7J5kzjSVeuWfC0ng9gSFTGYISrNT2feIwCpHMkS/l9UN4Zz2ffOBWLd4z/ymknr8
+         Jgbx9ZgLVgoFGnyatXlgF8yBbaLcgkAIBZqAbTgTzCtoogKEeexE4SG3s7NO8PVMztLP
+         6t+A==
+X-Gm-Message-State: AFq9FYKHxedGFsxkRH0Sv7CfiL2XZXFC6wzPLP08/cA6VQhSkaNQhzAT
+	8tFpsYyUKX/c2cd225sy1+aZS05hPGjAyZi0GVlrK/jtyuFVtbiPQUghEl84DKpi
+X-Gm-Gg: AYBFou12qbJHcdXlT9RyB2vEi9mpDjr+OV8cdjnd4vUD/Hp+baIj9EWeoVw3g186bLJ
+	zz9b5V3ivfAJKgYzepA5MEmJJRK/AXavh8rKhhesKWl74qa5umtzLMUdtaB6bRnpJLuXY6IrMVY
+	En/oRLYaLm09lNgli8CL1KpVp2V2P9qs54l20O4/TQ+7oz7d6fKC42HM8uZk7pi7PW+Y1lO4hJp
+	3A9IuHyckUuhwYKMOjJ7I2oPvL18XQRSqVbSOkOgnmuWBZ55ZyiLK1dqueMHsOsqdsjrj0OYOGr
+	BTG5SA6w+XTxUhfKD0mFU9LEE5Gcp9Jk9n+bKeRfFcAHZtzAJeH5/w79wxRlgOQ2CpfwlFTAQAa
+	bLTnx/rilsr3lkILW/DA1qY/p3LJIeMkxKMSoTpn4qrKOojMWVtlGtLgY+S4eX6gVmQ1jBLg+2D
+	7+VMBGl7NArmbdBgqPh/pG4Ravd+dWqeZSwDTyv6oep7HX41WTJs+1Et67VPqjZ634ZZREYzK1t
+	TYLR5iL2VJhqkq/LkS3bBpdbZOI3EhmHYJRUU6ixoU=
+X-Received: by 2002:a17:90b:17c1:b0:3a8:13d6:f740 with SMTP id 98e67ed59e1d1-3a813d7aa24mr202013a91.22.1791156909970;
+        Sun, 04 Oct 2026 16:35:09 -0700 (PDT)
+Received: from carrot.taila25129.ts.net (madb688455.ap.nuro.jp. [219.104.132.85])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3a78daef465sm8810002a91.1.2026.10.04.16.35.08
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 04 Oct 2026 16:35:09 -0700 (PDT)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Viacheslav Dubeyko <slava@dubeyko.com>
+Cc: linux-nilfs <linux-nilfs@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+Subject: [PATCH] nilfs2: simplify nilfs_mdt_writeback()
+Date: Mon,  5 Oct 2026 08:31:06 +0900
+Message-ID: <20261004233506.20802-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260920205533.426028-1-southampton.jake.labelle@gmail.com>
- <20260930000954.371774-1-southampton.jake.labelle@gmail.com>
- <20260930000954.371774-3-southampton.jake.labelle@gmail.com>
- <CAKFNMok2oRBaSxmRLOs1+g6LWDbDAcstg1myzRjZ=y6t_mf-=w@mail.gmail.com>
- <CAKFNMokQ_iwmSig2PruoncoxqhTNCYrzYSp+KMF=6vMjct12JQ@mail.gmail.com> <CAKFNMokwGHQabG-W-zmo3kwFnYAj5ZJFFNGH6szv7F49gwo3Hg@mail.gmail.com>
-In-Reply-To: <CAKFNMokwGHQabG-W-zmo3kwFnYAj5ZJFFNGH6szv7F49gwo3Hg@mail.gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Fri, 2 Oct 2026 12:56:42 +0900
-X-Gm-Features: AclHuK9yIAvyBODapVGqQYB1XGpnByTFnNeDfaJzliHBPGaJnBwTzvZA0YNJHcg
-Message-ID: <CAKFNMo=tNBDsQ+uSwHLKYxFF5Txa1d2onDOYNpcimZzEY0V2BQ@mail.gmail.com>
-Subject: Re: [PATCH v2 2/2] nilfs2: validate directory position after llseek
- in readdir
-To: Jake Labelle <southampton.jake.labelle@gmail.com>
-Cc: Viacheslav Dubeyko <slava@dubeyko.com>, linux-nilfs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Fri, Oct 2, 2026 at 10:58=E2=80=AFAM Ryusuke Konishi wrote:
->
-> Hi Jake,
->
-> I have one additional piece of feedback regarding the commit message
-> and code comment that I would like you to reflect in the patch set.
->
-> Looking closely at the commit description again, the statement:
->
-> "possibly reading past the end of the folio and returning unrelated
-> memory contents to userspace."
->
-> appears to be inaccurate for the original nilfs_readdir() implementation.
->
-> Because the inner loop enforces '(char *)de <=3D limit' before
-> processing any entry (where 'limit' is capped at
-> 'nilfs_last_byte(inode, n) - NILFS_DIR_REC_LEN(1)'), an unaligned
-> pointer that points past 'limit' fails this check and never enters the
-> loop.  Therefore, it cannot read past the end of the folio or leak
-> out-of-bounds memory contents to userspace.
->
-> The actual issue is that an unaligned offset within the valid page
-> boundary parses arbitrary bytes inside the folio as a valid
-> 'nilfs_dir_entry', returning bogus/corrupted directory entries to
-> userspace.
->
-> Could you update the commit message to reflect that the bug is parsing
-> bogus entries within the folio, rather than out-of-bounds folio
-> access?
->
-> Similarly, the last sentence of the comment added inside nilfs_readdir():
->
-> "otherwise dir_emit() copies name_len bytes from a fake entry, reading
-> past the end of the folio."
->
-> also has the same inaccuracy.  Could you update that sentence as well?
->  For example:
->
-> "otherwise dir_emit() copies name_len bytes from a fake entry,
-> returning bogus directory entries to userspace."
->
-> Thanks,
-> Ryusuke Konishi
+The writepages() callback for metadata files, nilfs_mdt_writeback(),
+calls nilfs_mdt_write_folio() for each dirty folio via writeback_iter(),
+where read-only superblock checks, folio dirty state clearing on error,
+and triggering of the log writer via nilfs_construct_segment() are
+performed.  This helper function is used nowhere else.
 
-Hi Jake,
+Executing these operations per folio is inefficient:
 
-Sorry for sending multiple emails in a row before hearing back from
-you, but I must retract my previous comment regarding the
-out-of-bounds access.
+- Checking if the filesystem has fallen back to read-only mode is
+  repeated redundantly.
 
-While dir_emit() and its underlying VFS actors (e.g.
-filldir/filldir64) are designed defensively, looking more closely at
-their implementation, the safeguard appears to be incomplete when
-dealing with a corrupted 'name_len' (whether that actually triggers a
-kernel bug or other issue in practice is unclear, but the point that
-an out-of-bounds page access could occur seems correct).
+- Calling nilfs_construct_segment() inside the per-folio loop causes
+  redundant log writer invocations for a single sync request, where only
+  the first invocation performs actual log writing.
 
-Even though 'de' itself satisfies the '(char *)de <=3D limit' check, an
-unaligned entry near the page boundary may have a bogus 'de->name_len'
-(for instance, 255).
-The verify_dirent_name() helper inside the actor called by dir_emit()
-executes memchr() on 'de->name' for that length, which will read past
-the mapped page boundary.
+Unfold nilfs_mdt_write_folio() into nilfs_mdt_writeback() and consolidate
+these operations at the function level.  The read-only check is moved to
+the top of nilfs_mdt_writeback(), replacing per-folio
+nilfs_clear_folio_dirty() calls with a single nilfs_clear_dirty_pages()
+call to discard dirty pages across the mapping at once.  Additionally,
+nilfs_construct_segment() is invoked once when 'sync_mode' is WB_SYNC_ALL
+and the mapping is tagged dirty.
 
-So your original description about reading past the end of the
-page/folio is correct.
-Please disregard my previous email about updating those statements in
-the commit message and code comment.
+With these operations consolidated outside the loop, the remaining
+per-folio actions (calling folio_redirty_for_writepage() on already
+dirty folios and unlocking them) serve no purpose, so the folio iteration
+itself is removed.
 
-Sorry for any confusion caused!
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+Viacheslav,
+
+Please add this to the queue for the next cycle.
+
+This refactors the metadata file writeback callback function,
+restructuring an inefficient legacy function organization rooted in
+the era of aops->writepage() to align with aops->writepages().
 
 Thanks,
 Ryusuke Konishi
+
+ fs/nilfs2/mdt.c | 40 +++++++++++-----------------------------
+ 1 file changed, 11 insertions(+), 29 deletions(-)
+
+diff --git a/fs/nilfs2/mdt.c b/fs/nilfs2/mdt.c
+index b50c88b65183..77dc2be2ce65 100644
+--- a/fs/nilfs2/mdt.c
++++ b/fs/nilfs2/mdt.c
+@@ -391,51 +391,33 @@ int nilfs_mdt_fetch_dirty(struct inode *inode)
+ 	return test_bit(NILFS_I_DIRTY, &ii->i_state);
+ }
+ 
+-static int nilfs_mdt_write_folio(struct folio *folio,
++static int nilfs_mdt_writeback(struct address_space *mapping,
+ 		struct writeback_control *wbc)
+ {
+-	struct inode *inode = folio->mapping->host;
+-	struct super_block *sb;
++	struct inode *inode = mapping->host;
+ 	int err = 0;
+ 
+-	if (inode && sb_rdonly(inode->i_sb)) {
++	if (!inode)
++		return 0;
++
++	if (sb_rdonly(inode->i_sb)) {
+ 		/*
+ 		 * It means that filesystem was remounted in read-only
+ 		 * mode because of error or metadata corruption. But we
+ 		 * have dirty folios that try to be flushed in background.
+-		 * So, here we simply discard this dirty folio.
++		 * So, here we simply discard these dirty folios.
+ 		 */
+-		nilfs_clear_folio_dirty(folio, false);
+-		folio_unlock(folio);
++		nilfs_clear_dirty_pages(mapping, false);
+ 		return -EROFS;
+ 	}
+ 
+-	folio_redirty_for_writepage(wbc, folio);
+-	folio_unlock(folio);
+-
+-	if (!inode)
+-		return 0;
+-
+-	sb = inode->i_sb;
+-
+-	if (wbc->sync_mode == WB_SYNC_ALL)
+-		err = nilfs_construct_segment(sb);
++	if (wbc->sync_mode == WB_SYNC_ALL &&
++		mapping_tagged(mapping, PAGECACHE_TAG_DIRTY))
++		err = nilfs_construct_segment(inode->i_sb);
+ 
+ 	return err;
+ }
+ 
+-static int nilfs_mdt_writeback(struct address_space *mapping,
+-		struct writeback_control *wbc)
+-{
+-	struct folio *folio = NULL;
+-	int error;
+-
+-	while ((folio = writeback_iter(mapping, wbc, folio, &error)))
+-		error = nilfs_mdt_write_folio(folio, wbc);
+-
+-	return error;
+-}
+-
+ static const struct address_space_operations def_mdt_aops = {
+ 	.dirty_folio		= block_dirty_folio,
+ 	.invalidate_folio	= block_invalidate_folio,
+-- 
+2.53.0
+
