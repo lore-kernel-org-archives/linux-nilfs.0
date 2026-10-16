@@ -1,203 +1,426 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CEBB52FE42;
-	Wed, 14 Oct 2026 13:47:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791985663; cv=none; b=rOZcUCwf0LuOStKrxgzW0pYCfgewfM/Kodm3ZyXH+m8mNws6+nTZ0dUTy0quiUnn/3x6tqplTh6+h0KSsnVbMFD6h0ZHvUnCaGnM8JdViRqS70gS1bdnZ88yHSLvnDxC2lP1YS5do0g+/pGfSiKNKqLroedZRIOSTdvE1PXPEcM=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791985663; c=relaxed/simple;
-	bh=uLec5Ms1kEItxT/9M3m+iatVoLfvlo+Ku3r+6YxXaVo=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=phCBR6//HXrne9fXQuP5Y8SlKSN8HTEjA2q3Jc4Sajhj8+u1uUOHMyUHoTWCDTdEAzUTBJE3/IZJndBSh1RxXY2sWaD31bfg76jprO9ONdpaNf+CJguXn6+qH+rNM0OxUhvPqk7EUsm6GBMbQIaANXa0Vvd+R0yHPNISsRLC1lg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=KER6SV+3; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=5kV45Nl3; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=S0AnEx52; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=gG1ABpRO; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C363A2CCB5
+	for <linux-nilfs@vger.kernel.org>; Fri, 16 Oct 2026 00:01:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=170.10.133.124
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1792108885; cv=pass; b=gwAPXwV2eixscODMQS9/vRYG5PlwMD6YosDiHftb3Gh9ybOPVyvG78EHAKzey0LgHJFlvktex+kE+4mAMMNMxeak2i3R0d6BNsHf1wSdPNb/ZSyMLMItwRGu55IVhTVfO7/UTEcZk/nFv+4Orb39ckLNdMWdyMciNCbujjTWhgc=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1792108885; c=relaxed/simple;
+	bh=cDzYndgVLHSlgLhviEcKgLhvTsb8mhyEeRWsU/W6ToA=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=nOtcBLzfLbNNzolvM8bEUdQa70QkQxdbraGafqP+EvlYDKYqM4eYjpUIQ8WIt5T9uw/vjj8VW4Ta5SSa/gQmx4pxFBMpWRpI7265kQGcQMl86HmjoghSFe/7beLI5PFHGCrAuRxJ/ST9106k15zXDl1X0iAQLHv/81x2RH6wXZY=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eOrvjLSV; dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b=t5UKP6wc; arc=pass smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="KER6SV+3";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="5kV45Nl3";
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="S0AnEx52";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="gG1ABpRO"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id D252822258;
-	Wed, 14 Oct 2026 13:47:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1791985659; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eOrvjLSV";
+	dkim=pass (2048-bit key) header.d=redhat.com header.i=@redhat.com header.b="t5UKP6wc"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1792108882;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=DY9RqNIokuQ1DH3X9Yc1BCOmA2bOCbyTbnsYeJcms7U=;
-	b=KER6SV+3E5T8faaU3djQpSC8B9QPNgiQOksk9btYa1oyN+g/YdhOBY6t1StzY1g3bSF0IJ
-	zd1FvSem8kaP2TbkqojJhhhFOthOVUjirK7sCmgbkHZZx82aJ9Io4OE8IvNRplBb+KGXEf
-	1xnlhspPxY1CCNo9bMSSg22YlcPY1WI=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1791985659;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=DY9RqNIokuQ1DH3X9Yc1BCOmA2bOCbyTbnsYeJcms7U=;
-	b=5kV45Nl3phoxgImBDhEqInuMMmAek0XiQQPFlXI/cnE3ZS5Quvx+F2axMbnAyEMUB1fkx3
-	FIYEJ2frN9CQ5KBA==
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b=S0AnEx52;
-	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b=gG1ABpRO
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1791985657; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=DY9RqNIokuQ1DH3X9Yc1BCOmA2bOCbyTbnsYeJcms7U=;
-	b=S0AnEx52KGncKxtGJdhOJnkNKWblqAhU1fDfPojL39mMiKeDrabTNcq7zrzX9j4BiwbLyH
-	OakWO7MFjbmum5NnwrDWXKsOJm95K6rjrzLtmGKio9hh9a9ZDKInBQ8G3OJJr2jLduCpIm
-	cY4ShwlOEbCtlHljqjRWtydkmyqg6nY=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1791985657;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=DY9RqNIokuQ1DH3X9Yc1BCOmA2bOCbyTbnsYeJcms7U=;
-	b=gG1ABpROq+bYTWDuUnYSBShOJ9fbmudAese1phkK/c9rHSbMI+6wnPeO8BO8ATprL8kHK6
-	exH5zVUd6CuBDKDA==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 9348F133F1;
-	Wed, 14 Oct 2026 13:47:37 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id ACfUG/mHz2oSUQAAD6G6ig
-	(envelope-from <jack@suse.cz>); Wed, 14 Oct 2026 13:47:37 +0000
-Received: by quack3.suse.cz (Postfix, from userid 1000)
-	id 84A41A140F; Wed, 14 Oct 2026 15:47:36 +0200 (CEST)
-Date: Wed, 14 Oct 2026 15:47:36 +0200
-From: Jan Kara <jack@suse.cz>
-To: Andreas Gruenbacher <agruenba@redhat.com>
-Cc: Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
-	Jan Kara <jack@suse.com>, Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, 
-	linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net, 
-	linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, linux-fsdevel@vger.kernel.org, 
-	ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev, linux-btrfs@vger.kernel.org, 
-	gfs2@lists.linux.dev, linux-efi@vger.kernel.org, linux-mtd@lists.infradead.org, 
-	linux-xfs@vger.kernel.org, stable@vger.kernel.org, 
-	Karl Mehltretter <kmehltretter@gmail.com>
-Subject: Re: [PATCH RFC 00/28] fs: don't set SB_RDONLY after filesystem errors
-Message-ID: <k7zduo2ewgvrmic2gc4wssakq4ystwqpuwo6a5llx2gzc64xzl@k2pjjijh5kye>
-References: <20261012-work-fs-sb_rdonly-v1-0-60743a3dc326@kernel.org>
- <my2k7257m265fp5ad77n5hfndl23i56gsog3jwnsyocp3yxbnj@aphfqdiej2hs>
- <20261013-forsten-ammoniak-geknackt-fefec366cc97@brauner>
- <CAHc6FU5JuYU8R4=agxgWBoEKrUGyWiitzRn5MwXiV7NZYt=_ag@mail.gmail.com>
+	bh=+iJ5ftvCuZ0dzn9DuBnu06m+Dldzk+vmqioG+hhsp4M=;
+	b=eOrvjLSV43SUnA0pU74smYdAa2STlHdpkEAUfzY5/5j+KWiy9/ZBs1BbtCDImyLyRKWgzT
+	BfS5j/gl0yT4Txm2dbjA0M4syiJOTCE9XwDeqMjG5c8xxHFD+k8TdOutiVMzlgI5dV2Aoi
+	GCERHyWh6Z7wSSX2I34ZyQ638KoAnkU=
+Received: from mail-yx1-f71.google.com (mail-yx1-f71.google.com
+ [74.125.224.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-498-2AU8tz3vO8S_X9xgJHpQZg-1; Fri, 16 Oct 2026 00:01:21 +0000
+X-MC-Unique: 2AU8tz3vO8S_X9xgJHpQZg-1
+X-Mimecast-MFC-AGG-ID: 2AU8tz3vO8S_X9xgJHpQZg_1792108881
+Received: by mail-yx1-f71.google.com with SMTP id 956f58d0204a3-677d93efa20so2515170d50.1
+        for <linux-nilfs@vger.kernel.org>; Thu, 15 Oct 2026 17:01:21 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1792108881; cv=none;
+        d=google.com; s=arc-20260327;
+        b=NhvU4tR70WJeJLd2VIO3MRTYX+yWT054gSj0MQ9qT7L7j1dW0PgWw1eHZmZ9cvBrYh
+         1Jroh0unD1bw3EBm6VD7aL7dgGkOLd1rfRM3oI1RS4uj6mNGJ7vJxOo6kSVjB4gSaX51
+         W8ljvZy6bq7FE7GsJei9yQ7+06UJVuwpe3TZsOgpK3pRtL3D5VoM5E1NeDKTeL+vff4k
+         nnRMDSMl0etd8lipITO5d5WzItG4rKcDq91sTeCReVyZOHLfs8QCE4IO01h29Roh4auY
+         nErxvrJvvEmijelTA3JaWGfxL1FbF9XUwvla798hT7d8zLZmMibB5nPehHlOeFpjjaR3
+         TCMg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=+iJ5ftvCuZ0dzn9DuBnu06m+Dldzk+vmqioG+hhsp4M=;
+        fh=228jO30exLjpacgprRcQtKCljHHZuMT8Xvf/9uwIbX4=;
+        b=SsdCLnACC4M3d38jhZ+YupjbZvVqmAzp4rga8mGofRBD8R/xJufwBYDqfhE/tqtatu
+         yAmxwYXkBcZYxNJDE+3g8vv3Viok/6lhKOP5cfKTT571oeLRMR0OLI3BHzsSLvn4x4aJ
+         2Y0rZrTKzw72LHuVFaG244mYq0mGcm5nyqdlHs+3ptYr/BNlQ+MYgN1KVP3V2gROWEYF
+         toJ1qbBCIVpqkK6IMw/Dm1dt+gnyQ2RYzpHDDbkmUSccKPZ2jdcFQhyVs+rscYT2qJa5
+         OiL8O9cOLBVxah/VIPrChWVzTzexHkUATvASOoa1reYY7zGoBpEYCRhdyq5vnUvXedmX
+         b6IQ==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=redhat.com; s=google; t=1792108881; x=1792713681; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=+iJ5ftvCuZ0dzn9DuBnu06m+Dldzk+vmqioG+hhsp4M=;
+        b=t5UKP6wcJpasP5FVfoST4wmPFtstXAYMq3I8UXxbX+DHYjTWAmU7hsFj5Fm5S2qbXC
+         4K6BPO2quq5/2Tl8X66mS561+14O1MKMLYC1/GPU95aJ8L6B+2VR38vtqNr4uJu3SnsN
+         nNsr4RhXVYEvgePoQbLCK93T70G0khI8MQwgdUsxP5aAAAjU24UjkO4KpNfhAmZwXAf8
+         hy1Nt4qQXyUKyqkiVirv5sF0aSd/bb3jkAxDQwLR9B39CoJHnvf7t+uLIQ961BpA/dB/
+         qc3tELFQW+6Fdh7qG4+JM0zSGe3DopMl1oqX/P+z2pvXGshWNGReVs7erfDlVsaCIF86
+         NoIg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792108881; x=1792713681;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=+iJ5ftvCuZ0dzn9DuBnu06m+Dldzk+vmqioG+hhsp4M=;
+        b=Xn+OAeoW1QEUP7p0R5lyZ2g39rfJBfH3xsfYpRoX0a8fDZCNthgSaM94f6ubZ2FfN8
+         TSc9kZL0yxcrp7XsB4SNhMLE6vMzxrQz/5mnP8LimLibAEp2H0h5OYaLfwlQCWcR8xUN
+         h/uyTe36tHBGQQwOMQfIt/MLOegQdVj0kjzx+nM9iSZd110lIWJw0VlPZHm1LgyUXa9g
+         6aA4WgtjWHMOtllXCbyd4XzCiNbkFVPbhSm9Bhe3o6xWUvC4zpX54itrFNp0r2OCoAyv
+         5Y0dzAYMpSKaEBiJzAyn2ZPETvl/Y8vMvzZGK/pjzLedXmHiw1IO44409qHqMYvXFtgo
+         bUUA==
+X-Forwarded-Encrypted: i=1; AKwUvBxxRYJEJVBr7TICOvKHE3hvxuEenPwMzKfwwvdDF3kgg3nWOIS02iOuCyO60bjDtQa175lH0Fk+qPDRSg==@vger.kernel.org
+X-Gm-Message-State: AFq9FYLw++/bUNyueEIZ1duRdCY1yMXLzI8/OnoTtBc1HoUZvZAZRWLB
+	IJ/0jTJZu7+7g2gVXBqMsENF0vXIz1Ht7BOBhCuc+mQOu8PxzIs2OdyCcwjb67vl/fOvx2tanDX
+	n9i6m5cj89fUyxI4A+QZMK8hT9JuZ6xUYR9ho48KyY84Zhyi15uS/Qp7llA1fv5DXuCuaRdhoAs
+	5+w4ErPFlSCxdyYFiOcYGwzrqufS87UwPFySjDdu4=
+X-Gm-Gg: AYBFou12RKPytmHA9MW5cf+jqM0DN9r+QY2uESTP76AN/gpz+Zi1gsDSoU4rxPj8SbI
+	Lc1ILIFxqEkX06gDNEwhLTnN15VKESCN9HJDkQwhTHtArC2nKjY0D+MxMc5XnaoWw+h+XavRnju
+	alKuTOTczR5y+A7dGneD1wBJ2jWWWcJBuUbnzChHlkaXxRxZI5eV+moAsVZu8wt5XI+UVwv1a25
+	R28soZL8FBuLfZXpPWSAAVBDrPttS/MqET58sDa8iv5KA==
+X-Received: by 2002:a05:690e:b8c:b0:679:980d:996a with SMTP id 956f58d0204a3-679980da3fcmr1447587d50.33.1792108875614;
+        Thu, 15 Oct 2026 17:01:15 -0700 (PDT)
+X-Received: by 2002:a05:690e:b8c:b0:679:980d:996a with SMTP id
+ 956f58d0204a3-679980da3fcmr1447535d50.33.1792108871774; Thu, 15 Oct 2026
+ 17:01:11 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAHc6FU5JuYU8R4=agxgWBoEKrUGyWiitzRn5MwXiV7NZYt=_ag@mail.gmail.com>
-X-Rspamd-Action: no action
-X-Spam-Score: -4.01
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-4.01 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	MID_RHS_NOT_FQDN(0.50)[];
-	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	RCVD_COUNT_THREE(0.00)[3];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	RCPT_COUNT_TWELVE(0.00)[20];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_TLS_LAST(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DKIM_TRACE(0.00)[suse.cz:+];
-	MISSING_XM_UA(0.00)[];
-	FREEMAIL_CC(0.00)[kernel.org,suse.cz,suse.com,zeniv.linux.org.uk,vger.kernel.org,lists.sourceforge.net,lists.linux.dev,lists.infradead.org,gmail.com];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.cz:dkim,suse.com:email,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Spam-Level: 
-X-Rspamd-Queue-Id: D252822258
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+References: <20261012-work-fs-sb_rdonly-v1-0-60743a3dc326@kernel.org> <20261012-work-fs-sb_rdonly-v1-21-60743a3dc326@kernel.org>
+In-Reply-To: <20261012-work-fs-sb_rdonly-v1-21-60743a3dc326@kernel.org>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Date: Fri, 16 Oct 2026 02:01:00 +0200
+X-Gm-Features: AclHuK-sAjCgZe2jZlpOS_f9wdrUdBca6HiO3TEkm1pT3ImiObIJ5_3wwDvQKVU
+Message-ID: <CAHc6FU6z4kX5R3Og8m0dYOHsjFcw+4Btvfe87AGPxy_EWs0E7A@mail.gmail.com>
+Subject: Re: [PATCH RFC 21/28] gfs2: don't set SB_RDONLY on withdraw
+To: Christian Brauner <brauner@kernel.org>
+Cc: Jan Kara <jack@suse.com>, Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, 
+	linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net, 
+	linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, 
+	linux-fsdevel@vger.kernel.org, ntfs@lists.linux.dev, 
+	ocfs2-devel@lists.linux.dev, linux-btrfs@vger.kernel.org, 
+	gfs2@lists.linux.dev, linux-efi@vger.kernel.org, 
+	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org, 
+	stable@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Wed 14-10-26 12:04:08, Andreas Gruenbacher wrote:
-> On Wed, Oct 14, 2026 at 12:20 AM Christian Brauner <brauner@kernel.org> wrote:
-> > > I'm in favor of this. Just after checking couple of filesystem changes -
-> > > won't we be better off by using a generic flag in super_block for this so
-> > > that VFS can check for it? Then each filesystem won't have to implement
-> > > its own wrapper for simple_fsync(), quota operations, and whatever other
-> > > generic operations that need to bail on shutdown filesystem...
-> >
-> > Do you mean something like?:
-> >
-> > From 28c97f2142e255eb835d26deb97b00afccfb7c4a Mon Sep 17 00:00:00 2001
-> > From: Christian Brauner <brauner@kernel.org>
-> > Date: Tue, 13 Oct 2026 21:15:36 +0200
-> > Subject: [PATCH] fs: add a generic emergency read-only state
-> >
-> > The filesystems that stopped setting SB_RDONLY after an error refuse
-> > modifications themselves now. Each of them grew the same checks in
-> > ->open, ->setattr, ->fsync, ->write_inode, the directory operations, the
-> > quota operations and ->reconfigure. Jan suggested a generic flag so the
-> > VFS can do that once (cf. [1]).
-> >
-> > So add SB_STATE_EMERGENCY_RO in a new sb->s_state word. It is only ever
-> > set with set_bit() and never cleared so it can be tested anywhere
-> > without any ordering against the setter. A filesystem calls
-> > sb_set_emergency_ro() where it used to set SB_RDONLY. SB_RDONLY itself
-> > stays untouched so freeze_super() and thaw_super() keep seeing a
-> > consistent superblock.
-> >
-> > The VFS then checks it wherever sb_rdonly() gates a write:
-> >
-> > - __mnt_is_readonly() so mnt_want_write(), opening files for writing,
-> >   access(W_OK), nfsd and overlayfs see a read-only superblock
-> > - sb_permission() for vfs_create(), vfs_unlink() and friends
-> > - notify_change(), rw_verify_area(), vfs_fallocate(), vfs_fsync_range()
-> >   and do_page_mkwrite() for files that were opened before the error
-> > - reconfigure_super() refuses going read-write
-> > - sync_filesystem(), sync(2) and write_inode() don't write anymore
-> > - the dquot code doesn't write the quota files anymore and quotactl(2)
-> >   refuses to change anything
-> > - "emergency_ro" is shown in the mount options, /proc/mounts shows the
-> >   superblock as "ro" and statfs() reports ST_RDONLY like they did when
-> >   SB_RDONLY was set
-> >
-> > What reaches the filesystem without passing through the VFS it still has
-> > to refuse itself. That's its allocators, its journal, its own writeback
-> > and the deletion of unlinked inodes.
-> 
-> For shared filesystems like gfs2, the concept of an emergency
-> read-only state doesn't make sense because in that state (in gfs2
-> terms, a withdrawn filesystem), we cannot do any more cluster-wide
-> locking and so we cannot allow any more reads, either. Could we define
-> the new flag in a way that would allow filesystems to enforce stronger
-> guarantees? This would suggest a flag name other than
-> SB_STATE_EMERGENCY_RO, though.
+Christian,
 
-The problem is that a lot of local filesystems really want the emergency
-read-only state (and not full fs shutdown). So if you want to fully
-shutdown the fs on error, either gfs2 has to do it on it's own or we could
-introduce another sb state for that. But I think emergency-ro state needs
-to stay...
+thanks for looking into this. I agree with a lot of the points you are
+making. This message is still difficult to reply to because it
+conflates multiple problems.
 
-								Honza
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+On Mon, Oct 12, 2026 at 1:06=E2=80=AFPM Christian Brauner <brauner@kernel.o=
+rg> wrote:
+> do_withdraw() sets SB_RDONLY from the withdraw work item without holding
+> sb->s_umount. gfs2_withdraw() sets SDF_WITHDRAWN right away and queues
+> gfs2_withdraw_func() which runs do_withdraw(). That also happens on a
+> frozen filesystem. SDF_JOURNAL_LIVE is still set then because the
+> freeze log flush doesn't clear it.
+
+Agreed, do_withdraw() shouldn't set SB_RDONLY.
+
+> freeze_super() and thaw_super() both look at sb_rdonly() to figure out
+> whether the s_writers rwsems need to be taken or released. gfs2 doesn't
+> even get that far. FITHAW goes through gfs2_thaw_super() to
+> gfs2_do_thaw() whose gfs2_freeze_lock_shared() fails with -EIO for a
+> withdrawn filesystem. So FITHAW never gets to thaw_super() and the
+> filesystem stays frozen.
+
+So when gfs2_thaw_super() is called on a withdrawn filesystem, it
+should still call thaw_super(). Fair enough.
+
+> The only ways out are emergency thaw, which
+> calls thaw_super_locked() directly, and writing 0 to the gfs2 "freeze"
+> sysfs file, which calls thaw_super() directly. Both see SB_RDONLY and
+> skip sb_freeze_unlock(). The rwsems stay write-locked, writes through
+> file descriptors opened before the withdraw hang and umount warns:
+>
+>   gfs2: fsid=3Ds2test:s2fs.0: can't lock the freeze glock: -5
+>   gfs2: fsid=3Ds2test:s2fs.0: GFS2: couldn't thaw filesystem: -5
+>   sysrq: Emergency Thaw of all frozen filesystems
+>   WARNING: kernel/rcu/sync.c:177 at rcu_sync_dtor+0x143/0x190
+>
+>   [<0>] percpu_rwsem_wait+0x203/0x500
+>   [<0>] vfs_write+0xb57/0xfa0
+
+According to commit d564053f0746 ("GFS2: Clean up freeze code"), the
+idea of the freeze sysfs file was to make it behave like the FIFREEZE
+/ FITHAW ioctls. This isn't what the code is doing at all.
+
+> Withdrawing first and freezing afterwards isn't any better.
+> freeze_super() freezes the read-only superblock without the rwsems,
+> gfs2_lock_fs_check_clean() fails with -EIO and gfs2_do_thaw() can't get
+> the freeze glock. FIFREEZE fails with -EIO and the superblock stays
+> frozen and pinned for good.
+>
+> SDF_WITHDRAWN already stops all modifications. Glocks fail with -EIO,
+> gfs2_trans_begin() with -EROFS and log flushes and metadata reads are
+> refused. So stop setting SB_RDONLY in do_withdraw() like ext4 did in
+> commit d3476f3dad4a ("ext4: don't set SB_RDONLY after filesystem
+> errors").
+
+Yes, do_withdraw() shouldn't set SB_RDONLY.
+
+> A few things have to come with that:
+>
+> (1) gfs2_evict_inode() and gfs2_quota_sync() check gfs2_withdrawn() next
+>     to sb_rdonly(). Eviction writes the inode glock's metadata in place
+>     and umount evicts everything.
+>
+> (2) gfs2_write_inode() returns -EIO once withdrawn. sync(2), syncfs(2),
+>     freeze and umount skipped writeback for the read-only superblock.
+>     Now they reach ->write_inode() which writes the glock address space
+>     in place without a withdrawn check, and gfs2_ail_drain() leaves
+>     committed buffers dirty. Data writeback needs no check because the
+>     block mapping goes through gfs2_meta_read() which fails once
+>     withdrawn.
+
+Okay, (1) and (2) are related to the SB_RDONLY change.
+
+> (3) gfs2_do_thaw() thaws even if the freeze glock can't be taken again
+>     because the filesystem withdrew. A withdrawn filesystem can't write
+>     anything and its lockspace is gone anyway.
+>
+> (4) gfs2_freeze_super() refuses a withdrawn filesystem with -EIO before
+>     calling freeze_super(). It can't take the freeze glock anymore and
+>     freeze_super() would now take the rwsems of the read-write
+>     superblock before gfs2_lock_fs_check_clean() fails.
+
+And (3) and (4) are related to thawing a withdrawn filesystem.
+
+> Note that the SB_RDONLY change and (3) have to go in together and the
+> rest has to be in place by then. With only the SB_RDONLY change a freeze
+> after a withdraw takes the rwsems of the now read-write superblock and
+> stays frozen for good with writers blocked. With only (3) FITHAW reaches
+> thaw_super() on the read-only superblock and leaks the rwsems. And
+> without (4) a freeze after a withdraw goes through the error path of
+> gfs2_freeze_super() which re-locks sd_freeze_gh while
+> gfs2_lock_fs_check_clean() still holds it. The umount that is now
+> possible then hangs in gfs2_wait_glocks().
+
+Not sure what should prevent us from fixing withdrawn filesystem
+thawing and the SB_RDONLY issue in separate commits. Both need fixing
+in the end, but that's okay.
+
+> While withdrawn a remount to read-write fails with -EROFS instead of the
+> -EIO from gfs2_make_fs_rw().
+
+So before this patch, 'mount -o remount,rw' of a withdrawn filesystem
+fails with -EIO, and this patch changes it to -EROFS. What's wrong
+with -EIO? Once do_withdraw() doesn't set SB_RDONLY anymore, the
+filesystem will remain read-write mounted; getting an -EROFS error in
+that state seems odd.
+
+> A remount to read-only goes through
+> gfs2_make_fs_ro() which writes nothing once do_withdraw() has run, and
+> since the previous patch gfs2_make_fs_ro() waits for that. So emergency
+> remount (sysrq u), which now forces every withdrawn gfs2 read-only,
+> works without a WARN.
+
+Alright.
+
+> We show "withdrawn" in the mount options next to the existing
+> "demote_interface_used". A withdrawn filesystem stays "rw" so statfs()
+> doesn't report ST_RDONLY anymore, and the "Mounted RO" line in the sysfs
+> status file and the RDONLY=3D uevent field read 0 too. A second mount of
+> the device and a gfs2meta mount have to be read-write now. And like with
+> "emergency_ro" on ext4, remount helpers that pass the shown options back
+> fail. busybox mount for example now gets "Unknown parameter
+> 'withdrawn'".
+>
+> Path based operations fail with -EIO as before. The mount root is the
+> exception because it isn't looked up. So operations on it now fail with
+> -EIO from the glocks instead of -EROFS from mnt_want_write(), and the
+> same goes for fd based chmod, chown, utimes, setxattr and fileattr
+> changes. syncfs(2) on a withdrawn filesystem returns gfs2_sync_fs()'s
+> sd_log_error, e.g. -EIO, instead of 0. FITHAW of a filesystem that
+> withdrew while frozen works now and FIFREEZE of a withdrawn filesystem
+> fails with -EIO without freezing it.
+>
+> Reproducer (the sb_rdonly selftest at the end of this series covers it
+> as well):
+>
+>   mkfs.gfs2 -O -p lock_nolock -j 1 -t test:fs img; mount -o loop img /mnt
+>   exec 3>>/mnt/a 4</mnt          # paths stop working after the withdraw
+>   fsfreeze -f /mnt
+>   echo 1 > /sys/fs/gfs2/test:fs/withdraw; sleep 8
+>   <FITHAW on fd 4>               # before: EIO, stays frozen; after: thaw=
+ed
+>   echo j > /proc/sysrq-trigger   # before: the only way out, leaks the rw=
+sems
+>   echo x >&3                     # before: hangs in percpu_rwsem_wait(); =
+after: EIO
+>   umount /mnt                    # before: WARNING at rcu_sync_dtor()
+>
+> Fixes: 601ef0d52e96 ("gfs2: Force withdraw to replay journals and wait fo=
+r it to finish")
+> Fixes: b77b4a4815a9 ("gfs2: Rework freeze / thaw logic")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
+> ---
+>  fs/gfs2/ops_fstype.c |  6 +++++-
+>  fs/gfs2/quota.c      |  2 +-
+>  fs/gfs2/super.c      | 19 +++++++++++++++++--
+>  fs/gfs2/util.c       |  6 ++++--
+>  4 files changed, 27 insertions(+), 6 deletions(-)
+>
+> diff --git a/fs/gfs2/ops_fstype.c b/fs/gfs2/ops_fstype.c
+> index 718e0da7dfce..d7f7e8b75971 100644
+> --- a/fs/gfs2/ops_fstype.c
+> +++ b/fs/gfs2/ops_fstype.c
+> @@ -1594,7 +1594,11 @@ static int gfs2_reconfigure(struct fs_context *fc)
+>                 if (fc->sb_flags & SB_RDONLY) {
+>                         gfs2_make_fs_ro(sdp);
+>                 } else {
+> -                       error =3D gfs2_make_fs_rw(sdp);
+> +                       /* A withdrawn filesystem can't go back to read-w=
+rite. */
+> +                       if (gfs2_withdrawn(sdp))
+> +                               error =3D -EROFS;
+> +                       else
+> +                               error =3D gfs2_make_fs_rw(sdp);
+>
+>                         if (error)
+>                                 errorfc(fc, "unable to remount read-write=
+");
+>                 }
+> diff --git a/fs/gfs2/quota.c b/fs/gfs2/quota.c
+> index 001c8b39ca55..7fac70bae129 100644
+> --- a/fs/gfs2/quota.c
+> +++ b/fs/gfs2/quota.c
+> @@ -1329,7 +1329,7 @@ int gfs2_quota_sync(struct super_block *sb, int typ=
+e)
+>         u64 sync_gen;
+>         int error =3D 0;
+>
+> -       if (sb_rdonly(sdp->sd_vfs))
+> +       if (sb_rdonly(sdp->sd_vfs) || gfs2_withdrawn(sdp))
+>                 return 0;
+>
+>         qda =3D kzalloc_objs(struct gfs2_quota_data *, max_qd);
+> diff --git a/fs/gfs2/super.c b/fs/gfs2/super.c
+> index 1d7b39354d65..ec7bce124376 100644
+> --- a/fs/gfs2/super.c
+> +++ b/fs/gfs2/super.c
+> @@ -456,6 +456,9 @@ static int gfs2_write_inode(struct inode *inode, stru=
+ct writeback_control *wbc)
+>         int ret =3D 0;
+>         bool flush_all =3D (wbc->sync_mode =3D=3D WB_SYNC_ALL || gfs2_is_=
+jdata(ip));
+>
+> +       if (gfs2_withdrawn(sdp))
+> +               return -EIO;
+> +
+>         if (flush_all)
+>                 gfs2_log_flush(GFS2_SB(inode), ip->i_gl,
+>                                GFS2_LOG_HEAD_FLUSH_NORMAL |
+> @@ -686,7 +689,12 @@ static int gfs2_do_thaw(struct gfs2_sbd *sdp, enum f=
+reeze_holder who, const void
+>         int error;
+>
+>         error =3D gfs2_freeze_lock_shared(sdp);
+> -       if (error)
+> +       /*
+> +        * A withdrawn filesystem can't get the freeze glock back, but it=
+ won't
+> +        * write anything either. Thaw it anyway instead of leaving it fr=
+ozen
+> +        * for good.
+> +        */
+> +       if (error && !gfs2_withdrawn(sdp))
+>                 goto fail;
+>         error =3D thaw_super(sb, who, freeze_owner);
+>         if (!error)
+> @@ -751,6 +759,11 @@ static int gfs2_freeze_super(struct super_block *sb,=
+ enum freeze_holder who,
+>                 mutex_unlock(&sdp->sd_freeze_mutex);
+>                 return -EBUSY;
+>         }
+> +       /* A withdrawn filesystem can't take the freeze glock anymore. */
+> +       if (gfs2_withdrawn(sdp)) {
+> +               mutex_unlock(&sdp->sd_freeze_mutex);
+> +               return -EIO;
+> +       }
+
+This is racy; the filesystem can still be withdrawn after this
+gfs2_withdrawn() check. It should make more sense to bail out of the
+for loop in gfs2_freeze_super() on withdrawn filesystems.
+
+>         for (;;) {
+>                 error =3D freeze_super(sb, who, freeze_owner);
+> @@ -1165,6 +1178,8 @@ static int gfs2_show_options(struct seq_file *s, st=
+ruct dentry *root)
+>                 seq_puts(s, ",nobarrier");
+>         if (test_bit(SDF_DEMOTE, &sdp->sd_flags))
+>                 seq_puts(s, ",demote_interface_used");
+> +       if (gfs2_withdrawn(sdp))
+> +               seq_puts(s, ",withdrawn");
+
+I'm not a fan of those fake mount options. It doesn't matter all that
+much for "withdrawn" because remounting will fail anyway, but it's
+still messy.
+
+Filesystems with "demote_interface_used" can be remounted, so that
+fake option is worse.
+
+"demote_rq" and "demote_interface_used" should never have been added
+in the first place, but here we are.
+
+>         if (args->ar_rgrplvb)
+>                 seq_puts(s, ",rgrplvb");
+>         if (args->ar_loccookie)
+> @@ -1466,7 +1481,7 @@ static void gfs2_evict_inode(struct inode *inode)
+>         int ret;
+>
+>         gfs2_holder_mark_uninitialized(&gh);
+> -       if (sb_rdonly(sb) || !ip->i_no_addr || !ip->i_gl)
+> +       if (sb_rdonly(sb) || gfs2_withdrawn(sdp) || !ip->i_no_addr || !ip=
+->i_gl)
+>                 goto out;
+>
+>         /*
+> diff --git a/fs/gfs2/util.c b/fs/gfs2/util.c
+> index 1535ce2b7aa8..990552f42a0b 100644
+> --- a/fs/gfs2/util.c
+> +++ b/fs/gfs2/util.c
+> @@ -133,9 +133,11 @@ static void do_withdraw(struct gfs2_sbd *sdp)
+>                            gfs2_log_is_empty(sdp),
+>                            HZ * 5);
+>
+> -       sdp->sd_vfs->s_flags |=3D SB_RDONLY;
+> -
+>         /*
+> +        * We don't set SB_RDONLY. That requires sb->s_umount, and changi=
+ng it
+> +        * under freeze_super() and thaw_super() leaves the freeze protec=
+tion
+> +        * unbalanced. SDF_WITHDRAWN already stops all modifications.
+> +        *
+>          * Dequeue any pending non-system glock holders that can no
+>          * longer be granted because the file system is withdrawn.
+>          */
+>
+> --
+> 2.53.0
+>
+
+Thanks,
+Andreas
+
