@@ -1,118 +1,157 @@
-Received: from mail-pg1-f173.google.com (mail-pg1-f173.google.com [209.85.215.173])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAC413DB31A
-	for <linux-nilfs@vger.kernel.org>; Mon, 19 Oct 2026 06:14:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F04133F383;
+	Mon, 19 Oct 2026 09:52:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792390494; cv=none; b=ARm0oSmv1ddFEbrdurGSwoCCVStxv5C5s9aLIAvU6UHz43D4NfGrkFiBA39Ga+U2UBLhls8TOKSXD4dz7I8N4IwwfPCtfdA1OFsa191JFouxMJj7nEm+M0+kDrA7V8qIi+NdxcNIsU9puDBdQCycXZO6oauJiNOgtccBisNSQFc=
+	t=1792403554; cv=none; b=h3tQ1igpdIANRrMuAftjN9Mzbefc/n7blm9qjCwOYcMgJsz+98fsFFffkt0tHrarl8Y5bhk8ItiwWidbgv+fGNsPpYAYFFcn5vn0rFNCHCB0YhFlEexFy6PhP2ukMCTeTUT5Z2H1V7hekFt/IZ2Nr0R1KYOZPpmrCThjGJ8nJc4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792390494; c=relaxed/simple;
-	bh=hLviHrUQcnY9d6Hs59o7A7DhG6hJV3vxIcScsJNeYyM=;
+	s=arc-20240116; t=1792403554; c=relaxed/simple;
+	bh=WvTtg8JCOogctn7ZSS15ZrjyvEQJ4j+2UdlxuxFQnTw=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=CDYP8HL8qyuh1lnz7lSpnoLFVjI+grYm+P155hpQSna2Xz8Y95PclxJbaCKCaMLFV+qTiI8OURf0A3clr6Z/6wyEO1MhHT2TEE/zjJr+3e9k2MZRhQM33Sy4CPJ6lHhSe5b1ASF7kNZy3crIVDUtlq42wRel5ZHqq3TLC9bUOqs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=b15sAq9N; arc=none smtp.client-ip=209.85.215.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=CfiBFQvZrR7GyJkM+yMTQuGzCdp0oNMqfmU0ZDeD2Nltxtddj27SaHHVhxlVDfBTA1oj0ZzVyh+la59qopzAdK2yzUk7yicXfN0TB1danUVUEvnAjuq3sMp1C27gQ+kIne9lli9mnBL8KNTbEq/24yr3Jy2qtuo8IYfvLxWSzIY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=DapX6O+I; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=HkvNOVKW; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=DapX6O+I; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=HkvNOVKW; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="b15sAq9N"
-Received: by mail-pg1-f173.google.com with SMTP id 41be03b00d2f7-ccc6b11a19aso597100a12.0
-        for <linux-nilfs@vger.kernel.org>; Sun, 18 Oct 2026 23:14:52 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1792390492; x=1792995292; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=CH7/2Pn88Czop2CrZPadAXkcJAGF4wsEW/e1YNB1cxQ=;
-        b=b15sAq9NWihv6GFpfqSH5HJ3jmNXepVPacRSjllpONskWo3VoEK4Itgk5hQGhDqVUm
-         OWiPBYy0UhE40WYO7DWnLZlZpp1Jwz4eqeXN2NSXpBe447i3vO6tMCc7g3awQB10u3Jj
-         jTYX/R96bQphJx/b/em2D3HoMpomNXcg8xaw48nYpVKInNkwqKttKW2Y5t+OgBhBj5Fy
-         EbpmE93ZISJExcTC6ZjYcexazX0RFzhEETQCXjJaWpZSM11D4gqsKPPoT80kk/2BPyfp
-         49Q5kSYl++unHpMs6blx4qxYak19NowZTS7eZvDPax0vG4/9RmoFI/cMVEqXRgNQ7P5Q
-         Zvog==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792390492; x=1792995292;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=CH7/2Pn88Czop2CrZPadAXkcJAGF4wsEW/e1YNB1cxQ=;
-        b=S1oqeGrVA/e4lhGSPdhRRw+N/vA7CJl/CmjY3ZciG61u3w63W3SPnRud32ektDagcX
-         ziF3DfW536TBQEUwIRTpvJQgw4Ug1Xhf1xF8mrfgKolmZbJzmgauYkqsQ+VhlWY6zQ8u
-         9ucor03i2qSCasfmVbZRgFrS1EsOpTqr3qXn2w9wPlF63xPCh6qyPe9/2mO1rwQMd5dG
-         pi0fLC2m8YGfyFb1HPqeYT1Cel1HMx+8KgctWg2xa21gQgve9de0L+CdwkItOLBGKoIQ
-         WIhJhZQxdH/KoWR5fYQlm5bp+qs+QY1YDtMYG0iCYqvxrCCCKwy7Ko3mh1CNkNISozKi
-         ojpQ==
-X-Forwarded-Encrypted: i=1; AKwUvByu7f6fva168ivWvVxBvGY7JclSRCCPqVf2zAiouNcJSOB57RZnZqQJapu4aO7nt2va4H2kRIQvrA058w==@vger.kernel.org
-X-Gm-Message-State: AFq9FYLjoM+mZbygiV1sd+dCJ8PfrRQdp5DRQdm77NDzkznc71l0gb2R
-	/6b5+BWHl78PGMmWg/BgLaO/9nJwlBlmpyvym93+5SWZde+YAOF5RTZX
-X-Gm-Gg: AYBFou2DinYsMhNTpV4JWSwn/Gjdj/+tzYCiUhvdPgZ3bhLmRFgMQuc33dHu/44X0mN
-	SnviowE5C9vcB+TOrEvWjcW5rcfV7/yOXSX+HuOSPzhwglvK/A791QV5GELJoFjYL9gi8Cc50TZ
-	qGTjvGijjFyc3Hi04ACknQYIAXn4iAJMIMkxglxIMZFdnot5odBzyRUc7VNW/d2eKAf4bO7q94X
-	MhC9spLg8WX0yk5PzcFe/BUEd+0y/Ecrqu7/r5lwY7vrvqcFSrqtv6nQ+fGcGy6+v9XQMY2+r7a
-	B9lAtxMcsgoli5qXif6E4hI5Gj7uM8BErBoysl7Bius/q7qi84yptUJEi2vIf1AhrRykc/6byx2
-	4pf9JNSuBaV8UQC8YvFN8CtRUTxOZP46MpRTLiGEoZ8wz73tLTspXYMpP8VJBNwJPOFzol/+WR0
-	86i4Gkio652PkxolU1sqS1aQezv+cQUd4R5WpyYkyMTPi79qSSjKaxx5NCBG6c
-X-Received: by 2002:a17:90b:3851:b0:3ab:c80:9362 with SMTP id 98e67ed59e1d1-3aceeea8f3amr5078332a91.35.1792390492104;
-        Sun, 18 Oct 2026 23:14:52 -0700 (PDT)
-Received: from localhost ([27.122.242.71])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3ac94794dd9sm19035101a91.12.2026.10.18.23.14.50
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 18 Oct 2026 23:14:51 -0700 (PDT)
-Date: Mon, 19 Oct 2026 15:14:46 +0900
-From: Hyunchul Lee <hyc.lee@gmail.com>
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="DapX6O+I";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="HkvNOVKW";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="DapX6O+I";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="HkvNOVKW"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 6896E1F44E;
+	Mon, 19 Oct 2026 09:52:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1792403550; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q/XjywU63jHK3zYfOZqk/GFYoCnttMlmfWvXQ5qlU98=;
+	b=DapX6O+Ip4pKRXdlJVwKoYbFSgZmnci+oTZVGWx9N//wk+3Co0A6Gy6VjLwyPbJnXuzAkL
+	nK/2Yk9eDEsEWraU+H6ro4FbaBRxl+xMkoYT76R16fauUCeKeP7bK2SBFwKH5znABsckFq
+	6f8cRPlmgFApKa7bh+P/Y4scW5VQEgI=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1792403550;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q/XjywU63jHK3zYfOZqk/GFYoCnttMlmfWvXQ5qlU98=;
+	b=HkvNOVKWZPcLczlyzJhxbC7tMzVsoibO8LGhYXd0PSctA5J8hm3Rc9LMb4abX/F22nZPqn
+	qBMliAhGPtxMP+Ag==
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1792403550; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q/XjywU63jHK3zYfOZqk/GFYoCnttMlmfWvXQ5qlU98=;
+	b=DapX6O+Ip4pKRXdlJVwKoYbFSgZmnci+oTZVGWx9N//wk+3Co0A6Gy6VjLwyPbJnXuzAkL
+	nK/2Yk9eDEsEWraU+H6ro4FbaBRxl+xMkoYT76R16fauUCeKeP7bK2SBFwKH5znABsckFq
+	6f8cRPlmgFApKa7bh+P/Y4scW5VQEgI=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1792403550;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q/XjywU63jHK3zYfOZqk/GFYoCnttMlmfWvXQ5qlU98=;
+	b=HkvNOVKWZPcLczlyzJhxbC7tMzVsoibO8LGhYXd0PSctA5J8hm3Rc9LMb4abX/F22nZPqn
+	qBMliAhGPtxMP+Ag==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3F3B4134B3;
+	Mon, 19 Oct 2026 09:52:30 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id emzKBV7o1WpYOgAAD6G6ig
+	(envelope-from <jack@suse.cz>); Mon, 19 Oct 2026 09:52:30 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id BB917A1413; Mon, 19 Oct 2026 11:52:25 +0200 (CEST)
+Date: Mon, 19 Oct 2026 11:52:25 +0200
+From: Jan Kara <jack@suse.cz>
 To: Christian Brauner <brauner@kernel.org>
-Cc: Jan Kara <jack@suse.com>, Al Viro <viro@zeniv.linux.org.uk>,
-	ecryptfs@vger.kernel.org, linux-ext4@vger.kernel.org,
-	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org,
-	exfat@lists.linux.dev, linux-fsdevel@vger.kernel.org,
-	ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev,
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev,
-	linux-efi@vger.kernel.org, linux-mtd@lists.infradead.org,
-	linux-xfs@vger.kernel.org, stable@vger.kernel.org
-Subject: Re: [PATCH RFC 14/28] ntfs: don't set SB_RDONLY after filesystem
- errors
-Message-ID: <atW1VhJXAIvtYPfd@hyunchul-PC02>
+Cc: Andreas Gruenbacher <agruenba@redhat.com>, Jan Kara <jack@suse.com>, 
+	Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, linux-ext4@vger.kernel.org, 
+	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, 
+	linux-fsdevel@vger.kernel.org, ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev, 
+	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, linux-efi@vger.kernel.org, 
+	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org, stable@vger.kernel.org
+Subject: Re: [PATCH RFC 20/28] gfs2: wait for a pending withdraw before
+ remounting read-only
+Message-ID: <wauqpgtmmf2beg3pc2kqlbizrigd4ew26do4zqch5ilwdjy4cd@brolwbx25sem>
 References: <20261012-work-fs-sb_rdonly-v1-0-60743a3dc326@kernel.org>
- <20261012-work-fs-sb_rdonly-v1-14-60743a3dc326@kernel.org>
+ <20261012-work-fs-sb_rdonly-v1-20-60743a3dc326@kernel.org>
+ <CAHc6FU5bdAjABRm=bnH68b2f66TZTDZ8sPdatLB2fS7-55U=yw@mail.gmail.com>
+ <20261018-ungemacht-sodbrennen-hausordnung-42d33a4f7098@brauner>
 Precedence: bulk
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261012-work-fs-sb_rdonly-v1-14-60743a3dc326@kernel.org>
+In-Reply-To: <20261018-ungemacht-sodbrennen-hausordnung-42d33a4f7098@brauner>
+X-Spam-Flag: NO
+X-Spam-Score: -3.80
+X-Spam-Level: 
+X-Spamd-Result: default: False [-3.80 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MISSING_XM_UA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_TWELVE(0.00)[18];
+	ARC_NA(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCVD_COUNT_THREE(0.00)[3];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	RCVD_TLS_LAST(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email]
 
-Hi Christian,
+On Sun 18-10-26 17:48:34, Christian Brauner wrote:
+...
+> On Fri, Oct 16, 2026 at 02:32:01AM +0200, Andreas Gruenbacher wrote:
+> > > diff --git a/fs/gfs2/util.c b/fs/gfs2/util.c
+> > > index 83b8bb6446e5..1535ce2b7aa8 100644
+> > > --- a/fs/gfs2/util.c
+> > > +++ b/fs/gfs2/util.c
+> > > @@ -122,7 +122,7 @@ static void do_withdraw(struct gfs2_sbd *sdp)
+> > >                 up_write(&sdp->sd_log_flush_lock);
+> > >                 return;
+> > >         }
+> > > -       clear_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags);
+> > > +       clear_and_wake_up_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags);
+> > >         gfs2_ail_drain(sdp); /* frees all transactions */
+> > >         up_write(&sdp->sd_log_flush_lock);
+> > >
+> > >
+> > > --
+> > > 2.53.0
+> > >
+> > 
+> > this looks good all around, thank you very much. Can I add it to my gfs2 queue?
+> 
+> I was planning to just provide a stable branch for everyone to pull post
+> -rc1. Then you can just pull that in?
 
-> diff --git a/fs/ntfs/super.c b/fs/ntfs/super.c
-> index 4066bacabe37..12ad2ce938ba 100644
-> --- a/fs/ntfs/super.c
-> +++ b/fs/ntfs/super.c
-> @@ -269,6 +269,8 @@ static int ntfs_reconfigure(struct fs_context *fc)
->  
->  	ntfs_debug("Entering with remount");
->  
-> +	/* Mark the volume dirty first if an error made it read-only. */
-> +	flush_work(&vol->error_work);
->  	sync_filesystem(sb);
->  
+On a related topic: I didn't find any branch with this work in vfs.git - I
+wanted to check how all the things come together after adding the generic
+emergency RO bit. So if you can push some inofficial branch for now it
+would help me... Thanks!
 
-    if (sb_rdonly(sb) && !(fc->sb_flags & SB_RDONLY)) {
-        ....
-	return -EROFS;
-
-Before this patch, SB_RDONLY is set, so remount,rw returned -EROFS. With
-this patch, sb_rdonly(sb) is false, so remount,rw skips the check and
-return success even though writes are rejected with -EROFS.
-
-I think that the condition should be test NVolErrors(), for example
-
-    if ((sb_rdonly(sb) || NVolErrors(vol)) &&
-        !(fc->sb_flags & SB_RDONLY)) {
+								Honza
 
 -- 
-Thanks,
-Hyunchul
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
