@@ -1,61 +1,64 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792508036;
-	b=f5ZhU1Zby4A19J4+hUpXgyd73lLTBkwN8wlN1SuQEFKtxqmAb9bS5JU+ogGe4SEvzrc2
-	 Mvf7L01Iad55N1r9x5eZChZc9IkrxnedXE3xG/4sJ0BtLTXpa/8g7Xp2FRVF+J1FIIkGu
-	 Mvr+ddszbRUr+13nWVIhZrRooRwFFcfEZs8oY3lOd7RTo4UQ9iedP5zOwpuvDpMDBNg5a
-	 0Jx5uPOnYVf2tj4OpE4MxxyNbBnEX1aFER/CExmrkGNeebwiMBtFLJkIDoCkCvFysWEhT
-	 jWh6KC+0LItR3O1nuKGw+H5f8Qd8kL9AZb9gnqFSUqrx2/TstIsa5CxJrhpgtZocrmw==
+	t=1792550192;
+	b=3PFE2VzLEIeJ4UUjZsSRmAC4727rzB3G/u/EQhT5nGUajykIA6fdc9IgkzRLk8rTh7/P
+	 qeVN8v7YFHts28dGWwvKeMPgJjYTkmWOIeM739zkIeuaxV3sZfdRmH1pas0AXgARzsx2p
+	 j+1BPL7B5zyRuRMcDQ0lpVxKBxT+9UL/3EmBBwaDqIykpK539xBbRkhY5zVHJTBVZhE6R
+	 nI74Kj3hmWZuRY43PEfIIseIYAOx24pH3cWcj3g6RDK+fwYsubkQgtLsGEz7wK/ICJedz
+	 KsbJ6RsgsGDsNe7rQhqDpEsuhgjOwlhO1ubLkwT1nOll24AozBgwGrBBj6ihTpOClMA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792508036;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=/bwYNsuvdLOeGIvvyV7lXuTJEpgdy2xoAlb1KPVe2eU=;
-	b=kvGvn/yBRpq3pajMQq3GvJg6WTxWOpiWP+TIO49xEc2VKKZEV6ORne7hwamwk4JjIZiy
-	 /PDK7sGurlRcXU1l3fduhyn/FEdzKjDgME3CDeczbj6WzsT3xD/SEgGfWRioZPymQGw+s
-	 vi0LNy4menNgzDuRXO9O0pUAT8YQ8swM7ydHE18avHZ2g3EjBZ+X0EJgKcdLxQDQNfrKV
-	 gJXP+nAltnQiBJu7IUqC3S9sbnnGZRmI9jaaomBqLFd2NTkdnqkMAOEa/1zaQZQNgFUy5
-	 ybqtHiNo7+VZkZjwE3Vc3dvCx5Ob6XAdamaDzjR4CLNVG+r1/5ablyrTHfQySu5WilA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792550192;
+	h=Received:DKIM-Signature:Received:Subject:From:In-Reply-To:References:
+	 X-PR-Tracked-List-Id:X-PR-Tracked-Message-Id:X-PR-Tracked-Remote:
+	 X-PR-Tracked-Commit-Id:X-PR-Merge-Tree:X-PR-Merge-Refname:
+	 X-PR-Merge-Commit-Id:Message-Id:Date:To:Cc;
+	bh=RF1o8WwgvD6Hs9AE7pD2KU/fd1EOqN0edNZ8gBsE5fE=;
+	b=N8dp7snuf2kXLEJ+0FHW4Zn+eldrUSdIlRJZHgBw2iXk0GVwgmub9JjuGpkLGEJcV4bp
+	 muyRtbTC//6uc1PeqHE8QPg3wjATa0kciS+vMDNH/Reaa1xKy9fkXbwdS8eW4UTLdXka4
+	 yCwgkCRSJP7OM3mV5n4SvxG6EY0RLC7rOHcxMFBpDqUutPEmkDavoukkO6h+IfOHRlV8L
+	 elYrTvtU6CNWEvxOvclXLkjoMePiKHJdfN1QvZgMaJ3qfE2UDr+P0dGCW8nxMnMbRUYCY
+	 VnjEeq2j1dN3mNMgfOm1z5GNSb4+/Ce5gabg4um33cDn/mIA1lXRlKy1rtkKjn5RYLQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=j+nClr50;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=IonqBeyy;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9377C606A324;
-	Tue, 20 Oct 2026 14:53:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F9A9606A31B;
+	Wed, 21 Oct 2026 02:36:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=j+nClr50
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7BC0B1F000C4;
-	Tue, 20 Oct 2026 14:53:51 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=IonqBeyy
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BF3341F000C9;
+	Wed, 21 Oct 2026 02:36:31 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792508035;
-	bh=/bwYNsuvdLOeGIvvyV7lXuTJEpgdy2xoAlb1KPVe2eU=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=j+nClr509Ip2YmEn7/caQLmG/4tBtyXZnslPC9cLou/c2WF5cUyD8vV0z4nB9Tev2
-	 plhyZAe/DFKunvOqX8v/oXRElPiP3zxk2HziYyB5Fx7bPGt0t29G9UDf+1rfbuTFys
-	 26EzMGskCjKKCcH4vAuqOv+1PYrBjiQnY9DVI9Dr4fSEZ8yAk0LnKIRmk7JwU0k+tW
-	 rl99vZagqlR6jXNFfVasyDMk1PxV7oE6nRO/s1kciIZkWvnPgB1U5HfkO6NzVlXd9L
-	 pR5YKf1B76wv3ukXrumON6Rbv57+rbThp5bo1tebJ6WrsH6Sye8PXipcbNZHIwrAzz
-	 YGHmJPYOdgplw==
-Date: Tue, 20 Oct 2026 16:53:45 +0200
-From: Christian Brauner <brauner@kernel.org>
-To: Jan Kara <jack@suse.cz>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>, Jan Kara <jack@suse.com>, 
-	Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, linux-ext4@vger.kernel.org, 
-	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, 
-	linux-fsdevel@vger.kernel.org, ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev, 
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, linux-efi@vger.kernel.org, 
-	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org, stable@vger.kernel.org
-Subject: Re: [PATCH RFC 20/28] gfs2: wait for a pending withdraw before
- remounting read-only
-Message-ID: <20261020-steinbock-sprachen-charmant-e4fd6d840395@brauner>
-References: <20261012-work-fs-sb_rdonly-v1-0-60743a3dc326@kernel.org>
- <20261012-work-fs-sb_rdonly-v1-20-60743a3dc326@kernel.org>
- <CAHc6FU5bdAjABRm=bnH68b2f66TZTDZ8sPdatLB2fS7-55U=yw@mail.gmail.com>
- <20261018-ungemacht-sodbrennen-hausordnung-42d33a4f7098@brauner>
- <wauqpgtmmf2beg3pc2kqlbizrigd4ew26do4zqch5ilwdjy4cd@brolwbx25sem>
+	s=k20260515; t=1792550191;
+	bh=RF1o8WwgvD6Hs9AE7pD2KU/fd1EOqN0edNZ8gBsE5fE=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc;
+	b=IonqBeyyeSxuf0p3yFJZ0w2eLHLbB83AMXXyKE5Gj6rl+8aIHPk7hlnRWuwADxFWi
+	 X/q+C/jJF12SbPYI/SWp+XpKDqmxHKviwQ3HwGQrO0KviInR8x3LzL9bUZU6hlnjow
+	 h/Rz0DZJ2O7+tZiEgLIHo18+e/ItXkXg3+/yKSYwUdXo/heuWF2pCsDOz6wZTsKxRZ
+	 7aJDYvGwlEDVnPfd7E4Vbj0xkqaDCv2WszORfdt4LGwGLx6d7hgRJvSWVyEYoh/cjo
+	 UUxq8oAVwGJ1Xy3d8einjyA1Emm57tEAexnIdM2p73jKU+jUJLTyydNlbfE06V8RL4
+	 kY7EAcUAu1DHg==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id B47273809A18;
+	Wed, 21 Oct 2026 02:36:31 +0000 (UTC)
+Subject: Re: [GIT PULL] nilfs2 changes for 7.4-rc1
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <76ad2d292f0446eeaa22850bbf4a63335b5eff19.camel@dubeyko.com>
+References: <76ad2d292f0446eeaa22850bbf4a63335b5eff19.camel@dubeyko.com>
+X-PR-Tracked-List-Id: <linux-nilfs.vger.kernel.org>
+X-PR-Tracked-Message-Id: <76ad2d292f0446eeaa22850bbf4a63335b5eff19.camel@dubeyko.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/vdubeyko/nilfs2.git tags/nilfs2-v7.4-tag1
+X-PR-Tracked-Commit-Id: de7f49c12566cc5c7437a2f26c6c754b9d4d5648
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: d28fb91dd82aa56359b6de4d6241b7063672a4c0
+Message-Id: <179255019022.339009.14782547056377899219.pr-tracker-bot@kernel.org>
+Date: Wed, 21 Oct 2026 02:36:30 +0000
+To: Viacheslav Dubeyko <slava@dubeyko.com>
+Cc: torvalds@linux-foundation.org, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, konishi.ryusuke@gmail.com, vdubeyko@coreweave.com, qwe.aldo@gmail.com, hemanth.selam@gmail.com, southampton.jake.labelle@gmail.com, r772577952@gmail.com, joshua.crofts1@gmail.com
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -64,43 +67,16 @@ List-Subscribe: <mailto:linux-nilfs+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <wauqpgtmmf2beg3pc2kqlbizrigd4ew26do4zqch5ilwdjy4cd@brolwbx25sem>
 
-On Mon, Oct 19, 2026 at 11:52:25AM +0200, Jan Kara wrote:
-> On Sun 18-10-26 17:48:34, Christian Brauner wrote:
-> ...
-> > On Fri, Oct 16, 2026 at 02:32:01AM +0200, Andreas Gruenbacher wrote:
-> > > > diff --git a/fs/gfs2/util.c b/fs/gfs2/util.c
-> > > > index 83b8bb6446e5..1535ce2b7aa8 100644
-> > > > --- a/fs/gfs2/util.c
-> > > > +++ b/fs/gfs2/util.c
-> > > > @@ -122,7 +122,7 @@ static void do_withdraw(struct gfs2_sbd *sdp)
-> > > >                 up_write(&sdp->sd_log_flush_lock);
-> > > >                 return;
-> > > >         }
-> > > > -       clear_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags);
-> > > > +       clear_and_wake_up_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags);
-> > > >         gfs2_ail_drain(sdp); /* frees all transactions */
-> > > >         up_write(&sdp->sd_log_flush_lock);
-> > > >
-> > > >
-> > > > --
-> > > > 2.53.0
-> > > >
-> > > 
-> > > this looks good all around, thank you very much. Can I add it to my gfs2 queue?
-> > 
-> > I was planning to just provide a stable branch for everyone to pull post
-> > -rc1. Then you can just pull that in?
-> 
-> On a related topic: I didn't find any branch with this work in vfs.git - I
-> wanted to check how all the things come together after adding the generic
-> emergency RO bit. So if you can push some inofficial branch for now it
-> would help me... Thanks!
+The pull request you sent on Fri, 16 Oct 2026 15:27:29 -0700:
 
-Absolutely:
+> git://git.kernel.org/pub/scm/linux/kernel/git/vdubeyko/nilfs2.git tags/nilfs2-v7.4-tag1
 
-vfs-7.5.super.ro
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/d28fb91dd82aa56359b6de4d6241b7063672a4c0
+
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
