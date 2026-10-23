@@ -1,100 +1,95 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.221.51
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1792718027;
-	b=3wsf+XYYLlzko7Up3plySzkP6WB+RDWIz0G5agBzr1qFo32ERPhDktioHjoDRKtKJ1Ru
-	 n/BCZE9Jq89R60BDw7CoW9o1vvRpyRMLMVHTtiUX212SrUlyRcS1RtIeo5cOIjVR+Je3z
-	 R+bQrEVIG+Bd+Am0WADJXgCZ8aSVSRFAGRdM6xPLzB5cDlYVlBM2hP0VNA0m1fO1KuxBl
-	 FRCszdpYsuXa+FkiHwjIO0wH2kFBdRkDn155CT2fxtV/s2PfIfvfJPYJZpq6dxb6qJsK1
-	 D8Hl3zNg0o4/SQ7ipiWtM08K072JkMI7MK2xXmDGrKCqfNlTmqkdtPKuTXecoWgLGwg==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792718027;
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.169
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1792745514;
+	b=eRcn8Zwh+Zh+Sd8iK+2DMysHRrMIwfYmwOvMYPVe8863kApWVBayzXb/WrrpWo4kjOl+
+	 Rnko+9Vc682T/wtAar6s/0+d2dvkGBEEl9hJ8J7PEQVavz/4Fl/rfCuVvaXnWVHcdeqa7
+	 wDMqPToPptw4M7d95NEHhlW3BydtM7PKwPdwHyAahbMX2G+cteuVvKRsJsAyW1goXf2Ko
+	 iTSXUpoBE746996b0WJk9b9beg8+gWEWX9CiwNOsM5GqN33nBI0+1ORO320K1zLeo+jey
+	 ga8BXlhXiuAqDDRU6p12MbUROdZ8Avf0RejZqoVcPlydMTezo2VamRbtE0CUreNZbtw==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792745514;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=tG1huFZNxVbEJ8XFnOVD6N3fEf7gVxHcg8lll9mK/BQ=;
-	b=ebQSzrYzYI8S7Hz3T9MsyLsM+VgVgOXrQj5Gbs+Ic4UtScvVeWteM52is0eoG55CN5zI
-	 5/VWW+5nTSiJsZBmFbr5W3Q+qgG2HwCLisKYCUOxgluDXJ5UMxJ09sds0mmrrQgTrBdgR
-	 E+rXJw3RNraikee5RtCq3YGSHQ00UcomEJjQ9psBdxQ0rr+YzVj7xNuNnuWIDVPc6CiuS
-	 5mjURq855nvtJdQV05PUNZ1ndZtq5b5b91tN/jgp0LuKTN6ushcIyU4q04eNrA81JswUM
-	 IPx5CbVo0cOYEBLZ6URY7quYp+2Lj8S29Tt5DhXdKeqs6i+PQYhQ12MK6m0NgR8zy0A==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=XsQ7jb7KO3Mrp8snOLVCes53wF+hkQPQbyMlf+Nofr8=;
+	b=fL3zrQPO5RguNzc4y+k5SH3Esi5Jtku/mRdRGfeHG+BZfNFXPsGCW8yevUXuXrdPs2gj
+	 3PqiBEyWblbCjqFLWmdVwiuiP7Bmwx83xesJLwY+JGCvVt9F/PD7VSDgjL3HKaEHqgs1E
+	 pF9AYcuQlpIjilQe83bGYbJwLVYXVUysEVK8lF9XQKPhGVcS2FoR3a+qI3qenZ3VGQhR6
+	 LMdkFnK3Ss38eeoNY5gzOzduH2Au0dbPLqPR84jA7WnJxbxMtqmGrKixorTe2IEjgbMEk
+	 Cij0XuwAqA8otCEsKqdQL6SJAgJpBJhpDACy4M+OTUrEl7NAY2eolWPBXO9Iib8gATw==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=jddypwW7;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.221.51
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=OlLf0Bg8;
+	arc=none smtp.remote-ip=209.85.221.169
+Received: from mail-vk1-f169.google.com (mail-vk1-f169.google.com [209.85.221.169])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F787606A31B
-	for <linux-nilfs@vger.kernel.org>; Fri, 23 Oct 2026 01:13:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1F787606A31B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F484606A31B
+	for <linux-nilfs@vger.kernel.org>; Fri, 23 Oct 2026 08:51:53 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9F484606A31B
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=jddypwW7
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-48e09aa5264so170075f8f.2
-        for <linux-nilfs@vger.kernel.org>; Thu, 22 Oct 2026 18:13:46 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1792718025; cv=none;
-        d=google.com; s=arc-20260327;
-        b=k8zhpwUvhnd3RihIGlLNdxv1DsCX8by/5VvtTOhorOw7YJhZKin5cuarAAIZcgYoIk
-         sn18pswUd6lygGnG02q9EeKTkaHunx8/SqAv4+fWRrwZ/UOMmKtf3ciMHP8HlR7Drugy
-         X41b5HySZqdQhrwYirtyKVA7cM/lkw3X7gn9LVvSlP/fMOd6vBwWUuNDRr1ueqvaHLP6
-         p1t0IMMi05vLY0rMn7zzuch8DCSvthY9lKAixqBUA4jkgc03X/E5lB60w6WImXcnlDR1
-         ckf75lEJxCSG1F61FEAL1WlxXHiB5amhjn3JCidMLW1rKMyKXIuD1830uDT7ah2efINR
-         pi6Q==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=tG1huFZNxVbEJ8XFnOVD6N3fEf7gVxHcg8lll9mK/BQ=;
-        fh=KJGEjTzwYu5KL5jw/nXlBvFqM9l+0EvrhkpAyuNGCGs=;
-        b=P9kCl59tQ1jsY3TW3y2Q3W4/ZDtoLGm/JyD/5vImNIwDxhEYd7mvuf0qdQk8hFGXWB
-         z6jR/3c/hsSYOOBhjeZrZZatP9sTD82ay2zKtOEzvjyxbWkZvu/zfdAiiHd0rqdy/7za
-         0AmvH6oLYM7amfjXFVLwhkkFw1P7jTNIKPUYE7/Qc/Nta8aJgjg2z2tIpcrfsUkrYmgL
-         FFBTcWI1o5HDr+fk8txYd23Khyx+zMa7daJGOcVyohztviutLvnfn3LKtc5NGnCF/Xak
-         KqB1kHI0D3Bpwumu5K7C9kf08m8j8A6pliRQezwZAPxNHOS7Rg+C0FUarjUII5VTn9Kz
-         1K7Q==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=OlLf0Bg8
+Received: by mail-vk1-f169.google.com with SMTP id 71dfb90a1353d-5eab93a9862so186696e0c.0
+        for <linux-nilfs@vger.kernel.org>; Fri, 23 Oct 2026 01:51:53 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1792718025; x=1793322825; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=tG1huFZNxVbEJ8XFnOVD6N3fEf7gVxHcg8lll9mK/BQ=;
-        b=jddypwW7JUppD2JCsVIJJhFrqBIKxP5XvFnlAq43nR1XVfMHjgZMwn/lLuua44C1ey
-         Qban6YbojUdjUd3LZfTfgiJsiEaEqxPMbpnFR0EdlASZvyUxv2VWoJm5hSwLWBb/pNW6
-         WvcDvmfZ1Ph80Z6riulc3F21Tqj/QaiqQcPNLDwSuK8TsA1ZB4sSvi1qFoPOIvpW+xPz
-         R5/7+YuVUE3HvQaMaPuEHs3nFv1rI+G0Sd8Ppnmnjc1wdTWcLJavNXwBCMqeAILgyld7
-         xvDipUVyeRx/PEypeHCX+zrnjXxg7CqWtm9O+oGhHG64bLKLdpBfvCkCKfF3qY+/bNf9
-         58qA==
+        d=gmail.com; s=20251104; t=1792745512; x=1793350312; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=XsQ7jb7KO3Mrp8snOLVCes53wF+hkQPQbyMlf+Nofr8=;
+        b=OlLf0Bg8codaTQcw5DcH+h/1/uwGj+Gp1nUwjStmUDhQDUIqGONd2WeFQGkvXClMUW
+         j7bHlpOcJqBfCHIqNM40FRxOKlMouS+yza9v51Vv7WrITnDywHcTI9xXeMPt0C85gJMD
+         x290lNXjcjVDmopfljxhH9DYat5XDr3jXk5/FWGkfLtNf3k6KoPmbcy8GmVayqlyvFML
+         fkngQ4lb05PQHFd15G2kksBYmExgt90FgwA9iUTUclFiRhfVk2e4SfcUnkEv8KAWRXmr
+         RlwT+bMTMLEwZM1PSIiO0ecW1+Z2PpKovuPpBF+8bmPE3XUnCUEsQdjTXrZqjIjA+nkE
+         lc4w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792718025; x=1793322825;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=tG1huFZNxVbEJ8XFnOVD6N3fEf7gVxHcg8lll9mK/BQ=;
-        b=IcA4fUIlLCdvVlt3CfIy1AMVeMDQq5WdFcXbpWw1cX/8pOf5vQP+ACZ3NJx/m5dwFP
-         m45RpC/XyJqSkRUK5Rssuo7Apq1cIeOvqLm8PMHtsp3lZv6f3a8ep5Splsf+E+EK4XAa
-         sflO8qr5shUpsthzMBdYVcJYp8uauojiYhIa9tp466JuUD0ENTIB+brDwUNM/uDce44V
-         jLrTXZ2EvnMdr+SmQs9PcnQZMLkDQOoByBiBjaSGRbXsB+EwuMI1nksFRyR6QpguLmXA
-         PQpCJJsCC9ahJrQaDtQ46q3G3uShWIowIrWXS2QLO7YWtGYBkoAv9sgSNIqsgb92TykM
-         igEw==
-X-Forwarded-Encrypted: i=1; AKwUvBw9b/EBzoPaFqN0rNDnYClRzWdl5vm7kJS++HUrsJI3Y05B/8oscjeQupyGtuP4tNSQ2GuDjrozwfwcIQ==@vger.kernel.org
-X-Gm-Message-State: AFq9FYL30ggrOG07xNB+xXDFFMaVXqsJJY0p7uagjBSASOUqMMsVt/rU
-	1NHnHSXKfI0lfgZFOKW3w+db197YZ99D6j6WxDzKTU6dcr1wUiV3HXIxOnQw71FgBeVrHXoGP4u
-	ekQ8HoQQMPJnlJYJVzBjoFk2Q2CKS+iw=
-X-Gm-Gg: AYBFou1iOZqrYCTqNoiblbPyu8NnRbd73IzBKSXm9opRJltqMJii6/PlPL8Y5btYei5
-	5pJ6KcEV/yPa//SOQ4RN2A7tH6UkJM3hHjlAy6N2sTTkezkBmgSeoW63ag3oroqRb8iuD0fMzeH
-	A+5BWuAwEKr7TqhWMfcEQRK2QNJynorSZdMvWlFM+/ksyNLBXBP6JtYyQIKD49ITCdcOZWJxBf+
-	CfhyyTQ9mFWs1uN92i8HXPfe8O7nUlEwMu1tBpIVrlh6LsWsPqo9uWBcVWmnspiXJak8QAraF42
-	qJLEkcJSmwy8QSrXv1MrIktqq1SwXkWN2y57/8DhwuaiPKfBeZW1oDb5g199UVMs71lGetZD7eH
-	yPEWcgR3Sp6dNO8JykFs43WT+kBrFi6PIglUP6g==
-X-Received: by 2002:a5d:5e8b:0:b0:48a:f404:695e with SMTP id
- ffacd0b85a97d-48e385bd508mr813127f8f.50.1792718025240; Thu, 22 Oct 2026
- 18:13:45 -0700 (PDT)
+        d=1e100.net; s=20260707; t=1792745512; x=1793350312;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=XsQ7jb7KO3Mrp8snOLVCes53wF+hkQPQbyMlf+Nofr8=;
+        b=vs1C4eo4F49lTagWMU4tpOAZHNVV+Z/9JQZ4VpJbs9wYM6VZf/citZjpdCGRlhrkJg
+         IYssq2Xqq9pWWBMgUtRB5nvqQBj95bY28cYqMu7SKTaFxeBUU5x9mVSGfXixH64lurru
+         YXDZowEIo5VyQlATz488HvlWxfUb7E8GfnCP1DMutq92b/D3EVjg1V4da4yTbSoS+aV0
+         gffMvbjw70EoeMQL8xZGW3rr1gikLi/xO66n83sImP0k65/9rvrtcJ62IJbkxtTKG+NE
+         2HBtSzymGodMwciGbyqoR/XAr7yovG6NmNm3bSqgMs4EBe1o1eN9RyP4IJcqONfl0w/O
+         kH0Q==
+X-Forwarded-Encrypted: i=1; AKwUvBwKH7YVh7QIpmS9FXQw63ixrmLBn2O/XDDTaEC9LFrCEVtttoV5nU5PSBqlZueiw5eTUwH2yyAu4wY3SA==@vger.kernel.org
+X-Gm-Message-State: AFq9FYLHBNSUrNi7IJjkqhRrnkD0y43MDiH5gkoKeYSELsKtjTyCEe44
+	iuU+UNpFBYaHtxDpMwwfNTlTUAtQ+40XwThQuCGf+BTpwUELqNWtx5xv
+X-Gm-Gg: AYBFou2FqsxIbFaUjFVNCrydg9IGaFUIKD5iUU/fjie+tvZ/Ge1VFQHXU++bKI2+rEY
+	t1eNH8Mjnqn9Ua0nmnSkJ/cFg9ss5JEKb+aXX7UYizyuouSCOQPZDaxT0hCAXLK8sO+TNqcVq9W
+	zZb4PzMyY+dwMKxxO5UwgkYIP528A4ogp7hSrglAymlfDt8RKI1mS/L7xL20NbTycO2SuCFyyk/
+	Ni41TxIFvuvtWurmOF4TBHGqHZqn3cpeXQBQ2ZLDwEmyGUOoS9n/lF2WKaY1zRSaGs8HPhrO7WX
+	LAk36kgy1H7ndavyYI+uiXbFr1tmbMxLn1UQTPgayGtAH6NQwhGW0ztJMrl4BqVqzYKMtQGzphd
+	BXaOaPLdKmqnCOl/iTIcAXwdKYHs15IYnD/AOYDVsslHShvEzRraXG+aQm9DbWYVoblFCT409XM
+	P4WYaVPgkptJ2seOJjrr7BYDE/jRl5rOUw0dGCbMKKOZjU68FAhGxSVAYSfpRqW711Q12zqrb1E
+	6WwS1sP1b9OsQVgs+zGaERrWXvhrPNamuI97HYOiYWjoudaeJzhdjDagxhlGSLmhRnDmxX+LRFj
+	lbBD0t3zfLI+Py/FWVei
+X-Received: by 2002:a05:6122:3482:b0:5d4:dd7c:b22b with SMTP id 71dfb90a1353d-5ec14a86114mr472271e0c.12.1792745512510;
+        Fri, 23 Oct 2026 01:51:52 -0700 (PDT)
+Received: from Biostar-A520MT ([187.94.15.233])
+        by smtp.gmail.com with ESMTPSA id 71dfb90a1353d-5ec13f674c5sm1717371e0c.16.2026.10.23.01.51.49
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 23 Oct 2026 01:51:52 -0700 (PDT)
+From: Breno Rodrigues Alves <breno3011alves@gmail.com>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: Viacheslav Dubeyko <slava@dubeyko.com>,
+	linux-nilfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Breno Rodrigues Alves <breno3011alves@gmail.com>
+Subject: Re: [PATCH] nilfs2: remove two dead '#if 0' blocks
+Date: Fri, 23 Oct 2026 05:51:32 -0300
+Message-ID: <20261023085132.4874-1-breno3011alves@gmail.com>
+X-Mailer: git-send-email 2.56.0
+In-Reply-To: <CAKFNMomoPV87KM94eYMHNz9WG9CuAHOWVEgPbsEBUZi55jhHpg@mail.gmail.com>
+References: <20261022220637.89697-1-breno3011alves@gmail.com> <CAKFNMomoPV87KM94eYMHNz9WG9CuAHOWVEgPbsEBUZi55jhHpg@mail.gmail.com>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -104,92 +99,14 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261022220637.89697-1-breno3011alves@gmail.com>
-In-Reply-To: <20261022220637.89697-1-breno3011alves@gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Fri, 23 Oct 2026 10:13:28 +0900
-X-Gm-Features: AclHuK-pRUO26_pnOdG0dntPiPDuOPrxpOIYxFOQTtHB_TJBkclZoTcflgnjzSY
-Message-ID: <CAKFNMomoPV87KM94eYMHNz9WG9CuAHOWVEgPbsEBUZi55jhHpg@mail.gmail.com>
-Subject: Re: [PATCH] nilfs2: remove two dead '#if 0' blocks
-To: Breno Rodrigues Alves <breno3011alves@gmail.com>
-Cc: Viacheslav Dubeyko <slava@dubeyko.com>, linux-nilfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Fri, Oct 23, 2026 at 7:06=E2=80=AFAM Breno Rodrigues Alves wrote:
->
-> Remove two blocks of code that have been disabled with '#if 0' since
-> the initial nilfs2 import:
->
->   - inode.c: the code that would have read i_file_acl and i_dir_acl
->     from the on-disk inode.  nilfs2 has never implemented ACLs, and
->     the i_file_acl/i_dir_acl fields do not exist in struct
->     nilfs_inode_info, so this block has never been compiled.
->
->   - super.c: the classic ext2 "maximal mount count reached" check.
->     nilfs2 reads and rewrites s_max_mnt_count for on-disk
->     compatibility, but the check itself was never enabled.  Removing
->     the disabled branch does not change the on-disk format or the
->     behaviour of the driver.
->
-> No functional changes.
->
-> Signed-off-by: Breno Rodrigues Alves <breno3011alves@gmail.com>
-> ---
+Hi Ryusuke,
 
-Hi Breno,
+Thank you for the pointer - I should have checked the latest mainline
+master and the linux-nilfs list history before sending.  Please consider
+the patch dropped.
 
-The same patch proposal was previously made and the changes have already
-been merged into mainline in the current merge window:
+I will be more careful next time.
 
-https://lore.kernel.org/all/20260907-nilfs2-dead-code-cleanup-v2-1-fa1ab5b0=
-abd6@gmail.com/
-
-Before submitting a patch, please make sure to check the latest mainline
-master branch, the linux-next tree, and mailing list history.
-
-Thanks,
-Ryusuke Konishi
-
->  fs/nilfs2/inode.c | 5 -----
->  fs/nilfs2/super.c | 4 ----
->  2 files changed, 9 deletions(-)
->
-> diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> index 34e609606..c5b0e9f27 100644
-> --- a/fs/nilfs2/inode.c
-> +++ b/fs/nilfs2/inode.c
-> @@ -422,11 +422,6 @@ int nilfs_read_inode_common(struct inode *inode,
->
->         inode->i_blocks =3D le64_to_cpu(raw_inode->i_blocks);
->         ii->i_flags =3D le32_to_cpu(raw_inode->i_flags);
-> -#if 0
-> -       ii->i_file_acl =3D le32_to_cpu(raw_inode->i_file_acl);
-> -       ii->i_dir_acl =3D S_ISREG(inode->i_mode) ?
-> -               0 : le32_to_cpu(raw_inode->i_dir_acl);
-> -#endif
->         ii->i_dir_start_lookup =3D 0;
->         inode->i_generation =3D le32_to_cpu(raw_inode->i_generation);
->
-> diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> index 893a504cb..d0faae49c 100644
-> --- a/fs/nilfs2/super.c
-> +++ b/fs/nilfs2/super.c
-> @@ -826,10 +826,6 @@ static int nilfs_setup_super(struct super_block *sb,=
- int is_mount)
->
->         if (nilfs->ns_mount_state & NILFS_ERROR_FS) {
->                 nilfs_warn(sb, "mounting fs with errors");
-> -#if 0
-> -       } else if (max_mnt_count >=3D 0 && mnt_count >=3D max_mnt_count) =
-{
-> -               nilfs_warn(sb, "maximal mount count reached");
-> -#endif
->         }
->         if (!max_mnt_count)
->                 sbp[0]->s_max_mnt_count =3D cpu_to_le16(NILFS_DFL_MAX_MNT=
-_COUNT);
-> --
-> 2.56.0
->
+Breno
