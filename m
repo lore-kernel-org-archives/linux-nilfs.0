@@ -1,95 +1,75 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.169
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=162.62.57.252
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792745514;
-	b=eRcn8Zwh+Zh+Sd8iK+2DMysHRrMIwfYmwOvMYPVe8863kApWVBayzXb/WrrpWo4kjOl+
-	 Rnko+9Vc682T/wtAar6s/0+d2dvkGBEEl9hJ8J7PEQVavz/4Fl/rfCuVvaXnWVHcdeqa7
-	 wDMqPToPptw4M7d95NEHhlW3BydtM7PKwPdwHyAahbMX2G+cteuVvKRsJsAyW1goXf2Ko
-	 iTSXUpoBE746996b0WJk9b9beg8+gWEWX9CiwNOsM5GqN33nBI0+1ORO320K1zLeo+jey
-	 ga8BXlhXiuAqDDRU6p12MbUROdZ8Avf0RejZqoVcPlydMTezo2VamRbtE0CUreNZbtw==
+	t=1792901059;
+	b=NPnlv8G28k8WW9YK+UQX1XWUcXTbUA04B2SWn7n+O/nodaomubAZj/jBpXuK1JsEM7J2
+	 yhxUEH6lsZCnXEfMLO3+ZH7kC2297XDKcI25LSVMItZuBXCFOGdwj3tF/Lf985ClKBpA3
+	 6RmbtnZ2i2sGnDipZrzSkkb0zvHlRaLNPF4f2OTsjHNU8W2u6FeocEmp+6ItybgwXiTok
+	 fyloT/1rpCmdD8PF37r36ahegCjzSverZSVct4wYC4grcekz0FQEbld18Cn/J/bYZUozc
+	 q6UKAEJgG8Xh/zyTeUtMsaRYk3Gcev62rtj/VV2++ROAZ4onZ4eV52U/6ltLkTZQQQg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792745514;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=XsQ7jb7KO3Mrp8snOLVCes53wF+hkQPQbyMlf+Nofr8=;
-	b=fL3zrQPO5RguNzc4y+k5SH3Esi5Jtku/mRdRGfeHG+BZfNFXPsGCW8yevUXuXrdPs2gj
-	 3PqiBEyWblbCjqFLWmdVwiuiP7Bmwx83xesJLwY+JGCvVt9F/PD7VSDgjL3HKaEHqgs1E
-	 pF9AYcuQlpIjilQe83bGYbJwLVYXVUysEVK8lF9XQKPhGVcS2FoR3a+qI3qenZ3VGQhR6
-	 LMdkFnK3Ss38eeoNY5gzOzduH2Au0dbPLqPR84jA7WnJxbxMtqmGrKixorTe2IEjgbMEk
-	 Cij0XuwAqA8otCEsKqdQL6SJAgJpBJhpDACy4M+OTUrEl7NAY2eolWPBXO9Iib8gATw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792901059;
+	h=DMARC-Filter:DKIM-Signature:Received:X-QQ-mid:Message-ID:
+	 X-QQ-XMAILINFO:X-QQ-XMRINFO:From:To:Cc:Subject:Date:X-OQ-MSGID:
+	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=zlDTu0+rj5QcafGfw4BzS+L3W33szTnntE/NHGZ2tP4=;
+	b=tOxGkH6bmxH9JMFzsXJKtPC5z35vtHMB+iOcUuzuTKmBtGeMoenggb+EyWLlskTeW0By
+	 GqDPEk721Y7XWnBnv1czoNamrWOvuHuIIK2AGolsYo+00S4Uo2y3vFqMLD8XxzvhnkIWQ
+	 uU8M1vuIeBesJdOJSkVgOyV4bPXnYLDRpw7t9U3MW2OUa7Te/pVS3EEv4PEgCbXGV35ZI
+	 JBeQH/eGyDZXClTOgu2SRE8WrUk3twlKFCcjDLDh4aNcN5NjEy4NbuwIVxrx8u+ucfCD1
+	 2hRgSRfBQfMWETky75QIl6j9M5mLHxGOCgmL0n3g0pSjHvO8IXAC3zgGySw1lWNfcpg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=OlLf0Bg8;
-	arc=none smtp.remote-ip=209.85.221.169
-Received: from mail-vk1-f169.google.com (mail-vk1-f169.google.com [209.85.221.169])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=foxmail.com;
+	spf=pass smtp.mailfrom=foxmail.com;
+	dkim=pass header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=t2SYPfRb;
+	arc=none smtp.remote-ip=162.62.57.252
+Received: from out162-62-57-252.mail.qq.com (out162-62-57-252.mail.qq.com [162.62.57.252])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F484606A31B
-	for <linux-nilfs@vger.kernel.org>; Fri, 23 Oct 2026 08:51:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9F484606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87EA5606A31A
+	for <linux-nilfs@vger.kernel.org>; Sun, 25 Oct 2026 04:04:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 87EA5606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=foxmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=foxmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=OlLf0Bg8
-Received: by mail-vk1-f169.google.com with SMTP id 71dfb90a1353d-5eab93a9862so186696e0c.0
-        for <linux-nilfs@vger.kernel.org>; Fri, 23 Oct 2026 01:51:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1792745512; x=1793350312; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=XsQ7jb7KO3Mrp8snOLVCes53wF+hkQPQbyMlf+Nofr8=;
-        b=OlLf0Bg8codaTQcw5DcH+h/1/uwGj+Gp1nUwjStmUDhQDUIqGONd2WeFQGkvXClMUW
-         j7bHlpOcJqBfCHIqNM40FRxOKlMouS+yza9v51Vv7WrITnDywHcTI9xXeMPt0C85gJMD
-         x290lNXjcjVDmopfljxhH9DYat5XDr3jXk5/FWGkfLtNf3k6KoPmbcy8GmVayqlyvFML
-         fkngQ4lb05PQHFd15G2kksBYmExgt90FgwA9iUTUclFiRhfVk2e4SfcUnkEv8KAWRXmr
-         RlwT+bMTMLEwZM1PSIiO0ecW1+Z2PpKovuPpBF+8bmPE3XUnCUEsQdjTXrZqjIjA+nkE
-         lc4w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792745512; x=1793350312;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=XsQ7jb7KO3Mrp8snOLVCes53wF+hkQPQbyMlf+Nofr8=;
-        b=vs1C4eo4F49lTagWMU4tpOAZHNVV+Z/9JQZ4VpJbs9wYM6VZf/citZjpdCGRlhrkJg
-         IYssq2Xqq9pWWBMgUtRB5nvqQBj95bY28cYqMu7SKTaFxeBUU5x9mVSGfXixH64lurru
-         YXDZowEIo5VyQlATz488HvlWxfUb7E8GfnCP1DMutq92b/D3EVjg1V4da4yTbSoS+aV0
-         gffMvbjw70EoeMQL8xZGW3rr1gikLi/xO66n83sImP0k65/9rvrtcJ62IJbkxtTKG+NE
-         2HBtSzymGodMwciGbyqoR/XAr7yovG6NmNm3bSqgMs4EBe1o1eN9RyP4IJcqONfl0w/O
-         kH0Q==
-X-Forwarded-Encrypted: i=1; AKwUvBwKH7YVh7QIpmS9FXQw63ixrmLBn2O/XDDTaEC9LFrCEVtttoV5nU5PSBqlZueiw5eTUwH2yyAu4wY3SA==@vger.kernel.org
-X-Gm-Message-State: AFq9FYLHBNSUrNi7IJjkqhRrnkD0y43MDiH5gkoKeYSELsKtjTyCEe44
-	iuU+UNpFBYaHtxDpMwwfNTlTUAtQ+40XwThQuCGf+BTpwUELqNWtx5xv
-X-Gm-Gg: AYBFou2FqsxIbFaUjFVNCrydg9IGaFUIKD5iUU/fjie+tvZ/Ge1VFQHXU++bKI2+rEY
-	t1eNH8Mjnqn9Ua0nmnSkJ/cFg9ss5JEKb+aXX7UYizyuouSCOQPZDaxT0hCAXLK8sO+TNqcVq9W
-	zZb4PzMyY+dwMKxxO5UwgkYIP528A4ogp7hSrglAymlfDt8RKI1mS/L7xL20NbTycO2SuCFyyk/
-	Ni41TxIFvuvtWurmOF4TBHGqHZqn3cpeXQBQ2ZLDwEmyGUOoS9n/lF2WKaY1zRSaGs8HPhrO7WX
-	LAk36kgy1H7ndavyYI+uiXbFr1tmbMxLn1UQTPgayGtAH6NQwhGW0ztJMrl4BqVqzYKMtQGzphd
-	BXaOaPLdKmqnCOl/iTIcAXwdKYHs15IYnD/AOYDVsslHShvEzRraXG+aQm9DbWYVoblFCT409XM
-	P4WYaVPgkptJ2seOJjrr7BYDE/jRl5rOUw0dGCbMKKOZjU68FAhGxSVAYSfpRqW711Q12zqrb1E
-	6WwS1sP1b9OsQVgs+zGaERrWXvhrPNamuI97HYOiYWjoudaeJzhdjDagxhlGSLmhRnDmxX+LRFj
-	lbBD0t3zfLI+Py/FWVei
-X-Received: by 2002:a05:6122:3482:b0:5d4:dd7c:b22b with SMTP id 71dfb90a1353d-5ec14a86114mr472271e0c.12.1792745512510;
-        Fri, 23 Oct 2026 01:51:52 -0700 (PDT)
-Received: from Biostar-A520MT ([187.94.15.233])
-        by smtp.gmail.com with ESMTPSA id 71dfb90a1353d-5ec13f674c5sm1717371e0c.16.2026.10.23.01.51.49
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2026 01:51:52 -0700 (PDT)
-From: Breno Rodrigues Alves <breno3011alves@gmail.com>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Cc: Viacheslav Dubeyko <slava@dubeyko.com>,
-	linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Breno Rodrigues Alves <breno3011alves@gmail.com>
-Subject: Re: [PATCH] nilfs2: remove two dead '#if 0' blocks
-Date: Fri, 23 Oct 2026 05:51:32 -0300
-Message-ID: <20261023085132.4874-1-breno3011alves@gmail.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <CAKFNMomoPV87KM94eYMHNz9WG9CuAHOWVEgPbsEBUZi55jhHpg@mail.gmail.com>
-References: <20261022220637.89697-1-breno3011alves@gmail.com> <CAKFNMomoPV87KM94eYMHNz9WG9CuAHOWVEgPbsEBUZi55jhHpg@mail.gmail.com>
+	dkim=pass (1024-bit key, unprotected) header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=t2SYPfRb
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=foxmail.com;
+	s=s201512; t=1792901052;
+	bh=zlDTu0+rj5QcafGfw4BzS+L3W33szTnntE/NHGZ2tP4=;
+	h=From:To:Cc:Subject:Date;
+	b=t2SYPfRbzgSk2k3st+bm3Uiij2aQe5Lz/6fRUxYMT+tXU3GfDaRrTAdxd8xgAxvob
+	 nmkQePBi/TiJl56HvU8ht0tVOjTnYAe1Z+kR2+FPWooceR4dZyiSx1KmrIWhsSSjok
+	 QRcuXGyhMCTK2wr+Xhe5vkTZSXlp1z9DKxG50Bh0=
+Received: from mypc.. ([2409:8a00:2545:d0f4:8cf1:f261:1d36:a9de])
+	by newxmesmtplogicsvrszc50-0.qq.com (NewEsmtp) with SMTP
+	id 10A0EA8F; Sun, 25 Oct 2026 12:04:10 +0800
+X-QQ-mid: xmsmtpt1792901050tx8anrqpd
+Message-ID: <tencent_A1BD1C90A8E503B41B451E310527DC9E9F07@qq.com>
+X-QQ-XMAILINFO: N9lasXYeZMXWYd9/OBgDXX5DUXvmS0m83td2rc8xKf9MTBz3XO9yJVZswR3IrK
+	 z5iVQofkiLG8k3zi6miuU9LN71m1utW+Utnlkd3UzmPtqYb4giUjNomDBPraFM5zYT02PjaCTEMV
+	 GlnAjNJUCZXaEUZG2X8yppMVsZEovDv6HkbMMnCQ5fkX8/tCqa1o1P13t4BwEZvIiuuNMEfYQ5Ag
+	 lOLQRsJXc0sTx4/U6KJ82/LcElJAEYLkqnBvQ0tlVFq0Eb9ylGdn1uCCpixz8/0mOoncX5/K+qBG
+	 Z1zGc1RgEuaKzktxIlXrw7uhoBf6aXMpMQ3483XX07YwxxoAuCrg9Sq4y3peXtxT6WoI2fv0WFeo
+	 YWZc+E9hPNnD+MQeuM015sRj+nxUySX5Lyf90P2F7CepKappHyjM6LLla8En/668KJEDuiDToY6G
+	 zznRfKAKzsO9/cGoO5IEcfzi+sqX2p/fqUZfIIKnr5QL0vlck+Z1lS3sd5ibUVCJq+8W9PM6f+vR
+	 KIPlmogwzYfoNfX4QGeIhCRudpqrwU9/xG2KxG38gCYEVNrD8IEjGKy+KHXybHgoDPa7ivC5TmKr
+	 9nrFYEFQ2zD4lTZk4t5cynur9oelm5xgm4ic6Y0cHxNeHsRRIRcBejMWobO9DKdbgQJSIweI3XXp
+	 GQYuNvOBtrzBlqW3p2W4gqBMsxYT9SjIDAOKEKHjYif3efkf4fjC90MEM0AEAyRyHAH1KEo33IQM
+	 N9CXz3JG0VgE6/xvcPBsXI6Vi9zhYC7ElvkIxoZIo2h+5djNSsp/HytP+2Du8P6uv8iGOmV0OYC2
+	 TYPfGQgOC7P1siFGAbudg2J4xIQ6VGSxz7sXKbfk59gl1OBTc34FYboDM+0+PbUeP6IgpMXUY5Am
+	 mYc6qSmQR43U/gsjcI4gydXoi0XzJhjk53aVKfeq3W60MOgPokfV2Wq4toXvMB/Suwgt3crVnIXa
+	 x2g+FWGi7PokVBWVIJohKwhFYW9VIDLQPpdKH3oQ21iDnbMl2Jz6UiNVIDZ+WQghULFTJb+92Vsu
+	 P+wkJnRksygeK8OIQyGMez6VTMB0pO5CIBy3Yb5AQbSxtmYecpv4U1IVpTm/qQ73QhzUetfATMbL
+	 0yh97d
+X-QQ-XMRINFO: NyFYKkN4Ny6FuXrnB5Ye7Aabb3ujjtK+gg==
+From: wangjianjian0@foxmail.com
+To: konishi.ryusuke@gmail.com,
+	slava@dubeyko.com
+Cc: linux-nilfs@vger.kernel.org,
+	Wang Jianjian <wangjianjian0@foxmail.com>
+Subject: [PATCH] nilfs2: add atime support
+Date: Sun, 25 Oct 2026 12:04:08 +0800
+X-OQ-MSGID: <20261025040408.625539-1-wangjianjian0@foxmail.com>
+X-Mailer: git-send-email 2.34.1
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -101,12 +81,111 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Hi Ryusuke,
+From: Wang Jianjian <wangjianjian0@foxmail.com>
 
-Thank you for the pointer - I should have checked the latest mainline
-master and the linux-nilfs list history before sending.  Please consider
-the patch dropped.
+This RFC patch added atime support for nilfs2. To keep disk inode
+layout, reuse {i_xattr, i_pad} as {i_atime, i_atime_nosec}. And remove
+SB_NOATIME from sb_flags.
 
-I will be more careful next time.
+For now, the default behavior is relatime and other time mount
+options(such as noatime, lazytime,...) are not considered.
 
-Breno
+Signed-off-by: Wang Jianjian <wangjianjian0@foxmail.com>
+---
+ fs/nilfs2/inode.c                  | 6 ++++--
+ fs/nilfs2/nilfs.h                  | 2 --
+ fs/nilfs2/segment.c                | 3 ---
+ fs/nilfs2/super.c                  | 5 -----
+ include/uapi/linux/nilfs2_ondisk.h | 4 ++--
+ 5 files changed, 6 insertions(+), 14 deletions(-)
+
+diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
+index 34e6096069ad..c04f6aea5dee 100644
+--- a/fs/nilfs2/inode.c
++++ b/fs/nilfs2/inode.c
+@@ -409,8 +409,8 @@ int nilfs_read_inode_common(struct inode *inode,
+ 	i_gid_write(inode, le32_to_cpu(raw_inode->i_gid));
+ 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
+ 	inode->i_size = le64_to_cpu(raw_inode->i_size);
+-	inode_set_atime(inode, le64_to_cpu(raw_inode->i_mtime),
+-			le32_to_cpu(raw_inode->i_mtime_nsec));
++	inode_set_atime(inode, le64_to_cpu(raw_inode->i_atime),
++			le32_to_cpu(raw_inode->i_atime_nsec));
+ 	inode_set_ctime(inode, le64_to_cpu(raw_inode->i_ctime),
+ 			le32_to_cpu(raw_inode->i_ctime_nsec));
+ 	inode_set_mtime(inode, le64_to_cpu(raw_inode->i_mtime),
+@@ -721,8 +721,10 @@ void nilfs_write_inode_common(struct inode *inode,
+ 	raw_inode->i_gid = cpu_to_le32(i_gid_read(inode));
+ 	raw_inode->i_links_count = cpu_to_le16(inode->i_nlink);
+ 	raw_inode->i_size = cpu_to_le64(inode->i_size);
++	raw_inode->i_atime = cpu_to_le64(inode_get_atime_sec(inode));
+ 	raw_inode->i_ctime = cpu_to_le64(inode_get_ctime_sec(inode));
+ 	raw_inode->i_mtime = cpu_to_le64(inode_get_mtime_sec(inode));
++	raw_inode->i_atime_nsec = cpu_to_le32(inode_get_atime_nsec(inode));
+ 	raw_inode->i_ctime_nsec = cpu_to_le32(inode_get_ctime_nsec(inode));
+ 	raw_inode->i_mtime_nsec = cpu_to_le32(inode_get_mtime_nsec(inode));
+ 	raw_inode->i_blocks = cpu_to_le64(inode->i_blocks);
+diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
+index 4fc42d3787a4..23e2624f13ac 100644
+--- a/fs/nilfs2/nilfs.h
++++ b/fs/nilfs2/nilfs.h
+@@ -234,8 +234,6 @@ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
+ }
+ #endif
+ 
+-#define NILFS_ATIME_DISABLE
+-
+ /* Flags that should be inherited by new inodes from their parent. */
+ #define NILFS_FL_INHERITED						\
+ 	(FS_SECRM_FL | FS_UNRM_FL | FS_COMPR_FL | FS_SYNC_FL |		\
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 829573cb6131..3a9a66cc22e0 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -929,9 +929,6 @@ static void nilfs_write_root_mdt_inode(struct inode *inode,
+ 
+ 	nilfs_write_inode_common(inode, raw_inode);
+ 
+-	/* zero-fill unused portion of raw_inode */
+-	raw_inode->i_xattr = 0;
+-	raw_inode->i_pad = 0;
+ 	memset((void *)raw_inode + sizeof(*raw_inode), 0,
+ 	       nilfs->ns_inode_size - sizeof(*raw_inode));
+ 
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 893a504cb80c..75c068359b7c 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -867,11 +867,6 @@ int nilfs_store_magic(struct super_block *sb,
+ 
+ 	sb->s_magic = le16_to_cpu(sbp->s_magic);
+ 
+-	/* FS independent flags */
+-#ifdef NILFS_ATIME_DISABLE
+-	sb->s_flags |= SB_NOATIME;
+-#endif
+-
+ 	nilfs->ns_resuid = le16_to_cpu(sbp->s_def_resuid);
+ 	nilfs->ns_resgid = le16_to_cpu(sbp->s_def_resgid);
+ 	nilfs->ns_interval = le32_to_cpu(sbp->s_c_interval);
+diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
+index b3442b16ff6a..ed365ba4565f 100644
+--- a/include/uapi/linux/nilfs2_ondisk.h
++++ b/include/uapi/linux/nilfs2_ondisk.h
+@@ -65,9 +65,9 @@ struct nilfs_inode {
+ 	__le32	i_flags;
+ 	__le64	i_bmap[NILFS_INODE_BMAP_SIZE];
+ #define i_device_code	i_bmap[0]
+-	__le64	i_xattr;
++	__le64	i_atime;
+ 	__le32	i_generation;
+-	__le32	i_pad;
++	__le32	i_atime_nsec;
+ };
+ 
+ #define NILFS_MIN_INODE_SIZE		128
+
+base-commit: a4ff2be345d0abc943da8dd8da98151843b750dc
+-- 
+2.34.1
+
