@@ -1,142 +1,117 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.181
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.169
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793033999;
-	b=v7CMZ06T1Nr1F8xZpksfU4giJtQ8W11q3UBGm5DtrTsy/23+jcYx4itAxiYU6RYwNFM3
-	 L7epLITAbbam7ZSX9TJBpQ26FyRUTUP6lhDJzZGPT3MUkca7RA7Ih34P0qkPU5mhsa0bn
-	 FOsvfMqVJvTsXHN2mk+Y6iEtLyywe64Kjc0meJDsUaSU/MA7YborFnp/tjKDANTnMzjOG
-	 Czddv0fyLFwbtWGHPwxXFQSYpMoAdjr5LJuLJmZ62gyYS+GRBJbfkGWyYObrdSxa0x3ZG
-	 4ANdIqUDbw+TKn9H0zaLIZorxQSmi1NGjhbyR/+bI0N0Iex5C56IVW2QMhaCPQnmjlg==
+	t=1793138313;
+	b=MrVsAOfYhGtBuOnMiO1vIPbEyAW89vtcF5ToejZUO0j3fzgTNBoao2WgaYVlQop1x3Uc
+	 hpYfjq4jK/W9AqmItwnHIne9NqAt+c/k6AyJxoOp/74kBMImlt4d2bU1Uv3tYfrlHWLsb
+	 d5cV+cVGbs9Rn37yDVRwKTUkIuXX+ljH2gSiAFLvu/s50gVmL3qpWSE+1GUDAt5CggyxL
+	 rekNgKgds7a160XIXqQYrGIJg55PuyXP2XOb2/UplxvbZUNGnuMfAn7t+KkY7W3XDE2G+
+	 qp8gxqQLELpd5XpQ1j3MfONbBAR2K4dhV5OfEZ1WSRkXK3tRuELmMY5nPSdnPvaDPRg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793033999;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793138313;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Message-ID:Subject:
-	 From:To:Cc:Date:In-Reply-To:References:Autocrypt:Content-Type:
-	 Content-Transfer-Encoding:User-Agent:MIME-Version;
-	bh=SmKresnM181ABUUClYsztqkK6jIT00C1iyRhD1wPWZM=;
-	b=k3epC/YSLs0imG3pmy3FNV5M42heUMElg4CS9Kov1ABQ12GMoqUlHEhNydq4U8c6Xuhd
-	 4PfirF7uqeCXd9IlxplPCFNjvMEM8kBgy42OUWirmlMRsnwMx3ttkGALAwCII3fy2kMu/
-	 9L+ml6pcj6pvaWYkiXBZZUv3jDMPBCh3a5yWsmbTOjnXxOeEwJQ5xf+THm414Ti9XqVGt
-	 Y4ZkAzFvNJN0vHudGnF434OeAN2IySXfSjQkbAB0RCloDcRlGNXGUSl0HeiKmv5MrZIwE
-	 vmoh1T9kCeTmOvqDFFoIVm1ysk4wvg4MFWce43sjyUmcqEEI0MPs2uZ0cKoTjV+ti+Q==
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=fKH8lEROlToWUaFVk6HBGi+a3bbRsRUnkhgJ3/v+Ess=;
+	b=YCaqMyxlP8Nncn9YGGaAlv8vspXgCp1TZk+gsb/kIfMCymGT/5i+vm0Ked5I4ZQWHqjJ
+	 Rs2tcAsXmu5E6hWrf6TbLS2l5Pabblt8OjzjqhJTJ68XUaS8sUQuXo8jegFv2obD55w69
+	 OmDzm6Ngbv9hmm2n0h7rM2rXVtojbK430SE6aj8jxJmqQqyiFsrx2IntcuVWBarEfmbgM
+	 ruStS8ONUugguqCNxc6tEK7RfvRtL0rk5/qLse2ZP0RcEV7tYkFQsR9iKSxMng+z7cMn3
+	 gFHvcFgeDb1en+bKIyUMCikngUuXfCn9WsALMwpA4/qUB6ojMJZcCTuRWX8V4OrnYqg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=dubeyko.com;
-	spf=pass smtp.mailfrom=dubeyko.com;
-	dkim=pass header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.a=rsa-sha256 header.s=20251104 header.b="RPBIVjJ/";
-	arc=none smtp.remote-ip=209.85.128.181
-Received: from mail-yw1-f181.google.com (mail-yw1-f181.google.com [209.85.128.181])
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Kktk5MvT;
+	arc=none smtp.remote-ip=209.85.128.169
+Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com [209.85.128.169])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 28453606A31D
-	for <linux-nilfs@vger.kernel.org>; Mon, 26 Oct 2026 16:59:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 28453606A31D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4FFD606A31A
+	for <linux-nilfs@vger.kernel.org>; Tue, 27 Oct 2026 21:58:32 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B4FFD606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=dubeyko-com.20251104.gappssmtp.com header.i=@dubeyko-com.20251104.gappssmtp.com header.a=rsa-sha256 header.s=20251104 header.b=RPBIVjJ/
-Received: by mail-yw1-f181.google.com with SMTP id 00721157ae682-8b0a28a720aso31135657b3.2
-        for <linux-nilfs@vger.kernel.org>; Mon, 26 Oct 2026 09:59:57 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Kktk5MvT
+Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-8b0d126f631so3073547b3.2
+        for <linux-nilfs@vger.kernel.org>; Tue, 27 Oct 2026 14:58:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20251104.gappssmtp.com; s=20251104; t=1793033997; x=1793638797; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=SmKresnM181ABUUClYsztqkK6jIT00C1iyRhD1wPWZM=;
-        b=RPBIVjJ/mfszH8jUZRAsvxN5N1lh3RGCU22mGjM8xzPVt89PBgLDaTqMnhP0SCjBmG
-         G4PBQqrSAXuliSGoqBu1lTIdfeKs4ViafsBBGsKEx/dVbPWNiqReoWe5vXPnAJ7mkORW
-         AqcZLzkcDFp6y4FyG0WdjNtehr+Cf7ra2wo9vUw1jfx9rm3+//geUXxkeKliGBEhGVon
-         qIuYAdAd0YSDq/Jr3KSQwFF6eDw2j/FyYk4ZcbEzlftlmj8LMhkr6dYbBBAyYR+3JekR
-         kOtbWL/IvEgrpssMMabZYlgv2l16BVOmxzed4eL30ofEuvX8T0LjayYIJuNQYZe7EVJa
-         npbw==
+        d=gmail.com; s=20260707; t=1793138312; x=1793743112; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=fKH8lEROlToWUaFVk6HBGi+a3bbRsRUnkhgJ3/v+Ess=;
+        b=Kktk5MvTTmooZ0Q3aCi26vX768BMQ/1m/1iozUmZR0IzIeWf2BuQjazLJfG3476g/r
+         8kvrHa8KOzQV8RrLyDJ1RlEwNQ7Be2n0AY1iiRRdIvzRuc1oPn4B9jjY/M5c2//4SLMj
+         USKthEZZWMli+0SNU4AVBbstq5kepiLkMHCLjcclCHsvypIYeFeeQS+wYw7Tchrd69SR
+         Mqo4l3cOiuk8Ls1Fk9pOGcS/WnltZVnMA+jAYh1/nSwoFzCdA70wDWhzfkrisd+SUrQE
+         6YLG1ywmQCVUi4C6A9d96MuXY2i6KxrufWZylWKs6C1OPJqhIo/CTS2nFacO58n+P2BA
+         axtw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793033997; x=1793638797;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=SmKresnM181ABUUClYsztqkK6jIT00C1iyRhD1wPWZM=;
-        b=MtCkl8OqdzTuzNFrLWmq8qQr07h1+L59dz3Dg36kM0VvsFULoes3wGh6vOrfSFUKNy
-         6GQno3B9SJQJP0IXXxR/jDNtH7U+NYi8A2IVz/jPH5bpL8YjmV/9NP9HYSuNP5tTUssh
-         qNf93ig/OYGV279g+GrAvEkwXkK55/eggIuSBESqXTUjAAh+uz+3qh9xyKGRbOAe/MPA
-         MzXisqUhZFYM3u+cp20iRtYLTl+m6WhX6CCAro6ZUowFN/3mHYHYcd+QvhOdrIsyKYrU
-         I/d5an/BsBL+wn/wFtWNYlBqrr8wAOTwD+1tK5XGCZjEmJrWRUxB/t8HgHMlw0dVXC8u
-         dRMA==
-X-Gm-Message-State: AFq9FYIW84prv0auJuHFBqpGj2pEG3KwOp+/yPJeZrPFyNJK0we1maqV
-	aSlgK8TOUQjWKCuybEJMbqYs8ssXIjy5gZlkLtcBILuqXCPG5M9IjYYHGy5N6A7K0Tw=
-X-Gm-Gg: AYBFou1ltqFmhpN/icqyTLa2/b26i+A6rOpxvjoepZIZcGn/AtRupGj0a5xWc3usgLJ
-	Lr0VRVZzVeSKL/j3f4SIsFrZVIMp/nZSYE5AU6DomFQAMgJ4oED4DAKe8Q9oRzoG0Q1MJUSXklE
-	Iv9KJhd08TV1eOjzgJDdyqT0HjsRNFSGk0P4/fMAzNDDkfzn4vqMn8UiWv9aJj0xPQnmuTGOI6D
-	JmFyAbiHB+nH1XKUdrmCfdQ1ftCE1P8ebnYovMVlx1VD7CErb4t4slAgtN+SaPoxpepWNxRF8kE
-	BsXBFlgcrwTogu9glWDdv+RK3Y8698cE696tBUsjKBQi3JZFXRDPm3tFx3iQE2qrz2h95k95TzA
-	U3lmBBIwP0r0+suqXqgCZ1KKDhHmlmFahl+FPTDR2+S9FkASpHANxS7vGW+AeZU1PZvOLXy/mY8
-	561eiLnZF+za7gNp+qxT3DQkwNDLUB56AiwlmnSKBHJ/dJ0f+lA/tHZs/kfL45lz/Mj/2uuI1uY
-	lud4kVjGbxp80HGn3xBY8AyyI8n2vwpVxkdmHA6CWSDHCoHgQyh9RfKBNbI8OCFKwH5E9A7P3Jl
-	G1oWe+x2DSTlcs0HlNuaLJW/6mRF1oJG4FcIuPZzHVZjhiUGtLjs8KRbW8iycmnE6HurCBFHMGS
-	uOhxwC2P2j7Tu6X94BEHchxV6pg+EBmG0X0+6P/8Rn/oM56A=
-X-Received: by 2002:a05:690c:34c6:b0:8ae:a9c6:2740 with SMTP id 00721157ae682-8b166c51804mr36321077b3.48.1793033996947;
-        Mon, 26 Oct 2026 09:59:56 -0700 (PDT)
-Received: from ?IPv6:2600:1700:6476:1430:5187:d81d:3a9e:a63b? ([2600:1700:6476:1430:5187:d81d:3a9e:a63b])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b166eb116esm34522267b3.37.2026.10.26.09.59.55
+        d=1e100.net; s=20260707; t=1793138312; x=1793743112;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=fKH8lEROlToWUaFVk6HBGi+a3bbRsRUnkhgJ3/v+Ess=;
+        b=odM9cmcHhYgx1oQoALMhaYGvJMXhznPojZ6VvDhqezn6ouzG8Dm9wjSX7uzjEeXWq8
+         BC9i49LepAxTIN4ydrCWrAbH9G+9XwDAfqwMVDrKV2Yc1LWPrEimnRUnDW0SNHAb9MgD
+         3Rtg/ihXSiK5r5LiNTcsoR4xufxqNcN+r58qRcnzK3lwKcuwe44TNt+MKhyZ16W2qHrN
+         0Cp7PBgXL9b2+5WprWpQyDysv23dM8uWn4IJU1vgYcMg5Wy/6lxQ5THiNkpx28bpyJxK
+         dt13lnwmN9W7o8ioesUg6cqodhnKnpJpDyH04+FWfUhr7rGPan2/TZ2nCfxOkH0+Wcyv
+         NvJA==
+X-Forwarded-Encrypted: i=1; AKwUvByOFiYc0deKvukyMfvuKwoNwRYB0OBO9ORGWiMzqkxHzBUaBnKKgrBDWCl8WEVsiYH+tH5LFbsmQmSO5Q==@vger.kernel.org
+X-Gm-Message-State: AFq9FYJI0sLEykFS4dvb0MR37buWDmU3q5sj2n7PuYDQhe7EzQ77F6U1
+	tunltyRXwu+JCpYr/IiDyc2OLnPG8e04BVi/v2IGQHSWKGgVlHNzLTVd
+X-Gm-Gg: AYBFou0Xx4WnIGNQLlQRQSgsSgUaIGPDh+8+lEfBLRiEhF+kqTqEDjE37fggI/sHFUY
+	fOXS6WEAlk8WPiCMrAevDkuCq9/Ak8cR8dVRm+MGfEvQ3lrzc9dUuQWpGT0Cn+KZhd0AWS3Z2hI
+	QqX+wpalV4hutmK0BoC96WcXJQGhI63N4cdPh6/cOL22iFMtKcfVOTKC47yLVJTVUXRcSpw6wdn
+	97l6ru2V5A+t1kvve2+THBgcYFfLeoKNVl3Bx2KCHS43Tk8Xwyjxdw5N8n0ncdP1A2SvZfmi2hH
+	YwPe8eOLJvcuiJSxXcCZ5mZPoocaoqbmoHksJ4XTTr9dZJ6Hs7P3vW5ks4AnZsOvecg7RSfQscQ
+	oICbffGgamofOff1ImgzxFEkJWDx458YH9TTYKgQjTd33x955eoeRL7iH5acp3Wd8e0eBaYfI8Z
+	tIAzn4Xds7h7vCFXcQlE9PghBRhRaFXahuBuWTsgZobLmeQHyDb5NtW4KOHlojahfprlnRjsDbi
+	wCEAk9WODbIOkzFOZIuRRWnD2EtX/WBQXpa7AzHTm6gdnp2/b767j5a8DE23Y7icbALWAO67LMJ
+	6im3Eq7XhNf8fhGRXY2nzAjWN7yyHViT
+X-Received: by 2002:a05:690c:7108:b0:8b0:7c36:4afc with SMTP id 00721157ae682-8b1b5e81826mr2719877b3.58.1793138311531;
+        Tue, 27 Oct 2026 14:58:31 -0700 (PDT)
+Received: from localhost ([2a03:2880:ff:71::])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b19e59400csm19360677b3.22.2026.10.27.14.58.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 26 Oct 2026 09:59:56 -0700 (PDT)
-Message-ID: <ef6de636ae209a86b7ea262831c8fdbb8258b866.camel@dubeyko.com>
-Subject: Re: [PATCH] nilfs2: add atime support
-From: Viacheslav Dubeyko <slava@dubeyko.com>
-To: "wangjianjian (C)" <wangjianjian3@huawei.com>, Ryusuke Konishi
-	 <konishi.ryusuke@gmail.com>, wangjianjian0@foxmail.com
-Cc: linux-nilfs@vger.kernel.org
-Date: Mon, 26 Oct 2026 09:59:55 -0700
-In-Reply-To: <eefa16b7-506e-47e1-8ab9-b4f5738733ea@huawei.com>
-References: <tencent_A1BD1C90A8E503B41B451E310527DC9E9F07@qq.com>
-	 <CAKFNMokNhGtWE-uAmXBAXneuqwFZ9bP++jRexS+p3Xdbq8G+Zw@mail.gmail.com>
-	 <eefa16b7-506e-47e1-8ab9-b4f5738733ea@huawei.com>
-Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
- keydata=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
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 (by Flathub.org) 
+        Tue, 27 Oct 2026 14:58:30 -0700 (PDT)
+From: Joanne Koong <joannelkoong@gmail.com>
+To: Christian Brauner <brauner@kernel.org>
+Cc: linux-fsdevel@vger.kernel.org,
+	Christoph Hellwig <hch@lst.de>,
+	"Darrick J . Wong" <djwong@kernel.org>,
+	changfengnan@bytedance.com,
+	kbusch@kernel.org,
+	Matthew Wilcox <willy@infradead.org>,
+	Jan Kara <jack@suse.cz>,
+	Jonathan Corbet <corbet@lwn.net>,
+	David Sterba <dsterba@suse.com>,
+	Gao Xiang <xiang@kernel.org>,
+	Namjae Jeon <linkinjeon@kernel.org>,
+	Theodore Ts'o <tytso@mit.edu>,
+	Jaegeuk Kim <jaegeuk@kernel.org>,
+	Miklos Szeredi <miklos@szeredi.hu>,
+	Andreas Gruenbacher <agruenba@redhat.com>,
+	Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>,
+	Hyunchul Lee <hyc.lee@gmail.com>,
+	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
+	Carlos Maiolino <cem@kernel.org>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	libaokun@linux.alibaba.com,
+	bfoster@redhat.com,
+	linux-ext4@vger.kernel.org,
+	linux-xfs@vger.kernel.org,
+	Viacheslav Dubeyko <slava@dubeyko.com>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	linux-nilfs@vger.kernel.org,
+	fuse-devel@lists.linux.dev,
+	Zhang Yi <yi.zhang@huawei.com>
+Subject: [PATCH 0/5] iomap: remaining patches for iomap_iter_next conversion
+Date: Tue, 27 Oct 2026 14:53:21 -0700
+Message-ID: <20261027215326.2693300-1-joannelkoong@gmail.com>
+X-Mailer: git-send-email 2.52.0
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -146,222 +121,106 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Hi Ryusuke and Wang,
+Hi Christian,
 
-On Mon, 2026-10-26 at 15:04 +0800, wangjianjian (C) wrote:
-> =E5=9C=A8 2026/10/25 13:09, Ryusuke Konishi =E5=86=99=E9=81=93:
-> > On Sun, Oct 25, 2026 at 1:04=E2=80=AFPM wrote:
-> > >=20
-> > > From: Wang Jianjian <wangjianjian0@foxmail.com>
-> > >=20
-> > > This RFC patch added atime support for nilfs2. To keep disk inode
-> > > layout, reuse {i_xattr, i_pad} as {i_atime, i_atime_nosec}. And
-> > > remove
-> > > SB_NOATIME from sb_flags.
-> > >=20
-> > > For now, the default behavior is relatime and other time mount
-> > > options(such as noatime, lazytime,...) are not considered.
-> > >=20
-> > > Signed-off-by: Wang Jianjian <wangjianjian0@foxmail.com>
-> > > ---
-> > > =C2=A0 fs/nilfs2/inode.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 6 ++++--
-> > > =C2=A0 fs/nilfs2/nilfs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 2 --
-> > > =C2=A0 fs/nilfs2/segment.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 3 ---
-> > > =C2=A0 fs/nilfs2/super.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 5 -----
-> > > =C2=A0 include/uapi/linux/nilfs2_ondisk.h | 4 ++--
-> > > =C2=A0 5 files changed, 6 insertions(+), 14 deletions(-)
-> >=20
-> > Hi Wang Jianjian, (and Viacheslav)
-> >=20
-> > A similar proposal was made in the following RFC patch [1].
-> >=20
-> > [1]
-> > https://lore.kernel.org/all/20260219204343.70117-1-slava@dubeyko.com/
-> >=20
-> > Since that patch is more comprehensive, I would prefer to proceed
-> > based on Viacheslav's proposal.
-> > Regarding atime support, we previously agreed to utilize the
-> > reserved
-> > extended attribute field.
-> > As I recall, the remaining tasks were determining the design for
-> > the
-> > COMPAT flag in the superblock to ensure both forward and backward
-> > compatibility, and addressing the necessary updates for nilfs-
-> > utils.
->=20
-> Sure. And sorry I didn't notice Viacheslav's patch.>
-> > This has been on hold for more than half a year due to personal
-> > circumstances on both Viacheslav's side and mine, but depending on
-> > his
-> > availability, it might be time to start moving this forward soon.
-> >=20
-> > However, since I am currently focused on analyzing a few issues and
-> > preparing patches to fix them, and will be traveling over the next
-> > two
-> > weeks due to family matters (which have required frequent travel
-> > this
-> > year), I would appreciate it if we could resume detailed
-> > discussions
-> > after 7.4-rc2 is released.
+This is a resend of the last 3 patches from the "iomap: convert to in-iter
+iomap_next() model" patch series [1].
 
-Sorry, I was distracted from working on this patch by multiple events
-in my life for the last half a year. I am OK if Wang can  take this
-work. :) I am in business trip during this week. So, I am expecting not
-to have enough time for discussion for the next several days. Let's=20
-get more detailed discussion after 1 - 2 weeks.
+Those 3 patches are rebased on top of current mainline (commit 83f32c773255
+("Merge tag 'erofs-for-7.4-rc1-2' ...")) in Linus's tree. They require two new
+preparatory patches (patches 1 and 2 in this series), which are trivial
+->iomap_next() conversions of the nilfs2 and fuse iomap code that was added
+during this merge window. There were conflicts with "iomap: pass
+iomap_iter_next_fn directly instead of struct iomap_ops" (patch 4 in this
+series) during the rebase. These are resolved in the patch, which now also
+converts the iomap users added this merge window (ext4 iomap buffered I/O,
+exfat swap activation, nilfs2, and fuse ext_map). Jan's Acked-by and
+Christoph's Reviewed-by on it predate these changes.
+
+These patches are being sent out now in case anyone wants to look at the
+preparatory patches or patch 4. This series applies cleanly to both current
+mainline and next-20261027. If anything conflicts by the time you pick it up
+at the end of the merge window, I'll rebase and resend.
 
 Thanks,
-Slava.=20
+Joanne
 
-> >=20
-> > Thanks,
-> > Ryusuke Konishi
-> >=20
-> > >=20
-> > > diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-> > > index 34e6096069ad..c04f6aea5dee 100644
-> > > --- a/fs/nilfs2/inode.c
-> > > +++ b/fs/nilfs2/inode.c
-> > > @@ -409,8 +409,8 @@ int nilfs_read_inode_common(struct inode
-> > > *inode,
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 i_gid_write(inode, l=
-e32_to_cpu(raw_inode->i_gid));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 set_nlink(inode, le1=
-6_to_cpu(raw_inode->i_links_count));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode->i_size =3D le=
-64_to_cpu(raw_inode->i_size);
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode_set_atime(inode, le64_to_=
-cpu(raw_inode->i_mtime),
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 le32_to_=
-cpu(raw_inode->i_mtime_nsec));
-> > > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode_set_atime(inode, le64_to_=
-cpu(raw_inode->i_atime),
-> > > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 le32_to_=
-cpu(raw_inode->i_atime_nsec));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode_set_ctime(inod=
-e, le64_to_cpu(raw_inode->i_ctime),
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
- le32_to_cpu(raw_inode->i_ctime_nsec));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 inode_set_mtime(inod=
-e, le64_to_cpu(raw_inode->i_mtime),
-> > > @@ -721,8 +721,10 @@ void nilfs_write_inode_common(struct inode
-> > > *inode,
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_gid =3D=
- cpu_to_le32(i_gid_read(inode));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_links_c=
-ount =3D cpu_to_le16(inode->i_nlink);
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_size =
-=3D cpu_to_le64(inode->i_size);
-> > > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_atime =3D
-> > > cpu_to_le64(inode_get_atime_sec(inode));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_ctime =
-=3D
-> > > cpu_to_le64(inode_get_ctime_sec(inode));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_mtime =
-=3D
-> > > cpu_to_le64(inode_get_mtime_sec(inode));
-> > > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_atime_nsec =3D
-> > > cpu_to_le32(inode_get_atime_nsec(inode));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_ctime_n=
-sec =3D
-> > > cpu_to_le32(inode_get_ctime_nsec(inode));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_mtime_n=
-sec =3D
-> > > cpu_to_le32(inode_get_mtime_nsec(inode));
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_blocks =
-=3D cpu_to_le64(inode->i_blocks);
-> > > diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-> > > index 4fc42d3787a4..23e2624f13ac 100644
-> > > --- a/fs/nilfs2/nilfs.h
-> > > +++ b/fs/nilfs2/nilfs.h
-> > > @@ -234,8 +234,6 @@ static inline int nilfs_init_acl(struct inode
-> > > *inode, struct inode *dir)
-> > > =C2=A0 }
-> > > =C2=A0 #endif
-> > >=20
-> > > -#define NILFS_ATIME_DISABLE
-> > > -
-> > > =C2=A0 /* Flags that should be inherited by new inodes from their
-> > > parent. */
-> > > =C2=A0 #define
-> > > NILFS_FL_INHERITED=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 \
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 (FS_SECRM_FL | FS_UN=
-RM_FL | FS_COMPR_FL | FS_SYNC_FL
-> > > |=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 \
-> > > diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-> > > index 829573cb6131..3a9a66cc22e0 100644
-> > > --- a/fs/nilfs2/segment.c
-> > > +++ b/fs/nilfs2/segment.c
-> > > @@ -929,9 +929,6 @@ static void nilfs_write_root_mdt_inode(struct
-> > > inode *inode,
-> > >=20
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nilfs_write_inode_co=
-mmon(inode, raw_inode);
-> > >=20
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* zero-fill unused portion of =
-raw_inode */
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_xattr =3D 0;
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 raw_inode->i_pad =3D 0;
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 memset((void *)raw_i=
-node + sizeof(*raw_inode), 0,
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 nilfs->ns_inode_size - sizeof(*raw_inode));
-> > >=20
-> > > diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-> > > index 893a504cb80c..75c068359b7c 100644
-> > > --- a/fs/nilfs2/super.c
-> > > +++ b/fs/nilfs2/super.c
-> > > @@ -867,11 +867,6 @@ int nilfs_store_magic(struct super_block
-> > > *sb,
-> > >=20
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sb->s_magic =3D le16=
-_to_cpu(sbp->s_magic);
-> > >=20
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* FS independent flags */
-> > > -#ifdef NILFS_ATIME_DISABLE
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sb->s_flags |=3D SB_NOATIME;
-> > > -#endif
-> > > -
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nilfs->ns_resuid =3D=
- le16_to_cpu(sbp->s_def_resuid);
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nilfs->ns_resgid =3D=
- le16_to_cpu(sbp->s_def_resgid);
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 nilfs->ns_interval =
-=3D le32_to_cpu(sbp->s_c_interval);
-> > > diff --git a/include/uapi/linux/nilfs2_ondisk.h
-> > > b/include/uapi/linux/nilfs2_ondisk.h
-> > > index b3442b16ff6a..ed365ba4565f 100644
-> > > --- a/include/uapi/linux/nilfs2_ondisk.h
-> > > +++ b/include/uapi/linux/nilfs2_ondisk.h
-> > > @@ -65,9 +65,9 @@ struct nilfs_inode {
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __le32=C2=A0 i_flags=
-;
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __le64=C2=A0 i_bmap[=
-NILFS_INODE_BMAP_SIZE];
-> > > =C2=A0 #define i_device_code=C2=A0 i_bmap[0]
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __le64=C2=A0 i_xattr;
-> > > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __le64=C2=A0 i_atime;
-> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __le32=C2=A0 i_gener=
-ation;
-> > > -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __le32=C2=A0 i_pad;
-> > > +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 __le32=C2=A0 i_atime_nsec;
-> > > =C2=A0 };
-> > >=20
-> > > =C2=A0 #define NILFS_MIN_INODE_SIZE=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0 128
-> > >=20
-> > > base-commit: a4ff2be345d0abc943da8dd8da98151843b750dc
-> > > --
-> > > 2.34.1
-> > >=20
+[1] https://lore.kernel.org/linux-fsdevel/20260729192737.3190206-1-joannelkoong@gmail.com/
+
+Joanne Koong (5):
+  nilfs2: convert iomap ops to ->iomap_next()
+  fuse: convert ext_map iomap ops to ->iomap_next()
+  iomap: remove ->iomap_begin()/->iomap_end() legacy path
+  iomap: pass iomap_iter_next_fn directly instead of struct iomap_ops
+  Documentation: iomap: update docs to reflect iomap_iter_next model
+
+ Documentation/filesystems/iomap/design.rst    | 140 +++++++++++++-----
+ .../filesystems/iomap/operations.rst          |  68 ++++-----
+ Documentation/filesystems/iomap/porting.rst   |  16 +-
+ block/fops.c                                  |  10 +-
+ fs/btrfs/direct-io.c                          |   8 +-
+ fs/dax.c                                      |  48 +++---
+ fs/erofs/data.c                               |  28 ++--
+ fs/erofs/internal.h                           |   3 +-
+ fs/erofs/zmap.c                               |   7 +-
+ fs/exfat/file.c                               |  14 +-
+ fs/exfat/inode.c                              |   6 +-
+ fs/exfat/iomap.c                              |  22 +--
+ fs/exfat/iomap.h                              |   6 +-
+ fs/ext2/ext2.h                                |   3 +-
+ fs/ext2/file.c                                |   4 +-
+ fs/ext2/inode.c                               |   9 +-
+ fs/ext4/ext4.h                                |  10 +-
+ fs/ext4/extents.c                             |   8 +-
+ fs/ext4/file.c                                |  22 +--
+ fs/ext4/inode.c                               |  58 +++-----
+ fs/f2fs/data.c                                |   6 +-
+ fs/f2fs/f2fs.h                                |   3 +-
+ fs/f2fs/file.c                                |   4 +-
+ fs/fuse/dax.c                                 |  10 +-
+ fs/fuse/ext_map.c                             |  11 +-
+ fs/fuse/file.c                                |  10 +-
+ fs/fuse/virtio_fs.c                           |   3 +-
+ fs/gfs2/aops.c                                |   6 +-
+ fs/gfs2/bmap.c                                |   9 +-
+ fs/gfs2/bmap.h                                |   2 +-
+ fs/gfs2/file.c                                |   6 +-
+ fs/gfs2/inode.c                               |   6 +-
+ fs/hpfs/file.c                                |   6 +-
+ fs/internal.h                                 |   1 -
+ fs/iomap/buffered-io.c                        |  40 ++---
+ fs/iomap/direct-io.c                          |   8 +-
+ fs/iomap/fiemap.c                             |   8 +-
+ fs/iomap/iter.c                               |  13 +-
+ fs/iomap/seek.c                               |   8 +-
+ fs/iomap/swapfile.c                           |   4 +-
+ fs/iomap/trace.h                              |  12 +-
+ fs/nilfs2/file.c                              |   2 +-
+ fs/nilfs2/iomap.c                             |   4 +-
+ fs/nilfs2/iomap.h                             |   4 +-
+ fs/ntfs/aops.c                                |   6 +-
+ fs/ntfs/file.c                                |  20 +--
+ fs/ntfs/inode.c                               |   2 +-
+ fs/ntfs/iomap.c                               |  42 ++----
+ fs/ntfs/iomap.h                               |  10 +-
+ fs/ntfs3/file.c                               |  16 +-
+ fs/ntfs3/inode.c                              |  13 +-
+ fs/ntfs3/ntfs_fs.h                            |   3 +-
+ fs/remap_range.c                              |   6 +-
+ fs/xfs/xfs_aops.c                             |   8 +-
+ fs/xfs/xfs_file.c                             |  53 +++----
+ fs/xfs/xfs_iomap.c                            |  55 ++-----
+ fs/xfs/xfs_iomap.h                            |  16 +-
+ fs/xfs/xfs_iops.c                             |   4 +-
+ fs/xfs/xfs_reflink.c                          |   6 +-
+ fs/zonefs/file.c                              |  22 +--
+ include/linux/dax.h                           |  18 +--
+ include/linux/fs.h                            |   7 +-
+ include/linux/iomap.h                         |  66 +++++----
+ 63 files changed, 492 insertions(+), 557 deletions(-)
+
+-- 
+2.52.0
+
