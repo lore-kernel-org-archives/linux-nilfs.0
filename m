@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.181
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.224.42
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793138316;
-	b=niBm9acoLPg+YWllYjpw5j0rF34gI6t31x5UEwrc6NVnyWGmGyWxmHrGAcufrr1hl/JI
-	 QFr0reLYVysKzRGWeCEQVk596W1tVU4hE1FCnJ5uC6XUsIhVs9VxdLDGKO9aijNi2Xeqp
-	 5VOn+Wh1N7YPW/9HrOBXvpApZvKS8gg3dTcTCUljrydhG0hb7uztPn7lMD/sfjN7XomXT
-	 jDuYr7hDg4BoJG8hlGV1swU9JmXbjofiOIihV9OOQvI993/5Ibf3mQB9P2cIRNSnP/WaE
-	 4eG9f+oH/R6duERioO8Iapm/YtC2dIBYyGrg3u4mwMJrDpDM0LqQu/vdVpTr5rBxLNQ==
+	t=1793138319;
+	b=DHGeKITJse63lzw3LLhZosPoiZlaS5n90/GCGmRnKu5Ux2zUxm/1VCP6GNszCjcO+clV
+	 FbiIVEQYD1haY7BGXIdhoOlnFOgzOmdBN32LCKOhjncOLRr8ujtI9VLodCHYf5Ok14dM0
+	 cPDMumjCiI1hpT6zYhrNKmHVh0ChPlyc3l+qL1OPtWj4sX+bi1Shi4585WcJcgp5chTJ4
+	 1B3/2eOOebavf9y3OHj0fFHSbxvTsue88PeiniYAN1nP50jzvF2Z15vfUd9a13wVlepSQ
+	 1b4howxH/D1tJQpwM4/bGrw7g+3F7G+XPf5A8CCu9xerjHZj44K490u5RDst7LdDEzw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793138316;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793138319;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=W9OJQx+TcWNp0m+XcidattXlpUlog8C9yogSLSSgROM=;
-	b=VIxOgJ6Pi6Cenc5CXLd4LbDacbLnNEUi6khTQm4rioVeRQ+ErTZN2hhH6LZVCw0DSCFw
-	 8tzf3epMnPAxBP/g6751aEOvlxMWqKbFjx/NtPHlProyxU3icBQfxpEvX6QGrEDBGIk+r
-	 AZP1qkDhVBXuwsIqtkLtqkNTFDutFbCWEVwHvEXBbXbss9cdPejv5Ke1D2o7Cj/RIP2lK
-	 t64MrohJ0yeCDk8ElnZ0DIuXhOYT0jCyYze8sE/5/mC/4D/gXzhi0vPdNKAzV/0fAbB7i
-	 /GQ/vReHsah79rlaYzGtTM7lbujzqj25pCrjuP7KNYjLlb0OIiJhJgM/O/WuQcPIn/A==
+	bh=iqfPoWTkUvjEoiyLTnmr5mj5KovsR6sHRhbPRdxo4UA=;
+	b=v6INA1vP+NjbfC7j6CEfI5NhKzeb0YNK13dBKC48aeV5sf6D1YdbTzFRpZ32ErjRCbA0
+	 8L1sRbh8/lDyWGkmfTuG4j3euLXkZYfKWLTvvw6pUxpQUi2M+Q8rXX1iIVNS7XP1FXXdm
+	 ewN2m1maOPnIPGaI+P2pURuE55EvPwPagrr/3WNHI7LLZdUdmkFJA6AeWMUf9rXLM9mN9
+	 BbxJOVIxwLUY6x4di71OjcrfOooquP/EpPR6EYPUOHcsp0b2CY4jiZglQzur9dEBDpfgN
+	 N4GaoGII9iOyjSur4ECRt6KCc5cfooVfbx9yGe43uoKz2uOsrQ3SHDq0hqCN/+xOxQA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=oKDsmVms;
-	arc=none smtp.remote-ip=209.85.128.181
-Received: from mail-yw1-f181.google.com (mail-yw1-f181.google.com [209.85.128.181])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hHefbI+9;
+	arc=none smtp.remote-ip=74.125.224.42
+Received: from mail-yx1-f42.google.com (mail-yx1-f42.google.com [74.125.224.42])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8131606A320
-	for <linux-nilfs@vger.kernel.org>; Tue, 27 Oct 2026 21:58:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B8131606A320
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3F5D6606A31D
+	for <linux-nilfs@vger.kernel.org>; Tue, 27 Oct 2026 21:58:38 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3F5D6606A31D
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=oKDsmVms
-Received: by mail-yw1-f181.google.com with SMTP id 00721157ae682-8ad98c3fb15so2730307b3.2
-        for <linux-nilfs@vger.kernel.org>; Tue, 27 Oct 2026 14:58:35 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hHefbI+9
+Received: by mail-yx1-f42.google.com with SMTP id 956f58d0204a3-677dbe051d4so380189d50.0
+        for <linux-nilfs@vger.kernel.org>; Tue, 27 Oct 2026 14:58:38 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793138315; x=1793743115; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793138317; x=1793743117; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=W9OJQx+TcWNp0m+XcidattXlpUlog8C9yogSLSSgROM=;
-        b=oKDsmVmsuk3dkIKPLXCEgrrBz0xgLo11lpY3b+3BJxL16XSKxaj0p+Bmb6QSRClvjk
-         vQgeub/fwL+j+/KqtYUrPWdmrqMOoHx4qRiN7qr8wi7AoYcTOgTu8qTvLTN8mlMLlta3
-         PRadaYH+I4mJfMBwrxUUOTN4Y17NnYPF5kfY7qSiXSUYMB6ANOrfA2ad1Z7YMIcWrkC4
-         ikNN/NuZ7clzkhppK02X+qnkR7AXWJPHiDKqadRAar6whNKO1V0O+2g15MNOLrrR0eHR
-         DhtfZtaofy0tspWXl2SLaHkWgeiBPnzHNxLwCbUXaJurLi0FF2JQJ69msPaVlOWQ1s3H
-         utUQ==
+        bh=iqfPoWTkUvjEoiyLTnmr5mj5KovsR6sHRhbPRdxo4UA=;
+        b=hHefbI+948nzC9V3ObgOm7xqIlu0T2MEDj0gG6avl8Xb2kbhf6Z/cbqoyxSTnA73BW
+         CDF5OTDEdklbOqujS6eVhxL5dGvh/C6tEqLgDMTWvMNYjG/xe9C8VnbQomQrlEVPuJFG
+         m+SVQ/r0R6uk3NynScu0b7mMuf29mIgeofx6m0l3z2mL0kRhgjYRJbMWyYYrRrbZUIG4
+         AG1hLaUcgUGyfeP1pEu8FX4TgOHzM5iAwdAKt4hZbNHbOhfpISpbqGywIGZjvg1dRFdo
+         GgL5HVvBjS2vRht/e+neQcTE4BQOXDlg/uGmJh01kZlWUbRinQzJknNHTTrFiU4vjNMu
+         iDIQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793138315; x=1793743115;
+        d=1e100.net; s=20260707; t=1793138317; x=1793743117;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=W9OJQx+TcWNp0m+XcidattXlpUlog8C9yogSLSSgROM=;
-        b=L++0n2v/LVgVlC6Q9nPOqLvozL/lL5MVGRg1BHrIDDmWqZ5c/xQdgpRcusmFnScDRT
-         0RlyQN+RkrUPy/bulwvhTeiVEJiOPYLvkrZCNUwAyowqtfmoQLLLyHK3LKgwZ2ii92eb
-         83r6hIBY9901NEtyeFXthVfGwuHlO6I0rdYaw27U7oLhPbn8mAdy8x7SKGhVCrOkgUv1
-         l3OHLKywkw2PmecMxWjAkfbLovd6bZOoiWztOxFbE+C+aprMkWNdKRJpr3Q0dNPFt1xB
-         lTlDUZDSuw6eZL+4Iog51569LsWp2k1VthOpr+wm0IbEKAnfhj+CueFFZc7BTGGcoNIK
-         +0fw==
-X-Forwarded-Encrypted: i=1; AKwUvBxdEWuyIfW9uCpBhiPRYiRUF+v3iTCjCSxyf3dFYEIELEa06Kt0SxGsU12snyqB6Ks/iCKT24yETfy0rA==@vger.kernel.org
-X-Gm-Message-State: AFq9FYIhEEb9myZAOWiU18mTrvqOdHzP7473FTbJ79Kdzy/vfoAHjPVj
-	6v8Va94pWpAWWwt6kipJGC6CHDJ26mR5udOMaba8T2EiOoDD+PP/L9SQ
-X-Gm-Gg: AYBFou3d6IdsvllDNPOTk5jsALTME6lgn2aL4PwP41ZjUXwc7Xc8/hGeVEhn+yJgvWI
-	JuX+lP2ByqZ3sm3WKsR30pc7zHBe3mRusw1ufDEdjw9VIuV0B9pju4ehG6WgwiB0neNSsu56JxO
-	BqWD9JXXm3t8JWjOp3N9lDgZJiTSoPdkBq5lQiZxVaJMVUbX+NI0pb8RJcoXwuZfuhnwTc4y38G
-	FoD5+C+LkGwfkw+7+o1dUzWd71teY5/c6rHZOTxRW9mSUNd4YqBOD9hFkPDLMjX7XOLkzms8PWH
-	nMbJxROC22BENyciVuqpTH+1/qLJ8T+I0fsqTKbM3JcLwXwy9PzfnOacMxCvzSHClKggDurbeMb
-	Fg26NZg7jQcYPiICEn++7OgAXqAyHFmlk5F5E2DPXvG8CswXYsl187q6mfS/qHIxaBQtZOu5e8w
-	6n24gLoxCoxB5sL/XvsI+XWP/HHT2zBCS6hkjrjiUOlM8LbdpZtZWZIYF3mPQsaAj7pvRTlFUGU
-	t6YWaoTSVnaPM8LI6QD1NXB1fnhFVyC3DutYgZSrUnB3exuohXIoIDatWOQpMvjn4Dza5J1+eop
-	hlUinyIYX0BjGymis2rstMs8AE23eQDI
-X-Received: by 2002:a05:690c:e194:20b0:8b1:7346:f1b0 with SMTP id 00721157ae682-8b1b5bbd517mr2470267b3.18.1793138314743;
-        Tue, 27 Oct 2026 14:58:34 -0700 (PDT)
-Received: from localhost ([2a03:2880:ff:5b::])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b19e67cbf1sm18555897b3.33.2026.10.27.14.58.34
+        bh=iqfPoWTkUvjEoiyLTnmr5mj5KovsR6sHRhbPRdxo4UA=;
+        b=uM4hJvD6GGS1YWkc5Zj9LjXm0r71C+WDzQwxq+5fmISO4w7QERZSJmBSDW0VHowA+9
+         wrXZfe92FZ5gGgsCOmT5TMPp53bxvNKgDm+7i5T2nPf98k2bSLM4P1fORRGNEfWDn3rm
+         m4YyPa61TxjOVLh6UHWrxX/L1fg3Q8p7Oy455pbzNmskCeF5s1TjDnmqQWDOamB60tn2
+         299Q1NuduA2/jlTZQqgzxtSxcJMdbq/Ydj5vBpPhI7mAPt1b8/vCl/SHZSRdOD7k/eWq
+         vRq6whQJzgeAKrnhVhhtJFRhDL4P0rqhY/BWjZa8SE72sfDzdqfV11DPoTOvPeqMl+Te
+         9j5Q==
+X-Forwarded-Encrypted: i=1; AKwUvByfp1aSo+ZaF1MmTxmO8Oh/JKsfAOso+J2zfcYb+lVAx3rcum49K1OUEt48iiq10wf1s6r5dgWl07IH6g==@vger.kernel.org
+X-Gm-Message-State: AFq9FYKYUQeu53zwlJoDrZ7nNbjxOQUvOCfxWOSPXM4gNS5132/hCNbD
+	PImYAeu7qhMU4gOPfPS2oeHmASmqtaq/KB/UFoPgcP0PCVF5oBM3tBRK
+X-Gm-Gg: AYBFou3V061t8bwqtbTbG1W/AV3XPRU0eo4KV8V8h+83iCpinmdI3uSsC1Lvhr8Loe9
+	EvtGm6vypnsOvIEsjh4F1UXg2xx9EHeLa3IW6m4gLKWHawF0rj3MF9oD5OXzql937dkdgUeZN2r
+	L8ctpa5I+2RWhBFrr6rtzeMAwyvyGP9Z7G8z1aIU1FseW38zIh3QqMdYjtxUi65BR11RRMRWgVs
+	zv3HibU1E2V3DHU4X0lc13pl/IHQNCGoxv6eBM9oBz/bHI7r9LY7BhrDg/J2uZgjm+VY5D1KC2v
+	oLGx/SSkrqTKXPIZFGzPyKCKkPD6+hKaTdDdPkJooAavekkLAFgy963sML+6FMNDJ2rZJKbNsA1
+	cvz5xFJ5Xt+k6xm97RHPG1I2KLnY/n/DO5uP6xSPckoLngoBtgRtyQoG0a2mP/+ibi0EpfgwHnI
+	HiKwZ0rm0Eos63WAsEjLXb/n+/yT0ey7O/CN0UMb3caDkcsItE2xJY4K3sWUVajcEsLC2vyPEBS
+	SqeYwdJzLFC5YbAgUfirjp0QnensH8/taS/BwcQ2TfpHZ2QfNcTMJ//JtA5pZMoKktBBfElDOj0
+	WW3d2iatnxlv75Rq3y2k8gI+VuiVVn/B
+X-Received: by 2002:a05:690c:a418:20b0:8b1:691f:ab4d with SMTP id 00721157ae682-8b1b5ba3a5emr1705147b3.35.1793138317281;
+        Tue, 27 Oct 2026 14:58:37 -0700 (PDT)
+Received: from localhost ([2a03:2880:ff:4e::])
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b19e43e1d2sm18903937b3.5.2026.10.27.14.58.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 27 Oct 2026 14:58:34 -0700 (PDT)
+        Tue, 27 Oct 2026 14:58:36 -0700 (PDT)
 From: Joanne Koong <joannelkoong@gmail.com>
 To: Christian Brauner <brauner@kernel.org>
 Cc: linux-fsdevel@vger.kernel.org,
@@ -109,9 +109,9 @@ Cc: linux-fsdevel@vger.kernel.org,
 	linux-nilfs@vger.kernel.org,
 	fuse-devel@lists.linux.dev,
 	Zhang Yi <yi.zhang@huawei.com>
-Subject: [PATCH 1/5] nilfs2: convert iomap ops to ->iomap_next()
-Date: Tue, 27 Oct 2026 14:53:22 -0700
-Message-ID: <20261027215326.2693300-2-joannelkoong@gmail.com>
+Subject: [PATCH 2/5] fuse: convert ext_map iomap ops to ->iomap_next()
+Date: Tue, 27 Oct 2026 14:53:23 -0700
+Message-ID: <20261027215326.2693300-3-joannelkoong@gmail.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20261027215326.2693300-1-joannelkoong@gmail.com>
 References: <20261027215326.2693300-1-joannelkoong@gmail.com>
@@ -126,30 +126,33 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Convert nilfs2 iomap_ops to the new ->iomap_next() callback. The callback
-is generated with the DEFINE_IOMAP_ITER_NEXT() macro, which wraps the
-iomap_iter_next() helper to finish the previous mapping if needed and
-produce the next one. No functional changes are intended.
+Convert the fuse ext_map iomap_ops to the new ->iomap_next() callback.
+The callback is generated with the DEFINE_IOMAP_ITER_NEXT() macro, which
+wraps the iomap_iter_next() helper to finish the previous mapping if
+needed and produce the next one. No functional changes are intended.
 
 Signed-off-by: Joanne Koong <joannelkoong@gmail.com>
 ---
- fs/nilfs2/iomap.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ fs/fuse/ext_map.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/fs/nilfs2/iomap.c b/fs/nilfs2/iomap.c
-index e130ed63abd9..359786c97f2b 100644
---- a/fs/nilfs2/iomap.c
-+++ b/fs/nilfs2/iomap.c
-@@ -67,6 +67,8 @@ static int nilfs_iomap_begin(struct inode *inode, loff_t offset,
+diff --git a/fs/fuse/ext_map.c b/fs/fuse/ext_map.c
+index 7f04edc33fe3..edb19498d496 100644
+--- a/fs/fuse/ext_map.c
++++ b/fs/fuse/ext_map.c
+@@ -210,8 +210,11 @@ static int fuse_ext_map_iomap_begin(struct inode *inode, loff_t offset, loff_t l
  	return 0;
  }
  
-+static DEFINE_IOMAP_ITER_NEXT(nilfs_iomap_next, nilfs_iomap_begin);
++static DEFINE_IOMAP_ITER_NEXT(fuse_ext_map_iomap_next,
++			      fuse_ext_map_iomap_begin);
 +
- const struct iomap_ops nilfs_iomap_ops = {
--	.iomap_begin = nilfs_iomap_begin,
-+	.iomap_next = nilfs_iomap_next,
+ static const struct iomap_ops fuse_ext_map_iomap_ops = {
+-	.iomap_begin		= fuse_ext_map_iomap_begin,
++	.iomap_next		= fuse_ext_map_iomap_next,
  };
+ 
+ static vm_fault_t fuse_ext_map_huge_fault(struct vm_fault *vmf, unsigned int order)
 -- 
 2.52.0
 
