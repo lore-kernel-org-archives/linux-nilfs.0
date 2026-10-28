@@ -1,100 +1,121 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.210.170
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1793204284;
-	b=vlTzFHMW/z0rl9OkYlV0i/tamjxP4qpr4Fdh4vYFFz2p0nS7+JbEsbQwVfbvQZnMnAqZ
-	 FOZyMiIMsWW8AqSeVQoYvIxlzAN59Ju9i2A9BV1Enh5FGZkaw3Ra2itfAxFgMthk44LXH
-	 u6QruORawcQvaAYZ8cyQOS+9KNIM4aV7nQ6YbGtsOoihw40zkARzvRojaA27jOB+2E8wm
-	 aO96YUnU6NR00+Nnixz7fVeZUNP95rXK35mFGzqHfl5E+yYgEHBfn8b5VfQBCOzqkXcFD
-	 deqJCev8i4yn1lpqoAtb6CAegJxME4RNcTzioqfDop0OtRnwswQSdA1RdTIOXANUHeg==
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.remote-ip=170.10.133.124
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=fail;
+	t=1793225391;
+	b=2El7wnSmUiSCumJVAqdUd1izr6XpG6rJ4FvzS3e6JGLhxau8m8yKoGunN+3jk9VKzvBs
+	 SuI6MJK6FsiYoBijA3ajpJCZ/qvM4MsosVCD84e08G7Pq8YcS2LndchGpLoII1EAcRJbm
+	 NnOG5NTt3/VlKdSIgrlOoRbcqIzOHjHnm8lIv/cF0rYv2vzLBzevXMwnuDLlr7yW1Rij9
+	 12a+LjMiiXz8ly6sDYDPEQzIv8d069JxyVYa7GT5nVua3Rwmq/KO7or91mCD/kGWNyhR8
+	 EkYRHWxG+vfAHPCSZmhNlr3hqBG1paXyrWVM+zIRbnEce5h7/jZUATosxzFEi1kfZ5A==
 ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793204284;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	a=rsa-sha256; c=relaxed/relaxed; t=1793225391;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=LR+4Nh8FYTRY8kZRrhgD+RKAvmlbTqJy80aNBobHu6k=;
-	b=qkK8ffF/gcUW6Y/BNRY9XaE/dn8aJ96KLvS6EQsZZy8qKJOvbzi9/1BKqJIMZa9/Dbqn
-	 IXUbZY9+w5fyGibO246EFW4qyM1eVzXMCuc7SGt9/8izKl5AdtxnO245Ni+CnFi0Ncbm2
-	 WRGcRXgJEmQjZ7xlh0+D+DTlMLne7CdbhkGl6MG7dcJFQhsPeGUtMYeWfZppinVuTYqB0
-	 YxQjo2vB+4+sRiq8a7wgEyVzlZYYTPhfs9jM8mgjVna9aTvvKdscJ+v0kmBlXEqYmMkA2
-	 P5fW93zgWxqbdcQcCAZKNE7gSBPYQHx8dpBPbyNnDZzKauDEcDHyH5pQswXDzrUaH+w==
+	 X-Received:MIME-Version:References:In-Reply-To:From:Date:
+	 X-Gm-Features:Message-ID:Subject:To:Cc:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=j5xHrk121VJ6jsiOiBImMpaem11Ex15L22vqkzMRx+Y=;
+	b=Xd6hf7dIDBWWkAFyO1uobujRvWcDWSuwysXb8YiEgbpAbPopD6nA9T1IfvYA+oOBykPI
+	 u/smp7AK0ZpM4MBsXClb2wbZo/9G4A05MpHcvV2s1eSriOq9v1zFl29SNB/PlC0GhEoM8
+	 LJBU3egChkB5V2ddAn+nCcpejibbW/b/vfDuB3+dkAsV86HrJ6HYm4lx9Dlz4Qj0CsfZc
+	 gSGrPg0S1mRc1eQ5+Dm53M/LHMfD4LVH5rWHA5Av9w0xE1QUFrSLvtMb0ZD8DfHFt+opE
+	 vj9hX5GHKAfzqvRjfN6OSj1HMdR/5ssqlAzpu4VNp6xglHh6Kz7cjn5FVhvSMrRAsZA==
 ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=aE0UVEPl;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.210.170
-Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com [209.85.210.170])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=temperror header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=PNja0RrK;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=dMvVeWef;
+	arc=fail smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC27C606A31D
-	for <linux-nilfs@vger.kernel.org>; Wed, 28 Oct 2026 16:18:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DC27C606A31D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5830606A31C
+	for <linux-nilfs@vger.kernel.org>; Wed, 28 Oct 2026 22:09:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A5830606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=aE0UVEPl
-Received: by mail-pf1-f170.google.com with SMTP id d2e1a72fcca58-89ff475a152so575109b3a.3
-        for <linux-nilfs@vger.kernel.org>; Wed, 28 Oct 2026 09:18:03 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1793204283; cv=none;
+	dkim=temperror header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=PNja0RrK;
+	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=dMvVeWef
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793225384;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=j5xHrk121VJ6jsiOiBImMpaem11Ex15L22vqkzMRx+Y=;
+	b=PNja0RrK+GAXFseGHRAPgDcQljq0pWRU5IrNz2yhBUldeqB5xObADIbjyjHyNHrutF7Pt+
+	rJoNk3kv9NPLEvl8XKZoimFvycT999RKjoXG01AAR++Ak8kkM30MDhOQrx+KtOHBWo5kfK
+	yRocWGrPgLWx6N9WURbn5mAhp5Y0UlA=
+Received: from mail-yx1-f69.google.com (mail-yx1-f69.google.com
+ [74.125.224.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-672-ZIOC_dt9MaCWk2IccF0HyA-1; Wed, 28 Oct 2026 18:09:43 -0400
+X-MC-Unique: ZIOC_dt9MaCWk2IccF0HyA-1
+X-Mimecast-MFC-AGG-ID: ZIOC_dt9MaCWk2IccF0HyA_1793225383
+Received: by mail-yx1-f69.google.com with SMTP id 956f58d0204a3-67906c453b8so313557d50.1
+        for <linux-nilfs@vger.kernel.org>; Wed, 28 Oct 2026 15:09:43 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1793225383; cv=none;
         d=google.com; s=arc-20260327;
-        b=a9urkNWZ0lO4P0PuyQ86TthI4whTgtT/wCoCuWzD1JyfouSTvwKQz/uJyxDL0uI3Oa
-         tygpDnU0K9UyAqVZ2dEJYsh8Beq14TY6RtoVM6F2aQ8M6PbQloHmccKnVTNXn1WQN0Ok
-         qXTSPs2MM3TcJkZA1jBLNZyIJjYmgrqLF8EwoIaeqmP1+guwYRhtziEn3BTxLtfYNz6j
-         5086R0vQ5lXzne8MWAiYOzV64uu8u+A0tW+/lLK6eYTM0DFlXr3sg5nZsAaXTGWWbnb3
-         6Jj0mBD9x9qePnMf9fp+1txcQ2UvQX0gq62UnsFUq9bgyztDhb19H5uUHVHtu4e7xHGr
-         6lAw==
+        b=TSskyY3m7NgmBk+JWyUnGd7mpDwdH2tqBshk8ERJWDpsfPublEF92zyL8me8ZVJo6v
+         YFaZ2XHSr+3n78Xf+7vkpXLSubO2ABaTORezoUx94eKJB58/HC93oXhK7pqfWG4Rxro1
+         nG6/Mon8h+Z0QB7IQ9MJwT6Hr4XK081cueVr3TbiQZ0A7szdx+mLDML14efqGDzoIPaU
+         n4+KQIw6DE7xhdAUe8MrejbX1hlZ3p8aoE699sHFOofku5isbbJ+ffptTKAH0/X0q34w
+         47ofslRXTHeuhFMLs1O0RFClKwhRT8DSBu8fm5ACcr+Z5Xpa07uvz+5JBS5obab2rhXT
+         1E6w==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:dkim-signature;
-        bh=LR+4Nh8FYTRY8kZRrhgD+RKAvmlbTqJy80aNBobHu6k=;
-        fh=C4Fywuu8Du8qC3Nw6CVBDAImQNrz2/s+35LgYya2ywg=;
-        b=XVtKJGf6FTPvjPmPwY86e1JiB9nq0yxbXgS343COrO2mLcur5Xp+Jtviv0gIRq61RQ
-         8BZ+oNAwhZ+LKrmFBvGYdLemJZiibyEV4u39zKNEHlKf1GOikA9qyttTr8fplXPUDUuV
-         rX6ZriZFREaI37YTGkLFzqZYuGTAXNIYrk6Jm5MyXKRPh80KRunzB8rcHc53/c6QdnIK
-         px+d4asElnljQzg5inej3XA/Jb+SK3vK7E8rvzSNtbJiT1AQkS0+/ABqAjF9wsIlcaNc
-         NHT/tcGOaEXzuouSlvglhGuzYxTEeGuSmzCBPpRhBLtdI9U0uhn/ES5Sbxx52w5/50uj
-         Q/ew==;
+        bh=j5xHrk121VJ6jsiOiBImMpaem11Ex15L22vqkzMRx+Y=;
+        fh=ME8tCCzkof1gmj7IhEcm254vo8Pu9L/6ff4qr+YNkK8=;
+        b=iXavuGA6PrzSU1BvFAjzwQMcoV8NU22fHeJhZlbYj6tp5ZCcaUh1igqcgQvdRHX2yE
+         fxrpz8WwfT8gDfUKhWaZwPbNoYV6+RQkeKnY8aj3VnCkyncFaj+rPWW+MMnd0hpn9mKe
+         XjhkfboHcHlKybqknS/tipQ/rFRYJWgIufmKAGx1FbIqEnWr+vJmMWQmq++W9yw8YEoK
+         jAcqnyl3UdVzM5iMLwVP3cYJssa+nCDKg8FNKcPQZQXt+z1e/XCBtcrNkWbQNg2dT0UJ
+         1R33EdHDzUj6COUh+hiagFuxUQI6xcXK/9UGXrfAH51zd2UW27YmSPj3V8N4hTxTWK0B
+         hQsw==;
         darn=vger.kernel.org
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793204283; x=1793809083; darn=vger.kernel.org;
+        d=redhat.com; s=google; t=1793225383; x=1793830183; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=LR+4Nh8FYTRY8kZRrhgD+RKAvmlbTqJy80aNBobHu6k=;
-        b=aE0UVEPlAf/V7Y31izbriey87faIFsoS80MZfhPz+nDPK2fFTvb3pIODF+rYWahhAL
-         IE/GRtPxJFWJY401Rp92EZ6jNjNQiz4DcR1KQKNa6Wrp8DP5JXEhIV3bawUSZ6OBMF3Z
-         Fag/CZu8p4S0vDV+pKLBKXG5EdyK4ORV7TOV/oJxfGOY2FaA54ToDtf6HylO7ckImk9L
-         EZJGWpNqqI1H/cea5knc2AQwEuMaFuJBcGtCUYmE2I6v4kVZDruIbLWQjeqrsqwYkeKv
-         brBqy/vSgeArKD9ZAiQYA43dPDFIFx74Cu6p0i9jVLMzAd7CHb1//RgOJp9+fhNk+tAC
-         6PvA==
+        bh=j5xHrk121VJ6jsiOiBImMpaem11Ex15L22vqkzMRx+Y=;
+        b=dMvVeWefC8P+UdQKNVCTRzDnhWHngZQGob2rSgzwsZSnRN8SAHr7CL96OPYJXufFq7
+         zSTFFPllhPr/w76wrseeWsykFIT3XNeylizZvRvScikFw2Vx8ZBVf5aKYuJSSTUPuuch
+         XBaTxNgE5Gyy25Odb94BXqgaNMMlvyhAsHvl+cohQ1ckCaDBDm4+NkPEdFeD/j45D4SX
+         9JdubWa1Rkola0sqbNiDrUuR0ynjj8Js5euvpFf83x/dOZOzpzImQtYe9Q9exxMiq/qr
+         mXS/pEC6VjG6Gc4ktJQ1wDheP9WEZsIfL+MfkoZBHHuqMX4NfKOOS6gRPfYVsrX4HqWa
+         L7zw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793204283; x=1793809083;
+        d=1e100.net; s=20260707; t=1793225383; x=1793830183;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=LR+4Nh8FYTRY8kZRrhgD+RKAvmlbTqJy80aNBobHu6k=;
-        b=Y6uEMY9IBLITutuZIxnNC17PaASIA206EZnTMtxq4GP0UcZ8XVSsDzUoYpKOVF1/fm
-         cSxc6LTVu5tYHEdG611p3NN9q5UhRmQT33/xE1Zs4nA5kPuTOvElpXUMmRwt+XcDSFhT
-         iphjFwqOAKyeYjckAGRt2AVi8gYDvYoJ6CBCTyvBn0LsRGEFXuLIkz42006mE6KpmdFj
-         DKbti5+v2mw5f4b+V5IvMHARZYv6ya8JBLai4d+bpxy+yGxPvPGoqIb7WuTHo1hX4L8t
-         fboZY8wKRjXhfgybnh1E2Z3N53E907Y30Mf+AKbdj9rc+VvIY01q1hccrTGG7lf9x9gt
-         gyWg==
-X-Forwarded-Encrypted: i=1; AKwUvBx3Tkd5+4Y3JFVTcOI5p19uwI41xt+7sZPK99f2ohNSk3eyJ43L5htIbEOQhZv2NREUmoYSK3DWZnG/wA==@vger.kernel.org
-X-Gm-Message-State: AFq9FYLU5H6esHOBh51U8D2+KTRJQN8zw+VaorQs6tah8zR7YpggHyNu
-	LIdb7cPTa4bKj6F3CK3ol4Jol83UwGdCApuiFoSFE5p4uSVCGiG43VMdIIcPQAR9h2D44NMYTe0
-	WBjbTsRRL1cEgvlIEYhelrPc794sjW9g=
-X-Gm-Gg: AYBFou2Dd+lMjFf/FrejXCrDB3bpK4BzLANBzwIbbZZWc60wXbuP2Xd43ZLNihQJyHE
-	ax4bNQnZoLK63b/M9+ZarbNOGRBXCwKk49AdYUZzLOXpmPnFtmzp1GBX5sDm16cidYcCE0Lf6n/
-	xSd2HUuO/LPfrTnbDMkz2sdLGMphtZHIKIMr5mF0U0RMqdhfNROxGAvmnXL1hKYoaHWWxxZ25x+
-	Qtm/z0Zi7PSSf8Wfryw7jhUySqTxE7j910SRP8rcvP3bfwCmxDkzvJrsXktJRO95aFyWH725eSp
-	E2DkXR79cfFp2bwhwtin1JoY5N0EAAmSpg53RrtiDe+SEBU8L9JP4PZlGLasWp1BiZhMrkxbSeT
-	jSR20zymRdJKa2QjkweYOtHCYO530bnk8rDEUmw==
-X-Received: by 2002:a05:6a00:391f:b0:89e:9560:fc7a with SMTP id
- d2e1a72fcca58-8a6e6efa7a7mr2168656b3a.29.1793204283163; Wed, 28 Oct 2026
- 09:18:03 -0700 (PDT)
+        bh=j5xHrk121VJ6jsiOiBImMpaem11Ex15L22vqkzMRx+Y=;
+        b=I06d+t/2Jkcu+WmXRJG7MjL7GCbzrTqLaFV7GHTXFRw3b6zXJsnwlovAlxWS79dj53
+         uwmwjePpzycPzUIfMyOBWzxNPD7Wjs6wcCqlj6BFtf/x2rsLP4dPy8U5uESSx1pIb19J
+         FZyTezYlFDAZg1dmavefup120kIITfACOleBIKbbKNZqPQncjshMSh/SVzx+jaBZxBlq
+         oV/AtbkbEgmgTO+A3IABIR1BCDpKFO7fVNXq0I7u4Nmv/EUR8zVC+1FaMe82P6enGEhP
+         /4/SJIVxoCqgUiZ7I++phHHFbTwNXmod8YyNczldeuZLnAsnoaFIRxoHTiKyTSIkm7YZ
+         S5NA==
+X-Forwarded-Encrypted: i=1; AKwUvBxzYe3acQ+DUv4M5uZrZ3s0K+EQFcnb9NPVBYhYZhq4zkbrvE20c5h6RzZE7jj7/Yd+8XNNGC5Dc+f/WQ==@vger.kernel.org
+X-Gm-Message-State: AFq9FYIrEsPOMLC57pzFFjYd09fDjI2sEbEvna5KuHZQhBzE04q4ofgQ
+	Nn3FHSwafoBpoJjLTB6P0X8rsG+2sFFZZxL2HFvoXGcVRT9qCNGLUuUZZLtpVEBjlYQROXB6nEf
+	WPv+tqlA1GK1xrR6TSnkRuprM7/haP0NRCoHRDuplO7FfiHKWJ65dKZKwKbZ5KC6ptayLMXGByj
+	CNwpcPAUawUMT9Lm/GL3NORg8uOiL+43ZPILBopik=
+X-Gm-Gg: AYBFou2nGdVeMUnwsCSaQ4RK85i+9mrCCII8esEvJIyvsdNhGjpFkve7vzOWACAPVPW
+	aGc2Nd26PYw4b+qTs51VcebOt2QCcT3tFeANx9FDPpV7WUjZKcUWdHXedyFdZ+9x0R5Qe0TiZOP
+	Wl2BPKZiqDFH2sYJrKfOHW/4V6EeLKs8EpQ7cOS6vawQ3XBg9cRFVfrvd/JgmarqZrvR3Rr7x7l
+	nkpNtx5ivyh1+QXrJnliebgTV3liBRh6sEKYrUNMTRo4Q==
+X-Received: by 2002:a05:690e:1918:b0:679:ad2f:3fbf with SMTP id 956f58d0204a3-67a8d0047a5mr704871d50.8.1793225382844;
+        Wed, 28 Oct 2026 15:09:42 -0700 (PDT)
+X-Received: by 2002:a05:690e:1918:b0:679:ad2f:3fbf with SMTP id
+ 956f58d0204a3-67a8d0047a5mr704846d50.8.1793225382297; Wed, 28 Oct 2026
+ 15:09:42 -0700 (PDT)
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -104,70 +125,43 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261027215326.2693300-1-joannelkoong@gmail.com> <20261027215326.2693300-2-joannelkoong@gmail.com>
-In-Reply-To: <20261027215326.2693300-2-joannelkoong@gmail.com>
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Date: Thu, 29 Oct 2026 01:17:43 +0900
-X-Gm-Features: AclHuK91pZpqmliH2N1ROYQZJFORz_xx3uP0uM_hYUkPFZ1oO9AzV0q2NKIx0ms
-Message-ID: <CAKFNMo=Kqs0T=a578WN+=PZ2gse2APWZ_jnJ64XyrerFK41sXw@mail.gmail.com>
-Subject: Re: [PATCH 1/5] nilfs2: convert iomap ops to ->iomap_next()
-To: Joanne Koong <joannelkoong@gmail.com>
-Cc: Christian Brauner <brauner@kernel.org>, linux-fsdevel@vger.kernel.org, 
-	Christoph Hellwig <hch@lst.de>, "Darrick J . Wong" <djwong@kernel.org>, changfengnan@bytedance.com, 
-	kbusch@kernel.org, Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>, 
-	Jonathan Corbet <corbet@lwn.net>, David Sterba <dsterba@suse.com>, Gao Xiang <xiang@kernel.org>, 
-	Namjae Jeon <linkinjeon@kernel.org>, "Theodore Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, 
-	Miklos Szeredi <miklos@szeredi.hu>, Andreas Gruenbacher <agruenba@redhat.com>, 
-	Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, Hyunchul Lee <hyc.lee@gmail.com>, 
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Carlos Maiolino <cem@kernel.org>, 
-	Damien Le Moal <dlemoal@kernel.org>, libaokun@linux.alibaba.com, bfoster@redhat.com, 
-	linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, 
-	Viacheslav Dubeyko <slava@dubeyko.com>, linux-nilfs@vger.kernel.org, fuse-devel@lists.linux.dev, 
-	Zhang Yi <yi.zhang@huawei.com>
+References: <20261012-work-fs-sb_rdonly-v1-0-60743a3dc326@kernel.org>
+ <20261012-work-fs-sb_rdonly-v1-21-60743a3dc326@kernel.org>
+ <CAHc6FU6z4kX5R3Og8m0dYOHsjFcw+4Btvfe87AGPxy_EWs0E7A@mail.gmail.com> <20261028-zurschaustellen-okkupieren-inkompatibel-d11525ce88b8@brauner>
+In-Reply-To: <20261028-zurschaustellen-okkupieren-inkompatibel-d11525ce88b8@brauner>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Date: Wed, 28 Oct 2026 23:09:31 +0100
+X-Gm-Features: AclHuK9MzobLdiG2EG9M5KT_ibZzYxdrTghiXff6ZlesOE7YSK8Ag_RtXekxyZI
+Message-ID: <CAHc6FU6VSAWQ4RJTO_eLnpqN5qvrShbJeT+ADwiA6ohpq8dO4Q@mail.gmail.com>
+Subject: Re: [PATCH RFC 21/28] gfs2: don't set SB_RDONLY on withdraw
+To: Christian Brauner <brauner@kernel.org>
+Cc: Jan Kara <jack@suse.com>, Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, 
+	linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net, 
+	linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, 
+	linux-fsdevel@vger.kernel.org, ntfs@lists.linux.dev, 
+	ocfs2-devel@lists.linux.dev, linux-btrfs@vger.kernel.org, 
+	gfs2@lists.linux.dev, linux-efi@vger.kernel.org, 
+	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org, 
+	stable@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Oct 28, 2026 at 6:58=E2=80=AFAM Joanne Koong wrote:
+On Wed, Oct 28, 2026 at 5:02=E2=80=AFPM Christian Brauner <brauner@kernel.o=
+rg> wrote:
+> On Fri, Oct 16, 2026 at 02:01:00AM +0200, Andreas Gruenbacher wrote:
+> > According to commit d564053f0746 ("GFS2: Clean up freeze code"), the
+> > idea of the freeze sysfs file was to make it behave like the FIFREEZE
+> > / FITHAW ioctls. This isn't what the code is doing at all.
 >
-> Convert nilfs2 iomap_ops to the new ->iomap_next() callback. The callback
-> is generated with the DEFINE_IOMAP_ITER_NEXT() macro, which wraps the
-> iomap_iter_next() helper to finish the previous mapping if needed and
-> produce the next one. No functional changes are intended.
->
-> Signed-off-by: Joanne Koong <joannelkoong@gmail.com>
-> ---
+> That's a pre-existing and separate from this series. freeze_store() calls
+> freeze_super() and thaw_super() directly with FREEZE_HOLDER_USERSPACE and=
+ never
+> goes through gfs2_freeze_super() and gfs2_thaw_super(). So it never takes=
+ the
+> freeze glock. I don't think that's for this series to fix.
 
-Hi Joanne,
-
-Thanks for picking up the newly merged NILFS2 iomap code and handling
-the additional conversion to complete this series.
-
-While this patch is an intermediate step, the changes look good to me,
-including the finalizing conversion in patch 4/5.
-
-Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+I mainly wanted to point out that this behavior isn't intentional.
 
 Thanks,
-Ryusuke Konishi
+Andreas
 
->  fs/nilfs2/iomap.c | 4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
->
-> diff --git a/fs/nilfs2/iomap.c b/fs/nilfs2/iomap.c
-> index e130ed63abd9..359786c97f2b 100644
-> --- a/fs/nilfs2/iomap.c
-> +++ b/fs/nilfs2/iomap.c
-> @@ -67,6 +67,8 @@ static int nilfs_iomap_begin(struct inode *inode, loff_=
-t offset,
->         return 0;
->  }
->
-> +static DEFINE_IOMAP_ITER_NEXT(nilfs_iomap_next, nilfs_iomap_begin);
-> +
->  const struct iomap_ops nilfs_iomap_ops =3D {
-> -       .iomap_begin =3D nilfs_iomap_begin,
-> +       .iomap_next =3D nilfs_iomap_next,
->  };
-> --
-> 2.52.0
->
