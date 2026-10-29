@@ -1,48 +1,49 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793290106;
-	b=XlUjQJwPvVQnCBHw0dkiTrMRxg4OtAtfJlGJNfXJC2RGvYlLqCZfn5BE/5nm8ZXxscjJ
-	 4JYaMW5BzwJI0VFioo5D/zMMbUrtcdWRz78Ra2WaxDyCGtst+CnJH0vRhttuf2sbX2lLp
-	 2iQafE02A3K/XC22eNNFWa4ZDjQHD/biklEnPRPqQoGhL+szE3QwWMroXcZ+Nl6g1Fmdq
-	 KsYk2InY6ya27LvS8+8uoypMeMalfxVHplmBqw4bhODJkgjYdOSGH9krMiXmYubWuhgWX
-	 8CIfMfWsi8z7NJI2uRv5A1/Wixt+4KU0jpUYQSnkR7U84vEmfGHtA4uMUh7+0/rr/5g==
+	t=1793290098;
+	b=U24GrwWfoAj1eKZR2cOD9gc9CMo8vKcNXbojvyX62wRspLrqPHes05xe3brtmpagajXW
+	 pM9ftT36z7UU0dVfyNUCgZm8ykuf1S3oxSS9fmDqiUjagzSW4cWV6HhNNzJZVNU/hLAMx
+	 uJcUEvG7KGSAoFg2I40OamknGZ/dbTfMZVW8oC4VMlcmnv7QBUkb60aw1WSk/niYXkLYl
+	 bgLMmvbOYeDPjAkR6UcP0a4A0oF22FEPI+0tx24rYPRiH9LxSs6KkQdZzNRPlS4MzTUcO
+	 CMhz6Pe7SLj/6kPWrN/eb1/nBpu54tYN1Ds66ZlqDWqOWEOsM0b+Ke5SpVFZkcrjbcA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793290106;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793290098;
 	h=Received:DKIM-Signature:From:Date:Subject:MIME-Version:Content-Type:
 	 Content-Transfer-Encoding:Message-Id:References:In-Reply-To:To:Cc:
 	 X-Mailer:X-Developer-Signature:X-Developer-Key;
-	bh=I/oiBbhXQXOuy5/WHon3lGMzwYKAwOcdwRlB5xpdxo4=;
-	b=K4qh38AOOUfitVStKOlbi/c2Z2+9VaifUdMsjXtGz3QQ3FIz7H7rlaqZUHEAHZ5i8Cbx
-	 fxJE6yiPI2Yg4f3b97o2DWFDdIkChHLo35kLy1jPS15J4t35m/M9zEvrGKNuYnkk9qaZd
-	 0D6l/qbXyRk3iA2dNqOCT9Z66CF6W/K6ADLrdaUUnk3id7tMJDD9esLMut90qqKSuwGYA
-	 usB0tJTCk19a/PBV50TCE36b+FxtNhf+GOmGKTftHXvQAoTEVXyeVahjSArccRaNWu3GU
-	 O3sm3N96MCQ7J8MQRx+bOoqx3Yx2CTwF1CAM5nspBEAcU5gMlkRcMBx2dI+KVH6cgeg==
+	bh=iVtfPcXJU1Dl8ABOoiDUG8I8knzlj5kyhgqCw7tVF5M=;
+	b=hhXAv6BtBmwaHVpJ0SIw+BN5ULvmFtvkfduDGZdL9fwAhYQkmdck1X6NkX5Hq/AwTrBU
+	 /FWWErDnrFT3aUKVgX7mF72OnJi1MaEzDr7+Wf70l0y6NPR7AC9Li0hjf08Y+5DUfgKBO
+	 bDaQPvpBaSy/o1ZKbkXBO8ODqO0CzaiCN9ePnqOoSbwOn96/P2Z58BbjvnDZ5yi0zHx2Z
+	 bnFfrd2+5u8+vrCZTVbxra6lnLdKNkIaxRlNsxedghw4Z007U6OC6UriWgczti5xJbDSQ
+	 1Ei9hrzinwAAZyBwXgxzf2nT2mtOYwQf6uue2uut1BbFlIH02whrDvSceqp7HQ994fA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=apnLeEp6;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=SaNj3haK;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2380E606A31E;
-	Thu, 29 Oct 2026 16:08:25 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9FD70606A31A;
+	Thu, 29 Oct 2026 16:08:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=apnLeEp6
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1B1211F01824;
-	Thu, 29 Oct 2026 16:08:21 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=SaNj3haK
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A20F91F01816;
+	Thu, 29 Oct 2026 16:08:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793290105;
-	bh=I/oiBbhXQXOuy5/WHon3lGMzwYKAwOcdwRlB5xpdxo4=;
+	s=k20260515; t=1793290097;
+	bh=iVtfPcXJU1Dl8ABOoiDUG8I8knzlj5kyhgqCw7tVF5M=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc;
-	b=apnLeEp6sWFy2449fzQAHriIIqCswM8uoD0mTMMHveLird8YKw0oOjAo1G4GlLf/E
-	 wlj38mUL83hgTM19xi+oSPQDnV9WXWU1yHBf3y2zit5T3almbhv+eS37w3lnS9deCd
-	 16QZrfScJpN69CogqhFXyUYjLlkeyV0oTct2sfU+T4L+omqsbHA4buFp6xSmkfbKp8
-	 pWym+AoDsETj00RyBN8gL99EcOvnbplUFTpKbcTnb0LQgoQe366xX/UwyS/NQOtRb3
-	 G9NgaIdQ/P78ph9RLW7QyFUmrAYZUeSPX4LFQAH48AGbNdt/9cXHMX5TwjlcYT/9Fc
-	 2kP+LcuIAbwjw==
+	b=SaNj3haKjPhS0EV5du9JfwoaG8Rin7tmXFLxPOygnrJjfpOEMsH1kKI3PDQ5XrA31
+	 elsbGH2JC31Wkk9r2juQXQaMil6mGer0JYCXeGnlS7/hHIbTjXtNGAiTEsULpLJxMu
+	 x7YJWpentI1ho5FrGAqj77ZuQkE0HOtBSPBH+2h5Sw/HmrQ7Qr5Z3mw2MkbbdT1YeW
+	 C4YSP8lYmdEQ5tm4M6lVTrBxeZPwia5DPaoZf9AuXRGXTJe+LAly8bh0nCkCaJXpRy
+	 gtiqGKF122MQYR1+vHibsjYN3LXS6PReB5hM7+APMQef/PKfJbmCFxtyQT0H0voNLH
+	 HSOMgvztVLvIA==
 From: Christian Brauner <brauner@kernel.org>
-Date: Thu, 29 Oct 2026 17:07:06 +0100
-Subject: [PATCH v2 15/34] ufs: don't set SB_RDONLY after filesystem errors
+Date: Thu, 29 Oct 2026 17:07:04 +0100
+Subject: [PATCH v2 13/34] hfsplus: don't set SB_RDONLY when creating the
+ attributes tree
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -54,7 +55,7 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20261029-work-fs-sb_rdonly-v2-15-2f44f64f0b66@kernel.org>
+Message-Id: <20261029-work-fs-sb_rdonly-v2-13-2f44f64f0b66@kernel.org>
 References: <20261029-work-fs-sb_rdonly-v2-0-2f44f64f0b66@kernel.org>
 In-Reply-To: <20261029-work-fs-sb_rdonly-v2-0-2f44f64f0b66@kernel.org>
 To: linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.com>
@@ -65,243 +66,133 @@ Cc: Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org,
  linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, 
  linux-efi@vger.kernel.org, linux-mtd@lists.infradead.org, 
  linux-xfs@vger.kernel.org, 
- "Christian Brauner (Amutable)" <brauner@kernel.org>
+ "Christian Brauner (Amutable)" <brauner@kernel.org>, 
+ Viacheslav Dubeyko <slava@dubeyko.com>
 X-Mailer: b4 0.17-dev-ce4c1
-X-Developer-Signature: v=1; a=openpgp-sha256; l=8083; i=brauner@kernel.org;
- h=from:subject:message-id; bh=5wkaJy8Del2GgoWgJLyIqhCgM2FMCOm88L7ydmoZ6Xw=;
- b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQ9ztf/dfEn9+fLU13UX185N/37l95e7lUXL32av3rm1
- zcbC9bkSXSUsjCIcTHIiimyOLSbhMst56nYbJSpATOHlQlkCAMXpwBM5NoLhn862w35hG/cdz0h
- +/8km8q/0xs/NQn/v9XN8UpsgWxn/T8Zhv/pXwwEzuUckp3csGHLlhShgCThzspVCxf03T0ZvHh
- BnwEvAA==
+X-Developer-Signature: v=1; a=openpgp-sha256; l=4282; i=brauner@kernel.org;
+ h=from:subject:message-id; bh=ceXsregJOQeiQPf6PAYWpIExvMexFMwQYxKrBcvN4/M=;
+ b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQ9ztf/G9F4fqpwKhPTyquti1c/aoie/mDt5qzJk/o3n
+ OiRrDI53VHKwiDGxSArpsji0G4SLrecp2KzUaYGzBxWJpAhDFycAjCRNWcY/ofueNnGaSAsE9ow
+ Q/pZjtOVzvKr4cfmvV425Zn10Rk6T2sYGR4lKM17/HbTJjHHb7e8RaenbuR6nMZutGfxEYddod2
+ vjJkA
 X-Developer-Key: i=brauner@kernel.org; a=openpgp;
  fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
 
-ufs_error() sets SB_RDONLY on every error, whatever onerror= says, and
-ufs_panic() does too, both without holding s_umount. If that happens
-while the filesystem is frozen through bdev_freeze() thaw_super() sees a
-read-only superblock and leaves the s_writers rwsems locked so every
-writer hangs. It also leaked the cylinder group info because
-ufs_put_super() doesn't free it for a read-only superblock, and a
-remount to read-write read it in again over the old copy.
+hfs_btree_open() sets SB_RDONLY when the map record of a b-tree doesn't
+mark the header node as used. That's fine while mounting. But
+hfsplus_create_attributes_file() calls it too when the first extended
+attribute is set on a filesystem that has no attributes file yet. That
+runs on the live filesystem without s_umount and a filesystem must not
+change SB_RDONLY behind the VFS' back.
 
-So call sb_set_emergency_ro() instead and let the VFS refuse
-modifications. ufs_error() and ufs_panic() still mark the superblock
-UFS_FSBAD but don't queue ufs_sync_fs() anymore which does nothing in
-that state. ufs_put_cylinder() doesn't store the allocation rotors and
-ufs_write_inode() refuses. ufs_handle_dirsync() treats EROFS as success
-like ext2 because the directory entry was already changed.
+hfsplus_create_attributes_file() opens a tree it has just created itself
+with the header node marked as used, so there's nothing to check there.
+Move the check into hfsplus_fill_super() and do it for every tree it
+opens. No functional changes.
 
-A remount to read-write fails until umount. A remount to read-only works
-and keeps the cylinder group info because evicting inodes that were
-unlinked while open still loads cylinder groups. Writes through file
-descriptors opened before the error fail with EROFS.
-
+Suggested-by: Viacheslav Dubeyko <slava@dubeyko.com>
 Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
 ---
- fs/ufs/cylinder.c | 12 +++++++-----
- fs/ufs/dir.c      |  3 +++
- fs/ufs/inode.c    |  2 ++
- fs/ufs/super.c    | 56 ++++++++++++++++++++++++++++++++++++++-----------------
- 4 files changed, 51 insertions(+), 22 deletions(-)
+ fs/hfsplus/btree.c      | 42 ++++++++++++++++++++++++++++--------------
+ fs/hfsplus/hfsplus_fs.h |  1 +
+ fs/hfsplus/super.c      |  5 +++++
+ 3 files changed, 34 insertions(+), 14 deletions(-)
 
-diff --git a/fs/ufs/cylinder.c b/fs/ufs/cylinder.c
-index b930ee1cf853..e0360873a7f8 100644
---- a/fs/ufs/cylinder.c
-+++ b/fs/ufs/cylinder.c
-@@ -117,12 +117,14 @@ void ufs_put_cylinder (struct super_block * sb, unsigned bitmap_nr)
- 	}
- 	/*
- 	 * rotor is not so important data, so we put it to disk 
--	 * at the end of working with cylinder
-+	 * at the end of working with cylinder, but not after an error
- 	 */
--	ucg->cg_rotor = cpu_to_fs32(sb, ucpi->c_rotor);
--	ucg->cg_frotor = cpu_to_fs32(sb, ucpi->c_frotor);
--	ucg->cg_irotor = cpu_to_fs32(sb, ucpi->c_irotor);
--	ubh_mark_buffer_dirty (UCPI_UBH(ucpi));
-+	if (!sb_emergency_ro(sb)) {
-+		ucg->cg_rotor = cpu_to_fs32(sb, ucpi->c_rotor);
-+		ucg->cg_frotor = cpu_to_fs32(sb, ucpi->c_frotor);
-+		ucg->cg_irotor = cpu_to_fs32(sb, ucpi->c_irotor);
-+		ubh_mark_buffer_dirty (UCPI_UBH(ucpi));
-+	}
- 	for (i = 1; i < UCPI_UBH(ucpi)->count; i++) {
- 		brelse (UCPI_UBH(ucpi)->bh[i]);
- 	}
-diff --git a/fs/ufs/dir.c b/fs/ufs/dir.c
-index e96174b738b4..78c883921115 100644
---- a/fs/ufs/dir.c
-+++ b/fs/ufs/dir.c
-@@ -64,6 +64,9 @@ static int ufs_handle_dirsync(struct inode *dir)
- 	err = filemap_write_and_wait(dir->i_mapping);
- 	if (!err)
- 		err = sync_inode_metadata(dir, 1);
-+	/* The change is done, an error made us read-only in the meantime. */
-+	if (err == -EROFS && sb_emergency_ro(dir->i_sb))
-+		err = 0;
- 	return err;
- }
+diff --git a/fs/hfsplus/btree.c b/fs/hfsplus/btree.c
+index bd4dbdbc8f98..4a67569050e3 100644
+--- a/fs/hfsplus/btree.c
++++ b/fs/hfsplus/btree.c
+@@ -270,7 +270,6 @@ struct hfs_btree *hfs_btree_open(struct super_block *sb, u32 id)
+ 	struct hfs_btree *tree;
+ 	struct hfs_btree_header_rec *head;
+ 	struct address_space *mapping;
+-	struct hfs_bnode *node;
+ 	struct inode *inode;
+ 	struct page *page;
+ 	unsigned int size;
+@@ -381,19 +380,6 @@ struct hfs_btree *hfs_btree_open(struct super_block *sb, u32 id)
+ 	kunmap_local(head);
+ 	put_page(page);
  
-diff --git a/fs/ufs/inode.c b/fs/ufs/inode.c
-index c9ff8673fa66..ed5d98c8bfca 100644
---- a/fs/ufs/inode.c
-+++ b/fs/ufs/inode.c
-@@ -828,6 +828,8 @@ static int ufs_update_inode(struct inode * inode, int do_sync)
- 
- int ufs_write_inode(struct inode *inode, struct writeback_control *wbc)
- {
-+	if (sb_emergency_ro(inode->i_sb))
-+		return -EROFS;
- 	return ufs_update_inode(inode, wbc->sync_mode == WB_SYNC_ALL);
- }
- 
-diff --git a/fs/ufs/super.c b/fs/ufs/super.c
-index 3569ac92b065..d82cf73360a7 100644
---- a/fs/ufs/super.c
-+++ b/fs/ufs/super.c
-@@ -280,11 +280,13 @@ void ufs_error (struct super_block * sb, const char * function,
- 	uspi = UFS_SB(sb)->s_uspi;
- 	usb1 = ubh_get_usb_first(uspi);
- 	
--	if (!sb_rdonly(sb)) {
-+	/*
-+	 * SB_RDONLY needs s_umount, see sb_set_emergency_ro(). The superblock
-+	 * marked bad goes out with the block device.
-+	 */
-+	if (!sb_rdonly(sb) && sb_set_emergency_ro(sb)) {
- 		usb1->fs_clean = UFS_FSBAD;
- 		ubh_mark_buffer_dirty(USPI_UBH(uspi));
--		ufs_mark_sb_dirty(sb);
+-	node = hfs_bnode_find(tree, HFSPLUS_TREE_HEAD);
+-	if (IS_ERR(node))
+-		goto free_inode;
+-
+-	if (!hfs_bmap_test_bit(node, 0)) {
+-		pr_warn("(%s): %s (cnid 0x%x) map record invalid or bitmap corruption detected, forcing read-only.\n",
+-				sb->s_id, hfs_btree_name(id), id);
+-		pr_warn("Run fsck.hfsplus to repair.\n");
 -		sb->s_flags |= SB_RDONLY;
- 	}
- 	va_start(args, fmt);
- 	vaf.fmt = fmt;
-@@ -314,15 +316,14 @@ void ufs_panic (struct super_block * sb, const char * function,
- 	uspi = UFS_SB(sb)->s_uspi;
- 	usb1 = ubh_get_usb_first(uspi);
- 	
--	if (!sb_rdonly(sb)) {
-+	/* See ufs_error(). */
-+	if (!sb_rdonly(sb) && sb_set_emergency_ro(sb)) {
- 		usb1->fs_clean = UFS_FSBAD;
- 		ubh_mark_buffer_dirty(USPI_UBH(uspi));
--		ufs_mark_sb_dirty(sb);
- 	}
- 	va_start(args, fmt);
- 	vaf.fmt = fmt;
- 	vaf.va = &args;
--	sb->s_flags |= SB_RDONLY;
- 	pr_crit("panic (device %s): %s: %pV\n",
- 		sb->s_id, function, &vaf);
- 	va_end(args);
-@@ -512,11 +513,13 @@ static int ufs_read_cylinder_structures(struct super_block *sb)
+-	}
+-
+-	hfs_bnode_put(node);
+-
+ 	return tree;
  
- failed:
- 	kfree (base);
-+	sbi->s_csp = NULL;
- 	if (sbi->s_ucg) {
- 		for (i = 0; i < uspi->s_ncg; i++)
- 			if (sbi->s_ucg[i])
- 				brelse (sbi->s_ucg[i]);
- 		kfree (sbi->s_ucg);
-+		sbi->s_ucg = NULL;
- 		for (i = 0; i < UFS_MAX_GROUP_LOADED; i++)
- 			kfree (sbi->s_ucpi[i]);
- 	}
-@@ -579,7 +582,8 @@ static void ufs_put_cstotal(struct super_block *sb)
-  * ufs_put_super_internal() - put on-disk intrenal structures
-  * @sb: pointer to super_block structure
-  * Put on-disk structures associated with cylinder groups
-- * and write them back to disk, also update cs_total on disk
-+ * and write them back to disk, also update cs_total on disk.
-+ * Nothing is written back after an error.
-  */
- static void ufs_put_super_internal(struct super_block *sb)
- {
-@@ -591,10 +595,14 @@ static void ufs_put_super_internal(struct super_block *sb)
- 	
- 	UFSD("ENTER\n");
- 
-+	base = space = (char*) sbi->s_csp;
-+	/* Don't write anything back after an error, see ufs_error(). */
-+	if (sb_emergency_ro(sb))
-+		goto release;
-+
- 	ufs_put_cstotal(sb);
- 	size = uspi->s_cssize;
- 	blks = (size + uspi->s_fsize - 1) >> uspi->s_fshift;
--	base = space = (char*) sbi->s_csp;
- 	for (i = 0; i < blks; i++, space += uspi->s_fsize) {
- 		struct buffer_head *bh = sb_bread(sb, uspi->s_csaddr + i);
- 
-@@ -607,6 +615,7 @@ static void ufs_put_super_internal(struct super_block *sb)
- 		mark_buffer_dirty(bh);
- 		brelse(bh);
- 	}
-+release:
- 	for (i = 0; i < sbi->s_cg_loaded; i++) {
- 		ufs_put_cylinder (sb, i);
- 		kfree (sbi->s_ucpi[i]);
-@@ -616,7 +625,9 @@ static void ufs_put_super_internal(struct super_block *sb)
- 	for (i = 0; i < uspi->s_ncg; i++) 
- 		brelse (sbi->s_ucg[i]);
- 	kfree (sbi->s_ucg);
-+	sbi->s_ucg = NULL;
- 	kfree (base);
-+	sbi->s_csp = NULL;
- 
- 	UFSD("EXIT\n");
+  fail_page:
+@@ -407,6 +393,34 @@ struct hfs_btree *hfs_btree_open(struct super_block *sb, u32 id)
+ 	return NULL;
  }
-@@ -628,6 +639,10 @@ static int ufs_sync_fs(struct super_block *sb, int wait)
- 	struct ufs_super_block_third * usb3;
- 	unsigned flags;
  
-+	/* Leave the superblock alone after an error, see ufs_error(). */
-+	if (sb_emergency_ro(sb))
-+		return 0;
++/*
++ * Check the map record of a b-tree at mount. hfs_btree_open() can't do it
++ * because hfsplus_create_attributes_file() calls it on the live filesystem
++ * where SB_RDONLY must not be set.
++ */
++int hfsplus_btree_check_map(struct hfs_btree *tree)
++{
++	struct super_block *sb = tree->sb;
++	struct hfs_bnode *node;
 +
- 	mutex_lock(&UFS_SB(sb)->s_lock);
++	node = hfs_bnode_find(tree, HFSPLUS_TREE_HEAD);
++	if (IS_ERR(node)) {
++		pr_err("failed to load %s header node\n",
++		       hfs_btree_name(tree->cnid));
++		return PTR_ERR(node);
++	}
++
++	if (!hfs_bmap_test_bit(node, 0)) {
++		pr_warn("(%s): %s (cnid 0x%x) map record invalid or bitmap corruption detected, forcing read-only.\n",
++				sb->s_id, hfs_btree_name(tree->cnid), tree->cnid);
++		pr_warn("Run fsck.hfsplus to repair.\n");
++		sb->s_flags |= SB_RDONLY;
++	}
++
++	hfs_bnode_put(node);
++	return 0;
++}
++
+ /* Release resources used by a btree */
+ void hfs_btree_close(struct hfs_btree *tree)
+ {
+diff --git a/fs/hfsplus/hfsplus_fs.h b/fs/hfsplus/hfsplus_fs.h
+index 6f240f87f8ff..58c780b09b6f 100644
+--- a/fs/hfsplus/hfsplus_fs.h
++++ b/fs/hfsplus/hfsplus_fs.h
+@@ -362,6 +362,7 @@ int hfsplus_block_free(struct super_block *sb, u32 offset, u32 count);
+ u32 hfsplus_calc_btree_clump_size(u32 block_size, u32 node_size, u64 sectors,
+ 				  int file_id);
+ struct hfs_btree *hfs_btree_open(struct super_block *sb, u32 id);
++int hfsplus_btree_check_map(struct hfs_btree *tree);
+ void hfs_btree_close(struct hfs_btree *tree);
+ int hfs_btree_write(struct hfs_btree *tree);
+ int hfs_bmap_reserve(struct hfs_btree *tree, u32 rsvd_nodes);
+diff --git a/fs/hfsplus/super.c b/fs/hfsplus/super.c
+index ff7d6b3336a6..532f23502df3 100644
+--- a/fs/hfsplus/super.c
++++ b/fs/hfsplus/super.c
+@@ -564,6 +564,11 @@ static int hfsplus_fill_super(struct super_block *sb, struct fs_context *fc)
+ 	}
+ 	sb->s_xattr = hfsplus_xattr_handlers;
  
- 	UFSD("ENTER\n");
-@@ -684,7 +699,8 @@ static void ufs_put_super(struct super_block *sb)
- 
- 	UFSD("ENTER\n");
- 
--	if (!sb_rdonly(sb))
-+	/* NULL if a remount to read-only freed the cylinder groups */
-+	if (sbi->s_ucg)
- 		ufs_put_super_internal(sb);
- 	cancel_delayed_work_sync(&sbi->sync_work);
- 
-@@ -1265,14 +1281,20 @@ static int ufs_reconfigure(struct fs_context *fc)
- 	 * fs was mouted as rw, remounting ro
- 	 */
- 	if (fc->sb_flags & SB_RDONLY) {
--		ufs_put_super_internal(sb);
--		usb1->fs_time = ufs_get_seconds(sb);
--		if ((flags & UFS_ST_MASK) == UFS_ST_SUN
--		  || (flags & UFS_ST_MASK) == UFS_ST_SUNOS
--		  || (flags & UFS_ST_MASK) == UFS_ST_SUNx86) 
--			ufs_set_fs_state(sb, usb1, usb3,
--				UFS_FSOK - fs32_to_cpu(sb, usb1->fs_time));
--		ubh_mark_buffer_dirty (USPI_UBH(uspi));
-+		/*
-+		 * After an error leave the superblock alone and keep the
-+		 * cylinder groups, evict still needs them.
-+		 */
-+		if (!sb_emergency_ro(sb)) {
-+			ufs_put_super_internal(sb);
-+			usb1->fs_time = ufs_get_seconds(sb);
-+			if ((flags & UFS_ST_MASK) == UFS_ST_SUN
-+			  || (flags & UFS_ST_MASK) == UFS_ST_SUNOS
-+			  || (flags & UFS_ST_MASK) == UFS_ST_SUNx86)
-+				ufs_set_fs_state(sb, usb1, usb3,
-+					UFS_FSOK - fs32_to_cpu(sb, usb1->fs_time));
-+			ubh_mark_buffer_dirty (USPI_UBH(uspi));
-+		}
- 		sb->s_flags |= SB_RDONLY;
- 	} else {
- 	/*
++	if (hfsplus_btree_check_map(sbi->ext_tree) ||
++	    hfsplus_btree_check_map(sbi->cat_tree) ||
++	    (sbi->attr_tree && hfsplus_btree_check_map(sbi->attr_tree)))
++		goto out_close_attr_tree;
++
+ 	inode = hfsplus_iget(sb, HFSPLUS_ALLOC_CNID);
+ 	if (IS_ERR(inode)) {
+ 		pr_err("failed to load allocation file\n");
 
 -- 
 2.53.0
