@@ -1,49 +1,49 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=115.124.30.119
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793290186;
-	b=Zfy1Ayi0tBi1P9WGRsgSqy+KffjvKoHR+B8V1Q7OjR3ALJzLf+PfaCQdJHrIVhgjQdyu
-	 0A/FH3GboR9zKafNO2qXiSdQnE/O0Pd52QBpgghwn3QfgveBT0oHWIFWMqXRU/HYozXfp
-	 mWY8dIcSZqu/ukSEIDBaNZLIeDAo3WLL2FEgQ/G6EkQmh1zJ2ZQtqnf3Pg4L70RANiF7k
-	 FbY+rKIJzMytTDQ9eaTKT/V0Macy/yrpEJc7HzogTnWTiZT5LIhkDgI/QxHI2HUabz6zk
-	 7Xy9F5YkW9L0TCbrgDnnisSNFGTAlqWwMBLfFait9vmuWrw9ZQ9oWvNWNeZJytewYjQ==
+	t=1793329145;
+	b=2klpSdm6WW8MR3X+auas8q0UXUYNbhiE+7pMTPwmLvliku7LEhsZVwWOlKLPI90xKg+t
+	 G0w7ULw92YX8h0i1ZY/jh6ezA7y0d6qr5SESR9V0t/eWyl3sYExiyPQByJxFWjCDyZH6x
+	 ny4rTVYnguHG6Vc5XNOCaRBYEXilAA6xuCf9OqRzEs8QZbgno/ajaawLDfEgNHlbE41LS
+	 ZNE4syjA/Kjq8d6045tSuQqWwQoCGGn5SGYCW5mbGBfGOLRYDo2h2Id+n9IgBqBXjfKH6
+	 TPIzMzxX08bQJnjMjzKUUGCOQCTs8Wjo5MHs0J/5KEaxJ3fi+BfUMTgvu+k2ze27nfw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793290186;
-	h=Received:DKIM-Signature:From:Date:Subject:MIME-Version:Content-Type:
-	 Content-Transfer-Encoding:Message-Id:References:In-Reply-To:To:Cc:
-	 X-Mailer:X-Developer-Signature:X-Developer-Key;
-	bh=k/JaVVqCIjBjwcZ4Ktq0cqt6WTLnv5uHe8dvAAAN/MI=;
-	b=N2B9r0DCQfW08RCCMl3uLWF5llvxO/K5Obdls9pkIICH2st5jnoqaemF4t7SyLTtqRa/
-	 ocHYQtZ9HLL5OO5LWd8/a9R3AYkEI9VA5SmhaPBejwIK/7jyyBoYKLk4kVMHE+8Xfe0Jy
-	 kNy4DyrkzIGWzCwzt9XCDsoftm1zA8OUwd+yaiV8uKScQs1OpykB6Sm6ttReCr5rJBK0m
-	 lvp5OvAOfeXaTp2TJS8KbTlabs6qJNClBI1h/v0koghPKGTShDImcMfgAtuVFx9/3acTK
-	 wiVPP4IqIViFgPoZYHwFDyStj/ly9H/npGQrOqwnX390EYcYe2MDQaYVVhU1UwuQTQg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793329145;
+	h=DMARC-Filter:DKIM-Signature:X-Alimail-AntiSpam:Received:Message-ID:
+	 Date:MIME-Version:User-Agent:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type:Content-Transfer-Encoding;
+	bh=w/Jd2p/prMhPtETNelJfTcFSgzTHlHRnVEoen9y0JaA=;
+	b=bz2qlnfc+5uTpVMWPfZn1lfZ8Jxco1CEimIMtzhDwkcE9ByZGySPbCwzTwprQYkJ1oYT
+	 gBF1gXQJ9ORnt6xgBHdUU0rO6NR/hXcNeuC6SRAJZZ6ENxvvukguy/Rll7lNtXqcVlRDv
+	 LD38MTWoTq9gokd8w3WzGRY4OL0Cu3TSTbJYg2pMI3B8og+xLZydHxux8wPYWrS37fIpi
+	 LA+cl6PDOsWO2FmPE+8VeHtbF9r+gd+TPOgK3uG0bvG7zDZSXuyZcc+pcya+ic5W86VT+
+	 6dFJe59v/o6vejyy5yEBjgU8qu6zYCUIhxZrh6eP5aABwbDeWiFGdiuwKIUiPwjSayQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KIWlCk7A;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=pass header.from=linux.alibaba.com;
+	spf=pass smtp.mailfrom=linux.alibaba.com;
+	dkim=pass header.d=linux.alibaba.com header.i=@linux.alibaba.com header.a=rsa-sha256 header.s=default header.b=hSHEsgsY;
+	arc=none smtp.remote-ip=115.124.30.119
+Received: from out30-119.freemail.mail.aliyun.com (out30-119.freemail.mail.aliyun.com [115.124.30.119])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 469F8606A33E;
-	Thu, 29 Oct 2026 16:09:46 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 926C9606A31C;
+	Fri, 30 Oct 2026 02:59:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 926C9606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.alibaba.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KIWlCk7A
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 870A31F031E1;
-	Thu, 29 Oct 2026 16:09:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793290186;
-	bh=k/JaVVqCIjBjwcZ4Ktq0cqt6WTLnv5uHe8dvAAAN/MI=;
-	h=From:Date:Subject:References:In-Reply-To:To:Cc;
-	b=KIWlCk7AAJ2etTqUPf+UdcSsuMQuZHztzBRdcCGj27/lOxeGr5s2jXCZKUnct1Hqq
-	 u5XAaC7A1gbXRFYN//rzwBw44pCdOv6XKEZnPNidM4AS000LBTp1JaUTSwelZg75v1
-	 1v6U3BCWVAwmPqodxjhWjrHf2ygSXLcPRlmoMpXiseljbpwhkV4CraSn3ri/a0CzoO
-	 reSvsImFDP2+2el6B0AQRGIzkPw01/7bPt0yBtT7y19A7eoygxGFOvKE0H+mRI7efO
-	 c1Ti9Rr52z8ZG3rgoTtor5WIZO8sAPlyY/LQ7w0y879e0gl9ALerXcHaSyVpMhAQdB
-	 JB8ShTo3zTMSQ==
-From: Christian Brauner <brauner@kernel.org>
-Date: Thu, 29 Oct 2026 17:07:25 +0100
-Subject: [PATCH v2 34/34] selftests/filesystems: test xfs remounts after a
- shutdown
+	dkim=pass (1024-bit key, unprotected) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.a=rsa-sha256 header.s=default header.b=hSHEsgsY
+DKIM-Signature:v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=linux.alibaba.com; s=default;
+	t=1793329134; h=Message-ID:Date:MIME-Version:Subject:To:From:Content-Type;
+	bh=w/Jd2p/prMhPtETNelJfTcFSgzTHlHRnVEoen9y0JaA=;
+	b=hSHEsgsYOl/knZoiaKmOo9/szTsdb243LBtAHNpX/8InfeQ+O8kqyPkUuu0Awv2qPGL1dtHu80lxiinShoX3C//q9xO3uJS7nJ9pA7n/Uvoqx9PjlbXVT4MQjJDtbupw0uuaN9Pd4ZUnz3XFWW920V7V0LBApZUCRivWHHA722Q=
+X-Alimail-AntiSpam:AC=PASS;BC=-1|-1;BR=01201311R961e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=maildocker-contentspam033037026112;MF=joseph.qi@linux.alibaba.com;NM=1;PH=DS;RN=17;SR=0;TI=SMTPD_---0XDkufcn_1793329132;
+Received: from 30.221.129.214(mailfrom:joseph.qi@linux.alibaba.com fp:SMTPD_---0XDkufcn_1793329132 cluster:ay36)
+          by smtp.aliyun-inc.com;
+          Fri, 30 Oct 2026 10:58:53 +0800
+Message-ID: <0a8576a4-e397-4a49-ab0e-8f0f32bf2642@linux.alibaba.com>
+Date: Fri, 30 Oct 2026 10:58:52 +0800
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -53,389 +53,96 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20261029-work-fs-sb_rdonly-v2-34-2f44f64f0b66@kernel.org>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 19/34] ocfs2: keep the current mount options on remount
+To: Christian Brauner <brauner@kernel.org>, linux-fsdevel@vger.kernel.org,
+ Jan Kara <jack@suse.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org,
+ linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net,
+ linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, linux-mm@kvack.org,
+ ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev,
+ linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev,
+ linux-efi@vger.kernel.org, linux-mtd@lists.infradead.org,
+ linux-xfs@vger.kernel.org
 References: <20261029-work-fs-sb_rdonly-v2-0-2f44f64f0b66@kernel.org>
-In-Reply-To: <20261029-work-fs-sb_rdonly-v2-0-2f44f64f0b66@kernel.org>
-To: linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, 
- linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net, 
- linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, linux-mm@kvack.org, 
- ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev, 
- linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, 
- linux-efi@vger.kernel.org, linux-mtd@lists.infradead.org, 
- linux-xfs@vger.kernel.org, 
- "Christian Brauner (Amutable)" <brauner@kernel.org>
-X-Mailer: b4 0.17-dev-ce4c1
-X-Developer-Signature: v=1; a=openpgp-sha256; l=11137; i=brauner@kernel.org;
- h=from:subject:message-id; bh=/Voe/wFwqfK8+ON5qhwC5PvGjQ85ofAqpLXJMC6O98s=;
- b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQ9zjd4wrdORilhoSWvYNZB2e59widt47JWxGwyfiYtP
- v3leqOHHaUsDGJcDLJiiiwO7Sbhcst5KjYbZWrAzGFlAhnCwMUpABOZKsDwv5A/2aVg45/UMv5j
- XM0N7+My+WsFHXfEyVziSPY2DDrdycjwYilHyLqj3f4LHiTYP3fQuphzZfIXv89s3/8xT/nNFar
- IDgA=
-X-Developer-Key: i=brauner@kernel.org; a=openpgp;
- fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
+ <20261029-work-fs-sb_rdonly-v2-19-2f44f64f0b66@kernel.org>
+From: Joseph Qi <joseph.qi@linux.alibaba.com>
+In-Reply-To: <20261029-work-fs-sb_rdonly-v2-19-2f44f64f0b66@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Add tests for remounting xfs after FS_IOC_SHUTDOWN with the default, the
-logflush and the nologflush flags and after a shutdown that the remount
-to read-only causes itself:
 
-- option-only remount keeps it read-write
-- remount to read-only works
-- remount to read-write fails with EIO
 
-The image lives on a tmpfs of its own. For the last variant the test
-punches out the log and shrinks the tmpfs so the log write during the
-remount fails with ENOSPC.
+On 10/30/26 12:07 AM, Christian Brauner wrote:
+> ocfs2_init_fs_context() doesn't inherit the current mount options for a
+> reconfigure. But ocfs2_check_set_options() insists on exactly one
+> heartbeat mode and ocfs2_reconfigure() refuses to change the data mode.
+> So every remount without heartbeat= fails with EINVAL, including
+> emergency remount (sysrq u) which passes no options at all, and that
+> WARNs for every ocfs2 mounted read-write. A remount that does pass
+> heartbeat= silently resets every option it doesn't repeat, e.g. noacl,
+> errors=, barrier= and preferred_slot=.
+> 
+> So start a reconfigure from the current options like exfat and gfs2 do.
+> Asking for a different data or heartbeat mode still fails with EINVAL.
+> 
+> The next patch stops ocfs2 from setting SB_RDONLY after errors. An
+> errored ocfs2 then stays read-write and emergency remount would run into
+> this as well.
+> 
+> Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
+> ---
+>  fs/ocfs2/super.c | 13 +++++++++++++
+>  1 file changed, 13 insertions(+)
+> 
+> diff --git a/fs/ocfs2/super.c b/fs/ocfs2/super.c
+> index 0af2245ae303..67283244426e 100644
+> --- a/fs/ocfs2/super.c
+> +++ b/fs/ocfs2/super.c
+> @@ -1222,6 +1222,19 @@ static int ocfs2_init_fs_context(struct fs_context *fc)
+>  	mopt->resv_level = OCFS2_DEFAULT_RESV_LEVEL;
+>  	mopt->dir_resv_level = -1;
+>  
+> +	/*
+> +	 * Start from the current options so a remount only changes what it
+> +	 * specifies, emergency remount passes none at all.
+> +	 */
+> +	if (fc->purpose == FS_CONTEXT_FOR_RECONFIGURE) {
+> +		struct ocfs2_super *osb = OCFS2_SB(fc->root->d_sb);
+> +
+> +		mopt->mount_opt = osb->s_mount_opt;
+> +		mopt->atime_quantum = osb->s_atime_quantum;
+> +		mopt->slot = osb->preferred_slot;
+> +		mopt->user_stack = ocfs2_userspace_stack(osb);
+> +	}
 
-The tests need root, loop devices and mkfs.xfs.
+ocfs2_reconfigure() decides the transition from fc->sb_flags alone without
+sb_flags_mask test, unlike reconfigure_super(). And fspick() passes
+fs_context_for_reconfigure(target.dentry, 0, 0). So on a read-only mount:
 
-Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
----
- .../selftests/filesystems/sb_rdonly/.gitignore     |   1 +
- .../selftests/filesystems/sb_rdonly/Makefile       |   3 +-
- .../testing/selftests/filesystems/sb_rdonly/config |   2 +
- .../sb_rdonly/xfs_shutdown_remount_test.c          | 299 +++++++++++++++++++++
- 4 files changed, 304 insertions(+), 1 deletion(-)
+  fspick(AT_FDCWD, "/mnt", 0)        sb_flags 0, sb_flags_mask 0
+  fsconfig(fd, FSCONFIG_SET_STRING, "atime_quantum", "30", 0)
+  fsconfig(fd, FSCONFIG_CMD_RECONFIGURE)
+    reconfigure_super()
+      ocfs2_reconfigure()
+        (bool)(0 & SB_RDONLY) != sb_rdonly(sb)  -> 0 != 1, enters
+        fc->sb_flags & SB_RDONLY                -> 0, takes the rw branch
+        sb->s_flags &= ~SB_RDONLY
+        osb->osb_flags &= ~OCFS2_OSB_SOFT_RO
+        ocfs2_enable_quotas(osb)                -> writes the quota files
 
-diff --git a/tools/testing/selftests/filesystems/sb_rdonly/.gitignore b/tools/testing/selftests/filesystems/sb_rdonly/.gitignore
-index 7445dbe15229..26bf6c87edc1 100644
---- a/tools/testing/selftests/filesystems/sb_rdonly/.gitignore
-+++ b/tools/testing/selftests/filesystems/sb_rdonly/.gitignore
-@@ -2,3 +2,4 @@
- emergency_ro_test
- gfs2_withdraw_test
- ext4_emergency_remount_test
-+xfs_shutdown_remount_test
-diff --git a/tools/testing/selftests/filesystems/sb_rdonly/Makefile b/tools/testing/selftests/filesystems/sb_rdonly/Makefile
-index acd1d70d0fe2..0998b82b95d6 100644
---- a/tools/testing/selftests/filesystems/sb_rdonly/Makefile
-+++ b/tools/testing/selftests/filesystems/sb_rdonly/Makefile
-@@ -1,5 +1,6 @@
- # SPDX-License-Identifier: GPL-2.0
--TEST_GEN_PROGS := emergency_ro_test gfs2_withdraw_test ext4_emergency_remount_test
-+TEST_GEN_PROGS := emergency_ro_test gfs2_withdraw_test ext4_emergency_remount_test \
-+		  xfs_shutdown_remount_test
- 
- CFLAGS += -Wall -O2 -g $(KHDR_INCLUDES)
- 
-diff --git a/tools/testing/selftests/filesystems/sb_rdonly/config b/tools/testing/selftests/filesystems/sb_rdonly/config
-index d98bd667314b..fdb9dd69e701 100644
---- a/tools/testing/selftests/filesystems/sb_rdonly/config
-+++ b/tools/testing/selftests/filesystems/sb_rdonly/config
-@@ -4,3 +4,5 @@ CONFIG_EXT4_FS=y
- CONFIG_GFS2_FS=y
- CONFIG_JFS_FS=y
- CONFIG_NILFS2_FS=y
-+CONFIG_TMPFS=y
-+CONFIG_XFS_FS=y
-diff --git a/tools/testing/selftests/filesystems/sb_rdonly/xfs_shutdown_remount_test.c b/tools/testing/selftests/filesystems/sb_rdonly/xfs_shutdown_remount_test.c
-new file mode 100644
-index 000000000000..6d296e2c916c
---- /dev/null
-+++ b/tools/testing/selftests/filesystems/sb_rdonly/xfs_shutdown_remount_test.c
-@@ -0,0 +1,299 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * A shut down xfs refused to go read-only and emergency remount (sysrq u)
-+ * WARNed. Check that the remount works, also when its own flush shuts xfs
-+ * down, that going back to read-write fails with EIO and that option-only
-+ * remounts work. sysrq u itself can't be tested here, the plain remount goes
-+ * through the same path minus SB_FORCE.
-+ */
-+#define _GNU_SOURCE
-+#include <endian.h>
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <linux/falloc.h>
-+#include <linux/fs.h>
-+#include <linux/loop.h>
-+#include <sched.h>
-+#include <stdbool.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/ioctl.h>
-+#include <sys/mount.h>
-+#include <sys/stat.h>
-+#include <sys/statvfs.h>
-+#include <unistd.h>
-+
-+#include "../../kselftest_harness.h"
-+
-+/* mkfs.xfs refuses filesystems smaller than 300MiB */
-+#define IMG_SIZE	(512 << 20)
-+
-+#ifndef FS_IOC_SHUTDOWN
-+#define FS_IOC_SHUTDOWN _IOR('X', 125, __u32)
-+#endif
-+#ifndef FS_SHUTDOWN_FLAGS_DEFAULT
-+#define FS_SHUTDOWN_FLAGS_DEFAULT 0x0
-+#endif
-+#ifndef FS_SHUTDOWN_FLAGS_LOGFLUSH
-+#define FS_SHUTDOWN_FLAGS_LOGFLUSH 0x1
-+#endif
-+#ifndef FS_SHUTDOWN_FLAGS_NOLOGFLUSH
-+#define FS_SHUTDOWN_FLAGS_NOLOGFLUSH 0x2
-+#endif
-+
-+FIXTURE(xfs_shutdown) {
-+	char dir[64];
-+	char img[96];
-+	char mnt[96];
-+	char dev[32];
-+	int loop;
-+	int loop_fd;
-+	bool tmpfs;
-+	bool mounted;
-+};
-+
-+FIXTURE_VARIANT(xfs_shutdown) {
-+	/* FS_IOC_SHUTDOWN flags, -1 lets the remount's own flush shut it down */
-+	int shutdown_flags;
-+};
-+
-+FIXTURE_VARIANT_ADD(xfs_shutdown, shutdown_default) {
-+	.shutdown_flags = FS_SHUTDOWN_FLAGS_DEFAULT,
-+};
-+
-+FIXTURE_VARIANT_ADD(xfs_shutdown, shutdown_logflush) {
-+	.shutdown_flags = FS_SHUTDOWN_FLAGS_LOGFLUSH,
-+};
-+
-+FIXTURE_VARIANT_ADD(xfs_shutdown, shutdown_nologflush) {
-+	.shutdown_flags = FS_SHUTDOWN_FLAGS_NOLOGFLUSH,
-+};
-+
-+FIXTURE_VARIANT_ADD(xfs_shutdown, shutdown_by_remount) {
-+	.shutdown_flags = -1,
-+};
-+
-+/* The superblock options start with its own "ro" or "rw". */
-+static bool super_rdonly(const char *mnt)
-+{
-+	char line[4096], needle[128], fstype[64], source[256], opts[2048];
-+	bool ro = false;
-+	FILE *f;
-+
-+	f = fopen("/proc/self/mountinfo", "r");
-+	if (!f)
-+		return false;
-+	snprintf(needle, sizeof(needle), " %s ", mnt);
-+	while (fgets(line, sizeof(line), f)) {
-+		char *super;
-+
-+		if (!strstr(line, needle))
-+			continue;
-+		super = strstr(line, " - ");
-+		if (super && sscanf(super, " - %63s %255s %2047s",
-+				    fstype, source, opts) == 3)
-+			ro = !strncmp(opts, "ro", 2) && (opts[2] == ',' || !opts[2]);
-+	}
-+	fclose(f);
-+	return ro;
-+}
-+
-+static uint32_t get_be32(const unsigned char *p)
-+{
-+	uint32_t v;
-+
-+	memcpy(&v, p, sizeof(v));
-+	return be32toh(v);
-+}
-+
-+static uint64_t get_be64(const unsigned char *p)
-+{
-+	uint64_t v;
-+
-+	memcpy(&v, p, sizeof(v));
-+	return be64toh(v);
-+}
-+
-+/*
-+ * Make the next log write fail: punch the log out of the image on our tmpfs
-+ * and shrink the tmpfs to what is in use, so the log write needs a page it
-+ * can't get and fails with ENOSPC.
-+ */
-+static int fail_log_writes(FIXTURE_DATA(xfs_shutdown) *self)
-+{
-+	uint32_t blocksize, agblocks, logblocks;
-+	uint64_t logstart, agno, agbno;
-+	unsigned char sb[512];
-+	struct statvfs sv;
-+	char opts[64];
-+	int fd, ret = -1;
-+
-+	fd = open(self->img, O_RDWR | O_CLOEXEC);
-+	if (fd < 0)
-+		return -1;
-+	/* struct xfs_dsb */
-+	if (pread(fd, sb, sizeof(sb), 0) != sizeof(sb) || memcmp(sb, "XFSB", 4))
-+		goto out;
-+	blocksize = get_be32(sb + 4);
-+	logstart = get_be64(sb + 48);
-+	agblocks = get_be32(sb + 84);
-+	logblocks = get_be32(sb + 96);
-+	if (!logstart)
-+		goto out;
-+	/* sb_agblklog */
-+	agno = logstart >> sb[124];
-+	agbno = logstart & ((1ULL << sb[124]) - 1);
-+	if (fallocate(fd, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
-+		      (agno * agblocks + agbno) * blocksize,
-+		      (uint64_t)logblocks * blocksize))
-+		goto out;
-+
-+	/* the loop device may still allocate pages in between */
-+	for (int tries = 0; tries < 10; tries++) {
-+		if (statvfs(self->dir, &sv))
-+			break;
-+		snprintf(opts, sizeof(opts), "size=%llu",
-+			 (unsigned long long)(sv.f_blocks - sv.f_bfree) * sv.f_frsize);
-+		if (!mount(NULL, self->dir, NULL, MS_REMOUNT, opts)) {
-+			ret = 0;
-+			break;
-+		}
-+	}
-+out:
-+	close(fd);
-+	return ret;
-+}
-+
-+static void xfs_shutdown_cleanup(FIXTURE_DATA(xfs_shutdown) *self)
-+{
-+	if (self->mounted)
-+		umount2(self->mnt, MNT_DETACH);
-+	if (self->loop_fd >= 0)
-+		close(self->loop_fd);	/* LO_FLAGS_AUTOCLEAR detaches it */
-+	unlink(self->img);
-+	rmdir(self->mnt);
-+	if (self->tmpfs)
-+		umount2(self->dir, MNT_DETACH);
-+	rmdir(self->dir);
-+}
-+
-+FIXTURE_SETUP(xfs_shutdown)
-+{
-+	struct loop_config cfg = { .info.lo_flags = LO_FLAGS_AUTOCLEAR };
-+	char cmd[256], path[128];
-+	int ctl, fd, ret;
-+
-+	self->loop = -1;
-+	self->loop_fd = -1;
-+	self->tmpfs = false;
-+	self->mounted = false;
-+
-+	if (geteuid() != 0)
-+		SKIP(return, "test requires CAP_SYS_ADMIN");
-+	if (access("/dev/loop-control", R_OK | W_OK))
-+		SKIP(return, "test requires loop devices");
-+
-+	ASSERT_EQ(unshare(CLONE_NEWNS), 0);
-+	ASSERT_EQ(mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL), 0);
-+
-+	snprintf(self->dir, sizeof(self->dir), "/tmp/xfs_shutdown.XXXXXX");
-+	ASSERT_NE(mkdtemp(self->dir), NULL);
-+	/* fail_log_writes() needs the image on a tmpfs of our own */
-+	ASSERT_EQ(mount("tmpfs", self->dir, "tmpfs", 0, "size=1g,mode=0700"), 0);
-+	self->tmpfs = true;
-+	snprintf(self->img, sizeof(self->img), "%s/img", self->dir);
-+	snprintf(self->mnt, sizeof(self->mnt), "%s/mnt", self->dir);
-+	ASSERT_EQ(mkdir(self->mnt, 0700), 0);
-+
-+	fd = open(self->img, O_RDWR | O_CREAT | O_CLOEXEC, 0600);
-+	ASSERT_GE(fd, 0);
-+	ASSERT_EQ(ftruncate(fd, IMG_SIZE), 0);
-+	snprintf(cmd, sizeof(cmd), "mkfs.xfs -q -f %s >/dev/null 2>&1", self->img);
-+	if (system(cmd)) {
-+		close(fd);
-+		xfs_shutdown_cleanup(self);
-+		SKIP(return, "mkfs.xfs failed or is not available");
-+	}
-+
-+	ctl = open("/dev/loop-control", O_RDWR | O_CLOEXEC);
-+	ASSERT_GE(ctl, 0);
-+	cfg.fd = fd;
-+	/* another user can grab the free device first */
-+	for (int tries = 0;; tries++) {
-+		self->loop = ioctl(ctl, LOOP_CTL_GET_FREE);
-+		ASSERT_GE(self->loop, 0);
-+		snprintf(self->dev, sizeof(self->dev), "/dev/loop%d", self->loop);
-+		self->loop_fd = open(self->dev, O_RDWR | O_CLOEXEC);
-+		ASSERT_GE(self->loop_fd, 0);
-+		if (!ioctl(self->loop_fd, LOOP_CONFIGURE, &cfg))
-+			break;
-+		ASSERT_EQ(errno, EBUSY);
-+		ASSERT_LT(tries, 10);
-+		close(self->loop_fd);
-+		self->loop_fd = -1;
-+	}
-+	close(ctl);
-+	close(fd);
-+
-+	ret = mount(self->dev, self->mnt, "xfs", 0, NULL);
-+	if (ret && errno == ENODEV) {
-+		xfs_shutdown_cleanup(self);
-+		SKIP(return, "kernel lacks xfs");
-+	}
-+	ASSERT_EQ(ret, 0);
-+	self->mounted = true;
-+
-+	snprintf(path, sizeof(path), "%s/f", self->mnt);
-+	fd = open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0644);
-+	ASSERT_GE(fd, 0);
-+	ASSERT_EQ(write(fd, "data\n", 5), 5);
-+	ASSERT_EQ(fsync(fd), 0);
-+	/* leave something dirty for the shutdown */
-+	ASSERT_EQ(write(fd, "more\n", 5), 5);
-+	close(fd);
-+}
-+
-+FIXTURE_TEARDOWN(xfs_shutdown)
-+{
-+	xfs_shutdown_cleanup(self);
-+}
-+
-+TEST_F_TIMEOUT(xfs_shutdown, remount, 60)
-+{
-+	struct statvfs sv;
-+	int fd, ret;
-+
-+	if (variant->shutdown_flags < 0) {
-+		ASSERT_EQ(fail_log_writes(self), 0);
-+	} else {
-+		__u32 flags = variant->shutdown_flags;
-+
-+		fd = open(self->mnt, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
-+		ASSERT_GE(fd, 0);
-+		ASSERT_EQ(ioctl(fd, FS_IOC_SHUTDOWN, &flags), 0);
-+		close(fd);
-+	}
-+
-+	/* only options change */
-+	ASSERT_EQ(mount(NULL, self->mnt, NULL, MS_REMOUNT, NULL), 0);
-+	ASSERT_EQ(statvfs(self->mnt, &sv), 0);
-+	ASSERT_FALSE(!!(sv.f_flag & ST_RDONLY));
-+
-+	/* going read-only works */
-+	ret = mount(NULL, self->mnt, NULL, MS_REMOUNT | MS_RDONLY, NULL);
-+	ASSERT_EQ(ret, 0) TH_LOG("remount read-only: %s", strerror(errno));
-+	ASSERT_TRUE(super_rdonly(self->mnt));
-+
-+	/* going back to read-write doesn't, also not after the remount's shutdown */
-+	ret = mount(NULL, self->mnt, NULL, MS_REMOUNT, NULL);
-+	ASSERT_EQ(ret, -1);
-+	ASSERT_EQ(errno, EIO);
-+	ASSERT_TRUE(super_rdonly(self->mnt));
-+
-+	ASSERT_EQ(umount(self->mnt), 0);
-+	self->mounted = false;
-+}
-+
-+TEST_HARNESS_MAIN
+The final WRITE_ONCE(sb->s_flags, ...) in reconfigure_super() then
+leaves it cleared, because SB_RDONLY is not in sb_flags_mask. The same
+falls out of a legacy remount whose flags omit MS_RDONLY.
 
--- 
-2.53.0
+So it seems we should test sb_flags_mask as well?
+
+Thanks,
+Joseph
+
+> +
+>  	fc->fs_private = mopt;
+>  	fc->ops = &ocfs2_context_ops;
+>  
+> 
 
