@@ -1,103 +1,102 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.224.42
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.169
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793493222;
-	b=XJVNK+auzwxRPyJNE3XPDphrONZWYCFZJvtdAmw5jige/O6yrcs96z7cIs//Jl3WRXZI
-	 yjbOPnpXU5fkntmqma07Faux8uDe3+ntfF6SP2DijAWt5610G6FYDCsMpLdNRBSmZxlai
-	 bbM+gnnxExqlnv67LHubE5vJBTpb0vcnNzV8MxyRQb0dylL3C3ed/8C3Jj+T3YbQDAeEN
-	 on5Iol9uV61Ujr6be6bKVRFSFi0FTipRNIrlsqMa9TxxRbgXwzfBy0olKx3ofNYLmSNlf
-	 88/A3bTLATZY8wdoGtG6k3wfrpTuhH3cxiQpkiytL3FDQEq7IxA5BJissILzOcMFvtA==
+	t=1793494174;
+	b=uiJ08N9CMpeynrHlj1iRTFkZ04IX4XbevGt+voAoFyGVrDcKPDgxHJF7TGE+xjuGJlG1
+	 Jmb7DmIo3rsTdIOljYIIBIybUQ5um5DjL+PUJSkx5B2fJ0vfmbWKq/rEGTBAfrFMMLYDH
+	 a7N+/2OiIirPzijy0tExZKH62I6JMlxxmeGLoydr0sR1IQZ9PX7JcsT6Pqn5aRAAF86x2
+	 Bl6uQTSnymKcr9PrhfF+x6k1jkbn4N+PcZOnktwh1nHBMyIyhOwfxc6UF++Kq1d0FL1sB
+	 utzFgJYzutUwTJUwGcnX8OJssIjtjdQUl1pmjSR3xp+55QXQ69N20fY2APKcEj+1xSA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793493222;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793494174;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:Autocrypt:
 	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version;
-	bh=/OyNuE+u9LVqbLjPn4c642Wjld5y0QKeGGJuFQ0QfKY=;
-	b=o3DM9D+3LJjMrALpLmuDIcTgrSgqqhPV+5w5fwmef56Sl9ftDIhG3D2K82TRdV+DhsU+
-	 4wSnQNfhycqZkwq3k3kWFdroPApqxRwGYi9Ues2LPYUn5gvJvUuZMK48a2kWDOSqFbxGh
-	 MNHHFtLy3lf6yHApHzI8gh+4KiEf+s5H9oJRSfcmeQyCHuAH9CQJadpUGxEd1cFQxYvAp
-	 ffdijpjwyas9RnNu/H29hXNc1abMhgZO2VopRVwODP7HNHT3RkDFF1JHwwLYHWCwIBED0
-	 zk3GTRyWaZ3G5BB3wMLqDmgYhLJFcwwVydIhGHrsElVSh6LKCI3WiUJMlnJDVMRWmLw==
+	bh=EUpJKvz8mlj+rANwwFPIVtc0TayK+TWucETEd0TlynI=;
+	b=XUcpoKfqMCReUVae6gigSIrxiF1tKdSQ7dMzr1TlWjiyynFcb1IIOWBZ3lyDWSg2ZA05
+	 3ykvEUvKYpSAgdaY9P0oRXJab1Zv2/YLrWXYAKJRAUyEI4REHKqSVS1kSUicLItwDNiFN
+	 1+2jIy9YNpRVhQvVhJ0l8iPeEtkW2VIHgjULe2KSPq2mgUSaGnOFyKumrlCZB4ZAnn019
+	 c+KzdQAhIZEoAGdYpvf+37wa2AmIDpzuDerVfT04wqBGCEsB3mPU5XVOj8T2njRRDs1YR
+	 iV29aD5/qw7Q2egF4M9GfDczaKNVsSt/PLrng3m9gZcmaEjHvfVUSM8aH/aQA3FYdWw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=none header.from=dubeyko.com;
 	spf=pass smtp.mailfrom=dubeyko.com;
-	dkim=pass header.d=dubeyko-com.20260707.gappssmtp.com header.i=@dubeyko-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=opKOv9+L;
-	arc=none smtp.remote-ip=74.125.224.42
-Received: from mail-yx1-f42.google.com (mail-yx1-f42.google.com [74.125.224.42])
+	dkim=pass header.d=dubeyko-com.20260707.gappssmtp.com header.i=@dubeyko-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=WpWGwjWf;
+	arc=none smtp.remote-ip=209.85.128.169
+Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com [209.85.128.169])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D523A606A31A
-	for <linux-nilfs@vger.kernel.org>; Sun,  1 Nov 2026 00:33:41 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D523A606A31A
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 183F8606A31D
+	for <linux-nilfs@vger.kernel.org>; Sun,  1 Nov 2026 00:49:32 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 183F8606A31D
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=dubeyko-com.20260707.gappssmtp.com header.i=@dubeyko-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=opKOv9+L
-Received: by mail-yx1-f42.google.com with SMTP id 956f58d0204a3-6798c43a3d6so1288331d50.1
-        for <linux-nilfs@vger.kernel.org>; Sat, 31 Oct 2026 17:33:41 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=dubeyko-com.20260707.gappssmtp.com header.i=@dubeyko-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=WpWGwjWf
+Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-8871ada1a26so13891957b3.1
+        for <linux-nilfs@vger.kernel.org>; Sat, 31 Oct 2026 17:49:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dubeyko-com.20260707.gappssmtp.com; s=20260707; t=1793493221; x=1794098021; darn=vger.kernel.org;
+        d=dubeyko-com.20260707.gappssmtp.com; s=20260707; t=1793494172; x=1794098972; darn=vger.kernel.org;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=/OyNuE+u9LVqbLjPn4c642Wjld5y0QKeGGJuFQ0QfKY=;
-        b=opKOv9+LvbvKOcsG7sEdWgW5RTy7kU6wUMYBGioVfgkQyIsS6X9+fly6DW0lh7MWmZ
-         ADiBPMwopgDRliRbwbHjbfCkdevfkCAynrIpVoBW6iiAOr3rGvXAwIGA/DSi56T0vblu
-         Gjg2U4eBG8LdQEXYLZ7qi60tOfNA0+pQ7N6ygLuxQG+lIgm88X+Emoi5nm9Pbaem/j76
-         jkuNsmvU/V6VV1vnXToctK/8CAuMJZn01/QxEtPRFnFcVBKrtW5UUxqJ+1C3DlBlxZeW
-         +ODdnrfH/Kfr0AOh7QbaNuH+k1NTTYkBG/IliHraQ9l1BkSNdeBEsxD3N5gJRd6v8Nrx
-         0egw==
+        bh=EUpJKvz8mlj+rANwwFPIVtc0TayK+TWucETEd0TlynI=;
+        b=WpWGwjWf7a60loATRqrjsbiUQO5Y4q12xMTRWt7/xuQ5XNZyLTsoDKsmW3sgYDbaeg
+         MtirW6KfetPIQ2vZ+2v01wq+8Ezbatw5FSdaKnIeHDwnSa9asNJizwoCpuysv4EB4EEa
+         2GXfPz75kuLJSZSsW9P8dwFZQmjC5uquKmOlfFAurCNLfV+e1SIzf2HeYICMNyR1qQtd
+         KzSwLQVA2AmBD5oXUPlL8piovl9YAvZG29QvfZcOkVkIjQyMnQVOW2EmEY+bui5mD53S
+         /AYL1pc+pl/96LaEnCvQ+jQolY1iYQdC9aeL/3VNN/VDhQo014yPr8XWEb8Q/guE1XwV
+         XgLQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793493221; x=1794098021;
+        d=1e100.net; s=20260707; t=1793494172; x=1794098972;
         h=mime-version:user-agent:content-transfer-encoding:content-type
          :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=/OyNuE+u9LVqbLjPn4c642Wjld5y0QKeGGJuFQ0QfKY=;
-        b=MnNvycQSAtwZT8Zpzpsp7KPdx3ASe/oKBmi/pp3dvfxDFB3JU7Hbew0vGqtTRw2lat
-         N8+WhRpW5k0lW7l6z44erpV1Q/NcaALYX6YgbHyUB8yt3SglHj68uKDHH66YD9ZwGRLk
-         WimlGrN5nNZN30gl1g8hRirdr+As9T3rZQ89IUtt7LuRv8jKOYnHXuNnLoEc2wMPdVHz
-         oqf9dQu1UHB1d1AOlouxNLuzr/uJZpXNxWQws9S9GO64E0L9NrFmVp33goS6NUNYpOAs
-         zkPDR73yZMS+Bkpecy/cuOM6phNh+YltEwUnbhc2EW2+QCIwNJnXY377n/sOYWk2Y6Nn
-         fVpg==
-X-Forwarded-Encrypted: i=1; AKwUvBy8knL9DfVue6lECV7e9cwcTbU25LEhU9oapfDx9wy3X1A5JbFgD7MTmSyEmoYoqlZn1DXBNZz0HbmE4A==@vger.kernel.org
-X-Gm-Message-State: APuU4Z+p7dzechuafkK10ZAYZ687neQiHSXT2/HOd47XN21GhZC8Aoyx
-	pFfTiEje5E+VqpRgaRZq9XfDL584wGwZJ6eBTgiXZpyJj8t03vRuEKgqLuMJ+g/KPMg=
-X-Gm-Gg: AYBFou2APeeDf5rKjb7lgSTnRh0KYkvjskGaKHPEXK9S21Tvj1koMAjGrgX77WnfXta
-	YAr8vFzdRsVSXFENaMdglQABrSB0Xmexy4MvnNoxzoQU3FZZNcwU/EY6zocMatBJbrGZPs7uFDi
-	nO+ATDppvziFMCO0LW0Ad+Cd1lWsmexNC2bgClLc4jYsDBbAeYr3nKzXPlMplcHZE0E+OAyOCYV
-	Z+Ju2MJDFarCvpxFWlTPx0X5uTPb8FPDnQsZ+dmvd/0dPE4yYlpOY6PspGPzatwT4t/vS3k3D7Y
-	XodullpQxwLMg+L+yuVyw156My+kduTDrSR1MEvwPG7TNc1NU0TIN4Kffi4M0zwtg+TYY4cMqkt
-	MFNDBpniwa+Gm/NjpXSc84k1ybPObIbZSNsX1dUul4iPG/GMpxm9gcC0dZDGBiDyxoCIHsLxELH
-	aBJZFnoiYKEtfT8cKsRFOzPrVHRMxOW+Ow7FwuZwTarE/suj60knq3Orc/HLXsyXzLyxl7ePtzp
-	3A1dpMy2QLT5F5fcLEmEeeGkE1dqZ+a1jGW7Xyz8V0agaTDuFdYx7Z/UiOrWjd2I3s72mRI2Bww
-	3vm3Cz1BqFvlX5CeeRH4B6Z03o07byXBmxpCpqrN/VfTwFlcoVZuBCcfpLG7lkCFOuSEaIrZWsL
-	/ifd5Ny7RaH4muHtyGVkApIYAmE2yxE6Lv0PCJwUiIi6WMpR7KeqMZeJIidccrpeCapzllv4e1m
-	+AUfUj5hsBlIjk1tSaUv8=
-X-Received: by 2002:a05:690e:140e:b0:675:3d40:3c34 with SMTP id 956f58d0204a3-67bb3041657mr1552875d50.68.1793493220725;
-        Sat, 31 Oct 2026 17:33:40 -0700 (PDT)
+        bh=EUpJKvz8mlj+rANwwFPIVtc0TayK+TWucETEd0TlynI=;
+        b=JfIOVcxooyVn5lsrQtIInNDpY+C5QQg4X7R6l/yx5OmckOIKjVRj1g5zpwrGn1fcAc
+         uU3P4zI0UH+4H4zHf44LHkF9EbASuxsLsLNDJhPPNxuitm9tuPBtepDcLSHieOWO6Bd+
+         TvGMuGF9GXK43UDLoPj+eaMuljbgvxZe3dVTritkSCFzhSvvlm1pbP6dHxq2MlSEnH0t
+         AHmzDNcwGJZNKHvAM8FYeh3mOy74imiJ6FXdsNq+fG5uP8l8ta3MmAxACgn15zMsdg6R
+         2ooVdxPOTkvbKULMXCxylbpZ3k2yRvRcU9gxnHCbcN8hFdJk+INhXQaiJQ3vzJoH9euc
+         JIJg==
+X-Forwarded-Encrypted: i=1; AKwUvBzwiPbKVY1yXLxN5OY3NeXGckBRHYrfU4qTsMwAXOWVPuBR2jnD3332O+abERXbAFIi46hd5scXi96Axg==@vger.kernel.org
+X-Gm-Message-State: APuU4Z/9jy0+VD6xpSBW9LH3pnWC5XM9GV/wvSq0ITwhEtoKFjw+W8sO
+	Uy7ceiF/NWW82lhFsCukM6nhB38FAGq6/Z2kYLRz85v2IL94CwHJej2QJTlfuFLfTsY=
+X-Gm-Gg: AYBFou3CWRMymFJ/xOiigdrJhN6USvBozdGaW25Gj2ueawrnPoExOGUfewgBZIpzwny
+	3/1X4/Ap4Q4NXhVJ9BNP66cYCznWkZSc7xnGjfwGaCkqjn5LVBhJkCVEtkqwOUuIwzzBtq+osq1
+	B1S7SiijzOtf34FgbNQtZdSx9lK66EXtgPoR3zMwZBDk4/8jzJpOB8xvj3FLPaSIF/tVybiZaVs
+	v2ZOF7xQOfXalqEP9obTPjPsA8fUZ3JssvKVcZgy65BNZYMnHsMgQLvtjGSjiKyrqPYlSno6p4H
+	0ssL0JO+eWxRNfPacozx7n3XYfbyMOPICGVGJ/DqHMVQwv7gB1hRpid1mIWapCOXek9f23Aa9vr
+	8jj9bQqPWEcGvlTNW+ze27SgTioeXj9FNb8vl6Y/yEcrffAsE/ba149mHgYE/MPRrf4JpeVl7E1
+	4btUTaWHyoSvo3h/XQZRjqVJBKiTy7tEDk/fkduA2elSWDgAfwrrzWtDJzav/BUn0pwHEaP+1Fx
+	KQ/xkka1Y0U78TiBmtUjrXuB+aNIii69iPKnLaj6IA821PhHgYhBCgf3DPIjca6LbnDpQYeNUMl
+	i5Lqu/6GFRs+fI2N4ddfM2+Y1Ere4SrP08uYUILDWlwQOTIrwQmGPMHYzos/50pLsGCG5cmapZm
+	AYsomvlskHLjkJbXttVr0LwKHWHRtHfR0Wtce9bgNRks/gOkQkWz8M3Euf2rasrQIqG66Y/5zLN
+	rqJ6PcsMqhqSgIOppiAZY=
+X-Received: by 2002:a05:690c:6b01:b0:8b1:810d:276 with SMTP id 00721157ae682-8b2b66e9a50mr29543167b3.34.1793494172036;
+        Sat, 31 Oct 2026 17:49:32 -0700 (PDT)
 Received: from ?IPv6:2600:1700:6476:1430:6f84:fe3e:51d2:f3cd? ([2600:1700:6476:1430:6f84:fe3e:51d2:f3cd])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b2b7198c65sm28593177b3.36.2026.10.31.17.33.37
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b2b71bd543sm29098627b3.45.2026.10.31.17.49.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 31 Oct 2026 17:33:39 -0700 (PDT)
-Message-ID: <39d08fa0b0e45c61dbb4f57ccc911d1235ff9b5f.camel@dubeyko.com>
-Subject: Re: [PATCH v2 13/34] hfsplus: don't set SB_RDONLY when creating the
- attributes tree
+        Sat, 31 Oct 2026 17:49:30 -0700 (PDT)
+Message-ID: <49d219dab3cb6411a1626efe78070d1aed94e96b.camel@dubeyko.com>
+Subject: Re: [Jfs-discussion] [PATCH v2 12/34] hfs: use the generic
+ emergency read-only state
 From: Viacheslav Dubeyko <slava@dubeyko.com>
 To: Christian Brauner <brauner@kernel.org>, linux-fsdevel@vger.kernel.org, 
  Jan Kara <jack@suse.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, 
-	linux-ext4@vger.kernel.org, jfs-discussion@lists.sourceforge.net, 
-	linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, linux-mm@kvack.org, 
-	ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev,
- linux-btrfs@vger.kernel.org, 	gfs2@lists.linux.dev,
- linux-efi@vger.kernel.org, linux-mtd@lists.infradead.org, 
-	linux-xfs@vger.kernel.org
-Date: Sat, 31 Oct 2026 17:33:37 -0700
-In-Reply-To: <20261029-work-fs-sb_rdonly-v2-13-2f44f64f0b66@kernel.org>
+Cc: ntfs@lists.linux.dev, linux-xfs@vger.kernel.org, 
+	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, 
+	linux-mm@kvack.org, ocfs2-devel@lists.linux.dev, ecryptfs@vger.kernel.org, 
+	gfs2@lists.linux.dev, exfat@lists.linux.dev, linux-efi@vger.kernel.org, 
+	linux-mtd@lists.infradead.org, Al Viro <viro@zeniv.linux.org.uk>, 
+	linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org
+Date: Sat, 31 Oct 2026 17:49:29 -0700
+In-Reply-To: <20261029-work-fs-sb_rdonly-v2-12-2f44f64f0b66@kernel.org>
 References: <20261029-work-fs-sb_rdonly-v2-0-2f44f64f0b66@kernel.org>
-	 <20261029-work-fs-sb_rdonly-v2-13-2f44f64f0b66@kernel.org>
+	 <20261029-work-fs-sb_rdonly-v2-12-2f44f64f0b66@kernel.org>
 Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
  keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
  zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
@@ -155,143 +154,292 @@ List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
 
-On Thu, 2026-10-29 at 17:07 +0100, Christian Brauner wrote:
-> hfs_btree_open() sets SB_RDONLY when the map record of a b-tree
-> doesn't
-> mark the header node as used. That's fine while mounting. But
-> hfsplus_create_attributes_file() calls it too when the first extended
-> attribute is set on a filesystem that has no attributes file yet.
-> That
-> runs on the live filesystem without s_umount and a filesystem must
-> not
-> change SB_RDONLY behind the VFS' back.
+On Thu, 2026-10-29 at 17:07 +0100, Christian Brauner via Jfs-discussion
+wrote:
+> Set SB_STATE_EMERGENCY_RO instead of a private bit and drop the
+> checks
+> the VFS does now. What's left is hfs_get_block(),
+> hfs_file_truncate(),
+> write_begin, O_DIRECT writes, the hfs.type and hfs.creator xattrs,
+> hfs_write_inode() which still writes the b-tree headers, and the MDB
+> commit, close and dirtying paths.
 >=20
-> hfsplus_create_attributes_file() opens a tree it has just created
-> itself
-> with the header node marked as used, so there's nothing to check
-> there.
-> Move the check into hfsplus_fill_super() and do it for every tree it
-> opens. No functional changes.
->=20
-> Suggested-by: Viacheslav Dubeyko <slava@dubeyko.com>
 > Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
 > ---
-> =C2=A0fs/hfsplus/btree.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 42 +++++++++++++=
-+++++++++++++++-----------
-> ---
-> =C2=A0fs/hfsplus/hfsplus_fs.h |=C2=A0 1 +
-> =C2=A0fs/hfsplus/super.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 5 +++++
-> =C2=A03 files changed, 34 insertions(+), 14 deletions(-)
+> =C2=A0fs/hfs/attr.c=C2=A0=C2=A0 |=C2=A0 2 +-
+> =C2=A0fs/hfs/dir.c=C2=A0=C2=A0=C2=A0 | 12 ------------
+> =C2=A0fs/hfs/extent.c |=C2=A0 4 ++--
+> =C2=A0fs/hfs/hfs_fs.h | 11 -----------
+> =C2=A0fs/hfs/inode.c=C2=A0 | 20 ++++----------------
+> =C2=A0fs/hfs/mdb.c=C2=A0=C2=A0=C2=A0 |=C2=A0 8 ++++----
+> =C2=A0fs/hfs/super.c=C2=A0 |=C2=A0 5 +----
+> =C2=A07 files changed, 12 insertions(+), 50 deletions(-)
 >=20
-> diff --git a/fs/hfsplus/btree.c b/fs/hfsplus/btree.c
-> index bd4dbdbc8f98..4a67569050e3 100644
-> --- a/fs/hfsplus/btree.c
-> +++ b/fs/hfsplus/btree.c
-> @@ -270,7 +270,6 @@ struct hfs_btree *hfs_btree_open(struct
-> super_block *sb, u32 id)
-> =C2=A0	struct hfs_btree *tree;
-> =C2=A0	struct hfs_btree_header_rec *head;
-> =C2=A0	struct address_space *mapping;
-> -	struct hfs_bnode *node;
+> diff --git a/fs/hfs/attr.c b/fs/hfs/attr.c
+> index bd9a1289d8c5..337b22f28208 100644
+> --- a/fs/hfs/attr.c
+> +++ b/fs/hfs/attr.c
+> @@ -129,7 +129,7 @@ static int hfs_xattr_set(const struct
+> xattr_handler *handler,
+> =C2=A0	if (!value)
+> =C2=A0		return -EOPNOTSUPP;
+> =C2=A0
+> -	if (unlikely(hfs_emergency_ro(inode->i_sb)))
+> +	if (unlikely(sb_emergency_ro(inode->i_sb)))
+> =C2=A0		return -EROFS;
+> =C2=A0
+> =C2=A0	return __hfs_setxattr(inode, handler->flags, value, size,
+> flags);
+> diff --git a/fs/hfs/dir.c b/fs/hfs/dir.c
+> index f0d8ddb07503..f6b97da19788 100644
+> --- a/fs/hfs/dir.c
+> +++ b/fs/hfs/dir.c
+> @@ -189,9 +189,6 @@ static int hfs_create(const struct mnt_idmap
+> *idmap, struct inode *dir,
 > =C2=A0	struct inode *inode;
-> =C2=A0	struct page *page;
-> =C2=A0	unsigned int size;
-> @@ -381,19 +380,6 @@ struct hfs_btree *hfs_btree_open(struct
-> super_block *sb, u32 id)
-> =C2=A0	kunmap_local(head);
-> =C2=A0	put_page(page);
+> =C2=A0	int res;
 > =C2=A0
-> -	node =3D hfs_bnode_find(tree, HFSPLUS_TREE_HEAD);
-> -	if (IS_ERR(node))
-> -		goto free_inode;
+> -	if (unlikely(hfs_emergency_ro(dir->i_sb)))
+> -		return -EROFS;
 > -
-> -	if (!hfs_bmap_test_bit(node, 0)) {
-> -		pr_warn("(%s): %s (cnid 0x%x) map record invalid or
-> bitmap corruption detected, forcing read-only.\n",
-> -				sb->s_id, hfs_btree_name(id), id);
-> -		pr_warn("Run fsck.hfsplus to repair.\n");
-> -		sb->s_flags |=3D SB_RDONLY;
-> -	}
-> -
-> -	hfs_bnode_put(node);
-> -
-> =C2=A0	return tree;
+> =C2=A0	inode =3D hfs_new_inode(dir, &dentry->d_name, mode);
+> =C2=A0	if (IS_ERR(inode))
+> =C2=A0		return PTR_ERR(inode);
+> @@ -222,9 +219,6 @@ static struct dentry *hfs_mkdir(const struct
+> mnt_idmap *idmap, struct inode *dir
+> =C2=A0	struct inode *inode;
+> =C2=A0	int res;
 > =C2=A0
-> =C2=A0 fail_page:
-> @@ -407,6 +393,34 @@ struct hfs_btree *hfs_btree_open(struct
-> super_block *sb, u32 id)
-> =C2=A0	return NULL;
+> -	if (unlikely(hfs_emergency_ro(dir->i_sb)))
+> -		return ERR_PTR(-EROFS);
+> -
+> =C2=A0	inode =3D hfs_new_inode(dir, &dentry->d_name, mode);
+> =C2=A0	if (IS_ERR(inode))
+> =C2=A0		return ERR_CAST(inode);
+> @@ -258,9 +252,6 @@ static int hfs_remove(struct inode *dir, struct
+> dentry *dentry)
+> =C2=A0	struct inode *inode =3D d_inode(dentry);
+> =C2=A0	int res;
+> =C2=A0
+> -	if (unlikely(hfs_emergency_ro(sb)))
+> -		return -EROFS;
+> -
+> =C2=A0	if (S_ISDIR(inode->i_mode) && inode->i_size !=3D 2)
+> =C2=A0		return -ENOTEMPTY;
+> =C2=A0
+> @@ -299,9 +290,6 @@ static int hfs_rename(const struct mnt_idmap
+> *idmap, struct inode *old_dir,
+> =C2=A0	if (flags & ~RENAME_NOREPLACE)
+> =C2=A0		return -EINVAL;
+> =C2=A0
+> -	if (unlikely(hfs_emergency_ro(old_dir->i_sb)))
+> -		return -EROFS;
+> -
+> =C2=A0	/* Unlink destination if it already exists */
+> =C2=A0	if (d_really_is_positive(new_dentry)) {
+> =C2=A0		res =3D hfs_remove(new_dir, new_dentry);
+> diff --git a/fs/hfs/extent.c b/fs/hfs/extent.c
+> index dacf7ce1ffe4..fd874a93a92f 100644
+> --- a/fs/hfs/extent.c
+> +++ b/fs/hfs/extent.c
+> @@ -357,7 +357,7 @@ int hfs_get_block(struct inode *inode, sector_t
+> block,
+> =C2=A0			return -EIO;
+> =C2=A0		if (ablock >=3D HFS_I(inode)->alloc_blocks) {
+> =C2=A0			/* No new allocations after an error. */
+> -			if (unlikely(hfs_emergency_ro(sb)))
+> +			if (unlikely(sb_emergency_ro(sb)))
+> =C2=A0				return -EROFS;
+> =C2=A0			res =3D hfs_extend_file(inode);
+> =C2=A0			if (res)
+> @@ -494,7 +494,7 @@ void hfs_file_truncate(struct inode *inode)
+> =C2=A0	hfs_dbg("ino %llu, phys_size %llu -> i_size %llu\n",
+> =C2=A0		inode->i_ino, (long long)HFS_I(inode)->phys_size,
+> =C2=A0		inode->i_size);
+> -	if (unlikely(hfs_emergency_ro(sb)))
+> +	if (unlikely(sb_emergency_ro(sb)))
+> =C2=A0		return;
+> =C2=A0	if (inode->i_size > HFS_I(inode)->phys_size) {
+> =C2=A0		struct address_space *mapping =3D inode->i_mapping;
+> diff --git a/fs/hfs/hfs_fs.h b/fs/hfs/hfs_fs.h
+> index 325214573d91..fdfa5d303d5e 100644
+> --- a/fs/hfs/hfs_fs.h
+> +++ b/fs/hfs/hfs_fs.h
+> @@ -143,7 +143,6 @@ struct hfs_sb_info {
+> =C2=A0#define HFS_FLG_BITMAP_DIRTY	0
+> =C2=A0#define HFS_FLG_MDB_DIRTY	1
+> =C2=A0#define HFS_FLG_ALT_MDB_DIRTY	2
+> -#define HFS_FLG_EMERGENCY_RO	3	/* read-only after an MDB
+> write error */
+> =C2=A0
+> =C2=A0/* bitmap.c */
+> =C2=A0extern u32 hfs_vbm_search_free(struct super_block *sb, u32 goal, u3=
+2
+> *num_bits);
+> @@ -294,16 +293,6 @@ static inline const char *hfs_mdb_name(struct
+> super_block *sb)
+> =C2=A0	return sb->s_id;
 > =C2=A0}
 > =C2=A0
-> +/*
-> + * Check the map record of a b-tree at mount. hfs_btree_open() can't
-> do it
-> + * because hfsplus_create_attributes_file() calls it on the live
-> filesystem
-> + * where SB_RDONLY must not be set.
-> + */
-> +int hfsplus_btree_check_map(struct hfs_btree *tree)
-> +{
-> +	struct super_block *sb =3D tree->sb;
-> +	struct hfs_bnode *node;
-> +
-> +	node =3D hfs_bnode_find(tree, HFSPLUS_TREE_HEAD);
-> +	if (IS_ERR(node)) {
-> +		pr_err("failed to load %s header node\n",
-> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 hfs_btree_name(tree->cnid));
-> +		return PTR_ERR(node);
-> +	}
-> +
-> +	if (!hfs_bmap_test_bit(node, 0)) {
-> +		pr_warn("(%s): %s (cnid 0x%x) map record invalid or
-> bitmap corruption detected, forcing read-only.\n",
-> +				sb->s_id, hfs_btree_name(tree-
-> >cnid), tree->cnid);
-> +		pr_warn("Run fsck.hfsplus to repair.\n");
-> +		sb->s_flags |=3D SB_RDONLY;
-> +	}
-> +
-> +	hfs_bnode_put(node);
-> +	return 0;
-> +}
-> +
-> =C2=A0/* Release resources used by a btree */
-> =C2=A0void hfs_btree_close(struct hfs_btree *tree)
+> -/*
+> - * Writing back the MDB failed and the filesystem stopped all
+> modifications
+> - * until unmount. SB_RDONLY isn't used for that because it must not
+> change
+> - * without s_umount.
+> - */
+> -static inline bool hfs_emergency_ro(struct super_block *sb)
+> -{
+> -	return test_bit(HFS_FLG_EMERGENCY_RO, &HFS_SB(sb)->flags);
+> -}
+> -
+> =C2=A0static inline void hfs_bitmap_dirty(struct super_block *sb)
 > =C2=A0{
-> diff --git a/fs/hfsplus/hfsplus_fs.h b/fs/hfsplus/hfsplus_fs.h
-> index 6f240f87f8ff..58c780b09b6f 100644
-> --- a/fs/hfsplus/hfsplus_fs.h
-> +++ b/fs/hfsplus/hfsplus_fs.h
-> @@ -362,6 +362,7 @@ int hfsplus_block_free(struct super_block *sb,
-> u32 offset, u32 count);
-> =C2=A0u32 hfsplus_calc_btree_clump_size(u32 block_size, u32 node_size, u6=
-4
-> sectors,
-> =C2=A0				=C2=A0 int file_id);
-> =C2=A0struct hfs_btree *hfs_btree_open(struct super_block *sb, u32 id);
-> +int hfsplus_btree_check_map(struct hfs_btree *tree);
-> =C2=A0void hfs_btree_close(struct hfs_btree *tree);
-> =C2=A0int hfs_btree_write(struct hfs_btree *tree);
-> =C2=A0int hfs_bmap_reserve(struct hfs_btree *tree, u32 rsvd_nodes);
-> diff --git a/fs/hfsplus/super.c b/fs/hfsplus/super.c
-> index ff7d6b3336a6..532f23502df3 100644
-> --- a/fs/hfsplus/super.c
-> +++ b/fs/hfsplus/super.c
-> @@ -564,6 +564,11 @@ static int hfsplus_fill_super(struct super_block
-> *sb, struct fs_context *fc)
-> =C2=A0	}
-> =C2=A0	sb->s_xattr =3D hfsplus_xattr_handlers;
+> =C2=A0	set_bit(HFS_FLG_BITMAP_DIRTY, &HFS_SB(sb)->flags);
+> diff --git a/fs/hfs/inode.c b/fs/hfs/inode.c
+> index 6ea3b8ffb284..71f7ddf60fb2 100644
+> --- a/fs/hfs/inode.c
+> +++ b/fs/hfs/inode.c
+> @@ -54,7 +54,7 @@ int hfs_write_begin(const struct kiocb *iocb,
+> struct address_space *mapping,
+> =C2=A0	loff_t total_capacity;
+> =C2=A0	int ret;
 > =C2=A0
-> +	if (hfsplus_btree_check_map(sbi->ext_tree) ||
-> +	=C2=A0=C2=A0=C2=A0 hfsplus_btree_check_map(sbi->cat_tree) ||
-> +	=C2=A0=C2=A0=C2=A0 (sbi->attr_tree && hfsplus_btree_check_map(sbi-
-> >attr_tree)))
-> +		goto out_close_attr_tree;
-> +
-> =C2=A0	inode =3D hfsplus_iget(sb, HFSPLUS_ALLOC_CNID);
-> =C2=A0	if (IS_ERR(inode)) {
-> =C2=A0		pr_err("failed to load allocation file\n");
-
+> -	if (unlikely(hfs_emergency_ro(inode->i_sb)))
+> +	if (unlikely(sb_emergency_ro(inode->i_sb)))
+> =C2=A0		return -EROFS;
+> =C2=A0
+> =C2=A0	total_capacity =3D (loff_t)sbi->fs_ablocks * sbi->alloc_blksz;
+> @@ -143,7 +143,7 @@ static ssize_t hfs_direct_IO(struct kiocb *iocb,
+> struct iov_iter *iter)
+> =C2=A0	ssize_t ret;
+> =C2=A0
+> =C2=A0	if (iov_iter_rw(iter) =3D=3D WRITE &&
+> -	=C2=A0=C2=A0=C2=A0 unlikely(hfs_emergency_ro(inode->i_sb)))
+> +	=C2=A0=C2=A0=C2=A0 unlikely(sb_emergency_ro(inode->i_sb)))
+> =C2=A0		return -EROFS;
+> =C2=A0
+> =C2=A0	ret =3D blockdev_direct_IO(iocb, inode, iter, hfs_get_block);
+> @@ -479,11 +479,8 @@ int hfs_write_inode(struct inode *inode, struct
+> writeback_control *wbc)
+> =C2=A0	int res;
+> =C2=A0
+> =C2=A0	hfs_dbg("ino %llu\n", inode->i_ino);
+> -	if (unlikely(hfs_emergency_ro(inode->i_sb))) {
+> -		/*
+> -		 * Writeback still writes the b-tree nodes. Keep the
+> headers in
+> -		 * sync with them so the trees on disk stay intact.
+> -		 */
+> +	if (unlikely(sb_emergency_ro(inode->i_sb))) {
+> +		/* Keep the headers in sync with the nodes writeback
+> still writes. */
+> =C2=A0		if (inode->i_ino =3D=3D HFS_EXT_CNID)
+> =C2=A0			hfs_btree_write(HFS_SB(inode->i_sb)-
+> >ext_tree);
+> =C2=A0		else if (inode->i_ino =3D=3D HFS_CAT_CNID)
+> @@ -640,8 +637,6 @@ void hfs_evict_inode(struct inode *inode)
+> =C2=A0
+> =C2=A0static int hfs_file_open(struct inode *inode, struct file *file)
+> =C2=A0{
+> -	if ((file->f_mode & FMODE_WRITE) && hfs_emergency_ro(inode-
+> >i_sb))
+> -		return -EROFS;
+> =C2=A0	if (HFS_IS_RSRC(inode))
+> =C2=A0		inode =3D HFS_I(inode)->rsrc_inode;
+> =C2=A0	atomic_inc(&HFS_I(inode)->opencnt);
+> @@ -673,9 +668,6 @@ int hfs_inode_setattr(const struct mnt_idmap
+> *idmap, struct dentry *dentry,
+> =C2=A0	struct hfs_sb_info *hsb =3D HFS_SB(inode->i_sb);
+> =C2=A0	int error;
+> =C2=A0
+> -	if (unlikely(hfs_emergency_ro(inode->i_sb)))
+> -		return -EROFS;
+> -
+> =C2=A0	error =3D setattr_prepare(&nop_mnt_idmap, dentry, attr);
+> =C2=A0	if (error)
+> =C2=A0		return error;
+> @@ -727,10 +719,6 @@ static int hfs_file_fsync(struct file *filp,
+> loff_t start, loff_t end,
+> =C2=A0	struct super_block * sb;
+> =C2=A0	int ret, err;
+> =C2=A0
+> -	/* Inodes aren't written back after an error. */
+> -	if (unlikely(hfs_emergency_ro(inode->i_sb)))
+> -		return -EROFS;
+> -
+> =C2=A0	ret =3D file_write_and_wait_range(filp, start, end);
+> =C2=A0	if (ret)
+> =C2=A0		return ret;
+> diff --git a/fs/hfs/mdb.c b/fs/hfs/mdb.c
+> index 1a56cf5ea56e..b821b06121ad 100644
+> --- a/fs/hfs/mdb.c
+> +++ b/fs/hfs/mdb.c
+> @@ -338,7 +338,7 @@ int hfs_mdb_commit(struct super_block *sb)
+> =C2=A0	struct hfs_mdb *mdb =3D HFS_SB(sb)->mdb;
+> =C2=A0	int ret =3D 0;
+> =C2=A0
+> -	if (sb_rdonly(sb) || hfs_emergency_ro(sb))
+> +	if (sb_rdonly(sb) || sb_emergency_ro(sb))
+> =C2=A0		return 0;
+> =C2=A0
+> =C2=A0	/*
+> @@ -347,7 +347,7 @@ int hfs_mdb_commit(struct super_block *sb)
+> =C2=A0	 */
+> =C2=A0	if (!buffer_uptodate(HFS_SB(sb)->mdb_bh)) {
+> =C2=A0		pr_err("primary MDB is corrupt, mounting read-
+> only\n");
+> -		set_bit(HFS_FLG_EMERGENCY_RO, &HFS_SB(sb)->flags);
+> +		sb_set_emergency_ro(sb);
+> =C2=A0		return -EIO;
+> =C2=A0	}
+> =C2=A0
+> @@ -381,7 +381,7 @@ int hfs_mdb_commit(struct super_block *sb)
+> =C2=A0	=C2=A0=C2=A0=C2=A0 HFS_SB(sb)->alt_mdb) {
+> =C2=A0		if (!buffer_uptodate(HFS_SB(sb)->alt_mdb_bh)) {
+> =C2=A0			pr_err("alternate MDB is corrupt, mounting
+> read-only\n");
+> -			set_bit(HFS_FLG_EMERGENCY_RO, &HFS_SB(sb)-
+> >flags);
+> +			sb_set_emergency_ro(sb);
+> =C2=A0			ret =3D -EIO;
+> =C2=A0			goto out;
+> =C2=A0		}
+> @@ -432,7 +432,7 @@ int hfs_mdb_commit(struct super_block *sb)
+> =C2=A0void hfs_mdb_close(struct super_block *sb)
+> =C2=A0{
+> =C2=A0	/* update volume attributes */
+> -	if (sb_rdonly(sb) || hfs_emergency_ro(sb))
+> +	if (sb_rdonly(sb) || sb_emergency_ro(sb))
+> =C2=A0		return;
+> =C2=A0
+> =C2=A0	if (!buffer_uptodate(HFS_SB(sb)->mdb_bh))
+> diff --git a/fs/hfs/super.c b/fs/hfs/super.c
+> index bcc19c3a4f6b..c815d22ab900 100644
+> --- a/fs/hfs/super.c
+> +++ b/fs/hfs/super.c
+> @@ -82,7 +82,7 @@ void hfs_mark_mdb_dirty(struct super_block *sb)
+> =C2=A0	struct hfs_sb_info *sbi =3D HFS_SB(sb);
+> =C2=A0	unsigned long delay;
+> =C2=A0
+> -	if (sb_rdonly(sb) || hfs_emergency_ro(sb))
+> +	if (sb_rdonly(sb) || sb_emergency_ro(sb))
+> =C2=A0		return;
+> =C2=A0
+> =C2=A0	spin_lock(&sbi->work_lock);
+> @@ -131,9 +131,6 @@ static int hfs_reconfigure(struct fs_context *fc)
+> =C2=A0		return 0;
+> =C2=A0
+> =C2=A0	if (!(fc->sb_flags & SB_RDONLY)) {
+> -		/* After an MDB write error it stays read-only until
+> unmount. */
+> -		if (hfs_emergency_ro(sb))
+> -			return -EROFS;
+> =C2=A0		if (!(HFS_SB(sb)->mdb->drAtrb &
+> cpu_to_be16(HFS_SB_ATTRIB_UNMNT))) {
+> =C2=A0			pr_warn("filesystem was not cleanly
+> unmounted, running fsck.hfs is recommended.=C2=A0 leaving read-only.\n");
+> =C2=A0			sb->s_flags |=3D SB_RDONLY;
 
 Looks good.
 
