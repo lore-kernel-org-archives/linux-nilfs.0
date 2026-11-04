@@ -1,85 +1,85 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.172
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.216.45
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793753392;
-	b=TZ40s1g2yWHzPZburNGOkS6A0WqtgpVrUHjdTcPlWGcF1GFHUqoao0Z6ZHZohkzxuT1R
-	 byixEF4DByzwJD0eO/XujuHHLLJTJ1/Etpqe125j9Ge/PN+7V4xSXCrqKXh5pdME3QGTl
-	 9fbXZL3XjqHISLlu9zBR6zGUjEENgJhP82BXRmOYOqTyFl/aDb5vqwp9leMvmZFQcyhXj
-	 hl3iXwyiVdyNK6Sb3gnoDGXBQLPYq1TPWX+E/Xj8rq0AyLtz/cokhPkmp549uQq1JWndV
-	 YBwvI5jAwPi9u+NOfttr1gIZQPom9hAihJHp26AUiaLZxDa8qFKSbQhpYMp+N4ELJIA==
+	t=1793753735;
+	b=HP9vN5N25bNW7rNwwshp6W6zmoN3ZH2xYkKQCEgLrGdoPSAZiBtiaS3nbFzW1WQDutCU
+	 /aw+EyOUljrdQ9/jZJwhlrOqm8vWcUaEklVped/t24XcbPFJElRX12yPo3FuknMEnUNSk
+	 8eoknC3WSdxX1ln61o5r3pQfcqN00Gw8l+ePAMYxJeAkhCuRm3v7dGsRgC6bVPirxlevW
+	 H5DoZm8I9ag6nbY6DlsyV4K0Dm5hrNrn/GLVAsda8opAxkg3zdr/6CCowvOqIRn0QvUmQ
+	 8YCJQUh+yoPA4coZGQd40B8BjBb3zcd5265CsnksHSRA36fywhyeicITRRDvii25BPw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793753392;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793753735;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=/bumM81nPiENiLh9PH/Fm40C+VENRMD3A/OuAfI8Z4s=;
-	b=bRRqBb58hHKyYlSc51xWkVnMCrspDCcDRHMZPL77EGWOugQC/iGN5aOngCj+9ezOI8u1
-	 G4EZV9e5R3VuYXN25tL1cC7q0efT4T9ubcELkMumYKJhWhwgZ9M0UtxVr2meIzzKmr0u2
-	 kBGlWL9CDTTIz58CTMlJ0QlBQa7NTh/0VlKS75K4SksRrcrvAp8MOvuJCwSYRdTLdBt8V
-	 k0ygxydC5C5IX929XqyTAtJeFkPqe+eZAfGCxJN8LtIQUZreoqM/oYx1BaMxkEyX1CKm2
-	 Z0VfDh5oQJ5OML7KqXNERLy+BPFdN97ONuz4IbSWkVSDuEZxKV5wKLT/LFMSYzEdNrQ==
+	bh=xG5t3xikeZrgWEXDIQ9E66WF0APj2TRUKkrk3j8LkpE=;
+	b=P/pBYecSFfpcgoTz6TX1ZPDdtUgVmNUWygs5djsieH1KCMj33EYLXbVtksWLOCd/7CpA
+	 u3QzzD+JJNviSpPKNswBSoFJuiNXqkIQq4W0cHKvlyQWcjUL4ud/m86E6/p6rmdi+TNp6
+	 aXxPX+j71/frCvJog4ynEAVDVaHQX/IGu27JvF1u90Ig2xS79nEBaWSK4GpmEpdMqEAtT
+	 /qfxXZ1rKRPpsMYl0qIrOmabbKSYdFZ+WRQHcARyOLM+k+JKfbIgE4s59CTxhckLSldBx
+	 z6haK2b1Hc9OsJCXWh5/eQgbZHhF0u7Eh0qWYj/tMQpCdZljgMtlbaRTfbg+bCSKD1Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=VT+pUP2N;
-	arc=none smtp.remote-ip=209.85.210.172
-Received: from mail-pf1-f172.google.com (mail-pf1-f172.google.com [209.85.210.172])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=sudo5wuz;
+	arc=none smtp.remote-ip=209.85.216.45
+Received: from mail-pj1-f45.google.com (mail-pj1-f45.google.com [209.85.216.45])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B2AE606A331
-	for <linux-nilfs@vger.kernel.org>; Wed,  4 Nov 2026 00:49:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2B2AE606A331
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88833606A337
+	for <linux-nilfs@vger.kernel.org>; Wed,  4 Nov 2026 00:55:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 88833606A337
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=VT+pUP2N
-Received: by mail-pf1-f172.google.com with SMTP id d2e1a72fcca58-886e61fa30fso101057b3a.1
-        for <linux-nilfs@vger.kernel.org>; Tue, 03 Nov 2026 16:49:52 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=sudo5wuz
+Received: by mail-pj1-f45.google.com with SMTP id 98e67ed59e1d1-3ac7842c17dso153318a91.3
+        for <linux-nilfs@vger.kernel.org>; Tue, 03 Nov 2026 16:55:34 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793753391; x=1794358191; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793753734; x=1794358534; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=/bumM81nPiENiLh9PH/Fm40C+VENRMD3A/OuAfI8Z4s=;
-        b=VT+pUP2NwuZcLnfpE6RBehWP9rj7p+v+tKoR/WVHOzz1v7CJgJGu6gqjY1V/YGEdmw
-         igNrVOnPTFLv9xvYK2tnZhcPD4jqAzwLjDlQ2iFsJIT0vgZOsXkUB60qRSrv68Heg2+2
-         k5XkKmMrKWtBUKDoGvgF6CjyKJx7mmzehyXgiMW8Z51NtcdDEa4LvP5GkI/GPk/JWdX0
-         E0pyc83t8pyqA1wDQ4YMhv4IP3UIHbsnnJtT4+s3TyxuI9ePzpN8dD0BzwPhXNBIUBNN
-         GS4KAdHBqzLrJ9upnMsWdUfiG2GuZuR+cDGx90+hJalABWpp8S3bPmquj5j2mZuikn7l
-         6bxQ==
+        bh=xG5t3xikeZrgWEXDIQ9E66WF0APj2TRUKkrk3j8LkpE=;
+        b=sudo5wuzf8me28sIhbntLBwUiKNWuwSV6wtIncQpUBbsN4Zu1yMj1uOdtNMULS+qse
+         p10GSTbsQZQej+RmcaRVIPfYXpiJc7DVP332tBPCeYi6iIxYHtw/pCGnwu6pUZaiYkuu
+         1jzqj0fIApJI24vXlIZRW+4LFyo/2rv7mV5cIr8Gch74DjfIbhBYVLv8/dyYnqAxTrWw
+         7/Kxsv4asQfbrP6PWPBOlk/xWVzyI0hLDQrJy+RjayW+oFANYAqhfVZpq60HUf6srI5f
+         LvFF0LRAtEUesVRTlzKq8hIDxyh050q8ogJnunYhdFI0Mss29VGLQmid0PHrrP/vhgJw
+         FudA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793753391; x=1794358191;
+        d=1e100.net; s=20260707; t=1793753734; x=1794358534;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=/bumM81nPiENiLh9PH/Fm40C+VENRMD3A/OuAfI8Z4s=;
-        b=ojFkYQn2NqjXm9FB1eOTuwWEGvOvGqaoczy35bxwqlgK0x4a0FJNKCGd/WH3yIgMoB
-         WayaHVOm/qJ7J1GOFZJCFBdgsxzhbjlF/Iv0k/VhYrHGTTriaYz/4t7D6DmP6GY4xvd4
-         LysgIA1mIGh/AWddSsPQMdg/gYgK5SqN35/D/TX0eGdnxau1iZae5LqbnNr8UoqGTyTN
-         UNn1PkGxOTwm6hHHE3cJS/XHtfLQmrZ9/l0pd5uewdqyVNDTu7vLV3k0YH143QYXyVmU
-         7lGtxPUV9MYuu4uU5jpysrS5ht+dzuT4uMr13Ryy1jajQraO1M28y93qw0YbfwFxQxnb
-         KebA==
-X-Forwarded-Encrypted: i=1; AKwUvByvmkVq7lBNxwKdeJuKVtQyvI/QXDZ7uzxpwCdNAmEHNiQR63HTeJsxbsXPZaPAfNG+YdHxihKyWyo7QA==@vger.kernel.org
-X-Gm-Message-State: APuU4Z+Q/cIyo8IRwA8DN0hZO7Yzdgo2l6Fld9DvIekS7EXqZNzuYHIr
-	M/1qQmg+v5R/tU9lVTmHt+3Y0IgIG/eAX5YaoZMH6z6b2FQkmmbwg3r/
-X-Gm-Gg: AYBFou13ef68aRqihXEBRqOQR8++dPAKcGKqn9mEmPo47e7oi5pcSk1jIugmuQXhgNa
-	srWc7woYXbNEjubGHR72jQJ8m/3vwQOn1hYCrBxSVWTnatRUVFyUOwOiYxlK97PvycE/8AXDwR/
-	4xg6DI7QssWlCulmlOH8fl5Qm9hNLobvBXdgq18DsdPdic7udmEf1TAuazKKtvBuC5cnjfNzKqF
-	/TzNF1oSKyc5t5yYN1D++H7459wg+wXRO9mkPV1jjHUrdHN3KfRNpAwZOhXhCqQlaQhw9uzDOMR
-	YrvfDeDFmetvovs+t3UEDvZxAdmFnTR0LB+oY+dZv3Je6d8qAzqTq1kammap0XpnzDPUAJJAg+B
-	X0uis4KYif6xUk4VqVOTu2AGcoxz3+aeRz48CjMITX+DNwP00Bhov5V7dfAaIEVYLuz7IgCO0Kt
-	9rUDSuOjzA0OhHDoiwNJYGlaoUOawWqpx3jWGNw1gvsebtVnFrSEy87ogmNyuwqHHfSsFmmskjs
-	paQ+284v6ujCXlTFwOltfLv15TSCysk3+/5yFOXX5O+USxzoliDMiEF7TavJSp5kUY2zZQ7sp87
-	UKvKpsYxH4S5OZ7Cx9aRjmidAyAZi7WU5zsKl0k=
-X-Received: by 2002:a05:6a20:914b:b0:3e2:9470:5303 with SMTP id adf61e73a8af0-3e928953948mr11828504637.15.1793753391239;
-        Tue, 03 Nov 2026 16:49:51 -0800 (PST)
+        bh=xG5t3xikeZrgWEXDIQ9E66WF0APj2TRUKkrk3j8LkpE=;
+        b=uQiiMgQajUz65hxz4O//JlVXzJkvoz5F0uUL4rkl1pMjO1/9q/+kY57taHDbJkSf7r
+         UmxbyJbadWWnRM/IS4SCTq4pX8ZJBZu9HnwAJlIcv9H9RTdjofUsHPQwjgpmbbq1H5um
+         HpWfb+rZL9L2AfDMrmTTXNnElkAQ+CNlsrcKxnZD3lD2SBHquy9e1Rq7o5H4wfxgdRln
+         +MrdmODwy7mlyf8kyk0o5uFw8ZJ6CmSAgNPc3Y2Kz2S73170Iq4rhJ3Zmu7Ymf0Xbeaw
+         omsHI85iu/LdKyLrAQhRsnCaxpE8HneKtjAW16scu8JX3MoQbsVwAyh/x7DmizvKfVSe
+         Fzpg==
+X-Forwarded-Encrypted: i=1; AKwUvByjZGg3kOlLJqXWYV3pgvKuQfXC/OZch2cWbvK//IgwEIXrjrfZFWQLNB/wZ+WCFkYsjg8xUVsz1A/zlw==@vger.kernel.org
+X-Gm-Message-State: APuU4Z/0JmoqrD8Fl7er6JeS1QXiIZu3Nl3lZGcWArGcV48qf56rFCnC
+	TNQ53rL+Oj/PnB55sO5mDIwW7rWCiNm4mSemLKxgmb5b7dKy/KnD5bAE
+X-Gm-Gg: AYBFou284PZ7O4rLY+R/M6qqW872hFTNZhUjMLV/r4Fb5lhU9aHeavT68RU+POPkDpo
+	BvMM4eXOOe638yxp8UT6aboinxtsaIKyV2Juhr2kyxHixa9iyj0B9nOUIAR2h3Ytuhn8mDtP/Xy
+	UndwBHSfTWAM48e0C6p81hrAjbvhHIvj+iy8ruktZchesrDo8t/JawXrKKNzhXSODZtbHKPdC+O
+	K5m3/rSApMmaslI+Ri+DZLbjorllyQQ+4onNbEKR0d0jBjQcATS1bcYqkThWFesCf+4TY0HFok4
+	SzVpVoe3cBQobH+Kfxu+arHjs8P5ocpwCycnEAncYHqily1q1f+jBFS8Nx1Nuc8TxHidPaby/4L
+	cUdgQ155lT3Br+kYkmku89XUCxuX1BHN5OIKy4ISDq9rzwDOmDXY8wxa2L0dwZWwSAgkf5xsTeX
+	6HZPZ+nf0ewQD/LFxlEXngXoFnHn70x/pQN7CPmyI1RoYD6Qs4A6Gcbg1r9iHv1IJNSPS5fVBQ5
+	/lUilhbL1ePyJ8/8Nv2jO2mCisOfbwAj3JOdcqOkJXGkmL+ZSZzRU/6U1GitcBcV8Yjad1jmMJe
+	uG+t4R4vf/3Bb23pIQ==
+X-Received: by 2002:a17:90b:184f:b0:3ac:83c1:2c0 with SMTP id 98e67ed59e1d1-3ae897e06efmr11479861a91.64.1793753733906;
+        Tue, 03 Nov 2026 16:55:33 -0800 (PST)
 Received: from localhost ([27.122.242.71])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-cdb46440cc7sm329325a12.3.2026.11.03.16.49.50
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3b09445f7b3sm1222403a91.5.2026.11.03.16.55.32
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 03 Nov 2026 16:49:50 -0800 (PST)
-Date: Wed, 4 Nov 2026 09:49:48 +0900
+        Tue, 03 Nov 2026 16:55:33 -0800 (PST)
+Date: Wed, 4 Nov 2026 09:55:30 +0900
 From: Hyunchul Lee <hyc.lee@gmail.com>
 To: Christian Brauner <brauner@kernel.org>
 Cc: linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.com>,
@@ -89,13 +89,11 @@ Cc: linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.com>,
 	linux-mm@kvack.org, ntfs@lists.linux.dev,
 	ocfs2-devel@lists.linux.dev, linux-btrfs@vger.kernel.org,
 	gfs2@lists.linux.dev, linux-efi@vger.kernel.org,
-	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org,
-	stable@vger.kernel.org
-Subject: Re: [PATCH v2 17/34] ntfs: don't set SB_RDONLY after filesystem
- errors
-Message-ID: <auqBLEvcurRZfGj6@hyunchul-PC02>
+	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org
+Subject: Re: [PATCH v2 18/34] ntfs: use the generic emergency read-only state
+Message-ID: <auqCgguXEsKCq9p2@hyunchul-PC02>
 References: <20261029-work-fs-sb_rdonly-v2-0-2f44f64f0b66@kernel.org>
- <20261029-work-fs-sb_rdonly-v2-17-2f44f64f0b66@kernel.org>
+ <20261029-work-fs-sb_rdonly-v2-18-2f44f64f0b66@kernel.org>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -107,40 +105,15 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20261029-work-fs-sb_rdonly-v2-17-2f44f64f0b66@kernel.org>
+In-Reply-To: <20261029-work-fs-sb_rdonly-v2-18-2f44f64f0b66@kernel.org>
 
-On Thu, Oct 29, 2026 at 05:07:08PM +0100, Christian Brauner wrote:
-> With errors=remount-ro every ntfs_error() ends up in ntfs_handle_error()
-> which sets SB_RDONLY without holding s_umount. If that happens while the
-> volume is frozen through bdev_freeze() thaw_super() sees a read-only
-> superblock and leaves the s_writers rwsems locked so every writer hangs.
+On Thu, Oct 29, 2026 at 05:07:09PM +0100, Christian Brauner wrote:
+> Set SB_STATE_EMERGENCY_RO instead of the NV_EmergencyRO volume flag when
+> an error makes the volume read-only. ntfs_emergency_state() keeps
+> telling a shutdown (EIO) and the emergency state (EROFS) apart so all of
+> its callers stay as they are. /proc/mounts shows the volume read-only
+> again.
 > 
-> So set NV_Errors and a new NV_EmergencyRO flag instead like ext4 does.
-> ntfs_emergency_state() returns EIO after a shutdown and EROFS after an
-> error and the write side shutdown checks use it now. fallocate,
-> ->set_acl(), FS_IOC_SETFSLABEL, FITRIM and ntfs_mft_record_free() get a
-> check as well. Errors while mounting still set SB_RDONLY, nothing can
-> freeze the superblock before SB_BORN.
-> 
-> NV_Errors already refuses a remount to read-write and since
-> commit 521978c4f444 ("ntfs: sync the volume dirty bit with the recorded
-> error state") the volume stays marked dirty once errors were recorded.
-> But the dirty bit may not be on disk yet when the error hits and
-> writeback is refused from then on. So a work item writes it right away
-> because ntfs_error() can be called with mft records locked, and umount
-> lets a pending one run first.
-> 
-> Unlinked inodes are left to chkdsk in that state. Their mft records are
-> freed with direct bios while the index and bitmap updates of the
-> deletion can't be written back anymore. And writing to an encrypted file
-> only warns now. It called ntfs_error() which let anyone put the volume
-> into the emergency state.
-> 
-> /proc/mounts keeps showing the volume read-write. Writes through file
-> descriptors opened before the error fail with EROFS.
-> 
-> Fixes: 6251f0b0de7d ("ntfs: update super block operations")
-> Cc: stable@vger.kernel.org
 > Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
 
 Looks good to me.
