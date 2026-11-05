@@ -1,110 +1,69 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793871181;
-	b=OMyBytolRgHnEniT4ECBjiw94MyRf7YMtbYgOmAnOH/+2hbFSSa/l9MMd09Tdaq5VYIB
-	 G+hs5LQ1/oUv5HrRR/ehPBRtKOryhdoO2juXwcb1v3aUPBorScTNBajv2XNvMB5X3LF0V
-	 VkV8bdJhVCWw/V5k7vrVVnI1k0Mo1zRrEZeywHWiCLqz9R5d1wTphtrRYd+hEWm56K2dy
-	 OA/NBZngvvsS5wz/DFNaAUAPq43jZWr5jYLsrSv1A5g85Pq/3o1wmTbqAVonoRAodIyZO
-	 oFAXS8PFIDSCo8nuvfqPZmurtngMg8TnY/FP8iWvLd8li0JpJH2kYFvQ5bKOHOWz/kw==
+	t=1793890430;
+	b=yfz3EKgPFuaAIPO5SXbUF014SOVr3z2NY/PRn+EFTqt8ejR9mLDVY1gvcgjI+qZcGUkq
+	 DlXLIOK2WBrd7qr9cqUTjoT0ki+kEmabd9Vn68+fPenKGUi29tS1FonivW66Iw7zEqYsX
+	 dKPrYSVQu8FvtrQXyeb1KgdyGmG6kFMFZGcfp1uUwglOeP5232mJJnjw1q+IO6EidOtNA
+	 rXYQhVCbjvC3jzHAJAfytg8SXZ8qFl4qnior36BASQmwCqvmNya/gnco+D2wm0pM2W5BV
+	 uFCKFPx/M4RUS1OSDZ1N1lJVcu0Bk06gh5n3cPIXKNtxxbTA0MRtToa6P7y47Wppuow==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793871181;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:DKIM-Signature:
-	 DKIM-Signature:Received:Received:Received:Date:From:To:Cc:Subject:
-	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
-	 In-Reply-To:X-Spam-Flag:X-Spam-Level:X-Spamd-Result:X-Spam-Score;
-	bh=pgu8NzTJnS2R+zD0u6Z5S8xrxcIoknrqJKi9obAmajo=;
-	b=WpI2rh6zZ8bR6kfoa/WVUQEDMczzClRROHFvY/Fj+2AEDVWxg/Iv+eR1ftOUL0mm+o/S
-	 LUgW1OLbl2pAgvJ5fI7cVn7uJkd1GtKslZjONL7NIIIy3ISWvxUm14BfckivcOgyyd0Gx
-	 5a0ImciyB+oaA967erp6BEVFseqkJDPvyd6hP4jRRNDdbxm6irdwzTowBjolWb2bbdDx7
-	 tl+SHCjdJGCBxzpPzAkCVc6SIsgFvwQwYJZozlOZoCgZqc6I7+AAygA/KCGS9J3+F1tG6
-	 0ybUiVJVCzu9Pj2F/b5t2/kqe//jMwDyDaI1gFKSsvZYMGjiz94LY5sb78+RsVEUCkg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793890430;
+	h=Received:DKIM-Signature:From:To:Cc:In-Reply-To:References:Subject:
+	 Message-Id:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:
+	 X-Mailer;
+	bh=wPbepQK0nXa3d+APg5PI/tkZrq+GYAAdAwwH4WGsWbY=;
+	b=Y9+CFhj/b9FpS8EFwqIkfFgVs2IS8hDWQM9YpoY0Z4ncz4HffuEPytODbAb6LEe8rG6k
+	 2igOMz2gN8SZ2+XkD9p5xLOJzkQYF4lhTH3dhlBqwNey9q3M9JhyQjN/IjlS1hPS3lnLF
+	 CJulxa93RyfFMkOuRh5UWmdXNxLzAdv2hs3o6XOqRdvR4ngU6IuMc7zL4IOzk0tgQrWPv
+	 +M8cT2gaPLybbYd683MKdFqzV/ZJxdTwhaaSiqIvqAt+UoU9XRwsVNkwQpLjZLdfwbk/Q
+	 10ATbX/sE0c+7O/Wtco2Czwf7vtf1qaXy/bDrPc6qo1rcZF5JGfq8QO9RObm5iYAzYA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=suse.cz;
-	spf=pass smtp.mailfrom=suse.cz;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=v14WN48b;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvkNExNy;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=v14WN48b;
-	dkim=neutral header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvkNExNy;
-	arc=none smtp.remote-ip=195.135.223.130
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ut5GHx1c;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37944606A32C;
-	Thu,  5 Nov 2026 09:33:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 37944606A32C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68478606A31B;
+	Thu,  5 Nov 2026 14:53:50 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=v14WN48b;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvkNExNy;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=v14WN48b;
-	dkim=neutral header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvkNExNy
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 43A9421F5B;
-	Thu,  5 Nov 2026 09:32:58 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1793871178; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=pgu8NzTJnS2R+zD0u6Z5S8xrxcIoknrqJKi9obAmajo=;
-	b=v14WN48bHlIql9h5HLTugaVISujZG1I/c68I+QtgBbLoIBApSEacYXXWBcqgCfJXFq6f+A
-	a04b7rV9MZ+1A7GaOjZPNsUBb09L6OB9bhWH1gZyydPZAUwPj8q85pTy4SRbmwmJ76LAqC
-	SSzXuvpaBX/SH14eaONLs8VdXTpBuaQ=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1793871178;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=pgu8NzTJnS2R+zD0u6Z5S8xrxcIoknrqJKi9obAmajo=;
-	b=OvkNExNyUPYRAlVHRPqHODS9azrcpr+2lIkcR7gaa3TaHUtdVPDuCCR60na21ee4PYtMBN
-	8FyqEylcSu5PIbBg==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1793871178; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=pgu8NzTJnS2R+zD0u6Z5S8xrxcIoknrqJKi9obAmajo=;
-	b=v14WN48bHlIql9h5HLTugaVISujZG1I/c68I+QtgBbLoIBApSEacYXXWBcqgCfJXFq6f+A
-	a04b7rV9MZ+1A7GaOjZPNsUBb09L6OB9bhWH1gZyydPZAUwPj8q85pTy4SRbmwmJ76LAqC
-	SSzXuvpaBX/SH14eaONLs8VdXTpBuaQ=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1793871178;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=pgu8NzTJnS2R+zD0u6Z5S8xrxcIoknrqJKi9obAmajo=;
-	b=OvkNExNyUPYRAlVHRPqHODS9azrcpr+2lIkcR7gaa3TaHUtdVPDuCCR60na21ee4PYtMBN
-	8FyqEylcSu5PIbBg==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 160DB134F4;
-	Thu,  5 Nov 2026 09:32:58 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id jQQAOUlN7GrMbwAAD6G6ig
-	(envelope-from <jack@suse.cz>); Thu, 05 Nov 2026 09:32:58 +0000
-Received: by quack.suse.cz (Postfix, from userid 1000)
-	id 9A6FBB666; Thu, 05 Nov 2026 10:32:57 +0100 (CET)
-Date: Thu, 5 Nov 2026 10:32:57 +0100
-From: Jan Kara <jack@suse.cz>
-To: Christian Brauner <brauner@kernel.org>
-Cc: linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.com>, 
-	Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, linux-ext4@vger.kernel.org, 
-	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, 
-	linux-mm@kvack.org, ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev, 
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, linux-efi@vger.kernel.org, 
-	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org
-Subject: Re: [PATCH v2 31/34] ext4: use the generic emergency read-only state
-Message-ID: <m2tpyczkdirf7z4pnidxf3375ykgs6mrybxz6aejffpfgptw26@vfepghgrvgdr>
-References: <20261029-work-fs-sb_rdonly-v2-0-2f44f64f0b66@kernel.org>
- <20261029-work-fs-sb_rdonly-v2-31-2f44f64f0b66@kernel.org>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ut5GHx1c
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D97821F000C1;
+	Thu,  5 Nov 2026 14:53:43 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793890430;
+	bh=wPbepQK0nXa3d+APg5PI/tkZrq+GYAAdAwwH4WGsWbY=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Date;
+	b=Ut5GHx1crAV6ebP6MePvr8MXk/GyT0+FpLEitkajin2i4CdPw+Yrtsn4y98BfiUN1
+	 N5M8uMplNy3HVs3tsDHiskLMCirCzDYJLH1YChJ873MiyF54lHZDXJpdC921S8r6UY
+	 u3+OiCEt9QofdI3ELaU45FuLyS3AQsq9EKyKjBS49hNruPLkniq7Sn1gwN1Ijsp3ZE
+	 k3HoSzSpTSJjYII5amdBqdc518vEianS+2iHu1aqzoSAlTADTeS/jb2r7Ox+BW6Q76
+	 +A2NlXx48M50dddQdU7vSVLAFFZAmWxj3xeXuHK9T8tzNWep7+oKoJ4AB3z4vN9UXm
+	 Pyt/6mjIDSpWA==
+From: Christian Brauner <brauner@kernel.org>
+To: Joanne Koong <joannelkoong@gmail.com>
+Cc: linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, 
+ "Darrick J . Wong" <djwong@kernel.org>, changfengnan@bytedance.com, 
+ kbusch@kernel.org, Matthew Wilcox <willy@infradead.org>, 
+ Jan Kara <jack@suse.cz>, Jonathan Corbet <corbet@lwn.net>, 
+ David Sterba <dsterba@suse.com>, Gao Xiang <xiang@kernel.org>, 
+ Namjae Jeon <linkinjeon@kernel.org>, Theodore Ts'o <tytso@mit.edu>, 
+ Jaegeuk Kim <jaegeuk@kernel.org>, Miklos Szeredi <miklos@szeredi.hu>, 
+ Andreas Gruenbacher <agruenba@redhat.com>, 
+ Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>, 
+ Hyunchul Lee <hyc.lee@gmail.com>, 
+ Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
+ Carlos Maiolino <cem@kernel.org>, Damien Le Moal <dlemoal@kernel.org>, 
+ libaokun@linux.alibaba.com, bfoster@redhat.com, linux-ext4@vger.kernel.org, 
+ linux-xfs@vger.kernel.org, Viacheslav Dubeyko <slava@dubeyko.com>, 
+ Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-nilfs@vger.kernel.org, 
+ fuse-devel@lists.linux.dev, Zhang Yi <yi.zhang@huawei.com>
+In-Reply-To: <20261027215326.2693300-1-joannelkoong@gmail.com>
+References: <20261027215326.2693300-1-joannelkoong@gmail.com>
+Subject: Re: [PATCH 0/5] iomap: remaining patches for iomap_iter_next
+ conversion
+Message-Id: <20261105-tiefbau-gesurft-apokalypse-d83b3a572db4@brauner>
+Date: Thu, 05 Nov 2026 15:53:41 +0100
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -114,71 +73,50 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261029-work-fs-sb_rdonly-v2-31-2f44f64f0b66@kernel.org>
-X-Spam-Flag: NO
-X-Spam-Level: 
-X-Spamd-Result: default: False [-11.30 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	MID_RHS_NOT_FQDN(0.50)[];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_COUNT_THREE(0.00)[3];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	RCPT_COUNT_TWELVE(0.00)[17];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FROM_HAS_DN(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCVD_TLS_LAST(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MISSING_XM_UA(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.cz:email,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Score: -11.30
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.17-dev-ce4c1
 
-On Thu 29-10-26 17:07:22, Christian Brauner wrote:
-> Set SB_STATE_EMERGENCY_RO next to EXT4_FLAGS_EMERGENCY_RO when an error
-> makes the filesystem read-only. The VFS then refuses modifications
-> before they reach ext4 and reports the superblock as read-only like it
-> did when ext4 still set SB_RDONLY. The shutdown state stays ext4's own
-> and so do all of ext4's checks because they cover both states. ext4
-> keeps showing "emergency_ro" in its mount options.
+On Tue, 27 Oct 2026 14:53:21 -0700, Joanne Koong wrote:
+> This is a resend of the last 3 patches from the "iomap: convert to in-iter
+> iomap_next() model" patch series [1].
 > 
-> Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
-
-Looks good! Feel free to add:
-
-Reviewed-by: Jan Kara <jack@suse.cz>
-
-								Honza
-
-
-> ---
->  fs/ext4/super.c | 1 +
->  1 file changed, 1 insertion(+)
+> Those 3 patches are rebased on top of current mainline (commit 83f32c773255
+> ("Merge tag 'erofs-for-7.4-rc1-2' ...")) in Linus's tree. They require two new
+> preparatory patches (patches 1 and 2 in this series), which are trivial
+> ->iomap_next() conversions of the nilfs2 and fuse iomap code that was added
+> during this merge window. There were conflicts with "iomap: pass
+> iomap_iter_next_fn directly instead of struct iomap_ops" (patch 4 in this
+> series) during the rebase. These are resolved in the patch, which now also
+> converts the iomap users added this merge window (ext4 iomap buffered I/O,
+> exfat swap activation, nilfs2, and fuse ext_map). Jan's Acked-by and
+> Christoph's Reviewed-by on it predate these changes.
 > 
-> diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-> index ae5ba6823c01..afbdbb607b14 100644
-> --- a/fs/ext4/super.c
-> +++ b/fs/ext4/super.c
-> @@ -757,6 +757,7 @@ static void ext4_handle_error(struct super_block *sb, bool force_ro, int error,
->  	 * and other problems.
->  	 */
->  	set_bit(EXT4_FLAGS_EMERGENCY_RO, &EXT4_SB(sb)->s_ext4_flags);
-> +	sb_set_emergency_ro(sb);
->  }
->  
->  static void update_super_work(struct work_struct *work)
-> 
-> -- 
-> 2.53.0
-> 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+> [...]
+
+Applied to the vfs.fixes branch of the vfs/vfs.git tree.
+Patches in the vfs.fixes branch should appear in linux-next soon.
+
+Please report any outstanding bugs that were missed during review in a
+new review to the original patch series allowing us to drop it.
+
+It's encouraged to provide Acked-bys and Reviewed-bys even though the
+patch has now been applied. If possible patch trailers will be updated.
+
+Note that commit hashes shown below are subject to change due to rebase,
+trailer updates or similar. If in doubt, please check the listed branch.
+
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
+branch: vfs.fixes
+
+[1/5] nilfs2: convert iomap ops to ->iomap_next()
+      https://git.kernel.org/vfs/vfs/c/a210eb87cd3d
+[2/5] fuse: convert ext_map iomap ops to ->iomap_next()
+      https://git.kernel.org/vfs/vfs/c/f6c38b3d56c2
+[3/5] iomap: remove ->iomap_begin()/->iomap_end() legacy path
+      https://git.kernel.org/vfs/vfs/c/82f677376a90
+[4/5] iomap: pass iomap_iter_next_fn directly instead of struct iomap_ops
+      https://git.kernel.org/vfs/vfs/c/9e8fc16dc6b4
+[5/5] Documentation: iomap: update docs to reflect iomap_iter_next model
+      https://git.kernel.org/vfs/vfs/c/5612225809c7
+
