@@ -1,112 +1,73 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=113.46.200.225
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794581692;
-	b=P3vItzE8r1DQcizJZsjg2bpfSJEXxGao4bEKPt1HtSmcWRm8I4Dx3KMYiwXXBxolyo9P
-	 CnQZNZAHkrI+hk8UK+1LpVuTp85HeSGA1JN4t2Kq2bCQJEoJvqmrTHxD+xU8SNOxX3oSO
-	 83IkkzZPr4JcS6mBFDRyyailn+1Pw1NLdjx4uTxeQdoOvOylT04Z/aMe3CTwf36OWEy+F
-	 tBo7B8wDMhtuzyuG8U6fXXZ6MnLRPA0J3iLkoUO5TISLRK6vwZLwDh0NZuvSQ2MMpuw8e
-	 s4RpFhTedHCpD4fHdPPaT+itNbDLOMFouNpJj+uvx5AkyZEi1DvTxq8djOyieWJd8HQ==
+	t=1794622646;
+	b=OG53jzqQ3f9OPJ2c2tR5XejNnQ0BLSWaI6GcV+IEIrq6h0EuXsm7OhyhEeGnTlhrOVeh
+	 3pdI5/KmBbf853tu7cWmRk67RoPU1cytgJGEb+Y8lhmYkgOTh8JXPllb9/fd/yeQv+Gbs
+	 yOQbFgJnwEuA5jLduvwVVDee+rU0MMV2qKT/dj6+h90ogLrfLNvPyUdSaYmgD6TPInLgt
+	 6iN4VUj6WlDkPw7UUSbBjyH1cHbWlEm8R7k8OESWAd6ifU05keeydydP41dfiZgVylgNu
+	 da6CEcs32U9Aixut2/e3UtTepezy3oeVFxhqlSF0jekB3fIDLjZG3XmYxyHQxL0rVNw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794581692;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:DKIM-Signature:
-	 DKIM-Signature:Received:Received:Received:Date:From:To:Cc:Subject:
-	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
-	 In-Reply-To:X-Spamd-Result:X-Spam-Score:X-Spam-Level:X-Spam-Flag;
-	bh=kLg1wy+Nl3hNJVUViyQU914DrXr8uKXxDSBe+HH3+OI=;
-	b=gswewipYS8rwZ/40HbDDL7NFZqaakXNJchVEnvaFqxkaZZerFaHvK54i13BZN9+UMo3o
-	 7FaHoGQVyZWK6pR5fWFTz8h3EeMbEde+UuxYhhkwOfXINDxyvuGOotptQj+qEJADD21Jq
-	 Xuaire+yNvh8pYYSir4PspT+wp1rCIQMoDQ3Tyq3dQjgQCng21unuGrsWl+4gxsVhld5O
-	 Pecvl4ne3eRq6nbcc+vxsPt1om9EpyK2W18Xs8S1Mme3aYgJpDZdCxzdjNmbvoBkskuKz
-	 l9NrzZSu10MDyeeFmJnlcPfCcu9PP8Sn/Q0xuM3QGfBQniFwa4Aw3v9gpFS0qyDi8zQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794622646;
+	h=DMARC-Filter:dkim-signature:Received:Received:Received:Subject:To:CC:
+	 References:From:Message-ID:Date:User-Agent:MIME-Version:In-Reply-To:
+	 Content-Type:Content-Transfer-Encoding:X-Originating-IP:
+	 X-ClientProxiedBy;
+	bh=lamjSy1jct+Y32LWUG/7mqOA0l+lzlvT/xdWWaLZFKQ=;
+	b=N2bc503U/mCw2zrPZsKSPq3WYDTgWGDpRhDOTuWt7pSGYpbLNBUylCXXnJi0m29yAEUJ
+	 uUEjGURasXuJRFllIuEWl6/guO6JdaPUeZal9g2BJP4f9A//zSy0Fdd0oB1bO3JK0sqZu
+	 B5P32BOFhY+y219dLdOCr84Eilm+kPRn44Td1y9OkLhXkWmxoqiZ/DGxPbRKzJ/eQuX3F
+	 yBbLDO10hzrQvRYOFoujp4Fm/gCay+i7aOAa1NxqMWpyAADSwAn2TNpIsO7qSUpHKaXV1
+	 B0EpOYLKKqkfnRZ8egqK0tbZSR5GyFQ+Y0hRgRbQyfJzgMYf/0NT1g09+PTjtOAvtxg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=suse.cz;
-	spf=pass smtp.mailfrom=suse.cz;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=HbiPobah;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=QBNwugyQ;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=HbiPobah;
-	dkim=neutral header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=QBNwugyQ;
-	arc=none smtp.remote-ip=195.135.223.131
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	dmarc=pass header.from=huawei.com;
+	spf=pass smtp.mailfrom=huawei.com;
+	dkim=pass header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=dmJo6jxo;
+	arc=none smtp.remote-ip=113.46.200.225
+Received: from canpmsgout10.his.huawei.com (canpmsgout10.his.huawei.com [113.46.200.225])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D64FE606A330;
-	Fri, 13 Nov 2026 14:54:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D64FE606A330
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3843A606A327;
+	Sat, 14 Nov 2026 02:17:23 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3843A606A327
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=HbiPobah;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=QBNwugyQ;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=HbiPobah;
-	dkim=neutral header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=QBNwugyQ
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 0100E1F76B;
-	Fri, 13 Nov 2026 14:54:50 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1794581690; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kLg1wy+Nl3hNJVUViyQU914DrXr8uKXxDSBe+HH3+OI=;
-	b=HbiPobahhoFdy1JualtlCQSG5WiHGbYkeN97T1slq4syz8ydxAAmyFBMnw9wIWMymvWQBA
-	OibY1yJc8woYnm917MtaAgfxA3/FGLQWnqOg9S4/Gje0GR/2m8TO3d0XcGyF5ZnSISlDva
-	Pm+cC9vb75/3LpW2TrEGkQOayOm27Hw=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1794581690;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kLg1wy+Nl3hNJVUViyQU914DrXr8uKXxDSBe+HH3+OI=;
-	b=QBNwugyQn7fvnUpfJc61DDJ3B5ezL3Vu/dwAt7y/gE33yL9lBDupL5AB9JAf8phimNZdBs
-	djr90So7chpqQRAg==
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1794581690; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kLg1wy+Nl3hNJVUViyQU914DrXr8uKXxDSBe+HH3+OI=;
-	b=HbiPobahhoFdy1JualtlCQSG5WiHGbYkeN97T1slq4syz8ydxAAmyFBMnw9wIWMymvWQBA
-	OibY1yJc8woYnm917MtaAgfxA3/FGLQWnqOg9S4/Gje0GR/2m8TO3d0XcGyF5ZnSISlDva
-	Pm+cC9vb75/3LpW2TrEGkQOayOm27Hw=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1794581690;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=kLg1wy+Nl3hNJVUViyQU914DrXr8uKXxDSBe+HH3+OI=;
-	b=QBNwugyQn7fvnUpfJc61DDJ3B5ezL3Vu/dwAt7y/gE33yL9lBDupL5AB9JAf8phimNZdBs
-	djr90So7chpqQRAg==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id BBF48134C3;
-	Fri, 13 Nov 2026 14:54:49 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id hybEI7kk92pSFgAAD6G6ig
-	(envelope-from <jack@suse.cz>); Fri, 13 Nov 2026 14:54:49 +0000
-Received: by quack.suse.cz (Postfix, from userid 1000)
-	id 50A352396E; Fri, 13 Nov 2026 15:54:49 +0100 (CET)
-Date: Fri, 13 Nov 2026 15:54:49 +0100
-From: Jan Kara <jack@suse.cz>
-To: Christian Brauner <brauner@kernel.org>
-Cc: linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.com>, 
-	Al Viro <viro@zeniv.linux.org.uk>, ecryptfs@vger.kernel.org, linux-ext4@vger.kernel.org, 
-	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org, exfat@lists.linux.dev, 
-	linux-mm@kvack.org, ntfs@lists.linux.dev, ocfs2-devel@lists.linux.dev, 
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, linux-efi@vger.kernel.org, 
-	linux-mtd@lists.infradead.org, linux-xfs@vger.kernel.org, 
-	Karl Mehltretter <kmehltretter@gmail.com>
-Subject: Re: [PATCH v3 06/33] ext2: don't set SB_RDONLY after filesystem
- errors
-Message-ID: <wsdk673ps54ncvmj7xvgzghgcf7y27uw4w7ahrgbytdy6tdxg3@ldvmi2yk3lm7>
+	dkim=pass (1024-bit key, unprotected) header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=dmJo6jxo
+dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
+	c=relaxed/relaxed; q=dns/txt;
+	h=From;
+	bh=lamjSy1jct+Y32LWUG/7mqOA0l+lzlvT/xdWWaLZFKQ=;
+	b=dmJo6jxorxqj/soF5hgiJAk0L/VbZ+b6NQ150G77AKdiKykroxkSgy9jha28sMjYHaadv7xU4
+	gX5qGcCNkavMkbqMIDp0Pr2diskt5hVLJa0+T41ntlJJoc8GUBBS7KeBABGtvyISA72TUzk8pOV
+	JKQ3g1KA+Ky1blIGX4Su+70=
+Received: from mail.maildlp.com (unknown [172.19.163.163])
+	by canpmsgout10.his.huawei.com (SkyGuard) with ESMTPS id 4jRHnX4bKrz1K98l;
+	Sat, 14 Nov 2026 10:17:04 +0800 (CST)
+Received: from whupemo200011.china.huawei.com (unknown [7.152.185.179])
+	by mail.maildlp.com (Postfix) with ESMTPS id 8F8174048B;
+	Sat, 14 Nov 2026 10:17:15 +0800 (CST)
+Received: from [10.174.178.46] (10.174.178.46) by
+ whupemo200011.china.huawei.com (7.152.185.179) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.2562.45; Sat, 14 Nov 2026 10:17:13 +0800
+Subject: Re: [PATCH v3 30/33] ubifs: don't set SB_RDONLY after errors
+To: Christian Brauner <brauner@kernel.org>, <linux-fsdevel@vger.kernel.org>,
+	Jan Kara <jack@suse.com>
+CC: Al Viro <viro@zeniv.linux.org.uk>, <ecryptfs@vger.kernel.org>,
+	<linux-ext4@vger.kernel.org>, <jfs-discussion@lists.sourceforge.net>,
+	<linux-nilfs@vger.kernel.org>, <exfat@lists.linux.dev>, <linux-mm@kvack.org>,
+	<ntfs@lists.linux.dev>, <ocfs2-devel@lists.linux.dev>,
+	<linux-btrfs@vger.kernel.org>, <gfs2@lists.linux.dev>,
+	<linux-efi@vger.kernel.org>, <linux-mtd@lists.infradead.org>,
+	<linux-xfs@vger.kernel.org>
 References: <20261113-work-fs-sb_rdonly-v3-0-0be92bb73709@kernel.org>
- <20261113-work-fs-sb_rdonly-v3-6-0be92bb73709@kernel.org>
+ <20261113-work-fs-sb_rdonly-v3-30-0be92bb73709@kernel.org>
+From: Zhihao Cheng <chengzhihao1@huawei.com>
+Message-ID: <17287026-cccc-f56c-15a3-029b9a2c38c9@huawei.com>
+Date: Sat, 14 Nov 2026 10:17:12 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:68.0) Gecko/20100101
+ Thunderbird/68.5.0
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -116,188 +77,209 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261113-work-fs-sb_rdonly-v3-6-0be92bb73709@kernel.org>
-X-Spamd-Result: default: False [-11.30 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	MID_RHS_NOT_FQDN(0.50)[];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MISSING_XM_UA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	RCPT_COUNT_TWELVE(0.00)[18];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	TO_DN_SOME(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	FREEMAIL_CC(0.00)[vger.kernel.org,suse.com,zeniv.linux.org.uk,lists.sourceforge.net,lists.linux.dev,kvack.org,lists.infradead.org,gmail.com];
-	RCVD_COUNT_THREE(0.00)[3];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCVD_TLS_LAST(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.cz:email,suse.com:email,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Score: -11.30
-X-Spam-Level: 
-X-Spam-Flag: NO
+In-Reply-To: <20261113-work-fs-sb_rdonly-v3-30-0be92bb73709@kernel.org>
+Content-Type: text/plain; charset="gbk"; format=flowed
+Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: kwepems100001.china.huawei.com (7.221.188.238) To
+ whupemo200011.china.huawei.com (7.152.185.179)
 
-On Fri 13-11-26 12:59:02, Christian Brauner wrote:
-> With errors=remount-ro ext2_error() sets SB_RDONLY from whatever context
-> hit the error and without holding s_umount. That races with everyone
-> else changing sb->s_flags and it breaks freezing. If it happens while
-> the filesystem is frozen thaw_super() sees a read-only superblock and
-> leaves the s_writers rwsems locked so every writer hangs. A lookup in a
-> corrupted directory is enough. Karl proposed teaching thaw_super() about
-> it but Jan preferred fixing the filesystems (cf. [1]) like ext4 and f2fs
-> already did.
+ÔÚ 2026/11/13 19:59, Christian Brauner Ð´µÀ:
+> ubifs_ro_mode() sets c->ro_error and SB_RDONLY from whatever context hit
+> the error, e.g. a failing write, and without holding s_umount. UBIFS
+> can't be frozen but that still races with everyone else changing
+> sb->s_flags. And c->ro_error alone already makes every write fail with
+> EROFS.
 > 
-> So call sb_set_emergency_ro() instead and let the VFS refuse
-> modifications. ext2 still refuses allocations and ext2_xattr_set()
-> itself, ecryptfs calls the latter without write access on the lower
-> mount. Unlinked inodes are left to e2fsck. ext2_write_inode() keeps
-> working because writeback still writes data, bitmaps, indirect and
-> directory blocks after the error and they'd be lost without the inode.
-> A thaw after an error while frozen still writes the superblock but
-> EXT2_ERROR_FS stays set in it.
+> So call sb_set_emergency_ro() instead. The background thread can hit
+> the error before SB_BORN but doesn't hold s_umount either. The xattr
+> setters check c->ro_error as well because ecryptfs calls them without
+> write access on the lower mount and they change the inode in memory
+> first.
 > 
-> After a remount to read-only a remount to read-write fails until umount.
-> A plain remount to read-write right after the error succeeds but the
-> filesystem stays read-only. Writes through file descriptors opened
-> before the error fail with EROFS.
+> So far a remount to read-only after an error was refused and a remount
+> to read-write went through and cleared SB_RDONLY again because
+> c->ro_mount was never set. Now going read-only works. Nothing is synced
+> for it in that state and ubifs_remount_ro() skips the write-buffer syncs
+> and the master node like ubifs_put_super() does and only cancels the
+> write-buffer timers. Going read-write after that is refused by the VFS.
 > 
-> [1]: https://lore.kernel.org/r/hyhuckyohsabx2suvq3z7uy3pbgmihva6wgzxr3op7pzcrlu33@p7zzlgp2ehjf
+> The flusher still gets to the folios and inodes that were dirty before
+> the error, also after the remount which sets c->ro_mount and frees the
+> write reserve buffer. Every journal write fails with EROFS after an
+> error anyway. So do_writepage() and ubifs_write_inode() drop them
+> without going near the journal. Otherwise reserve_space() trips its
+> !c->ro_mount assert for every folio after the remount.
 > 
-> Reported-by: Karl Mehltretter <kmehltretter@gmail.com>
-> Link: https://lore.kernel.org/r/20260903060855.4610-1-kmehltretter@gmail.com
 > Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
-
-Looks good. Feel free to add:
-
-Reviewed-by: Jan Kara <jack@suse.cz>
-
-								Honza
-
 > ---
->  fs/ext2/balloc.c |  5 +++++
->  fs/ext2/ialloc.c |  2 ++
->  fs/ext2/inode.c  |  4 +++-
->  fs/ext2/super.c  | 13 ++++++++-----
->  fs/ext2/xattr.c  |  2 ++
->  5 files changed, 20 insertions(+), 6 deletions(-)
+>   fs/ubifs/file.c  | 12 ++++++++++++
+>   fs/ubifs/io.c    |  6 +++++-
+>   fs/ubifs/super.c | 40 ++++++++++++++++++++++++++--------------
+>   fs/ubifs/xattr.c |  6 ++++++
+>   4 files changed, 49 insertions(+), 15 deletions(-)
+
+Reviewed-by: Zhihao Cheng <chengzhihao1@huawei.com>
 > 
-> diff --git a/fs/ext2/balloc.c b/fs/ext2/balloc.c
-> index 80acc1e193871..77f2ed5a76a28 100644
-> --- a/fs/ext2/balloc.c
-> +++ b/fs/ext2/balloc.c
-> @@ -1236,6 +1236,11 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, ext2_fsblk_t goal,
->  	*errp = -ENOSPC;
->  	sb = inode->i_sb;
->  
-> +	if (sb_emergency_ro(sb)) {
-> +		*errp = -EROFS;
-> +		return 0;
+> diff --git a/fs/ubifs/file.c b/fs/ubifs/file.c
+> index 99dd52715eee9..4eae6c2ae2eea 100644
+> --- a/fs/ubifs/file.c
+> +++ b/fs/ubifs/file.c
+> @@ -898,6 +898,13 @@ static int do_writepage(struct folio *folio, size_t len)
+>   
+>   	folio_start_writeback(folio);
+>   
+> +	/* Nothing gets written after an error, drop the folio. */
+> +	if (unlikely(c->ro_error)) {
+> +		err = -EROFS;
+> +		mapping_set_error(folio->mapping, err);
+> +		goto out;
 > +	}
 > +
->  	/*
->  	 * Check quota for allocation of this block.
->  	 */
-> diff --git a/fs/ext2/ialloc.c b/fs/ext2/ialloc.c
-> index bf21b57cf98cd..2741ecd2b94fc 100644
-> --- a/fs/ext2/ialloc.c
-> +++ b/fs/ext2/ialloc.c
-> @@ -433,6 +433,8 @@ struct inode *ext2_new_inode(struct inode *dir, umode_t mode,
->  	int err;
->  
->  	sb = dir->i_sb;
-> +	if (sb_emergency_ro(sb))
-> +		return ERR_PTR(-EROFS);
->  	inode = new_inode(sb);
->  	if (!inode)
->  		return ERR_PTR(-ENOMEM);
-> diff --git a/fs/ext2/inode.c b/fs/ext2/inode.c
-> index 12ac4cfe15003..dd28637c60737 100644
-> --- a/fs/ext2/inode.c
-> +++ b/fs/ext2/inode.c
-> @@ -71,7 +71,9 @@ void ext2_evict_inode(struct inode * inode)
->  	struct ext2_block_alloc_info *rsv;
->  	int want_delete = 0;
->  
-> -	if (!inode->i_nlink && !is_bad_inode(inode)) {
-> +	/* After an error made us read-only the inode is left to e2fsck. */
-> +	if (!inode->i_nlink && !is_bad_inode(inode) &&
-> +	    !sb_emergency_ro(inode->i_sb)) {
->  		want_delete = 1;
->  		dquot_initialize(inode);
->  	} else {
-> diff --git a/fs/ext2/super.c b/fs/ext2/super.c
-> index fb217ef2d69f0..10d5165459749 100644
-> --- a/fs/ext2/super.c
-> +++ b/fs/ext2/super.c
-> @@ -53,7 +53,7 @@ void ext2_error(struct super_block *sb, const char *function,
->  	struct ext2_sb_info *sbi = EXT2_SB(sb);
->  	struct ext2_super_block *es = sbi->s_es;
->  
-> -	if (!sb_rdonly(sb)) {
-> +	if (!sb_rdonly_any(sb)) {
->  		spin_lock(&sbi->s_lock);
->  		sbi->s_mount_state |= EXT2_ERROR_FS;
->  		es->s_state |= cpu_to_le16(EXT2_ERROR_FS);
-> @@ -73,11 +73,11 @@ void ext2_error(struct super_block *sb, const char *function,
->  
->  	if (test_opt(sb, ERRORS_PANIC))
->  		panic("EXT2-fs: panic from previous error\n");
-> -	if (!sb_rdonly(sb) && test_opt(sb, ERRORS_RO)) {
-> +	/* SB_RDONLY needs s_umount, see sb_set_emergency_ro(). */
-> +	if (!sb_rdonly(sb) && test_opt(sb, ERRORS_RO) &&
-> +	    sb_set_emergency_ro(sb))
->  		ext2_msg(sb, KERN_CRIT,
->  			     "error: remounting filesystem read-only");
-> -		sb->s_flags |= SB_RDONLY;
-> -	}
->  }
->  
->  static void ext2_msg_fc(struct fs_context *fc, const char *prefix,
-> @@ -179,7 +179,7 @@ static void ext2_put_super (struct super_block * sb)
->  	ext2_xattr_destroy_cache(sbi->s_ea_block_cache);
->  	sbi->s_ea_block_cache = NULL;
->  
-> -	if (!sb_rdonly(sb)) {
-> +	if (!sb_rdonly_any(sb)) {
->  		struct ext2_super_block *es = sbi->s_es;
->  
->  		spin_lock(&sbi->s_lock);
-> @@ -1360,6 +1360,9 @@ static int ext2_reconfigure(struct fs_context *fc)
->  	if ((bool)(flags & SB_RDONLY) == sb_rdonly(sb))
->  		goto out_set;
->  	if (flags & SB_RDONLY) {
-> +		/* After an error nothing may be written, just go read-only. */
-> +		if (sb_emergency_ro(sb))
-> +			goto out_set;
->  		if (le16_to_cpu(es->s_state) & EXT2_VALID_FS ||
->  		    !(sbi->s_mount_state & EXT2_VALID_FS))
->  			goto out_set;
-> diff --git a/fs/ext2/xattr.c b/fs/ext2/xattr.c
-> index 8f608930a48c6..12dfffff189cb 100644
-> --- a/fs/ext2/xattr.c
-> +++ b/fs/ext2/xattr.c
-> @@ -429,6 +429,8 @@ ext2_xattr_set(struct inode *inode, int name_index, const char *name,
->  	ea_idebug(inode, "name=%d.%s, value=%p, value_len=%ld",
->  		  name_index, name, value, (long)value_len);
->  
-> +	if (sb_emergency_ro(sb))
+>   	block = folio->index << UBIFS_BLOCKS_PER_PAGE_SHIFT;
+>   	for (;;) {
+>   		blen = min_t(size_t, len, UBIFS_BLOCK_SIZE);
+> @@ -918,6 +925,7 @@ static int do_writepage(struct folio *folio, size_t len)
+>   		ubifs_ro_mode(c, err);
+>   	}
+>   
+> +out:
+>   	ubifs_assert(c, folio->private != NULL);
+>   	if (folio_test_checked(folio))
+>   		release_new_page_budget(c);
+> @@ -997,6 +1005,10 @@ static int ubifs_writepage(struct folio *folio, struct writeback_control *wbc)
+>   		goto out_unlock;
+>   	}
+>   
+> +	/* After an error do_writepage() drops the folio. */
+> +	if (unlikely(c->ro_error))
+> +		return do_writepage(folio, len);
+> +
+>   	spin_lock(&ui->ui_lock);
+>   	synced_i_size = ui->synced_i_size;
+>   	spin_unlock(&ui->ui_lock);
+> diff --git a/fs/ubifs/io.c b/fs/ubifs/io.c
+> index 6c6d682427793..931a88329b5f5 100644
+> --- a/fs/ubifs/io.c
+> +++ b/fs/ubifs/io.c
+> @@ -72,7 +72,11 @@ void ubifs_ro_mode(struct ubifs_info *c, int err)
+>   	if (!c->ro_error) {
+>   		c->ro_error = 1;
+>   		c->no_chk_data_crc = 0;
+> -		c->vfs_sb->s_flags |= SB_RDONLY;
+> +		/*
+> +		 * SB_RDONLY needs s_umount, see sb_set_emergency_ro(). The
+> +		 * background thread runs before SB_BORN already.
+> +		 */
+> +		sb_set_emergency_ro(c->vfs_sb);
+>   		ubifs_warn(c, "switched to read-only mode, error %d", err);
+>   		dump_stack();
+>   	}
+> diff --git a/fs/ubifs/super.c b/fs/ubifs/super.c
+> index 38972786817e7..2d71274e89ad0 100644
+> --- a/fs/ubifs/super.c
+> +++ b/fs/ubifs/super.c
+> @@ -312,6 +312,12 @@ static int ubifs_write_inode(struct inode *inode, struct writeback_control *wbc)
+>   		return 0;
+>   	}
+>   
+> +	/* Nothing gets written after an error, drop the change. */
+> +	if (unlikely(c->ro_error)) {
+> +		err = -EROFS;
+> +		goto out;
+> +	}
+> +
+>   	/*
+>   	 * As an optimization, do not write orphan inodes to the media just
+>   	 * because this is not needed.
+> @@ -327,6 +333,7 @@ static int ubifs_write_inode(struct inode *inode, struct writeback_control *wbc)
+>   			err = dbg_check_inode_size(c, inode, ui->ui_size);
+>   	}
+>   
+> +out:
+>   	ui->dirty = 0;
+>   	mutex_unlock(&ui->ui_mutex);
+>   	ubifs_release_dirty_inode_budget(c, ui);
+> @@ -1839,19 +1846,26 @@ static void ubifs_remount_ro(struct ubifs_info *c)
+>   
+>   	dbg_save_space_info(c);
+>   
+> -	for (i = 0; i < c->jhead_cnt; i++) {
+> -		err = ubifs_wbuf_sync(&c->jheads[i].wbuf);
+> +	/* Like ubifs_put_super(), don't write anything after an error. */
+> +	if (!c->ro_error) {
+> +		for (i = 0; i < c->jhead_cnt; i++) {
+> +			err = ubifs_wbuf_sync(&c->jheads[i].wbuf);
+> +			if (err)
+> +				ubifs_ro_mode(c, err);
+> +		}
+> +
+> +		c->mst_node->flags &= ~cpu_to_le32(UBIFS_MST_DIRTY);
+> +		c->mst_node->flags |= cpu_to_le32(UBIFS_MST_NO_ORPHS);
+> +		c->mst_node->gc_lnum = cpu_to_le32(c->gc_lnum);
+> +		err = ubifs_write_master(c);
+>   		if (err)
+>   			ubifs_ro_mode(c, err);
+> +	} else {
+> +		/* Syncing the write-buffers would have canceled them. */
+> +		for (i = 0; i < c->jhead_cnt; i++)
+> +			hrtimer_cancel(&c->jheads[i].wbuf.timer);
+>   	}
+>   
+> -	c->mst_node->flags &= ~cpu_to_le32(UBIFS_MST_DIRTY);
+> -	c->mst_node->flags |= cpu_to_le32(UBIFS_MST_NO_ORPHS);
+> -	c->mst_node->gc_lnum = cpu_to_le32(c->gc_lnum);
+> -	err = ubifs_write_master(c);
+> -	if (err)
+> -		ubifs_ro_mode(c, err);
+> -
+>   	vfree(c->orph_buf);
+>   	c->orph_buf = NULL;
+>   	kfree(c->write_reserve_buf);
+> @@ -1977,10 +1991,7 @@ static int ubifs_reconfigure(struct fs_context *fc)
+>   		if (err)
+>   			return err;
+>   	} else if (!c->ro_mount && (fc->sb_flags & SB_RDONLY)) {
+> -		if (c->ro_error) {
+> -			ubifs_msg(c, "cannot re-mount R/O due to prior errors");
+> -			return -EROFS;
+> -		}
+> +		/* After an error ubifs_remount_ro() can't write but still works. */
+>   		ubifs_remount_ro(c);
+>   	}
+>   
+> @@ -1994,7 +2005,8 @@ static int ubifs_reconfigure(struct fs_context *fc)
+>   		mutex_unlock(&c->bu_mutex);
+>   	}
+>   
+> -	if (!c->need_recovery)
+> +	/* Only valid without a media failure, see ubifs_put_super(). */
+> +	if (!c->need_recovery && !c->ro_error)
+>   		ubifs_assert(c, c->lst.taken_empty_lebs > 0);
+>   
+>   	return 0;
+> diff --git a/fs/ubifs/xattr.c b/fs/ubifs/xattr.c
+> index 3b0e8a270f594..572f6f3e52ad3 100644
+> --- a/fs/ubifs/xattr.c
+> +++ b/fs/ubifs/xattr.c
+> @@ -260,6 +260,9 @@ int ubifs_xattr_set(struct inode *host, const char *name, const void *value,
+>   	if (check_lock)
+>   		ubifs_assert(c, inode_is_locked(host));
+>   
+> +	if (c->ro_error)
 > +		return -EROFS;
->  	if (value == NULL)
->  		value_len = 0;
->  	if (name == NULL)
+> +
+>   	if (size > UBIFS_MAX_INO_DATA)
+>   		return -ERANGE;
+>   
+> @@ -564,6 +567,9 @@ static int ubifs_xattr_remove(struct inode *host, const char *name)
+>   
+>   	ubifs_assert(c, inode_is_locked(host));
+>   
+> +	if (c->ro_error)
+> +		return -EROFS;
+> +
+>   	if (fname_len(&nm) > UBIFS_MAX_NLEN)
+>   		return -ENAMETOOLONG;
+>   
 > 
-> -- 
-> 2.53.0
-> 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+
