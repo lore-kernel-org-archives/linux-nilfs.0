@@ -1,73 +1,75 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=113.46.200.225
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=203.205.221.236
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794622646;
-	b=OG53jzqQ3f9OPJ2c2tR5XejNnQ0BLSWaI6GcV+IEIrq6h0EuXsm7OhyhEeGnTlhrOVeh
-	 3pdI5/KmBbf853tu7cWmRk67RoPU1cytgJGEb+Y8lhmYkgOTh8JXPllb9/fd/yeQv+Gbs
-	 yOQbFgJnwEuA5jLduvwVVDee+rU0MMV2qKT/dj6+h90ogLrfLNvPyUdSaYmgD6TPInLgt
-	 6iN4VUj6WlDkPw7UUSbBjyH1cHbWlEm8R7k8OESWAd6ifU05keeydydP41dfiZgVylgNu
-	 da6CEcs32U9Aixut2/e3UtTepezy3oeVFxhqlSF0jekB3fIDLjZG3XmYxyHQxL0rVNw==
+	t=1794706414;
+	b=iEl/KkENtc7DBZZ+D3uzp+9FTiTV0l6sXv/1d4brQkH92GgD+4teApJJAZlEa1fsSg6J
+	 ZkX11TBH/gZ8jHMWFUbhbWe1KXJUybtZI2FVj0/Afjz4bw93KrRc1bd9Y0y/c5RpCRAx4
+	 4tKUVqm6u65NU2EXm+xt7cUdc3xS/BqfRKr3eEUb/C8LR0w2ByMEJACkMBg9+jmvhUItV
+	 2lyXLBnR5ecL/FhDaNMJmUyt6ZhBYLdtR7eWyy74TGla3JBmCiY0SaECsKv+Nlc3DGPVK
+	 aReSGW44WOgGHArvYTrLKe//vn9YzaMC2D6+o2MTMY34IyFJLYVkLpcyvucLzI+NhtA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794622646;
-	h=DMARC-Filter:dkim-signature:Received:Received:Received:Subject:To:CC:
-	 References:From:Message-ID:Date:User-Agent:MIME-Version:In-Reply-To:
-	 Content-Type:Content-Transfer-Encoding:X-Originating-IP:
-	 X-ClientProxiedBy;
-	bh=lamjSy1jct+Y32LWUG/7mqOA0l+lzlvT/xdWWaLZFKQ=;
-	b=N2bc503U/mCw2zrPZsKSPq3WYDTgWGDpRhDOTuWt7pSGYpbLNBUylCXXnJi0m29yAEUJ
-	 uUEjGURasXuJRFllIuEWl6/guO6JdaPUeZal9g2BJP4f9A//zSy0Fdd0oB1bO3JK0sqZu
-	 B5P32BOFhY+y219dLdOCr84Eilm+kPRn44Td1y9OkLhXkWmxoqiZ/DGxPbRKzJ/eQuX3F
-	 yBbLDO10hzrQvRYOFoujp4Fm/gCay+i7aOAa1NxqMWpyAADSwAn2TNpIsO7qSUpHKaXV1
-	 B0EpOYLKKqkfnRZ8egqK0tbZSR5GyFQ+Y0hRgRbQyfJzgMYf/0NT1g09+PTjtOAvtxg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794706414;
+	h=DMARC-Filter:DKIM-Signature:Received:X-QQ-mid:Message-ID:
+	 X-QQ-XMAILINFO:X-QQ-XMRINFO:From:To:Cc:Subject:Date:X-OQ-MSGID:
+	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=pLCPYEj6a2+/+vsSAhzPrTk+vl3QUgYLd5YGo87M8w4=;
+	b=k835HspxAgzIb3MpHSBiiV7gGG0CBAkVJeOW5Vm/q228wZ1u7s5hG7yo+YIPqMHJetVk
+	 H6R1CRtHj9PswEpTbtTE4498+h9oc0jK7wwKHt3Xg356TlPPh3MygMWrTL0Xh5FqFkBSp
+	 7SxsixxAi7DU1g5v3m96Lm3cqyzifAadqqUOHNlsbukpUEDxmWdBiX5nyMeTmF+WFnfGx
+	 mBYKu40I6m79gdTsj+716qwaac5I1ezSXF3cBTz5RXFPa5XIki7KhpeA1SJ44vO3xtJJZ
+	 xqXuTYivsMbrC0nSnIexmkQ6Yn1DgP6NBzHZ9FseM9EdLx8PiGr2h0HK4wL8S+axTAg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=huawei.com;
-	spf=pass smtp.mailfrom=huawei.com;
-	dkim=pass header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=dmJo6jxo;
-	arc=none smtp.remote-ip=113.46.200.225
-Received: from canpmsgout10.his.huawei.com (canpmsgout10.his.huawei.com [113.46.200.225])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=foxmail.com;
+	spf=pass smtp.mailfrom=foxmail.com;
+	dkim=pass header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=RON935lO;
+	arc=none smtp.remote-ip=203.205.221.236
+Received: from out203-205-221-236.mail.qq.com (out203-205-221-236.mail.qq.com [203.205.221.236])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3843A606A327;
-	Sat, 14 Nov 2026 02:17:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3843A606A327
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC823606A323
+	for <linux-nilfs@vger.kernel.org>; Sun, 15 Nov 2026 01:33:31 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DC823606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=foxmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=foxmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=dmJo6jxo
-dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
-	c=relaxed/relaxed; q=dns/txt;
-	h=From;
-	bh=lamjSy1jct+Y32LWUG/7mqOA0l+lzlvT/xdWWaLZFKQ=;
-	b=dmJo6jxorxqj/soF5hgiJAk0L/VbZ+b6NQ150G77AKdiKykroxkSgy9jha28sMjYHaadv7xU4
-	gX5qGcCNkavMkbqMIDp0Pr2diskt5hVLJa0+T41ntlJJoc8GUBBS7KeBABGtvyISA72TUzk8pOV
-	JKQ3g1KA+Ky1blIGX4Su+70=
-Received: from mail.maildlp.com (unknown [172.19.163.163])
-	by canpmsgout10.his.huawei.com (SkyGuard) with ESMTPS id 4jRHnX4bKrz1K98l;
-	Sat, 14 Nov 2026 10:17:04 +0800 (CST)
-Received: from whupemo200011.china.huawei.com (unknown [7.152.185.179])
-	by mail.maildlp.com (Postfix) with ESMTPS id 8F8174048B;
-	Sat, 14 Nov 2026 10:17:15 +0800 (CST)
-Received: from [10.174.178.46] (10.174.178.46) by
- whupemo200011.china.huawei.com (7.152.185.179) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.2562.45; Sat, 14 Nov 2026 10:17:13 +0800
-Subject: Re: [PATCH v3 30/33] ubifs: don't set SB_RDONLY after errors
-To: Christian Brauner <brauner@kernel.org>, <linux-fsdevel@vger.kernel.org>,
-	Jan Kara <jack@suse.com>
-CC: Al Viro <viro@zeniv.linux.org.uk>, <ecryptfs@vger.kernel.org>,
-	<linux-ext4@vger.kernel.org>, <jfs-discussion@lists.sourceforge.net>,
-	<linux-nilfs@vger.kernel.org>, <exfat@lists.linux.dev>, <linux-mm@kvack.org>,
-	<ntfs@lists.linux.dev>, <ocfs2-devel@lists.linux.dev>,
-	<linux-btrfs@vger.kernel.org>, <gfs2@lists.linux.dev>,
-	<linux-efi@vger.kernel.org>, <linux-mtd@lists.infradead.org>,
-	<linux-xfs@vger.kernel.org>
-References: <20261113-work-fs-sb_rdonly-v3-0-0be92bb73709@kernel.org>
- <20261113-work-fs-sb_rdonly-v3-30-0be92bb73709@kernel.org>
-From: Zhihao Cheng <chengzhihao1@huawei.com>
-Message-ID: <17287026-cccc-f56c-15a3-029b9a2c38c9@huawei.com>
-Date: Sat, 14 Nov 2026 10:17:12 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:68.0) Gecko/20100101
- Thunderbird/68.5.0
+	dkim=pass (1024-bit key, unprotected) header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=RON935lO
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=foxmail.com;
+	s=s201512; t=1794706409;
+	bh=pLCPYEj6a2+/+vsSAhzPrTk+vl3QUgYLd5YGo87M8w4=;
+	h=From:To:Cc:Subject:Date;
+	b=RON935lO/t+jahJLX6qsTungryMSYlw97TsUl+nDjc2HaNqHFA1Q1Z5l+Fyjp5KfQ
+	 04ZisyLkk29/DT9c67ib/xHJDSVjAbzPEAQYQl70HOAWJDO/akUjwUQQ4mf/CnguAY
+	 7sgO4cIMNt1BlLj57h+CqPIa6easu2uViKXhPlSw=
+Received: from localhost.localdomain ([2409:8a00:2545:bef4:c8bc:9cd1:4eaa:3])
+	by newxmesmtplogicsvrszc43-0.qq.com (NewEsmtp) with SMTP
+	id 85BB5C45; Sun, 15 Nov 2026 09:33:27 +0800
+X-QQ-mid: xmsmtpt1794706407tj9jz6lcg
+Message-ID: <tencent_E3847A19056D4E914FACD269A3C77BAF0905@qq.com>
+X-QQ-XMAILINFO: OWaeKR31G3nej2aEh15Kh3EgpGrqzTeBmff0PpJ4bao1fJSmkoHHXRX4Brd8dY
+	 NmbGEA7Iy/gzsvuSsEjBYAB7M0O4nXRu7q5zJIGUg549raBf3AwzRGr1NtXKr+vvZnc7w7vZVzcb
+	 q8fkn6Kt2orDoGnIQu7WfF/b0Ea0wecjsymHUKWaVxc6OSL/MBL+DvtDQmFE2R4z10/a0E8pQK9x
+	 4jR53oiIBG2OVGDeWP5NaiYrob13NdeDycp6yJ7LJl4L6AnfoYcdx4eww18TRPi568fcgqF2CK8x
+	 /DR7kXw4U8JSYK3VEbpss39r97w7c2ZiGCJ+hynW2POeICGj9pZbM03ox7kk/uazK9gG2QMiSX7M
+	 fq8ayok61FAKkAm32PYFH/kR1+sBCHH9z4lU9pf3UsTU0P3PaU4xBwJ+kCXpo1OG6S0C3Bc7h/wo
+	 zePxrz6lji7R3WKGoKKb83KXIAlHEGnR3le6seVNeqaXMrSuq7OqFthtUP7sD2URUxB1wd3WeOOB
+	 vDUyj3yr0dmOczcwQ07f7l2Spf7zXSNLEJbciqDuAm2sw9Aq1C53MTWMLVCUcC2odu6EN9iIzMK/
+	 ClUba49JTqj8GJBXzuxMXa9/CQOIHFk6Jjt8A2dBBSST9foQ2iWdNIsrbXX/xBJVC7Sh1TyYpA9Y
+	 ljSOEqvNqs3B1eF0GzunqOKhuMy17BiT1HAlYWCxgTsh4igEI/ua1bG39Su+y5j+8vHz4yymD4h7
+	 nIy1aMLpKgHIcYsxjxun+klyLWa9UeJBDHpqCKlDWYGeGSn7IP0Uc85a9jNZX5NqGOf0ysNecucm
+	 TO7f76cOYCq+x1k6lWtJbhvk2LH+M1o3MW3KVmBPlhveM2qy/CeLCzYaWCPrfjhbnSgLpGph4Qb2
+	 uxnkHNMNocHAsIXxpfG2wOy02Pk1Hsmqx1RVQ0GTQo4jzPWtnIZKIx+7KJdDjoT2U320azKvOzee
+	 CMTIKGWPPpO23eWnMa6zLhUOIY8BTX7M3c6PRLu42s04esj4U/q3yLXaaVrI14/NLhwMbHl0cjAl
+	 UzwsONzrGK/GI2op2Cf06dEcabHqpyzfLs5uVvtpwFOWi+fr/YFphfzjk338+E9DnU4DhKhgRMrB
+	 EUw4N7mZ3V4CEZ8U047JwZJoiKHGYmAV6axKgJj6JcVUQ4R4igqi5by8Y5936Y8WVGG2S/
+X-QQ-XMRINFO: OD9hHCdaPRBwH5bRRRw8tsiH4UAatJqXfg==
+From: Wang Jianjian <wangjianjian0@foxmail.com>
+To: konishi.ryusuke@gmail.com,
+	slava@dubeyko.com,
+	linux-nilfs@vger.kernel.org
+Cc: Wang Jianjian <wangjianjian0@foxmail.com>
+Subject: [PATCH v2 1/2] nilfs2: add compat_ro feature atime
+Date: Sun, 15 Nov 2026 09:33:27 +0800
+X-OQ-MSGID: <20261115013328.123821-1-wangjianjian0@foxmail.com>
+X-Mailer: git-send-email 2.47.3
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -77,209 +79,64 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-In-Reply-To: <20261113-work-fs-sb_rdonly-v3-30-0be92bb73709@kernel.org>
-Content-Type: text/plain; charset="gbk"; format=flowed
 Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: kwepems100001.china.huawei.com (7.221.188.238) To
- whupemo200011.china.huawei.com (7.152.185.179)
 
-ÔÚ 2026/11/13 19:59, Christian Brauner Ð´µÀ:
-> ubifs_ro_mode() sets c->ro_error and SB_RDONLY from whatever context hit
-> the error, e.g. a failing write, and without holding s_umount. UBIFS
-> can't be frozen but that still races with everyone else changing
-> sb->s_flags. And c->ro_error alone already makes every write fail with
-> EROFS.
-> 
-> So call sb_set_emergency_ro() instead. The background thread can hit
-> the error before SB_BORN but doesn't hold s_umount either. The xattr
-> setters check c->ro_error as well because ecryptfs calls them without
-> write access on the lower mount and they change the inode in memory
-> first.
-> 
-> So far a remount to read-only after an error was refused and a remount
-> to read-write went through and cleared SB_RDONLY again because
-> c->ro_mount was never set. Now going read-only works. Nothing is synced
-> for it in that state and ubifs_remount_ro() skips the write-buffer syncs
-> and the master node like ubifs_put_super() does and only cancels the
-> write-buffer timers. Going read-write after that is refused by the VFS.
-> 
-> The flusher still gets to the folios and inodes that were dirty before
-> the error, also after the remount which sets c->ro_mount and frees the
-> write reserve buffer. Every journal write fails with EROFS after an
-> error anyway. So do_writepage() and ubifs_write_inode() drop them
-> without going near the journal. Otherwise reserve_space() trips its
-> !c->ro_mount assert for every folio after the remount.
-> 
-> Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
-> ---
->   fs/ubifs/file.c  | 12 ++++++++++++
->   fs/ubifs/io.c    |  6 +++++-
->   fs/ubifs/super.c | 40 ++++++++++++++++++++++++++--------------
->   fs/ubifs/xattr.c |  6 ++++++
->   4 files changed, 49 insertions(+), 15 deletions(-)
+To prepare following atime support:
+1. add read-only compat feature NILFS_FEATURE_COMPAT_RO_ATIME.
+2. add the_nilfs.ns_feature_compat/compat_ro/incompat.
 
-Reviewed-by: Zhihao Cheng <chengzhihao1@huawei.com>
-> 
-> diff --git a/fs/ubifs/file.c b/fs/ubifs/file.c
-> index 99dd52715eee9..4eae6c2ae2eea 100644
-> --- a/fs/ubifs/file.c
-> +++ b/fs/ubifs/file.c
-> @@ -898,6 +898,13 @@ static int do_writepage(struct folio *folio, size_t len)
->   
->   	folio_start_writeback(folio);
->   
-> +	/* Nothing gets written after an error, drop the folio. */
-> +	if (unlikely(c->ro_error)) {
-> +		err = -EROFS;
-> +		mapping_set_error(folio->mapping, err);
-> +		goto out;
-> +	}
-> +
->   	block = folio->index << UBIFS_BLOCKS_PER_PAGE_SHIFT;
->   	for (;;) {
->   		blen = min_t(size_t, len, UBIFS_BLOCK_SIZE);
-> @@ -918,6 +925,7 @@ static int do_writepage(struct folio *folio, size_t len)
->   		ubifs_ro_mode(c, err);
->   	}
->   
-> +out:
->   	ubifs_assert(c, folio->private != NULL);
->   	if (folio_test_checked(folio))
->   		release_new_page_budget(c);
-> @@ -997,6 +1005,10 @@ static int ubifs_writepage(struct folio *folio, struct writeback_control *wbc)
->   		goto out_unlock;
->   	}
->   
-> +	/* After an error do_writepage() drops the folio. */
-> +	if (unlikely(c->ro_error))
-> +		return do_writepage(folio, len);
-> +
->   	spin_lock(&ui->ui_lock);
->   	synced_i_size = ui->synced_i_size;
->   	spin_unlock(&ui->ui_lock);
-> diff --git a/fs/ubifs/io.c b/fs/ubifs/io.c
-> index 6c6d682427793..931a88329b5f5 100644
-> --- a/fs/ubifs/io.c
-> +++ b/fs/ubifs/io.c
-> @@ -72,7 +72,11 @@ void ubifs_ro_mode(struct ubifs_info *c, int err)
->   	if (!c->ro_error) {
->   		c->ro_error = 1;
->   		c->no_chk_data_crc = 0;
-> -		c->vfs_sb->s_flags |= SB_RDONLY;
-> +		/*
-> +		 * SB_RDONLY needs s_umount, see sb_set_emergency_ro(). The
-> +		 * background thread runs before SB_BORN already.
-> +		 */
-> +		sb_set_emergency_ro(c->vfs_sb);
->   		ubifs_warn(c, "switched to read-only mode, error %d", err);
->   		dump_stack();
->   	}
-> diff --git a/fs/ubifs/super.c b/fs/ubifs/super.c
-> index 38972786817e7..2d71274e89ad0 100644
-> --- a/fs/ubifs/super.c
-> +++ b/fs/ubifs/super.c
-> @@ -312,6 +312,12 @@ static int ubifs_write_inode(struct inode *inode, struct writeback_control *wbc)
->   		return 0;
->   	}
->   
-> +	/* Nothing gets written after an error, drop the change. */
-> +	if (unlikely(c->ro_error)) {
-> +		err = -EROFS;
-> +		goto out;
-> +	}
-> +
->   	/*
->   	 * As an optimization, do not write orphan inodes to the media just
->   	 * because this is not needed.
-> @@ -327,6 +333,7 @@ static int ubifs_write_inode(struct inode *inode, struct writeback_control *wbc)
->   			err = dbg_check_inode_size(c, inode, ui->ui_size);
->   	}
->   
-> +out:
->   	ui->dirty = 0;
->   	mutex_unlock(&ui->ui_mutex);
->   	ubifs_release_dirty_inode_budget(c, ui);
-> @@ -1839,19 +1846,26 @@ static void ubifs_remount_ro(struct ubifs_info *c)
->   
->   	dbg_save_space_info(c);
->   
-> -	for (i = 0; i < c->jhead_cnt; i++) {
-> -		err = ubifs_wbuf_sync(&c->jheads[i].wbuf);
-> +	/* Like ubifs_put_super(), don't write anything after an error. */
-> +	if (!c->ro_error) {
-> +		for (i = 0; i < c->jhead_cnt; i++) {
-> +			err = ubifs_wbuf_sync(&c->jheads[i].wbuf);
-> +			if (err)
-> +				ubifs_ro_mode(c, err);
-> +		}
-> +
-> +		c->mst_node->flags &= ~cpu_to_le32(UBIFS_MST_DIRTY);
-> +		c->mst_node->flags |= cpu_to_le32(UBIFS_MST_NO_ORPHS);
-> +		c->mst_node->gc_lnum = cpu_to_le32(c->gc_lnum);
-> +		err = ubifs_write_master(c);
->   		if (err)
->   			ubifs_ro_mode(c, err);
-> +	} else {
-> +		/* Syncing the write-buffers would have canceled them. */
-> +		for (i = 0; i < c->jhead_cnt; i++)
-> +			hrtimer_cancel(&c->jheads[i].wbuf.timer);
->   	}
->   
-> -	c->mst_node->flags &= ~cpu_to_le32(UBIFS_MST_DIRTY);
-> -	c->mst_node->flags |= cpu_to_le32(UBIFS_MST_NO_ORPHS);
-> -	c->mst_node->gc_lnum = cpu_to_le32(c->gc_lnum);
-> -	err = ubifs_write_master(c);
-> -	if (err)
-> -		ubifs_ro_mode(c, err);
-> -
->   	vfree(c->orph_buf);
->   	c->orph_buf = NULL;
->   	kfree(c->write_reserve_buf);
-> @@ -1977,10 +1991,7 @@ static int ubifs_reconfigure(struct fs_context *fc)
->   		if (err)
->   			return err;
->   	} else if (!c->ro_mount && (fc->sb_flags & SB_RDONLY)) {
-> -		if (c->ro_error) {
-> -			ubifs_msg(c, "cannot re-mount R/O due to prior errors");
-> -			return -EROFS;
-> -		}
-> +		/* After an error ubifs_remount_ro() can't write but still works. */
->   		ubifs_remount_ro(c);
->   	}
->   
-> @@ -1994,7 +2005,8 @@ static int ubifs_reconfigure(struct fs_context *fc)
->   		mutex_unlock(&c->bu_mutex);
->   	}
->   
-> -	if (!c->need_recovery)
-> +	/* Only valid without a media failure, see ubifs_put_super(). */
-> +	if (!c->need_recovery && !c->ro_error)
->   		ubifs_assert(c, c->lst.taken_empty_lebs > 0);
->   
->   	return 0;
-> diff --git a/fs/ubifs/xattr.c b/fs/ubifs/xattr.c
-> index 3b0e8a270f594..572f6f3e52ad3 100644
-> --- a/fs/ubifs/xattr.c
-> +++ b/fs/ubifs/xattr.c
-> @@ -260,6 +260,9 @@ int ubifs_xattr_set(struct inode *host, const char *name, const void *value,
->   	if (check_lock)
->   		ubifs_assert(c, inode_is_locked(host));
->   
-> +	if (c->ro_error)
-> +		return -EROFS;
-> +
->   	if (size > UBIFS_MAX_INO_DATA)
->   		return -ERANGE;
->   
-> @@ -564,6 +567,9 @@ static int ubifs_xattr_remove(struct inode *host, const char *name)
->   
->   	ubifs_assert(c, inode_is_locked(host));
->   
-> +	if (c->ro_error)
-> +		return -EROFS;
-> +
->   	if (fname_len(&nm) > UBIFS_MAX_NLEN)
->   		return -ENAMETOOLONG;
->   
-> 
+Signed-off-by: Wang Jianjian <wangjianjian0@foxmail.com>
+---
+ fs/nilfs2/super.c                  | 3 +++
+ fs/nilfs2/the_nilfs.h              | 3 +++
+ include/uapi/linux/nilfs2_ondisk.h | 4 +++-
+ 3 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 2e3b591c117c..f92bcf1a9544 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -872,6 +872,9 @@ int nilfs_store_magic(struct super_block *sb,
+ 	nilfs->ns_resgid = le16_to_cpu(sbp->s_def_resgid);
+ 	nilfs->ns_interval = le32_to_cpu(sbp->s_c_interval);
+ 	nilfs->ns_watermark = le32_to_cpu(sbp->s_c_block_max);
++	nilfs->ns_feature_compat = le64_to_cpu(sbp->s_feature_compat);
++	nilfs->ns_feature_compat_ro = le64_to_cpu(sbp->s_feature_compat_ro);
++	nilfs->ns_feature_incompat = le64_to_cpu(sbp->s_feature_incompat);
+ 
+ 	return 0;
+ }
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 4776a70f01ae..cb54875d2350 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -178,6 +178,9 @@ struct the_nilfs {
+ 	int			ns_inode_size;
+ 	unsigned int		ns_first_ino;
+ 	u32			ns_crc_seed;
++	__u64			ns_feature_compat;
++	__u64			ns_feature_compat_ro;
++	__u64			ns_feature_incompat;
+ 
+ 	/* /sys/fs/<nilfs>/<device> */
+ 	struct kobject ns_dev_kobj;
+diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
+index b3442b16ff6a..19587700c92c 100644
+--- a/include/uapi/linux/nilfs2_ondisk.h
++++ b/include/uapi/linux/nilfs2_ondisk.h
+@@ -253,9 +253,11 @@ struct nilfs_super_block {
+  * doesn't know about, it should refuse to mount the filesystem.
+  */
+ #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT	0x00000001ULL
++#define NILFS_FEATURE_COMPAT_RO_ATIME		0x00000002ULL
+ 
+ #define NILFS_FEATURE_COMPAT_SUPP	0ULL
+-#define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
++#define NILFS_FEATURE_COMPAT_RO_SUPP	(NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT |\
++					 NILFS_FEATURE_COMPAT_RO_ATIME)
+ #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
+ 
+ /*
+-- 
+2.47.3
 
