@@ -1,74 +1,77 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=203.205.221.221
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794706564;
-	b=M7GPzp7gCbLcIRKRM/gf4WCTOw00ZUlDMM0Yu2Iiss2nG14q5WByr6o4C31ueGTUP3fP
-	 amL3pUo8eYMOEKhE0kctl+tVfUoKp6jyKdDnAbCVFP3/sHCYiPtTqAsMYx5XTQ1GVNc2c
-	 D0ncsc+tTkD2pjSJiJzDpiPXZk3u9OjCTr7Ip0O3J6Rj/HHWq7xxRk5PCpDk6bE9ZsSVX
-	 HkVp4FlND0bdHWtZ+GO2q1LGjHKO2s51NWuHZNCCEMPTmYY71WEDaxLlHfjuOTOxPfrNH
-	 rP6GcU/iHiYHtE3jvARi62IkrRWMCyrsm7FdnXVMUnD5wbRHq9DYikZQz1cp8bWlsGA==
+	t=1794706565;
+	b=XdobJ5sDgeWFkn2QmOIfKpV9UHBGbcpUNAYHb16aZHpYN4gMf/XxJGPOA4WmvaZxQoED
+	 oNkojCOFiCI2z+tdkHqZqud8dRZQ/zsPA2Zgf5t1/qT+W47kj9VN1cDa9RCMY2hES7HMD
+	 tehm0yLvTqrFLhpAOzuw/xxdExPDRzt3qg5ibbRXXbIqtZ9mdG/zGmMfBWEf94ZdO7gIz
+	 pWe+vhYXgxygdbRUQAtVONYS3oswOvW7xSmwgNUPBzGlvBDcbqvz+L5ZWawKqMKC7Dkr+
+	 8g8YqHqpMb8rFRQ0EF07gjgrL2z+fAVj3cADr4wagIziy3DCPHXpQzY6MvRHuAezDOQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794706564;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794706565;
 	h=DMARC-Filter:DKIM-Signature:Received:X-QQ-mid:Message-ID:
 	 X-QQ-XMAILINFO:X-QQ-XMRINFO:From:To:Cc:Subject:Date:X-OQ-MSGID:
-	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=Nm8wurlJlOnyOpdAiyvRqoIMW//he+Fp0Mb2Xpll6DM=;
-	b=qoB0rrA8qJ+rKUvB/ek2790N6OHXxo6m/R20Qo8W3h2rrAitNt4uGW64N5Bn6eXPsLen
-	 3Z3MdZBds1ZuffSl+vJCzFLH0LvsuksGmlShXMygdXnEjEb/tZiOzg13cKr2guF0CAzAh
-	 Oa3yE+2O5CjfkNcBObMOfjopxP8fOWmmfaq3pbC1y5lNQre0W6zfd2r1o8TjQb43RMF1k
-	 JH+/p1NOoro54YdlhcRoUCq2xOx9hRD7S8hSJ3szIX4HEyuSRr4ZtoV82iCglyNAzKsqg
-	 mcTnGGR0hy/oaps2DqnGLYQNV24ElzUxNTJyf7V04B9Lmp8+N5HNJJDlt0BYt5EaJuQ==
+	 X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=U9qpgRy4eXnqw2Um38ISACFhw/3ihYsf5U7SWR/9A/M=;
+	b=C0/Bd0LAYuVTfPnZiew17HQq2I+f4wdcylM5iGE9lBcRcPzobUXd7fzi9FlxZoIW/WQP
+	 7pB1O46CqJj0TlH33rSJyIKl3Qf/WQP9eo3m0Yrpm9bK5DFn7y/mfwUns4a9kao3UrhPg
+	 h8QzPJQsXfYbllYcTZmMjoLxS3yER5IJXaM0eXU2KSqZCoakqTbIxdhT5LMkQHc8qE3wU
+	 gcaxGyiEfqZdioQ+TaNfbGrNWwRccpkLng6XHQUzGE44rBGelbYlGrBLBjmlM9cO4L879
+	 KAMTKLRXcwD5BYsilF2X9ckACfWYVjX6dShFH0U3n/0O6xxtg2znm5MFeNeuDzn1njw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=foxmail.com;
 	spf=pass smtp.mailfrom=foxmail.com;
-	dkim=pass header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=q6mWURnm;
+	dkim=pass header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=DZaRbi4s;
 	arc=none smtp.remote-ip=203.205.221.221
 Received: from out203-205-221-221.mail.qq.com (out203-205-221-221.mail.qq.com [203.205.221.221])
 	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 891B9606A323
-	for <linux-nilfs@vger.kernel.org>; Sun, 15 Nov 2026 01:36:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 891B9606A323
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49B2A606A329
+	for <linux-nilfs@vger.kernel.org>; Sun, 15 Nov 2026 01:36:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 49B2A606A329
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=foxmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=foxmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=q6mWURnm
+	dkim=pass (1024-bit key) header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=DZaRbi4s
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=foxmail.com;
-	s=s201512; t=1794706560;
-	bh=Nm8wurlJlOnyOpdAiyvRqoIMW//he+Fp0Mb2Xpll6DM=;
-	h=From:To:Cc:Subject:Date;
-	b=q6mWURnmU2XihqwDwLP6YJ2QGT71Mn12S+7vvwDFdVQ0U53U6UUVMOSjEGTmVdr6c
-	 ubzf5OJ7BA0IyTWolEZKhJPDjqNpbg39CUFQIoTAqVRFp3UATgO63amRvi2a1VmBIa
-	 1QAlEm6Yi58VZFHdMflr5DUWs6m73cwk3PceN2EE=
+	s=s201512; t=1794706562;
+	bh=U9qpgRy4eXnqw2Um38ISACFhw/3ihYsf5U7SWR/9A/M=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=DZaRbi4snPxUguDVyT6A708zm25sfsCV3PsgNz5Y0Lyd+lc8wQ9Jo0OEL4o5QhDO7
+	 aCmeP5wreCSz4odlYRNRT4BTk/RHUzBqMS4S6JbApVXF3IyFvmbnF7jK+MDoIUlwZ1
+	 puuSlCSnvOZ4py+47IoJ9bcg214K3h6LUv7qwdH0=
 Received: from localhost.localdomain ([2409:8a00:2545:bef4:c8bc:9cd1:4eaa:3])
 	by newxmesmtplogicsvrszb51-0.qq.com (NewEsmtp) with SMTP
 	id 8FAB0A63; Sun, 15 Nov 2026 09:35:58 +0800
-X-QQ-mid: xmsmtpt1794706558tfrpimii9
-Message-ID: <tencent_41EDF983C02D93A045296A88093905F5500A@qq.com>
-X-QQ-XMAILINFO: MD5k9EpssWtDeW7aY51h2Eg5tzwHAB80lSduXQeum/YbwFVY4/W42Tq86yzJ9F
-	 7DMJyNTmkLswjz1hEUwzFcxesGEcln+U8RbZ7VFfYGRNZDFtYp2teOcL6IN2D39WzeyUOAERiLaz
-	 eYl6l35GN/w37zxX95oGYbdzHqMxCUy35ge0tc7I3RY0IgdxeSrHz3qCi7YcZ1jWmSZE/nIpRgKF
-	 J91rTMM6paplEHOGayCk+RaszNXcu77pNkNH+gvL8O8savafaMwaGuLqD/q1fWaMHO6YjS8bZnBP
-	 0Q2xjgvuQ+cL4tJ9GZp7+TtddBTue/os9v1n1VPdKaq8xiWYAX9cG7U5H6P1+HrnztScl3hm5+Si
-	 Iq5wG6vd/+/QgW8WHM3CpejYWuNctFfj8HmFOgvl3La08l2PtWrYgGr4niNSSnHLoZxHusyhjh15
-	 khadDj8SPc/GlsnZWgnM7pUL+i6LHa5Z93PHHFiSUw+NW+DWS1ck+vaA7bOfVlW+9R6aGLN2Shix
-	 IfR0FetbzOnLpejKHrPTR4nMlmNz4YBkBucIbDPVIYLCRQXggnZkm/WM3X6PpJ6I5o7MGywf4z4w
-	 Ok6QSkjXv/GQicDtSILQ7T+t5XVpeBpt2aA/a/x3DINJjJ4V1LIvb5XYHO5gDBex4uhsATEhpeOV
-	 +qjtwpQ5hvzev0JaP/aVVBmsLl1bB/iA9hUeGg49QJEOrlPmHxmOwqtcdLPVLvNAcpwYQ0oLJSB6
-	 qdjm33nG322T9Y/0Tf01SOu2D7ssHCasIfDP1QpCSPJwCWsHlYyqUlSY+K892NGaETcVKdhZuQZN
-	 d4V1Mo+9u0xNUWT1sWXI2sHHdAdaR4FF/cCZQD4qIPDk1qOxsQl08BidwJeZ717+iMfx4vdDYZtF
-	 koerS95jHKSFkut9EwWT+UCTypB5WJdSIdxehjarKTTfRYXZr1gPJjm+cogt4trKX4gtDJAYDJJf
-	 jHmGc5FVFXou6X+n8+JwGtRCJaBYqetIzL3MpDvOR945BwNtcMpMpf39YbBSP8KRCObGw2JshuAO
-	 /gI9kcduWqVC/C3nTUhutMzDAN9d24g+8tHRhf3P27hOR/irl1LlfKD7zmbDOLw86fYklpbVo6Pe
-	 8OR8K23gZ8mUkLvz6esiaIUvqkXoD349hTQ0/Lb7iMoNcw8aU=
-X-QQ-XMRINFO: NS+P29fieYNwqS3WCnRCOn9D1NpZuCnCRA==
+X-QQ-mid: xmsmtpt1794706560tfyp6b0vx
+Message-ID: <tencent_F4720D9A9922A5D89193704FC7DE27C8F806@qq.com>
+X-QQ-XMAILINFO: MRMtjO3A6C9Xibn/gGhJ0mezRBlCa+cqR3MUsta45NckHpc2UdbvF1ftdqeDYO
+	 JqcU0fsCcTo+WG/ySkDiXzoCW9ozAgpRatynIeK1L8JF+Tb3W9mMjkZiLSPcpUSnKs2rjD4lxopA
+	 mxocSGJeXtkfcQzeqW+tlkbc0RMtYpqRv7Gi1mFdUtTVqF4LdIhaEY8BdggQoInHu8xRA6pRBR9B
+	 X7isZPZv8q6oIrzdLgKHrClaaSr5fh/2xz7ll2MdEBbGaxjDNUGjDyYNfsC3JZAFmukaEC58MAxQ
+	 +cqo9R42iqb2zXvEYSccBbwUo4A/k8OOOqBctqz4iwBaSNz4AoSIfJdwhCXI4OHPWUbQ1gLxpKFh
+	 Km05Vu1UV2pl+EKM39k2OzR4S0/dMoNRnTjWpp2OWlNhhmwnS70kEl3W29fB+voaSDFxIgXEssir
+	 zkWbVZEL6zA98hI5Ixt0bQzAk5KDTyy7aPXdjUGgJuPKx6swWW1t+bH2eHugY9OUEVAy5P57yOUd
+	 A90u/2DmiexTwfzT0mJXxtlwV610usw99MIr9X7JIejLL6pTqyPyfeUNp/FnSWQ0cLrySq3A9t5Z
+	 kem/OBG0QtxIWUIIMHZ+7rugcQvsQNys+p7O7autIeCUtnjzceLZ+5vxLurFHBHTVAw3k/n4hNHv
+	 sBZpVAPFWDfnhYsxA/1vhra7ZmvYCOAdtktOD7XsccTdU20vkci+DhKlQ2lLpyNmIiqTbzq8Afsy
+	 a/BbzFuXf6osti33YjKmZVd58csEFyIWqvqCIkA+ILG9gEkc2y3miPk37mYRzx3qWSbGcIxqQOEG
+	 6ibBg+Gg52LlUVZuF/UOFV05D9nQZ8wtN4d7MwfQFg7KPh9cJnqFN4GIZ1EF8bokYL8a4BE0giiV
+	 b41xFWuCxawMqIJcFGyqmn6qVPGYAsqVerlGgu9emy8vyDhfhOW0xrRqCK2qpprfdCE6U+5d2nU+
+	 zUVcLmip5iCm+sl3CN77bu53eVDDbieLSuVl5BngMLVoUMZk6vJegV7upgso6m8Ify0MTFkGxNCm
+	 Aw8J+k7CgOOB99NL9IELFXzs0dc9HZg5ey/zq3M+vzV6DjKsLgQtlZRntpSv14OmTF0F3jXLYS7T
+	 PIDC7bux48v1SV3uL1o/83XafIpn/c/7TNcJimUS+84Z4QvX8=
+X-QQ-XMRINFO: Nq+8W0+stu50tPAe92KXseR0ZZmBTk3gLg==
 From: Wang Jianjian <wangjianjian0@foxmail.com>
 To: konishi.ryusuke@gmail.com,
 	linux-nilfs@vger.kernel.org
 Cc: Wang Jianjian <wangjianjian0@foxmail.com>
-Subject: [PATCH 1/3] nilfs2: Add atime to support feature list
-Date: Sun, 15 Nov 2026 09:35:58 +0800
-X-OQ-MSGID: <20261115013600.123910-1-wangjianjian0@foxmail.com>
+Subject: [PATCH 2/3] nilfs-tune: add atime support
+Date: Sun, 15 Nov 2026 09:35:59 +0800
+X-OQ-MSGID: <20261115013600.123910-2-wangjianjian0@foxmail.com>
 X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20261115013600.123910-1-wangjianjian0@foxmail.com>
+References: <20261115013600.123910-1-wangjianjian0@foxmail.com>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -82,40 +85,93 @@ Content-Transfer-Encoding: 8bit
 
 Signed-off-by: Wang Jianjian <wangjianjian0@foxmail.com>
 ---
- include/linux/nilfs2_ondisk.h | 4 +++-
- lib/feature.c                 | 2 ++
- 2 files changed, 5 insertions(+), 1 deletion(-)
+ sbin/nilfs-tune.c | 37 +++++++++++++++++++++++++++++++++++--
+ 1 file changed, 35 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/nilfs2_ondisk.h b/include/linux/nilfs2_ondisk.h
-index 27a6e57..68b1709 100644
---- a/include/linux/nilfs2_ondisk.h
-+++ b/include/linux/nilfs2_ondisk.h
-@@ -251,9 +251,11 @@ struct nilfs_super_block {
-  * doesn't know about, it should refuse to mount the filesystem.
-  */
- #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT	0x00000001ULL
-+#define NILFS_FEATURE_COMPAT_RO_ATIME		0x00000002ULL
+diff --git a/sbin/nilfs-tune.c b/sbin/nilfs-tune.c
+index e2384fc..598bdce 100644
+--- a/sbin/nilfs-tune.c
++++ b/sbin/nilfs-tune.c
+@@ -101,7 +101,7 @@ static const uint64_t ok_features[NILFS_MAX_FEATURE_TYPES] = {
+ 	/* Compat */
+ 	0,
+ 	/* Read-only compat */
+-	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
++	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT | NILFS_FEATURE_COMPAT_RO_ATIME,
+ 	/* Incompat */
+ 	0
+ };
+@@ -110,7 +110,7 @@ static const uint64_t clear_ok_features[NILFS_MAX_FEATURE_TYPES] = {
+ 	/* Compat */
+ 	0,
+ 	/* Read-only compat */
+-	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
++	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT | NILFS_FEATURE_COMPAT_RO_ATIME,
+ 	/* Incompat */
+ 	0
+ };
+@@ -485,21 +485,44 @@ static void show_nilfs_sb(struct nilfs_super_block *sbp)
+ 	       le16_to_cpu(sbp->s_bytes));
+ }
  
- #define NILFS_FEATURE_COMPAT_SUPP	0ULL
--#define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
-+#define NILFS_FEATURE_COMPAT_RO_SUPP	(NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT |\
-+					 NILFS_FEATURE_COMPAT_RO_ATIME)
- #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
++#define ATIME_ON_PROMPT "When enabling (OFF -> ON): Existing files will "	\
++			"expose the epoch date (1970-01-01) as their atime."
++#define ATIME_OFF_PROMPT "When disabling (ON -> OFF): Newly allocated inode "	\
++			 "blocks on older kernels will have their atime set "	\
++			 "to the epoch date, causing inconsistent behavior."
++static int prompt_feature_set(const char *msg)
++{
++	int c;
++
++	puts(msg);
++	puts("Do you wish to proceed (y/N)? ");
++	return ((c = getchar()) == 'y' || c == 'Y') ? 0 : -1;
++}
++
+ static int update_feature_set(struct nilfs_super_block *sbp,
+ 			      struct nilfs_tune_options *opts)
+ {
+ 	uint64_t features[NILFS_MAX_FEATURE_TYPES];
++	uint64_t old_features[NILFS_MAX_FEATURE_TYPES];
+ 	uint64_t bad_mask;
+ 	int bad_type;
+ 	int ret;
  
- /*
-diff --git a/lib/feature.c b/lib/feature.c
-index ac45344..13bc3fb 100644
---- a/lib/feature.c
-+++ b/lib/feature.c
-@@ -61,6 +61,8 @@ static const struct nilfs_feature features[] = {
- 	/* Read-only compat features */
- 	{ NILFS_FEATURE_TYPE_COMPAT_RO,
- 	  NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT, "block_count" },
-+	{ NILFS_FEATURE_TYPE_COMPAT_RO,
-+	  NILFS_FEATURE_COMPAT_RO_ATIME, "atime" },
- 	/* Incompat features */
- 	/* End */
- 	{ 0, 0, NULL }
+ 	features[NILFS_FEATURE_TYPE_COMPAT] =
++	old_features[NILFS_FEATURE_TYPE_COMPAT] =
+ 		le64_to_cpu(sbp->s_feature_compat);
+ 	features[NILFS_FEATURE_TYPE_COMPAT_RO] =
++	old_features[NILFS_FEATURE_TYPE_COMPAT_RO] =
+ 		le64_to_cpu(sbp->s_feature_compat_ro);
+ 	features[NILFS_FEATURE_TYPE_INCOMPAT] =
++	old_features[NILFS_FEATURE_TYPE_INCOMPAT] =
+ 		le64_to_cpu(sbp->s_feature_incompat);
+ 
++#define FEATURE_ON(type, mask) (!(old_features[(type)] & (mask)) && \
++				 (features[(type)] & (mask)))
++#define FEATURE_OFF(type, mask) ((old_features[(type)] & (mask)) && \
++				 !(features[(type)] & (mask)))
++
+ 	assert(opts->fs_features != NULL);
+ 	ret = nilfs_edit_feature(opts->fs_features, features, ok_features,
+ 				 clear_ok_features, &bad_type, &bad_mask);
+@@ -515,6 +538,16 @@ static int update_feature_set(struct nilfs_super_block *sbp,
+ 			      nilfs_feature2string(bad_type, bad_mask));
+ 		}
+ 	} else {
++		if (FEATURE_ON(NILFS_FEATURE_TYPE_COMPAT_RO,
++			       NILFS_FEATURE_COMPAT_RO_ATIME) &&
++		    prompt_feature_set(ATIME_ON_PROMPT) < 0)
++				return -1;
++
++		if (FEATURE_OFF(NILFS_FEATURE_TYPE_COMPAT_RO,
++				NILFS_FEATURE_COMPAT_RO_ATIME) &&
++		    prompt_feature_set(ATIME_OFF_PROMPT) < 0)
++				return -1;
++
+ 		sbp->s_feature_compat =
+ 			cpu_to_le64(features[NILFS_FEATURE_TYPE_COMPAT]);
+ 		sbp->s_feature_compat_ro =
 -- 
 2.47.3
 
