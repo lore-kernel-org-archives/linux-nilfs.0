@@ -1,74 +1,74 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=203.205.221.221
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=203.205.221.210
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794706565;
-	b=XdobJ5sDgeWFkn2QmOIfKpV9UHBGbcpUNAYHb16aZHpYN4gMf/XxJGPOA4WmvaZxQoED
-	 oNkojCOFiCI2z+tdkHqZqud8dRZQ/zsPA2Zgf5t1/qT+W47kj9VN1cDa9RCMY2hES7HMD
-	 tehm0yLvTqrFLhpAOzuw/xxdExPDRzt3qg5ibbRXXbIqtZ9mdG/zGmMfBWEf94ZdO7gIz
-	 pWe+vhYXgxygdbRUQAtVONYS3oswOvW7xSmwgNUPBzGlvBDcbqvz+L5ZWawKqMKC7Dkr+
-	 8g8YqHqpMb8rFRQ0EF07gjgrL2z+fAVj3cADr4wagIziy3DCPHXpQzY6MvRHuAezDOQ==
+	t=1794706574;
+	b=DxoESoFrDEPM0bXqCWeM5KRijab1MCHRUhaOw0KZVYvzXdQ7oaLYKySvs5T6zw238s5f
+	 fKYB1whbQdN0UmjEpXW7r2gNUPnjzomrXLGQVaxu4BZAOEtUhPtZYU+v25wnqtXgj2EGB
+	 tmUUArmLEO7RLFuHdlIFYoQBoHWS+XEWZQNkLvDxO5Jii6xMnMMV2I3fV1fsMv2XdpS/r
+	 pdLo9Aw0vtUNgxLwmIR+WnnZ4ifiQRmslArZngc+Wu4Wd8URA7bKrIzAbSrxLjS5M7qDU
+	 cRmbX+8goL3/TDc0tphb4h5nNT5ioKZCvuuZa4C4v+gl6PZnD3vgQ9os+0Qwwk/XfTw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794706565;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794706574;
 	h=DMARC-Filter:DKIM-Signature:Received:X-QQ-mid:Message-ID:
 	 X-QQ-XMAILINFO:X-QQ-XMRINFO:From:To:Cc:Subject:Date:X-OQ-MSGID:
 	 X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=U9qpgRy4eXnqw2Um38ISACFhw/3ihYsf5U7SWR/9A/M=;
-	b=C0/Bd0LAYuVTfPnZiew17HQq2I+f4wdcylM5iGE9lBcRcPzobUXd7fzi9FlxZoIW/WQP
-	 7pB1O46CqJj0TlH33rSJyIKl3Qf/WQP9eo3m0Yrpm9bK5DFn7y/mfwUns4a9kao3UrhPg
-	 h8QzPJQsXfYbllYcTZmMjoLxS3yER5IJXaM0eXU2KSqZCoakqTbIxdhT5LMkQHc8qE3wU
-	 gcaxGyiEfqZdioQ+TaNfbGrNWwRccpkLng6XHQUzGE44rBGelbYlGrBLBjmlM9cO4L879
-	 KAMTKLRXcwD5BYsilF2X9ckACfWYVjX6dShFH0U3n/0O6xxtg2znm5MFeNeuDzn1njw==
+	bh=92vbkXHQiMKc+ntZuQVcPOCyaPvxLMI1+R3Cgd8MhPQ=;
+	b=uEqb2WuAgxRRrbJmKo+oH/h0MEc1Us/lyUXlarBlBHMFBaR+XCFX3NrvGdnDPmMmY2Qz
+	 3DHMRM2eBcQUaHzr7qnxpl0+cKwZJ5Z+KJ1s5ycsqA5lsP2ktC3PMU7e5y8Sz6ioQb5i/
+	 iBEOpTgMyJyALb9rLeUKroYVMFj00pZp0h8bY3+GrVUUfF88Ill1ZU0s5VFnIAgzjo6rl
+	 c0JZtCJ7PW1cTxRiW8TJIU7gLAoUrjULo5Y/icOy7aKt2vFhGwv+O+BpI2l16/skhDb4i
+	 Bfl1yBwlKY4uisXmHjXGovznf0B9TQJc48ixqfT1/hXJpEF47SQeMYWuYBb7UAcNXEA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=foxmail.com;
 	spf=pass smtp.mailfrom=foxmail.com;
-	dkim=pass header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=DZaRbi4s;
-	arc=none smtp.remote-ip=203.205.221.221
-Received: from out203-205-221-221.mail.qq.com (out203-205-221-221.mail.qq.com [203.205.221.221])
+	dkim=pass header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b="IWd+L+/s";
+	arc=none smtp.remote-ip=203.205.221.210
+Received: from out203-205-221-210.mail.qq.com (out203-205-221-210.mail.qq.com [203.205.221.210])
 	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49B2A606A329
-	for <linux-nilfs@vger.kernel.org>; Sun, 15 Nov 2026 01:36:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 49B2A606A329
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07D41606A323
+	for <linux-nilfs@vger.kernel.org>; Sun, 15 Nov 2026 01:36:12 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 07D41606A323
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=foxmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=foxmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=DZaRbi4s
+	dkim=pass (1024-bit key) header.d=foxmail.com header.i=@foxmail.com header.a=rsa-sha256 header.s=s201512 header.b=IWd+L+/s
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=foxmail.com;
-	s=s201512; t=1794706562;
-	bh=U9qpgRy4eXnqw2Um38ISACFhw/3ihYsf5U7SWR/9A/M=;
+	s=s201512; t=1794706564;
+	bh=92vbkXHQiMKc+ntZuQVcPOCyaPvxLMI1+R3Cgd8MhPQ=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=DZaRbi4snPxUguDVyT6A708zm25sfsCV3PsgNz5Y0Lyd+lc8wQ9Jo0OEL4o5QhDO7
-	 aCmeP5wreCSz4odlYRNRT4BTk/RHUzBqMS4S6JbApVXF3IyFvmbnF7jK+MDoIUlwZ1
-	 puuSlCSnvOZ4py+47IoJ9bcg214K3h6LUv7qwdH0=
+	b=IWd+L+/sKuSMqrqVMAV0tE8r/75wUzYkytSDfbvDz6Wi4O5fY4GKa8vFy2ZLD/rNy
+	 bcVcNzoyG7br08SJKaFXu+PXxOGLNknTMlgTNrPpldyA2I4JsKcWCTH515QbUxGuTm
+	 SQ7GVOGkBWHOr5+n++GAev8bh0WhbPt6hwisgMOA=
 Received: from localhost.localdomain ([2409:8a00:2545:bef4:c8bc:9cd1:4eaa:3])
 	by newxmesmtplogicsvrszb51-0.qq.com (NewEsmtp) with SMTP
 	id 8FAB0A63; Sun, 15 Nov 2026 09:35:58 +0800
-X-QQ-mid: xmsmtpt1794706560tfyp6b0vx
-Message-ID: <tencent_F4720D9A9922A5D89193704FC7DE27C8F806@qq.com>
-X-QQ-XMAILINFO: MRMtjO3A6C9Xibn/gGhJ0mezRBlCa+cqR3MUsta45NckHpc2UdbvF1ftdqeDYO
-	 JqcU0fsCcTo+WG/ySkDiXzoCW9ozAgpRatynIeK1L8JF+Tb3W9mMjkZiLSPcpUSnKs2rjD4lxopA
-	 mxocSGJeXtkfcQzeqW+tlkbc0RMtYpqRv7Gi1mFdUtTVqF4LdIhaEY8BdggQoInHu8xRA6pRBR9B
-	 X7isZPZv8q6oIrzdLgKHrClaaSr5fh/2xz7ll2MdEBbGaxjDNUGjDyYNfsC3JZAFmukaEC58MAxQ
-	 +cqo9R42iqb2zXvEYSccBbwUo4A/k8OOOqBctqz4iwBaSNz4AoSIfJdwhCXI4OHPWUbQ1gLxpKFh
-	 Km05Vu1UV2pl+EKM39k2OzR4S0/dMoNRnTjWpp2OWlNhhmwnS70kEl3W29fB+voaSDFxIgXEssir
-	 zkWbVZEL6zA98hI5Ixt0bQzAk5KDTyy7aPXdjUGgJuPKx6swWW1t+bH2eHugY9OUEVAy5P57yOUd
-	 A90u/2DmiexTwfzT0mJXxtlwV610usw99MIr9X7JIejLL6pTqyPyfeUNp/FnSWQ0cLrySq3A9t5Z
-	 kem/OBG0QtxIWUIIMHZ+7rugcQvsQNys+p7O7autIeCUtnjzceLZ+5vxLurFHBHTVAw3k/n4hNHv
-	 sBZpVAPFWDfnhYsxA/1vhra7ZmvYCOAdtktOD7XsccTdU20vkci+DhKlQ2lLpyNmIiqTbzq8Afsy
-	 a/BbzFuXf6osti33YjKmZVd58csEFyIWqvqCIkA+ILG9gEkc2y3miPk37mYRzx3qWSbGcIxqQOEG
-	 6ibBg+Gg52LlUVZuF/UOFV05D9nQZ8wtN4d7MwfQFg7KPh9cJnqFN4GIZ1EF8bokYL8a4BE0giiV
-	 b41xFWuCxawMqIJcFGyqmn6qVPGYAsqVerlGgu9emy8vyDhfhOW0xrRqCK2qpprfdCE6U+5d2nU+
-	 zUVcLmip5iCm+sl3CN77bu53eVDDbieLSuVl5BngMLVoUMZk6vJegV7upgso6m8Ify0MTFkGxNCm
-	 Aw8J+k7CgOOB99NL9IELFXzs0dc9HZg5ey/zq3M+vzV6DjKsLgQtlZRntpSv14OmTF0F3jXLYS7T
-	 PIDC7bux48v1SV3uL1o/83XafIpn/c/7TNcJimUS+84Z4QvX8=
-X-QQ-XMRINFO: Nq+8W0+stu50tPAe92KXseR0ZZmBTk3gLg==
+X-QQ-mid: xmsmtpt1794706562tgmdylmh2
+Message-ID: <tencent_707010F5E5413437C5233177A7B91E8B3D07@qq.com>
+X-QQ-XMAILINFO: NnYhxYSyuBnLvyDfFSxCSEFWF/DNIQa3VQyIpvWsytA4Dc8joUJULPf8sMkCxF
+	 KMOIH0AdBadTYxvxF1bx7fikctux7pAXOCNnG0QTImPLVT7JjOHRx96V07me2d4y3oZUD7wAOdD4
+	 nQcV/fALSduxpxde9HVlYmDzKdxpoMeYp7BW52NbyQq2stltRtboAjv4GxgUl+M2VfwlRansK9gQ
+	 7DkHegc4XAthXyt3P19fX1lxkBt8/cKJVdP2C8UNVTvlSClT7CKdsbpUDbSrJGF+Td1xCekflaEa
+	 Qzl6z2c49QKfgGwJv5xKvhc8qLO2DIOLb86b1s/E2CRQncAHyXUStvML9uPIX/fydKmxASHpP97M
+	 G3YIl0NsNY0XQ1f7kniyN6t564EyCrsNbag8t19CMqAQcXVMO3MJuyOU1IL3CnWulaDxfjpXMYMl
+	 OxMldg8dK31130NaayD7+YXFCaWmkjBjTyU15iomo6mwnDg728ZUL1ZgbPiv/PA/2iw6TuwatsOF
+	 jKIqrt70Yx6qhv1tR5/G9kEm4nyma1bcUNpB5DSQHWBuXHL+ed5qxRuD7LJhgRAjYQwQaeJ0+2/g
+	 DZcWwVGyRN+BJmtv30bzZlEIqBLd8Q1jAxY8GH8FpCEZxYUOhZPRePE5D0xP+DxSL8EhP/n5Tc6K
+	 HIvAt/yU90K44FeRGhI5adRLZIhYoWe06SohPy3jJ32HUsGq4aLNK/XsPUAeXTnRzwXCThap72hT
+	 qUG6tIiUCdERbp1FNGcjC8jFeGQwpcbVlJHWM99o6pUFKq76cSeJmpUi4b+x4sSyHs1qBstpHNMr
+	 848AUJrcDj6N+gXUi4J212S3UmfeKtRq8/vNgKeAN7GUhqIq1kFZ5PDRvPSeVZ2BUTsHIUVAg+6Q
+	 gBNEg5zqNX51JQv8JDXjs1TrukTZ4n7e8FNsyUwUzwwxra0mxFObzy9maNgZcwwPg47Ch6LaeU29
+	 k7QviW0mHQBo2Liha8+7cwULTmyqXrygn7Vesn3agnr2x23HRjz0obxcF4pohHsE42gpPA+/1RvZ
+	 RMdrRZOqFvT3xCDxzWPmV54qqsHiQAbAGqBRqro0modShfJGQog7zsvv4/YWKFATHC4hcaV1O7Ws
+	 rYQQt70SyiiHcgdFy3z6k8rFyJO9EyxDLr3wrwBR3JuVhsdGOE0tA7eg1RwXKVtbESnX/b
+X-QQ-XMRINFO: MPJ6Tf5t3I/ylTmHUqvI8+Wpn+Gzalws3A==
 From: Wang Jianjian <wangjianjian0@foxmail.com>
 To: konishi.ryusuke@gmail.com,
 	linux-nilfs@vger.kernel.org
 Cc: Wang Jianjian <wangjianjian0@foxmail.com>
-Subject: [PATCH 2/3] nilfs-tune: add atime support
-Date: Sun, 15 Nov 2026 09:35:59 +0800
-X-OQ-MSGID: <20261115013600.123910-2-wangjianjian0@foxmail.com>
+Subject: [PATCH 3/3] mkfs.nilfs2: add time to ok_feature
+Date: Sun, 15 Nov 2026 09:36:00 +0800
+X-OQ-MSGID: <20261115013600.123910-3-wangjianjian0@foxmail.com>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261115013600.123910-1-wangjianjian0@foxmail.com>
 References: <20261115013600.123910-1-wangjianjian0@foxmail.com>
@@ -85,14 +85,14 @@ Content-Transfer-Encoding: 8bit
 
 Signed-off-by: Wang Jianjian <wangjianjian0@foxmail.com>
 ---
- sbin/nilfs-tune.c | 37 +++++++++++++++++++++++++++++++++++--
- 1 file changed, 35 insertions(+), 2 deletions(-)
+ sbin/mkfs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/sbin/nilfs-tune.c b/sbin/nilfs-tune.c
-index e2384fc..598bdce 100644
---- a/sbin/nilfs-tune.c
-+++ b/sbin/nilfs-tune.c
-@@ -101,7 +101,7 @@ static const uint64_t ok_features[NILFS_MAX_FEATURE_TYPES] = {
+diff --git a/sbin/mkfs.c b/sbin/mkfs.c
+index 05291d9..c4686eb 100644
+--- a/sbin/mkfs.c
++++ b/sbin/mkfs.c
+@@ -1023,7 +1023,7 @@ static const uint64_t ok_features[NILFS_MAX_FEATURE_TYPES] = {
  	/* Compat */
  	0,
  	/* Read-only compat */
@@ -101,77 +101,6 @@ index e2384fc..598bdce 100644
  	/* Incompat */
  	0
  };
-@@ -110,7 +110,7 @@ static const uint64_t clear_ok_features[NILFS_MAX_FEATURE_TYPES] = {
- 	/* Compat */
- 	0,
- 	/* Read-only compat */
--	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT,
-+	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT | NILFS_FEATURE_COMPAT_RO_ATIME,
- 	/* Incompat */
- 	0
- };
-@@ -485,21 +485,44 @@ static void show_nilfs_sb(struct nilfs_super_block *sbp)
- 	       le16_to_cpu(sbp->s_bytes));
- }
- 
-+#define ATIME_ON_PROMPT "When enabling (OFF -> ON): Existing files will "	\
-+			"expose the epoch date (1970-01-01) as their atime."
-+#define ATIME_OFF_PROMPT "When disabling (ON -> OFF): Newly allocated inode "	\
-+			 "blocks on older kernels will have their atime set "	\
-+			 "to the epoch date, causing inconsistent behavior."
-+static int prompt_feature_set(const char *msg)
-+{
-+	int c;
-+
-+	puts(msg);
-+	puts("Do you wish to proceed (y/N)? ");
-+	return ((c = getchar()) == 'y' || c == 'Y') ? 0 : -1;
-+}
-+
- static int update_feature_set(struct nilfs_super_block *sbp,
- 			      struct nilfs_tune_options *opts)
- {
- 	uint64_t features[NILFS_MAX_FEATURE_TYPES];
-+	uint64_t old_features[NILFS_MAX_FEATURE_TYPES];
- 	uint64_t bad_mask;
- 	int bad_type;
- 	int ret;
- 
- 	features[NILFS_FEATURE_TYPE_COMPAT] =
-+	old_features[NILFS_FEATURE_TYPE_COMPAT] =
- 		le64_to_cpu(sbp->s_feature_compat);
- 	features[NILFS_FEATURE_TYPE_COMPAT_RO] =
-+	old_features[NILFS_FEATURE_TYPE_COMPAT_RO] =
- 		le64_to_cpu(sbp->s_feature_compat_ro);
- 	features[NILFS_FEATURE_TYPE_INCOMPAT] =
-+	old_features[NILFS_FEATURE_TYPE_INCOMPAT] =
- 		le64_to_cpu(sbp->s_feature_incompat);
- 
-+#define FEATURE_ON(type, mask) (!(old_features[(type)] & (mask)) && \
-+				 (features[(type)] & (mask)))
-+#define FEATURE_OFF(type, mask) ((old_features[(type)] & (mask)) && \
-+				 !(features[(type)] & (mask)))
-+
- 	assert(opts->fs_features != NULL);
- 	ret = nilfs_edit_feature(opts->fs_features, features, ok_features,
- 				 clear_ok_features, &bad_type, &bad_mask);
-@@ -515,6 +538,16 @@ static int update_feature_set(struct nilfs_super_block *sbp,
- 			      nilfs_feature2string(bad_type, bad_mask));
- 		}
- 	} else {
-+		if (FEATURE_ON(NILFS_FEATURE_TYPE_COMPAT_RO,
-+			       NILFS_FEATURE_COMPAT_RO_ATIME) &&
-+		    prompt_feature_set(ATIME_ON_PROMPT) < 0)
-+				return -1;
-+
-+		if (FEATURE_OFF(NILFS_FEATURE_TYPE_COMPAT_RO,
-+				NILFS_FEATURE_COMPAT_RO_ATIME) &&
-+		    prompt_feature_set(ATIME_OFF_PROMPT) < 0)
-+				return -1;
-+
- 		sbp->s_feature_compat =
- 			cpu_to_le64(features[NILFS_FEATURE_TYPE_COMPAT]);
- 		sbp->s_feature_compat_ro =
 -- 
 2.47.3
 
