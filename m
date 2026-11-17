@@ -1,91 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.49
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.174
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794898288;
-	b=4qMNd4pLs4XLf4En7MLGgBoruaWeCMCjdYejYQMK8Z+Nw36d66DAuE+EhLTXbMaxK4go
-	 KHoxbQbUwKMHoU8TOk1cPofThqz6pJGEMC4fQzKqZbMTqgk1tGAQBcIe33Fhxet653eYj
-	 FZHEqTFl8PTgaCPIyzwPtaaxpajcakHadttR/e5GNd7CDqWTG2kF/6+j6Db18u8BXnvpB
-	 3aJaGQI6pyEKNBjr4T6ylbJRSchJ/Yu75cAc+WqfsT5fSyg74OazzGDuEpqMGyAGtPH/1
-	 zftCYFL8QQSW38wW0TtsdknujxX60+pl81YWHj2PkyXMmj9vUiPK8ZaNcFqzqeVX7WA==
+	t=1794898290;
+	b=eoi1ZycT6XVf6mO9rmbf9hhBrbz09x/j/YdFFhPX3zYoPl3rJVIi98BDMESqupzSK/7K
+	 /x61xCLyCccN1FSAZkXinK8PA3csFQ5KPcX9MdsUNHTyZyL4BV3umtC7GW1oqgnMcyP6n
+	 I2quWYFFtaDFs0pK5Y8ZF6gSxlPzFURzUsm4/5ZCa3PXJWPBPNWmKjYA+GimvygUhVor2
+	 +vJQRwiV0BNM9X+PPQOMy4jSWd+NQr+Ikow1CqoxFkjBJNhyb8oFti1N4RVJp/BeZrpzN
+	 k6n5XubCqZzVRLnyVc2KQnndsAFjZ2/mmvqISMRVRU/ZEnaNyXi9kwJ9pLw5GZUId9Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794898288;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794898290;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=Rk1FeQzJrhht2X1kLFkG63MCPIDEd8l5/+J4eSp8hlg=;
-	b=O3l8Qb8hi6nmeZdHjaP7ZLEaNCyLE5bTHvNz+I+RC3CxUbv2HeZma5awOQ59GBLK3Sf3
-	 zhUOk7bvLMb5mmP+5fAJ9qEr9ebT5Nq05eJfxtsQCWYXYN1/6uYSmicp00K7+/hPtUPoT
-	 fmkYThkrZHt+0zYEF1/h5eKrMQhyWlediOvOPE0RSezsd81EZWBzWRq+ZsxY+TTK9ylhT
-	 BZKBC/iPJ/P7DeJSF0mHW70D3mRzyTbiX7EZ3wJsQkbKoV/7VIUScAZhZOQOvxRuOP4Z6
-	 4QGrDHYhyzozEqL6lYidvjLuCyGgLQI+ElsAJE/8BLpqtAx0+wchOTsJeYhVqcKzOfQ==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=H7rBBGAWYyx/YFYo/54ustyS3rwja5fxSbKif0iz4Xg=;
+	b=RHVkJaWyXr+pyb8WmnQwCUSb4ll5+xW+BAsfoUmIAdg/E4wA4HL2cejLXrVNLKGpI/rL
+	 qrqEb8b97qZbzSa3edxjItYUWJNw/8Ly0fKNZz93v3hdxGnuuf5quGFvSd0/9DqXmAAqM
+	 EP/jh+a25DKahy5ghlrB+IJjp0DhsgTMb6bugscmxWWDg23yFtWCFm5KA2yn8SpagC4VI
+	 +Vy+ZxJULJCf5518mXsnve2f8ksv2eZ5/TP5vzQqwwXYEILs1q5fyEqmH+TVPGezANAnm
+	 Wzt7SY7ONPNzxiFXsDvdE8OY8q1J9fMVDGNLpNGY4sTdyn/FEteFxDRi3IO4jausM+w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=rHLcVAlc;
-	arc=none smtp.remote-ip=74.125.82.49
-Received: from mail-dl1-f49.google.com (mail-dl1-f49.google.com [74.125.82.49])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=laLPAhJj;
+	arc=none smtp.remote-ip=74.125.82.174
+Received: from mail-dy1-f174.google.com (mail-dy1-f174.google.com [74.125.82.174])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC811606A31C
-	for <linux-nilfs@vger.kernel.org>; Tue, 17 Nov 2026 06:51:27 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BC811606A31C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84D22606A332
+	for <linux-nilfs@vger.kernel.org>; Tue, 17 Nov 2026 06:51:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 84D22606A332
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=rHLcVAlc
-Received: by mail-dl1-f49.google.com with SMTP id a92af1059eb24-1a3c08d6928so5995041c88.0
-        for <linux-nilfs@vger.kernel.org>; Mon, 16 Nov 2026 22:51:27 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=laLPAhJj
+Received: by mail-dy1-f174.google.com with SMTP id 5a478bee46e88-36dbde64409so6305106eec.0
+        for <linux-nilfs@vger.kernel.org>; Mon, 16 Nov 2026 22:51:30 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794898287; x=1795503087; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Rk1FeQzJrhht2X1kLFkG63MCPIDEd8l5/+J4eSp8hlg=;
-        b=rHLcVAlcz5VgIGeYPUZoTWIp0lXLEtc+z7YYIHJuJNRv0h3y9ODnxzr8NlSqrpUmIp
-         JGVZnYMxTKCfBv9PcoP6cmGRv3q+fPfFtld5dkyb5pB24UbwWSroisGfsBQkN9b7JpDv
-         vTOfJhZhPJtvgqwrd1Gpv18b4C+iqjsPNGBzFnZQ0ItBF0sgDE0CNMX0jJ0V/3IN8RVF
-         ABaqw/CAyBLKvQqFbXyYnmOAZk2L+E4BuABEwWnQtsZt183dsQ8A5ZU8tizZSOrjb5ov
-         /D8IoZiF+sxdXBFm93yFZ/BS/zncAPC2A40AOoE/RBIuDDhJObs6gNN5lWDAaGxMr6Al
-         hdcg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794898287; x=1795503087;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20260707; t=1794898289; x=1795503089; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=Rk1FeQzJrhht2X1kLFkG63MCPIDEd8l5/+J4eSp8hlg=;
-        b=LLEkCzLwsnM55Vzli9RZRB2Z4ApNCcxQYye0fxv3ZT1kfUDQ61elJXWctbHWWG68to
-         1Zz9PTi1yK2ECDVZEW7jUqUmxQxN74VQ+hqVKzEOGzxUFrETm8cSmEG8FmVOyuVFeXmj
-         e2J6KABwT0ssoklaai4PJM6+dLpUWEO1610GgoIDuf1aSPUm3IZ0PPXUSAC2pHNq276e
-         EaPCrMEIhRJXf0611DepFcIQdtmRlDx/Rc6byEhAJ5EgckO5LwWAdCzy4N6KDYx/DyWt
-         5b0rYfc8iMVAYMlhQTEZ/Bpl90Xg7GqnI6qolV0nrpX6SDU1n/uxc8jfxVqzrXl+gDfc
-         sD2A==
-X-Forwarded-Encrypted: i=1; AL+hErGT16tEkeDW7M49KKTAg0/953odgw1WlsVZS/O+TC6P2fbFaVbmcmzUR++2RuxxZngtOi0UR0zZQjs5zw==@vger.kernel.org
-X-Gm-Message-State: APuU4Z9jcpdm4KOF4D/DFUBYCo68OYWqNw2n35rMDAeTI59joA15/nO/
-	Tf56YayVESWbiGULRA5zgw99pFtayRAvdvt5kvGjV7kAmFeeX3lglzHO
-X-Gm-Gg: AYBFou0bXFSGUVVD7FBn6l4QfcZOhmJQpLLgGGyWwLibb/B0zHzfQ691EUmg3jtJmLi
-	giGpK3MAJRuzcyyjlq10tqB8sccmd5AblHwXWbWPFNWRuxb/WKkh50d4vQnJpj1HW7eo5WFtU2O
-	+7beZbkXfhlH1GQuXhWmu+Po70A2uT7wGGdsYim/EpbjS66fIm9RQdN2fSxpzzYgIt5O7h8i29l
-	ElhLTjDFJIUY0TxWeJa83+aFPCvINcxUUTxiVfB0Vv2sAjxWsNK5+vmL+cozB3GKZRGf1ZyD1Jy
-	15UQnyvX0zEr3P0YShVwjwnSTcRBm4K+dtEJIOo5UWcJzkp54kMbW4o36ivZMO+iW7jLLmrCSv9
-	+RTgpmOsRljl+nbsoxoYXeird+lkXSanZnGUcD5kniZ2HCwGk7TjIW1fy7n+PUdlUDk6ikbt7RI
-	k+2tcYl4xFIGyRDVcL++ZiSeqLGV7nBmPD3bHif3/PEejNx5lHD1PZzwjmSwAY2Io4FR2e8XFLd
-	ty2luNlzWYJ56eiye5fDe+mqNfu2nqQmZKlHRsXM9Cin7cxPc5gJ1PiTaGrqMRlq/d4S7P0r6Lw
-	hQbCFeIx4eqyXXdeDvAZlm9vJx1fFRkEesNMeA0hoqUUJHsO0jr5eIw4B+xvE1oD
-X-Received: by 2002:a05:7022:3a87:b0:1b2:5884:a020 with SMTP id a92af1059eb24-1b50302ac09mr12374737c88.6.1794898286701;
-        Mon, 16 Nov 2026 22:51:26 -0800 (PST)
+        bh=H7rBBGAWYyx/YFYo/54ustyS3rwja5fxSbKif0iz4Xg=;
+        b=laLPAhJj/HJqN+aoxjqsUhoEII4ZKM6F/f4iNTCjaDSi+LXBcv9tFE+le3r0s5q4xx
+         99Cy1/KxBEGyyXKvLpA4X1eo+COL67UcS2dXkfn0UZ3VMQkN6hz0Uc3fAlidr4lefm+2
+         f11MvjJiqXWL/TPTE6iMjSDOfOC9bcE9YRDZa1Q+/bPpKLvpupDD7pduNWoudVrGTQRf
+         6UiNbgM03/+vcyVlIjF5F+ExVjjckoVHBzaZ60APBGKopdsYGGU8vONoMCQ22Ctej+gM
+         gZo+ReNjWXYHDlFd3/CafjFWE8AWTd+ro13nCRJhfIysCtNi9N4HtQCHW2zjbvife2ss
+         kZyA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794898289; x=1795503089;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=H7rBBGAWYyx/YFYo/54ustyS3rwja5fxSbKif0iz4Xg=;
+        b=IjpUIEhNs7vsCbuCv4zu3JMl1NF3sCRh0O+1ep1XEYt1+XvMUeduLT8E8bCK7NCfag
+         nztNdWiZN+b+HBsfgxndOCfTyFQVSn2PbE2vaIAZD/mk3WhOPwnROuvHX3qpJQXthRH2
+         wBKmnbO6p//DxRGTVA5jBRbIBDKbBmYYT1CT4C8Y3B3EVoLb/O/5SKzlbsJM7waKtXAU
+         W6CLoXekEUEMqtxBxFMCRQGpWVRDk325V9+ZFxwwoUUYHW9A1cYP2fUDKXN3IVOAwXyx
+         dJp/GqQ8ES3utwMtV8RTLyn5syVNSIaa/E7FXOR3hWSLLTJF4rv3FGEszHC/kDsTpFUv
+         EVjg==
+X-Forwarded-Encrypted: i=1; AL+hErH2gGyf0bbQZSUE24ZlnhvJdmSsCwZH6bjjz//+WdHxlBtFYzgipd55i6E58Uqbteu0PZ+GqnQR9ssplA==@vger.kernel.org
+X-Gm-Message-State: APuU4Z/V4t2Mn0hhetBxRaWYVhtS3RPnEm6KF4SkSyBn5Cx/yr4O37At
+	QekxjgBltcK2TdXn7SDiLprToiNguHQmp7IK91p7Dxw5sn0n+wWQg9uY
+X-Gm-Gg: AZFdTZd8hcYyyzrRhxhQsmMrDjZAga5qmo69BVEEjXzPDEKYLhRXdH4clV/dZU4PNIR
+	bBZeeVufflpmPmGr1Nndo2lEe9c/v4qVvjwh7X1WaoK53YYWd/8dDW1zeTcQ5zGWrSRWeU8cOq7
+	SpHkeADxRiNeHwG+fjdSh+SSh2UGDwXQiykmaCtIpa5560m7I0nbete0ihtwlJgAzHuZhrKcmml
+	GP1c0oAsoU5iJFVkupfTC0V7wXNTqOaJIcRsxifP/8U/nWoEqW4OCGTtv3kDgCcotXAcmInqj6n
+	LxRunBmPbwKlE7HUiKIUIvaoXnNjbuI7oojkegQaL0AUZAQv24xoD8BOAbq8QhMnPe5At7L7mNx
+	31tZI+hqFfSs5YQDf+WxzCFbgLeUoz7No+VpArnahctykH/2qyC2YMI8qdg5+I1HnSOT/vdQNza
+	jd/AGCvphFx0i1EVstlQ7cfhtoYbQ7QM98U73fPNWgNAQeiM5bYv7OcLnDDAf8Od37Q3WFM7OFG
+	ms8dKH3ZLDV/muKawoEHH5qBSunduJU4JpZqQrFoM2a2RwaeMaoIS/nO0AN7SXG1WrPxcOYvGLl
+	vy58250XGqCse80kL6w1B8woOgBwFdmRQ1vBSL62G+l6+vD2dC3w0ok7hfvb8Q4=
+X-Received: by 2002:a05:7300:6027:b0:360:e2e6:f849 with SMTP id 5a478bee46e88-37966e3b6c9mr13703517eec.28.1794898289262;
+        Mon, 16 Nov 2026 22:51:29 -0800 (PST)
 Received: from carrot.home.local (madb688455.ap.nuro.jp. [219.104.132.85])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-379565d269asm44099255eec.23.2026.11.16.22.51.23
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-379565d269asm44099255eec.23.2026.11.16.22.51.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 16 Nov 2026 22:51:24 -0800 (PST)
+        Mon, 16 Nov 2026 22:51:27 -0800 (PST)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Viacheslav Dubeyko <slava@dubeyko.com>
 Cc: Wang Jianjian <wangjianjian0@foxmail.com>,
 	linux-nilfs <linux-nilfs@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH 0/2] nilfs2: atime support
-Date: Tue, 17 Nov 2026 15:47:46 +0900
-Message-ID: <20261117065122.41553-1-konishi.ryusuke@gmail.com>
+Subject: [PATCH 1/2] nilfs2: add atime compat_ro feature
+Date: Tue, 17 Nov 2026 15:47:47 +0900
+Message-ID: <20261117065122.41553-2-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261117065122.41553-1-konishi.ryusuke@gmail.com>
+References: <20261117065122.41553-1-konishi.ryusuke@gmail.com>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -97,75 +100,77 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Hi Viacheslav,
+From: Wang Jianjian <wangjianjian0@foxmail.com>
 
-Please queue the following two patches for persistent atime support in
-nilfs2 for the next merge window.
+To prepare following atime support:
+1. add read-only compat feature NILFS_FEATURE_COMPAT_RO_ATIME.
+2. add the_nilfs.ns_feature_compat/compat_ro/incompat.
 
-This series builds upon your original patch [1], which Wang Jianjian
-followed up on to address review comments and add compat_ro feature flag
-support [2][3].  I have made minor modifications to those patches,
-including filling in missing kernel-doc comments and adjusting the
-commit messages (such as fixing the Co-developed-by tags).
+[ryusuke: added missing kernel-doc comments]
 
-To use this feature, install the updated nilfs-utils from the
-'atime-support' branch of the development repository [4] (which will be
-merged into the master branch once this patchset is queued), and either
-format a new filesystem with the atime feature enabled:
+Signed-off-by: Wang Jianjian <wangjianjian0@foxmail.com>
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+ fs/nilfs2/super.c                  | 3 +++
+ fs/nilfs2/the_nilfs.h              | 6 ++++++
+ include/uapi/linux/nilfs2_ondisk.h | 4 +++-
+ 3 files changed, 12 insertions(+), 1 deletion(-)
 
-  $ sudo mkfs -t nilfs2 -O atime /dev/<device>
-
-or enable the feature flag on an existing filesystem image using
-nilfs-tune:
-
-  $ sudo nilfs-tune -O atime /dev/<device>
-
-Once the atime feature flag is set, the filesystem can only be mounted
-read-only on currently deployed kernels that lack support for it (until
-the flag is cleared with "nilfs-tune -O ^atime /dev/<device>").  To
-avoid confusing users, this feature will remain optional in mkfs.nilfs2
-for the time being, though I plan to enable it by default in a future
-release of nilfs-utils.
-
-Note that when enabling the feature on an existing filesystem, inodes
-written by older mkfs or kernels have their on-disk atime fields
-initialized to 0, which will expose the epoch date (1970-01-01).
-nilfs-tune warns about this when setting the flag, and image conversion
-(such as copying mtime to atime) is not supported.
-
-The series consists of two patches:
-
-- Patch 1/2 introduces the read-only compat feature flag
-  (NILFS_FEATURE_COMPAT_RO_ATIME) to manage on-disk format compatibility
-  for atime support.
-- Patch 2/2 reads atime from on-disk inodes when the compat_ro flag is
-  enabled and stops unconditionally setting SB_NOATIME on the superblock,
-  switching VFS behavior accordingly.
-
-[1] https://lore.kernel.org/all/20260219204343.70117-1-slava@dubeyko.com
-[2] https://lore.kernel.org/all/tencent_E3847A19056D4E914FACD269A3C77BAF0905@qq.com
-[3] https://lore.kernel.org/all/tencent_F3CAF2061A8AE294D88513588FD3DE1F4806@qq.com
-[4] https://github.com/nilfs-dev/nilfs-utils.git
-
-Thanks,
-Ryusuke Konishi
-
-
-Viacheslav Dubeyko (1):
-  nilfs2: introduce atime support
-
-Wang Jianjian (1):
-  nilfs2: add atime compat_ro feature
-
- fs/nilfs2/Kconfig                  |  2 +-
- fs/nilfs2/inode.c                  | 11 +++++++++--
- fs/nilfs2/nilfs.h                  |  4 ----
- fs/nilfs2/segment.c                |  2 --
- fs/nilfs2/super.c                  | 11 ++++++-----
- fs/nilfs2/the_nilfs.h              |  6 ++++++
- include/uapi/linux/nilfs2_ondisk.h | 12 +++++++-----
- 7 files changed, 29 insertions(+), 19 deletions(-)
-
+diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
+index 2e3b591c117c..f92bcf1a9544 100644
+--- a/fs/nilfs2/super.c
++++ b/fs/nilfs2/super.c
+@@ -872,6 +872,9 @@ int nilfs_store_magic(struct super_block *sb,
+ 	nilfs->ns_resgid = le16_to_cpu(sbp->s_def_resgid);
+ 	nilfs->ns_interval = le32_to_cpu(sbp->s_c_interval);
+ 	nilfs->ns_watermark = le32_to_cpu(sbp->s_c_block_max);
++	nilfs->ns_feature_compat = le64_to_cpu(sbp->s_feature_compat);
++	nilfs->ns_feature_compat_ro = le64_to_cpu(sbp->s_feature_compat_ro);
++	nilfs->ns_feature_incompat = le64_to_cpu(sbp->s_feature_incompat);
+ 
+ 	return 0;
+ }
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index 4776a70f01ae..5143dbae5788 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -86,6 +86,9 @@ enum {
+  * @ns_inode_size: size of on-disk inode
+  * @ns_first_ino: first not-special inode number
+  * @ns_crc_seed: seed value of CRC32 calculation
++ * @ns_feature_compat: compat feature flags
++ * @ns_feature_compat_ro: read-only compat feature flags
++ * @ns_feature_incompat: incompat feature flags
+  * @ns_dev_kobj: /sys/fs/<nilfs>/<device>
+  * @ns_dev_kobj_unregister: completion state
+  * @ns_dev_subgroups: <device> subgroups pointer
+@@ -178,6 +181,9 @@ struct the_nilfs {
+ 	int			ns_inode_size;
+ 	unsigned int		ns_first_ino;
+ 	u32			ns_crc_seed;
++	__u64			ns_feature_compat;
++	__u64			ns_feature_compat_ro;
++	__u64			ns_feature_incompat;
+ 
+ 	/* /sys/fs/<nilfs>/<device> */
+ 	struct kobject ns_dev_kobj;
+diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
+index b3442b16ff6a..19587700c92c 100644
+--- a/include/uapi/linux/nilfs2_ondisk.h
++++ b/include/uapi/linux/nilfs2_ondisk.h
+@@ -253,9 +253,11 @@ struct nilfs_super_block {
+  * doesn't know about, it should refuse to mount the filesystem.
+  */
+ #define NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT	0x00000001ULL
++#define NILFS_FEATURE_COMPAT_RO_ATIME		0x00000002ULL
+ 
+ #define NILFS_FEATURE_COMPAT_SUPP	0ULL
+-#define NILFS_FEATURE_COMPAT_RO_SUPP	NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT
++#define NILFS_FEATURE_COMPAT_RO_SUPP	(NILFS_FEATURE_COMPAT_RO_BLOCK_COUNT |\
++					 NILFS_FEATURE_COMPAT_RO_ATIME)
+ #define NILFS_FEATURE_INCOMPAT_SUPP	0ULL
+ 
+ /*
 -- 
 2.53.0
 
