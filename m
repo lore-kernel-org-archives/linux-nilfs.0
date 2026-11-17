@@ -1,95 +1,131 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.172
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.169
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794898293;
-	b=uQlmcIUlTJ6TUCT9pJgCWlOoPwWoraAtIYgMixGVZ0jhRHQddBgH05tWTYiDlAsYMdRE
-	 g76LKUxmIgbq7nfiPe8S7jmwyjXS49JqkfyBFTAFPMxt2488At9qshvgInxvukYaxjs2C
-	 YzEk4P3aD8WkhzRD6Sj8XxlMzmMyBff6DQ34sOwVMkVTOgSABAm4hnOErTYloHc+Wmtu5
-	 M3Vv3ie2ibwBDzVC16tHvOgEDI4ambdwcbf64RP0StqfXwAQdVS+7Z/8QTmJIWwW9p63a
-	 o7vagr5VrjQXuYO1+x1bFVaukxFnp/6ZCV1+pemqB92++dxIaLF6ZF8RA+dyKyHAPEw==
+	t=1794939648;
+	b=q9qec8CQGdXjrjSo/ErRLc5hFGGRrqezm1P2ldkKh4jjUFVC9M/y6hZf8pusxmmBrkAb
+	 VCZz6TCnOU/oA3SGMhOTgfKhkm5Su5FKdYlkbX6SC1qzABtP9aWmoL5OfmxOglm6ii2mW
+	 My0pLmDglo3R6HCxPZym2wsXOSabqpmXzq8tU6F6Dk6r2dOYkunEcKhWIpNQWfd8UPxvX
+	 fzecMPmCxOAIL/4KWGYXhxzqQlkf71AXODHoy82bDBOVNHnc6+oaUHA2kUMBJg1tfSWQR
+	 5v+WDCpQU8kYKK5dv4I6CfNZ91+VlALONEK1GxPZa6YlVYJkeYXhsOozry4Tg1QlU7g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794898293;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794939648;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=RaW7IpysCPqlOXpmlCgnS8gUk7OicQRVwJcmgC0kHyY=;
-	b=UehtTwJqLCTJ27rrg7pCXQmTvF2huhpnT3tCYEUBs95SefC6RXP0+yJf0EdGm28YMxSv
-	 by6WZXzuRITZ+9g3unXjT6pyqJjwNgDKohkWDWW9NqnwkY5YibMZQBUQ4vn7UyMvEbS3s
-	 tTmVeExgGdrftFXWjJoJ/AYuW5Bk7kFLQGgGphQViJzGvKqDv9E7ucz9vImlLBE6v6XUU
-	 p3d1uzQxK4x2GH3J/Id+OOaqou3rtR8aOTWXgz9u+AN9IDjPEEIXyxfLQWnzXvNkSgUyc
-	 0i0DBy7095RQUm7Ps0pAhVCaf3WOaQmOV9CB+IsiftOlPMLWrPHDkaODZWh01Jk0AYw==
+	 Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:Autocrypt:
+	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version;
+	bh=gEpnTVL6/f36zmbCQlhINdIlM5qtOZv7QnnpCH/wsH4=;
+	b=FQYqL+tk7zFiZ8U/mhV/a/oWKXdN1hKLzccYZSFOTb3bwl0HvpAwkiu/l8DJ8it3CFpH
+	 5N+kPcmxNq3KysKUlJPCvBZRIzRQuZ8pqx2cRngbWXxKLRBrLvEOcMcJ3w6emPW2peCzs
+	 TNOF1cUjX3LQSLSh0WvEhqAB20d6ZbMvkrIY9+dlpwOMsSOBEDG/OVpQfT5gK1s/Ab8N7
+	 dMBeU/uDQjq2aO0iBhr6MQGGth8/q7AqbpfiPR1964SJ+RIeBNnsvjL+szRGE4dPbIybj
+	 HU43bdE5Y7LIAnBgiWx47CQyW2qN+IAT5jak2omhkmrUC6cj+MtUq8r4FNDBlK5ESGQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=PmHq0J5C;
-	arc=none smtp.remote-ip=74.125.82.172
-Received: from mail-dy1-f172.google.com (mail-dy1-f172.google.com [74.125.82.172])
+	dmarc=none header.from=dubeyko.com;
+	spf=pass smtp.mailfrom=dubeyko.com;
+	dkim=pass header.d=dubeyko-com.20260707.gappssmtp.com header.i=@dubeyko-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=SG71CXL4;
+	arc=none smtp.remote-ip=209.85.128.169
+Received: from mail-yw1-f169.google.com (mail-yw1-f169.google.com [209.85.128.169])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6153E606A330
-	for <linux-nilfs@vger.kernel.org>; Tue, 17 Nov 2026 06:51:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6153E606A330
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 041DF606A31C
+	for <linux-nilfs@vger.kernel.org>; Tue, 17 Nov 2026 18:20:47 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 041DF606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dubeyko.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dubeyko.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=PmHq0J5C
-Received: by mail-dy1-f172.google.com with SMTP id 5a478bee46e88-380c28f9e35so629209eec.1
-        for <linux-nilfs@vger.kernel.org>; Mon, 16 Nov 2026 22:51:33 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=dubeyko-com.20260707.gappssmtp.com header.i=@dubeyko-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=SG71CXL4
+Received: by mail-yw1-f169.google.com with SMTP id 00721157ae682-8b4e246acc2so138677b3.3
+        for <linux-nilfs@vger.kernel.org>; Tue, 17 Nov 2026 10:20:47 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794898292; x=1795503092; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=RaW7IpysCPqlOXpmlCgnS8gUk7OicQRVwJcmgC0kHyY=;
-        b=PmHq0J5CKu9qVwgY7FlIKVnJosfOdWuT32WTGqe+uOA9CDDwfFpGKaKKaqdoLgOqex
-         eO3HVo4IuWgq7dR/Hx4k3qlIz9e5pbtZVMJAesJXLdXHwue/mZQjvzd38IFUBbPLkFic
-         j5iamkra0jXYzKzTQpUx0MFEQzxC1+4ivJj+9XLF3sABosx2yXXTWUDeYQcG1vpVxYfg
-         injNdVq2h6fkNFyDCF98QsGp6cA+eFKJiwGmqM2yX4VRXHL1bmOyCx1AWGbc4emuP23I
-         zz8Zu52WM0QSl+9v6FKUjUysrOEUVoHCpCaj6oJeEEbi7L1ql63KEnr3dvHW0r1OfbrT
-         ECXw==
+        d=dubeyko-com.20260707.gappssmtp.com; s=20260707; t=1794939647; x=1795544447; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
+         :from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=gEpnTVL6/f36zmbCQlhINdIlM5qtOZv7QnnpCH/wsH4=;
+        b=SG71CXL4MMSwo18OwqecZo7oLfa4OkacsopHwxwn/L+p1kHpbBCAfZ7+xrr+fsB09S
+         OwnOQcNCziZAGA+lkUsFr8Ghnu7lCS+LgpzWO/NXdt5C81LFEeKQcDGJ01yBd/bRg+/1
+         HBqRDx+zsU1z4FZj6ptg5ap/7q/8K8KjTXLUF7sL0VqFyPeBrYWFc9BCRStQUdma5zFi
+         /19WPR4RNOAqOVTC9qeiqClrqIQC7PzBauuZDDKjaSqHrlvR6dmjqhSjBwSxJUUDqXAQ
+         Sr42ycY8w8LNMW5f2FXnlCoCcNfw2SrQUqHeBBjoEP40Fxyt4nSFb1keje9fX2kU98mQ
+         hRoQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794898292; x=1795503092;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=RaW7IpysCPqlOXpmlCgnS8gUk7OicQRVwJcmgC0kHyY=;
-        b=A9r11YoTyNIAR2NiOxsokqEmpkEdeGCaoO8OscLmkcU3RuzmD8Kh0x1Iv6wPpa4ANM
-         feC/wJv0CnGwrKiAIZPKnJeUbNmVVPM/p7d8kduz2lMFB1PgUotHmeYW1R9jiKVuI/qG
-         dBdNiCzTc6TfZlesCvh8PMTmQaLwDKy0CJLb22ubxCZ9Uzxqk6XQWEMJEvXjamZpXZLW
-         8W0I7HSc0k8DgFNb6+Oxuz0XWhYIRyospbmd600C5Wa0HeNda0kOqGbj8AdmfRMwmr7g
-         yla/Ar7kjuBTtI50QnUFK8tgU3c3pkPam9dzTlucfGmGdZKaQPMPUT6slREavSQnlwGp
-         Z8mQ==
-X-Forwarded-Encrypted: i=1; AL+hErEDQsY1cj3Xy/3HAvAzSzNeMtt41i8pfwWWw4297muIwX+wV4utTwvgEPHpiQpfB0qljX9rKPGU1PReOQ==@vger.kernel.org
-X-Gm-Message-State: APuU4Z94yicCNyPu+DBZ6Xeaa5E5SO/Jixdm/6t9Kfnmuy98h26Tc7t5
-	4j0ng5P/lNnULEnPwdCgKfqGA/y/N3lSncTDYtrbZZa8eBjvRAnzZdHB
-X-Gm-Gg: AZFdTZcWaATxta1PGpIL2DuQ3Yr1prsKrvFFOapC1xzxTyYP37MeE2kpc8qsn94upPi
-	x6feoodBlbGDPBKxFYfSI2Q1BXN8mgX/jnVRn1HIiyMkPcVd6zePk632OO+NZ5ohMW+AFz9jLNQ
-	thQMfONj4AnTMZVMRXNQZDAE2XT8cPZ2oMsrkevRdz4QRNAkIQIMh0uulbL361X6HvGu8axLhZk
-	s1jH/k9SJkBXnVuL9JSY4Ql10ou6w3Q7ChR7k4H8qyN/AZJZ7y/eh5px7o2WOXRNiqWpVHN4qwi
-	fVoUhfy6Usznc9piqvh3HsTTCW2THJFKpKPrusw/8/gt2PgcvSrH+mbTeqnFt1EG+R2IwM0wbLX
-	LHAUoy3Ie1qCPHtINAqSHSScDTwhT4O6omK3UFXvG2TeF2Do1wOq0d70dLNPiRcC3Coz1svogBO
-	/wLNnj9YTWIVjlsFYeFFyRPwZTQ504l1RLmpcE2Ys9rmtNqbTYynw5dwA7DgeNxqYrv0jO9zTiB
-	CDN2p35yg4HdgDI3lOBLZw2Nah8Qo2QcEMxVBjbdubAauo2roHCnVMpxfCDpgZm/BDKR3kBFCdG
-	Xqtpv/6/9Ly+SLyGxDPf0uCdeiVqt+8CezWuooNvdslfzZP7hftfBePMSP8d5saXXam4y0ivdCi
-	sL4wcnnFR
-X-Received: by 2002:a05:7300:7b1e:b0:36c:a3ae:936e with SMTP id 5a478bee46e88-3810e418910mr1836902eec.5.1794898292224;
-        Mon, 16 Nov 2026 22:51:32 -0800 (PST)
-Received: from carrot.home.local (madb688455.ap.nuro.jp. [219.104.132.85])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-379565d269asm44099255eec.23.2026.11.16.22.51.29
+        d=1e100.net; s=20260707; t=1794939647; x=1795544447;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :autocrypt:references:in-reply-to:date:cc:to:from:subject:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=gEpnTVL6/f36zmbCQlhINdIlM5qtOZv7QnnpCH/wsH4=;
+        b=WvsCeFZybHQAFtvyKvLwDSru1qDhyYu3uG2yNqMQMrR5SRqn2B5i3zN9toly+tBDsB
+         llSZRwTHgA5V5WZW1ArPkGAGat909fMYYGAuPvX0TtYPKyrOW9ItYnZH4Ph76HSFB05S
+         MQaz4R9qi8Va63hvwBIKx6EMDDWEjJbNT9MfQ7cNP1j2qg1hzj7tZTlqsI2JrGk4JoMr
+         W6SrZi+BNDHTIhNoKPBx3lk4MRThD58okgvSc5pZb2yIkLDx+H7lOLibpgjgnwugX6eQ
+         +62MiaT5wnlIrSE+jfVPClOWpjOdC4eBkxDMolEkZg7zrD4P8SYh/XJOZUpej3Emlf7o
+         ZxkA==
+X-Forwarded-Encrypted: i=1; AL+hErHghM22W1A/4G/5rLK++MnZvenj8PDsOD+QSlkRmpg9Pzcka+Ognuwn2MlwZbqnYzCcV+0lirBxk4Upug==@vger.kernel.org
+X-Gm-Message-State: APuU4Z8c0baOig/B3GiffOies977WzzDvGUG0SW5AqO+6INZtKGDwsua
+	BYwg7650Oxyvyn09YpbmAXvr+lUQ8a5CgbN/cFlCewy0GmECYAQa/pLcjSSeerlY9S8=
+X-Gm-Gg: AZFdTZc8W5yCJcGZ+gcVZL4I2t7Fu/U1a3Y3UNSGpdoXs1T406f5/Kv9zr3WrDL0RE/
+	IofNlvF4ItQKAxxV4qAm1Kv/BxqQEuBauGyOjaA7bGheXLc7WxxqrXqOZ0MY6K2il6kHPL3UIqR
+	0yn+EVevHHln/zBXFzaoKKW9C6KrmTljWFtZ1XmEDHAR0VbrJiucfIOI2OUQYhFB/9jyElMjiWc
+	EGc0cOylbm12YqO6d7OkNRqoI1Ju38VqJ/F7BffJ6gmuzzhzwp6PzxvjctTIT9JHQRm6OIuCBMr
+	CDQgJexl+/frOLr0dWpjFkfuLq6QuRVVXR74TG6i7xO1SS74JiwLd0IZgOupdsTHRw1NWtTTX5r
+	0lmbLv+Z6aWUgg32/RY4UX1tAU1rVwWg4bATVTjxc9pZHs1FyZxnr46i3iy/6T0mdik3VOeUWEm
+	3222WIZtorSxFcTBvjj1kBTDV+n3e5+XM9kYT84H3Nqh3z9d8g7JkB3t/Rj/NeaD8q3mv2tkyQJ
+	dRXQrXi6hZHwi9AWyizYQelfcuoTkYpKY91WLxDL/A6R2g082M1TKqDBT0iXB+DKJOp/GPsju3N
+	6qxRBu9OD8YhDcRIBBNMkhZ03BmeH+/yD6IYtSmZY9SQwt0fN6Ld+HZokSwoDrlvELWCOFBj8wX
+	yxgPBPaeJNWjVgT56joFpDSxdhDBVeoyo7IqK9TWyTlik1AVCE26f4XHeY7DiqFBtzB9Y+IGx9f
+	SMeGgof71vAuNKK+Hdid4=
+X-Received: by 2002:a05:690e:12cd:b0:671:26c4:3ac6 with SMTP id 956f58d0204a3-67dd454764bmr145475d50.37.1794939646693;
+        Tue, 17 Nov 2026 10:20:46 -0800 (PST)
+Received: from ?IPv6:2600:1700:6476:1430:d1c7:8722:e551:bec4? ([2600:1700:6476:1430:d1c7:8722:e551:bec4])
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-67dd402aa48sm272431d50.14.2026.11.17.10.20.44
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 16 Nov 2026 22:51:30 -0800 (PST)
-From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-To: Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: Wang Jianjian <wangjianjian0@foxmail.com>,
-	linux-nilfs <linux-nilfs@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-Subject: [PATCH 2/2] nilfs2: introduce atime support
-Date: Tue, 17 Nov 2026 15:47:48 +0900
-Message-ID: <20261117065122.41553-3-konishi.ryusuke@gmail.com>
-X-Mailer: git-send-email 2.53.0
+        Tue, 17 Nov 2026 10:20:45 -0800 (PST)
+Message-ID: <0318886d45a4eb49aaaa2af5227a3d92f558712d.camel@dubeyko.com>
+Subject: Re: [PATCH 0/2] nilfs2: atime support
+From: Viacheslav Dubeyko <slava@dubeyko.com>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Cc: Wang Jianjian <wangjianjian0@foxmail.com>, linux-nilfs
+	 <linux-nilfs@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Date: Tue, 17 Nov 2026 10:20:44 -0800
 In-Reply-To: <20261117065122.41553-1-konishi.ryusuke@gmail.com>
 References: <20261117065122.41553-1-konishi.ryusuke@gmail.com>
+Autocrypt: addr=slava@dubeyko.com; prefer-encrypt=mutual;
+ keydata=mQINBGgaTLYBEADaJc/WqWTeunGetXyyGJ5Za7b23M/ozuDCWCp+yWUa2GqQKH40dxRIR
+ zshgOmAue7t9RQJU9lxZ4ZHWbi1Hzz85+0omefEdAKFmxTO6+CYV0g/sapU0wPJws3sC2Pbda9/eJ
+ ZcvScAX2n/PlhpTnzJKf3JkHh3nM1ACO3jzSe2/muSQJvqMLG2D71ccekr1RyUh8V+OZdrPtfkDam
+ V6GOT6IvyE+d+55fzmo20nJKecvbyvdikWwZvjjCENsG9qOf3TcCJ9DDYwjyYe1To8b+mQM9nHcxp
+ jUsUuH074BhISFwt99/htZdSgp4csiGeXr8f9BEotRB6+kjMBHaiJ6B7BIlDmlffyR4f3oR/5hxgy
+ dvIxMocqyc03xVyM6tA4ZrshKkwDgZIFEKkx37ec22ZJczNwGywKQW2TGXUTZVbdooiG4tXbRBLxe
+ ga/NTZ52ZdEkSxAUGw/l0y0InTtdDIWvfUT+WXtQcEPRBE6HHhoeFehLzWL/o7w5Hog+0hXhNjqte
+ fzKpI2fWmYzoIb6ueNmE/8sP9fWXo6Av9m8B5hRvF/hVWfEysr/2LSqN+xjt9NEbg8WNRMLy/Y0MS
+ p5fgf9pmGF78waFiBvgZIQNuQnHrM+0BmYOhR0JKoHjt7r5wLyNiKFc8b7xXndyCDYfniO3ljbr0j
+ tXWRGxx4to6FwARAQABtCpWaWFjaGVzbGF2IER1YmV5a28gPFNsYXZhLkR1YmV5a29AaWJtLmNvbT
+ 6JAlQEEwEKAD4WIQRVwwtrZ87KC0La2wQ5XNnC34RAdQUCaBpd7AIbAQUJA8JnAAULCQgHAgYVCgk
+ ICwIEFgIDAQIeAQIXgAAKCRA5XNnC34RAdYjFEACiWBEybMt1xjRbEgaZ3UP5i2bSwayDwYDvgWW5
+ EbRP7JcqOcZ2vkJwrK3gsqC3FKpjOPh7ecE0I4vrabH1Qobe2N8B2Y396z24mGnkTBbb16Uz3PC93
+ nFN1BA0wuOjlr1/oOTy5gBY563vybhnXPfSEUcXRd28jI7z8tRyzXh2tL8ZLdv1u4vQ8E0O7lVJ55
+ p9yGxbwgb5vXU4T2irqRKLxRvU80rZIXoEM7zLf5r7RaRxgwjTKdu6rYMUOfoyEQQZTD4Xg9YE/X8
+ pZzcbYFs4IlscyK6cXU0pjwr2ssjearOLLDJ7ygvfOiOuCZL+6zHRunLwq2JH/RmwuLVmWWSbgosZ
+ D6c5+wu6DxV15y7zZaR3NFPOR5ErpCFUorKzBO1nA4dwOAbNym9OGkhRgLAyxwpea0V0ZlStfp0kf
+ VaSZYo7PXd8Bbtyjali0niBjPpEVZdgtVUpBlPr97jBYZ+L5GF3hd6WJFbEYgj+5Af7CUjbX9DHwe
+ GQ/tdXWRnJHRzorxzjOS3003ddRnPtQDDN3Z/XzdAZwQAs0RqqXrTeeJrLppFUbAP+HZTyOLVJcAA
+ lVQROoq8PbM3ZKIaOygjj6Yw0emJi1D9OsN2UKjoe4W185vamFWX4Ba41jmCPrYJWAWHfAMjjkInI
+ Pg7RLGs8FiwxfcpkILP0YbVWHiNAabQmVmlhY2hlc2xhdiBEdWJleWtvIDxzbGF2YUBkdWJleWtvL
+ mNvbT6JAlcEEwEKAEECGwEFCQPCZwAFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQRVwwtrZ87KC0
+ La2wQ5XNnC34RAdQUCaBpeTwIZAQAKCRA5XNnC34RAdew7D/48vw8dfTLcVjp4j6qUH9rOuXp5A2b
+ jCEPeI0oOwRdqkyiGzUfUprHM48owvvye5u1mUZnKp8BWDDsjX4ddmhdloY0+6ecRAG73xlWMFKVK
+ 4P5XGnHU9A2JOtRhnOWQfPTgFhy69BSYyOeG3e5J+xPyUUBeHajbMVPKnD10NMCx8Ux1D2bv8OWbv
+ 3DvpUNx9D46UhBmkwIfrQWBkr0OGD2AXFfPqo08c3jcJMOAEc2vBI08Fij9o1gHwP2suFaG0X6jUN
+ sy6KPOKg7TVMXtMzxNsKGyFxC1pG7lv+oaEBT6TJSVs/pm71ZrOezQANRzvBeXNUixWienTdAEG8a
+ x4uOf3EF5WvYUhDiY8XBJyRv2ZnKJmBxZ3jPStadSuh3Bmo4mNgRVpFXrfb7h8oJC1l1WGdJa9aWi
+ xUedku0/nH+nZMTqrtWYkXoLxaMswVM5S4f3pYKd7VlHxtlZiQ95RqQd5uWYcEN6xaSvAO3Cs4Co8
+ D6etTHtKPcx1+d0x6BvkBvqNJ5yCiuzPPnKE6E0ss52KKvQt3injPyfe8ffofbW4s2nlEL1s0DoBv
+ JslCebuQ6+Orb/Sl6zictIsv3XMq3jGFeZcDg2hXzngOC255+b0Z/To7jINTxYQot8jCOJQOLplxc
+ NFdvziOa4FgUBC4X71upsZIoZJeii2V/Jtc3B4g==
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.2-9 
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -99,202 +135,100 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-From: Viacheslav Dubeyko <slava@dubeyko.com>
+On Tue, 2026-11-17 at 15:47 +0900, Ryusuke Konishi wrote:
+> Hi Viacheslav,
+>=20
+> Please queue the following two patches for persistent atime support
+> in
+> nilfs2 for the next merge window.
+>=20
+> This series builds upon your original patch [1], which Wang Jianjian
+> followed up on to address review comments and add compat_ro feature
+> flag
+> support [2][3].=C2=A0 I have made minor modifications to those patches,
+> including filling in missing kernel-doc comments and adjusting the
+> commit messages (such as fixing the Co-developed-by tags).
+>=20
+> To use this feature, install the updated nilfs-utils from the
+> 'atime-support' branch of the development repository [4] (which will
+> be
+> merged into the master branch once this patchset is queued), and
+> either
+> format a new filesystem with the atime feature enabled:
+>=20
+> =C2=A0 $ sudo mkfs -t nilfs2 -O atime /dev/<device>
+>=20
+> or enable the feature flag on an existing filesystem image using
+> nilfs-tune:
+>=20
+> =C2=A0 $ sudo nilfs-tune -O atime /dev/<device>
+>=20
+> Once the atime feature flag is set, the filesystem can only be
+> mounted
+> read-only on currently deployed kernels that lack support for it
+> (until
+> the flag is cleared with "nilfs-tune -O ^atime /dev/<device>").=C2=A0 To
+> avoid confusing users, this feature will remain optional in
+> mkfs.nilfs2
+> for the time being, though I plan to enable it by default in a future
+> release of nilfs-utils.
+>=20
+> Note that when enabling the feature on an existing filesystem, inodes
+> written by older mkfs or kernels have their on-disk atime fields
+> initialized to 0, which will expose the epoch date (1970-01-01).
+> nilfs-tune warns about this when setting the flag, and image
+> conversion
+> (such as copying mtime to atime) is not supported.
+>=20
+> The series consists of two patches:
+>=20
+> - Patch 1/2 introduces the read-only compat feature flag
+> =C2=A0 (NILFS_FEATURE_COMPAT_RO_ATIME) to manage on-disk format
+> compatibility
+> =C2=A0 for atime support.
+> - Patch 2/2 reads atime from on-disk inodes when the compat_ro flag
+> is
+> =C2=A0 enabled and stops unconditionally setting SB_NOATIME on the
+> superblock,
+> =C2=A0 switching VFS behavior accordingly.
+>=20
+> [1]
+> https://lore.kernel.org/all/20260219204343.70117-1-slava@dubeyko.com
+> [2]
+> https://lore.kernel.org/all/tencent_E3847A19056D4E914FACD269A3C77BAF0905@=
+qq.com
+> [3]
+> https://lore.kernel.org/all/tencent_F3CAF2061A8AE294D88513588FD3DE1F4806@=
+qq.com
+> [4] https://github.com/nilfs-dev/nilfs-utils.git
+>=20
+> Thanks,
+> Ryusuke Konishi
+>=20
+>=20
+> Viacheslav Dubeyko (1):
+> =C2=A0 nilfs2: introduce atime support
+>=20
+> Wang Jianjian (1):
+> =C2=A0 nilfs2: add atime compat_ro feature
+>=20
+> =C2=A0fs/nilfs2/Kconfig=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +-
+> =C2=A0fs/nilfs2/inode.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 11 +++++++++--
+> =C2=A0fs/nilfs2/nilfs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 4 ----
+> =C2=A0fs/nilfs2/segment.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 --
+> =C2=A0fs/nilfs2/super.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 11 ++++++-----
+> =C2=A0fs/nilfs2/the_nilfs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 6 ++++++
+> =C2=A0include/uapi/linux/nilfs2_ondisk.h | 12 +++++++-----
+> =C2=A07 files changed, 29 insertions(+), 19 deletions(-)
 
-Currently, NILFS2 doesn't support atime. And it is possible
-to see the evidence of it by running generic/003 test-case of
-xfstests suite:
+Applied.
 
-sudo ./check generic/003
-FSTYP -- nilfs2
-PLATFORM -- Linux/x86_64 hfsplus-testing-0001 6.18.0-rc1+ #10 SMP PREEMPT_DYNAMIC Fri Nov 28 20:48:25 PST 2025
-MKFS_OPTIONS -- /dev/loop51
-MOUNT_OPTIONS -- /dev/loop51 /mnt/scratch
-
-generic/003 35s ... - output mismatch (see xfstests-dev/results//generic/003.out.bad)
-
-This patch replaces i_xattr with i_atime and i_pad with
-i_atime_nsec in struct nilfs_inode of the on-disk layout,
-and instead of unconditionally disabling filesystem-level
-atime support, makes it toggleable via the atime compat_ro
-feature flag.  Also, it modifies nilfs_read_inode_common()
-and nilfs_write_inode_common() with the goal of proper atime
-support.
-
-sudo ./check generic/003
-FSTYP         -- nilfs2
-PLATFORM      -- Linux/x86_64 nilfs2-testing 6.19.0-rc1+ #8 SMP PREEMPT_DYNAMIC Tue Feb 17 16:21:59 PST 2026
-MKFS_OPTIONS  -- /dev/loop51
-MOUNT_OPTIONS -- /dev/loop51 /mnt/scratch
-
-generic/003  30s ...  34s
-Ran: generic/003
-Passed all 1 tests
-
-[1] https://github.com/nilfs-dev/nilfs2/issues/7
-
-Signed-off-by: Viacheslav Dubeyko <slava@dubeyko.com>
-Co-developed-by: Wang Jianjian <wangjianjian0@foxmail.com>
-Signed-off-by: Wang Jianjian <wangjianjian0@foxmail.com>
-Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
----
- fs/nilfs2/Kconfig                  |  2 +-
- fs/nilfs2/inode.c                  | 11 +++++++++--
- fs/nilfs2/nilfs.h                  |  4 ----
- fs/nilfs2/segment.c                |  2 --
- fs/nilfs2/super.c                  |  8 +++-----
- include/uapi/linux/nilfs2_ondisk.h |  8 ++++----
- 6 files changed, 17 insertions(+), 18 deletions(-)
-
-diff --git a/fs/nilfs2/Kconfig b/fs/nilfs2/Kconfig
-index 0a5ace60e6ab..79b99c33af06 100644
---- a/fs/nilfs2/Kconfig
-+++ b/fs/nilfs2/Kconfig
-@@ -20,7 +20,7 @@ config NILFS2_FS
- 	  snapshot is mountable as a read-only file system concurrently with
- 	  its writable mount, and this feature is convenient for online backup.
- 
--	  Some features including atime, extended attributes, and POSIX ACLs,
-+	  Some features including extended attributes, and POSIX ACLs,
- 	  are not supported yet.
- 
- 	  To compile this file system support as a module, choose M here: the
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index 6ddef3ab0c19..b217eee57c36 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -387,6 +387,7 @@ void nilfs_set_inode_flags(struct inode *inode)
- int nilfs_read_inode_common(struct inode *inode,
- 			    struct nilfs_inode *raw_inode)
- {
-+	struct the_nilfs *nilfs = inode->i_sb->s_fs_info;
- 	struct nilfs_inode_info *ii = NILFS_I(inode);
- 	int err;
- 
-@@ -395,8 +396,12 @@ int nilfs_read_inode_common(struct inode *inode,
- 	i_gid_write(inode, le32_to_cpu(raw_inode->i_gid));
- 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
- 	inode->i_size = le64_to_cpu(raw_inode->i_size);
--	inode_set_atime(inode, le64_to_cpu(raw_inode->i_mtime),
--			le32_to_cpu(raw_inode->i_mtime_nsec));
-+	if (nilfs->ns_feature_compat_ro & NILFS_FEATURE_COMPAT_RO_ATIME)
-+		inode_set_atime(inode, le64_to_cpu(raw_inode->i_atime),
-+				le32_to_cpu(raw_inode->i_atime_nsec));
-+	else
-+		inode_set_atime(inode, le64_to_cpu(raw_inode->i_mtime),
-+				le32_to_cpu(raw_inode->i_mtime_nsec));
- 	inode_set_ctime(inode, le64_to_cpu(raw_inode->i_ctime),
- 			le32_to_cpu(raw_inode->i_ctime_nsec));
- 	inode_set_mtime(inode, le64_to_cpu(raw_inode->i_mtime),
-@@ -702,8 +707,10 @@ void nilfs_write_inode_common(struct inode *inode,
- 	raw_inode->i_gid = cpu_to_le32(i_gid_read(inode));
- 	raw_inode->i_links_count = cpu_to_le16(inode->i_nlink);
- 	raw_inode->i_size = cpu_to_le64(inode->i_size);
-+	raw_inode->i_atime = cpu_to_le64(inode_get_atime_sec(inode));
- 	raw_inode->i_ctime = cpu_to_le64(inode_get_ctime_sec(inode));
- 	raw_inode->i_mtime = cpu_to_le64(inode_get_mtime_sec(inode));
-+	raw_inode->i_atime_nsec = cpu_to_le32(inode_get_atime_nsec(inode));
- 	raw_inode->i_ctime_nsec = cpu_to_le32(inode_get_ctime_nsec(inode));
- 	raw_inode->i_mtime_nsec = cpu_to_le32(inode_get_mtime_nsec(inode));
- 	raw_inode->i_blocks = cpu_to_le64(inode->i_blocks);
-diff --git a/fs/nilfs2/nilfs.h b/fs/nilfs2/nilfs.h
-index 40dd42133dc6..1cf9e38152a6 100644
---- a/fs/nilfs2/nilfs.h
-+++ b/fs/nilfs2/nilfs.h
-@@ -27,7 +27,6 @@
-  * @i_state: dynamic state flags
-  * @i_bmap: pointer on i_bmap_data
-  * @i_bmap_data: raw block mapping
-- * @i_xattr: <TODO>
-  * @i_dir_start_lookup: page index of last successful search
-  * @i_cno: checkpoint number for GC inode
-  * @i_assoc_inode: associated inode (B-tree node cache holder or back pointer)
-@@ -43,7 +42,6 @@ struct nilfs_inode_info {
- 	unsigned long  i_state;		/* Dynamic state flags */
- 	struct nilfs_bmap *i_bmap;
- 	struct nilfs_bmap i_bmap_data;
--	__u64 i_xattr;	/* sector_t ??? */
- 	__u32 i_dir_start_lookup;
- 	__u64 i_cno;		/* check point number for GC inode */
- 	struct inode *i_assoc_inode;
-@@ -234,8 +232,6 @@ static inline int nilfs_init_acl(struct inode *inode, struct inode *dir)
- }
- #endif
- 
--#define NILFS_ATIME_DISABLE
--
- /* Flags that should be inherited by new inodes from their parent. */
- #define NILFS_FL_INHERITED						\
- 	(FS_SECRM_FL | FS_UNRM_FL | FS_COMPR_FL | FS_SYNC_FL |		\
-diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
-index af0c3560444f..68b640a7aa5b 100644
---- a/fs/nilfs2/segment.c
-+++ b/fs/nilfs2/segment.c
-@@ -930,8 +930,6 @@ static void nilfs_write_root_mdt_inode(struct inode *inode,
- 	nilfs_write_inode_common(inode, raw_inode);
- 
- 	/* zero-fill unused portion of raw_inode */
--	raw_inode->i_xattr = 0;
--	raw_inode->i_pad = 0;
- 	memset((void *)raw_inode + sizeof(*raw_inode), 0,
- 	       nilfs->ns_inode_size - sizeof(*raw_inode));
- 
-diff --git a/fs/nilfs2/super.c b/fs/nilfs2/super.c
-index f92bcf1a9544..ddad1e4f55ce 100644
---- a/fs/nilfs2/super.c
-+++ b/fs/nilfs2/super.c
-@@ -863,11 +863,6 @@ int nilfs_store_magic(struct super_block *sb,
- 
- 	sb->s_magic = le16_to_cpu(sbp->s_magic);
- 
--	/* FS independent flags */
--#ifdef NILFS_ATIME_DISABLE
--	sb->s_flags |= SB_NOATIME;
--#endif
--
- 	nilfs->ns_resuid = le16_to_cpu(sbp->s_def_resuid);
- 	nilfs->ns_resgid = le16_to_cpu(sbp->s_def_resgid);
- 	nilfs->ns_interval = le32_to_cpu(sbp->s_c_interval);
-@@ -876,6 +871,9 @@ int nilfs_store_magic(struct super_block *sb,
- 	nilfs->ns_feature_compat_ro = le64_to_cpu(sbp->s_feature_compat_ro);
- 	nilfs->ns_feature_incompat = le64_to_cpu(sbp->s_feature_incompat);
- 
-+	if (!(nilfs->ns_feature_compat_ro & NILFS_FEATURE_COMPAT_RO_ATIME))
-+		sb->s_flags |= SB_NOATIME;
-+
- 	return 0;
- }
- 
-diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
-index 19587700c92c..e94593137adb 100644
---- a/include/uapi/linux/nilfs2_ondisk.h
-+++ b/include/uapi/linux/nilfs2_ondisk.h
-@@ -47,9 +47,9 @@
-  * @i_links_count: links count
-  * @i_flags: file flags
-  * @i_bmap: block mapping
-- * @i_xattr: extended attributes
-+ * @i_atime: access time (seconds)
-  * @i_generation: file generation (for NFS)
-- * @i_pad: padding
-+ * @i_atime_nsec: access time (nano seconds)
-  */
- struct nilfs_inode {
- 	__le64	i_blocks;
-@@ -65,9 +65,9 @@ struct nilfs_inode {
- 	__le32	i_flags;
- 	__le64	i_bmap[NILFS_INODE_BMAP_SIZE];
- #define i_device_code	i_bmap[0]
--	__le64	i_xattr;
-+	__le64	i_atime;
- 	__le32	i_generation;
--	__le32	i_pad;
-+	__le32	i_atime_nsec;
- };
- 
- #define NILFS_MIN_INODE_SIZE		128
--- 
-2.53.0
-
+Thanks,
+Slava.
