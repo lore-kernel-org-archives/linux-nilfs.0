@@ -1,95 +1,58 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.176
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=113.46.200.223
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795352589;
-	b=iWhfBNMceax6pyw5qfV7GwB4Pye41AgzUEuFDbR5Ge4HQqcRxsC/jpE+glD7FG9+7gTB
-	 I2llMKqypVsp6NqLIvjp3QIv2rUd7Ffl2abhC8LrQxJfGiOZKx/4wqC8lgEXniAFQDpy2
-	 KE3deFU4/tphYggvovJtX8C/wfvfPYHnR9SeRgdJ7tlVMyZjIAKPH82qwscEAbm54p0cT
-	 JtmCcQRfibgMyG4zkcm9RxLeuyFpz6YUO7BufIVa9cQjCFDvY/rqA2l90Xoc5r9ZIG3on
-	 /sXm9NrNQOuHdE06cTJOVKoFhKHoBzQ7DQG2bO6NWo5pbcNxhUlc+niKMHwlZ5s17vQ==
+	t=1795427243;
+	b=ZS+/RvQ39QymgHIbjF3ti76IPkqP/TTDcKFF9pOjihOYyrkWDZw3g2BZqQZPYxuvVF4M
+	 naAGdmPl/fnrr47t6YGfTqW5eLGTibGKVAndnxag4TV3wo5h0lQUekKEwy6b1cIvh0ENL
+	 ZT6tymyjdJC/IYRW7LCcSzbVvbyD0m6UiBlQ/7lbRUAmrx2hl8FinwIxuXvTPB5VvasIE
+	 3o9FaJ1yrxttfbRYZBkJiWd0X5RG+OiGnQCcrwvPOQ1tIjP9qOR5IeDntpU04klvzgEcg
+	 iPVaneCmWSLYu0JcTPd97autq484rIdLT075FM+1XND/IzSq5f3tOomvNpz40mgnDQA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795352589;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=eMt+LuIAISp83lBsQo2yUsXzBU06/qpckceuqqW0mw8=;
-	b=QClQ+QjdYa2BqYbMurEC9Nwr2udFbyoI8hjxTt7ps0p2Zk7fq1tZdBwi2rhZjn0ETNnY
-	 5aVMAM8mCj9qowY4wfFOT1EoVxhTgG4QeYGx9JZjW0KvU5MvxMq7VlheyGPG7cVHJiMOF
-	 7fi+V93JJBsb88uS1Db5rMxQIF7utl2z6y8ASDYl6mhtSvkRUdxLaWEqUYBVTQC+Hu3Ge
-	 hRX6jDca7Q762d1/Cy97GzzrVbvxwUaUacN/oLormBmJfKbN9SUJtqTgFE5zOsX+ffian
-	 jRzIIgTEI9r6hC3KUCCHa1sFyr2HDT9sawQjO2Vp3Y9kXCVv3VvZcmbWr9ZLwG/31mg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795427243;
+	h=DMARC-Filter:dkim-signature:Received:Received:Received:Message-ID:
+	 Date:MIME-Version:User-Agent:Subject:To:CC:References:
+	 Content-Language:From:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding:X-Originating-IP:X-ClientProxiedBy;
+	bh=4fxAfI0a2C6thUnVCcQb+kjUx5re7WxYNCaW1Ta8RVw=;
+	b=kx/vKwx09TR+ARz+ebteFCJl37cdhYfTbScM4rgiV3yGNxHY8yi5BGrviLiL8VcM58eW
+	 B0Ml4XuiRO3k8/fHNEA9yLkd/69nEiT82RKXBE64e31fGwRfUOLKaiKLGMMh10FnGuam2
+	 8iK7tZnUqCBLCaNvOUuafE18kXEtH1IbcP4SjGBDp84VfL7YLebx5a0LvY1X5SLBOhvq9
+	 Wq702xD7+CCnPyU8rmRt0b6doGAzYZkrWwrlOz3ZCdiTTUj/tLWvOqIK5FLkQKzPzbCJ3
+	 vJGtOPT5wwhkMRSIm6nRCj6/lu52Rxz3WntrEB53MgnMEyB0NkiVXzd7Qu5V2erKxiA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=cs.unc.edu;
-	spf=pass smtp.mailfrom=cs.unc.edu;
-	dkim=pass header.d=cs.unc.edu header.i=@cs.unc.edu header.a=rsa-sha256 header.s=google header.b=c+q6Hi+t;
-	arc=none smtp.remote-ip=209.85.128.176
-Received: from mail-yw1-f176.google.com (mail-yw1-f176.google.com [209.85.128.176])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=huawei.com;
+	spf=pass smtp.mailfrom=huawei.com;
+	dkim=pass header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=5hipb5uI;
+	arc=none smtp.remote-ip=113.46.200.223
+Received: from canpmsgout08.his.huawei.com (canpmsgout08.his.huawei.com [113.46.200.223])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC781606A32A
-	for <linux-nilfs@vger.kernel.org>; Sun, 22 Nov 2026 13:03:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CC781606A32A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=cs.unc.edu
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.unc.edu
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5597F606A31A
+	for <linux-nilfs@vger.kernel.org>; Mon, 23 Nov 2026 09:47:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5597F606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=cs.unc.edu header.i=@cs.unc.edu header.a=rsa-sha256 header.s=google header.b=c+q6Hi+t
-Received: by mail-yw1-f176.google.com with SMTP id 00721157ae682-8b4cc793704so16493347b3.2
-        for <linux-nilfs@vger.kernel.org>; Sun, 22 Nov 2026 05:03:08 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=cs.unc.edu; s=google; t=1795352588; x=1795957388; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=eMt+LuIAISp83lBsQo2yUsXzBU06/qpckceuqqW0mw8=;
-        b=c+q6Hi+tL9782SFwDefp7XQBdxJIUoYa+4VMydpFxtnIR5fr17puG7ijniU1HbAJvW
-         BfG8kT3MD3y30gZxSCUO9yDJho6iKrGkOPubIdSYjOd5INZt84jOZ3Y+918xJTEz3rco
-         Xn8KfvMb9U2KZzMur3SK2+oDR4S3yHvLtaIa2dpiYkvZJVTrKmGaz6MT+lIlNCPDym0J
-         kBl1GF5oVqitjKODyCwyrXy/g48c9/VfTChbrhWufP3mFRHHHyxu98jtiBwV2f6avkPh
-         tiURYAjIMpIEuxdYUmBvzyNs9TIlSPO5aB3RevdgPU7/JvOfjyS3dGNgzsSTa9KJJx7q
-         oVQw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795352588; x=1795957388;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=eMt+LuIAISp83lBsQo2yUsXzBU06/qpckceuqqW0mw8=;
-        b=RuW9c8LQQze5tYhjrW3haCGXVFVWiQl7TP572JmSiKnQUAA+vJC1LO7JPpSCC7oMib
-         +nGCiia/fTRTqkTUsyQGNNcVMvYZI4Zs3cFxgRW1wjZ+G8EYxt6YQGgSssSSB90pU6WN
-         RLwOrK8VXnYsqMCONvnDM6zXXS879QfPBsrdAeKCh8IIkNUukzq9zxD5rDVUITgu9Ci0
-         +FOsSNxErgvLhvys/b0giK4X1p3dppBe7H+Q8SRG729rzUaULJpp1g2drzJx1TCy3Zeb
-         sO/rlv+cGSTBka6ZEWkfg6sJ4DVigZsOOINi5cM/oD0iluFOTgt+TyTfSvQNmTeVcS1q
-         44aA==
-X-Forwarded-Encrypted: i=1; AL+hErHlu6HFwvNudSedISnjRYngL/2niiNu7By3lkbiYLlxRr7KqGDmreVGMZDu3LS5hj18WYOkrHj01FMzhQ==@vger.kernel.org
-X-Gm-Message-State: APuU4Z8KaOpn4ILvSqcReRcgRVhNxZMvXLuX1L1i5GXsDkiWCITleXmx
-	fUTjZDF1lEcGpsWbTBXNz+coA08SDnXHGAIdCu1cEa7KdqiXhFJ6hg2lufpyQxqUag==
-X-Gm-Gg: AZFdTZe2m+5eGKnljL5s8wv4IZeAncL7CJKhYNEYRQL/6kPG3ErzbOzM6M60yqdQr5C
-	56ezX6OO4e3ilDRbSMASnRRTuPWTqPO9slitZKyhKcSC9OxgEhLnMaZbWopQn/hPMTftJbHNK+L
-	Bb96gZB1pUbk4Rmk+FrNaUWkAuedyIyDS2yxHyWPzq3CaiqGOhV3hJ40IhhsNcwok2Psx/B29Fq
-	DCCOwKRkpJyRwTjl1vb3IYlhp/jqIcMX2O9+uy0lYpmwse1kaT01v8YGg/k7M4CmS2aDWVLC3gk
-	sUUpzewPvHjpJoRLKM4ToXubOS9Z0KYA3GCeoeD7vizPwoV0DMvbaFxGrJIKQrIFoyft2C1SMGz
-	P0cMo2ZmxoQW9Kn3L7OTMjWbeNyKIlkENwtPG9DJRqiLy4XRAfwsCcRNTSN8LylepGUfAYjlTOD
-	AmrTiiBs6cC0BtQ4LlhaTa60f9KOKKu4MlXFbaggFjhTVjJ2WNPT9FnbU4yW0F6GxSJTMDSA6CG
-	EZsYnoYBEnsQlX47tcLkk0aa1icH2YoyMoHGtYmKhMYOxkLuPRxZc0kI5Yqc8HNUABnH2cMXxoW
-	HV9eo4W7jCNyKkLKrFI9IRqpgPD4yXiGhAZw8JBCDLxfOuo1Ka5eefkJSfMRu1o0qlzgh+YeNw=
-	=
-X-Received: by 2002:a05:690c:6b81:b0:8b4:c43c:96f6 with SMTP id 00721157ae682-8b5204b5cb5mr33609547b3.39.1795352587557;
-        Sun, 22 Nov 2026 05:03:07 -0800 (PST)
-Received: from cobra01.cs.unc.edu (cobra01.cs.unc.edu. [152.2.130.143])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-8b52030d5c3sm34756207b3.32.2026.11.22.05.03.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 22 Nov 2026 05:03:07 -0800 (PST)
-From: Hengyu Liang <hengyul@cs.unc.edu>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	Viacheslav Dubeyko <slava@dubeyko.com>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	linux-nilfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	stable@vger.kernel.org
-Subject: [PATCH] nilfs2: count new blocks that a short copy leaves dirty
-Date: Sun, 22 Nov 2026 08:02:47 -0500
-Message-ID: <20261122130247.2069007-1-hengyul@cs.unc.edu>
-X-Mailer: git-send-email 2.53.0
+	dkim=pass (1024-bit key, unprotected) header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=5hipb5uI
+dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
+	c=relaxed/relaxed; q=dns/txt;
+	h=From;
+	bh=4fxAfI0a2C6thUnVCcQb+kjUx5re7WxYNCaW1Ta8RVw=;
+	b=5hipb5uIjdlSD6RRyJZYcAmdU+EQ0MNnqPj3ltTSZ5XVO5Dy8Mq0JMi4DiNShwEG7S8x6yaKL
+	xKv0pL1w66425I1X5/AohX0+ZbNaTMD3JQg6S6IeTkz+w6ENjcb93L1KdYrrI+rfxUkCzUvtliv
+	hMgzNWahJ/OhejSZBHIiEY4=
+Received: from mail.maildlp.com (unknown [172.19.163.163])
+	by canpmsgout08.his.huawei.com (SkyGuard) with ESMTPS id 4jY1LS0F1BzmV7s;
+	Mon, 23 Nov 2026 17:46:56 +0800 (CST)
+Received: from kwepemf200016.china.huawei.com (unknown [7.202.181.9])
+	by mail.maildlp.com (Postfix) with ESMTPS id 9336340563;
+	Mon, 23 Nov 2026 17:47:18 +0800 (CST)
+Received: from [10.108.234.194] (10.108.234.194) by
+ kwepemf200016.china.huawei.com (7.202.181.9) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.2562.46; Mon, 23 Nov 2026 17:47:18 +0800
+Message-ID: <70c39f48-e9af-44a0-b9de-ebafe285fd10@huawei.com>
+Date: Mon, 23 Nov 2026 17:47:17 +0800
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -99,186 +62,120 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] nilfs2: fix leak of gc inodes on error
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+CC: <slava@dubeyko.com>, <linux-nilfs@vger.kernel.org>,
+	<fengaojigui88@gmail.com>
+References: <20261119083809.3918948-1-wangjianjian3@huawei.com>
+ <CAKFNMokeofZ8NU+nbn+FnYHNuQi5JJKhC_oS5+=bH-vhgrOUJg@mail.gmail.com>
+Content-Language: en-US
+From: "wangjianjian (C)" <wangjianjian3@huawei.com>
+In-Reply-To: <CAKFNMokeofZ8NU+nbn+FnYHNuQi5JJKhC_oS5+=bH-vhgrOUJg@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"; format=flowed
 Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: kwepems200002.china.huawei.com (7.221.188.68) To
+ kwepemf200016.china.huawei.com (7.202.181.9)
 
-Commit 665575cff098 ("filemap: move prefaulting out of hot write path")
-made generic_perform_write() fault in the source buffer only after a
-copy into the page cache has made no progress.  A write from memory
-that is not present yet now first calls ->write_end() with copied == 0,
-and copies again after the memory has been faulted in.
 
-However, nilfs_write_end() adds only the clean buffers of the copied
-range to the count of dirty blocks, while block_write_end() zero-fills
-and dirties the newly allocated buffers of the rest of the range.  The
-retry finds these buffers dirty, so the new blocks are never counted
-and nilfs_near_disk_full() does not stop the writer.  As of now, a
-write from a fresh anonymous mapping is accepted far beyond the free
-space, fsync() fails with ENOSPC, and the file is gone after a remount,
-together with the other changes made since the last log was written.
-On a volume shared with another user, that user's fsync() fails with
-ENOSPC too, and the files and directories that user created after the
-write are lost the same way.
+On 11/19/2026 7:32 PM, Ryusuke Konishi wrote:
+> On Thu, Nov 19, 2026 at 5:41 PM Wang Jianjian wrote:
+>> Zhengzheng reported below syz problems:
+>>
+>> NILFS (loop5): disposed unprocessed dirty file(s) when stopping log writer
+>> VFS: Busy inodes after unmount of loop5 (nilfs2)
+>>
+>> The reproducer called ioctl clean_segments on a corrupted image. It's
+>> first argument is { ino = 8, cno = 0xffffffffffffffff, vd_vblocknr = 34,
+>> vd_period = [0x30000000000000, 0x10), vd_blocknr = 6, vd_offset =
+>> 7,...}.
+>>
+>> nilfs_ioctl_clean_segments
+>>    nilfs_ioctl_move_blocks // gc iget 8, get one inode reference
+>>    nilfs_clean_segments
+>>      nilfs->ns_gc_inodes move to sci->sc_gc_inodes
+>>      nilfs_segctor_construct
+>>        nilfs_segctor_do_construct
+>>          nilfs_segctor_assign
+>>            nilfs_segctor_update_payload_blocknr
+>>              nilfs_bmap_assign
+>>                nilfs_btree_assign_gc
+>>                  nilfs_dat_move
+>>                    // since there is no dat entry for vblknr 34
+>>                    // (entry->de_blocknr == 0), return -EINVAL
+>>                    // fs will be remounted to readonly
+>>     // clean segments loop will be break because readonly fs
+>>     nilfs_remove_all_gcinodes
+>>          // since nilfs->ns_gc_inodes empty, it
+>>          // clean nothing
+>>
+>> ioctl_clean_segment will get one extra reference of inode 8 and when
+>> segments construct do GC move vblock 34 and do bmap assign, it lookup
+>> DAT table and get de_blocknr = 0, so it return -EINVAL. And since
+>> nilfs->ns_gc_inodes is empty, nilfs_remove_all_gcinodes will do nothing
+>> and the extra inode reference won't be released.
+>>
+>> To fix this, splice sci->sc_gc_inodes back to nilfs->ns_gc_inodes when
+>> got error.
+>>
+>> Note that, when normal files add to nilfs dirty list by
+>> nilfs_set_file_dirty, it will got one reference and when
+>> nilfs_bmap_assign got error, nilfs_segctor_do_construct() also doesn't
+>> put the inode, but as a last resort, nilfs_segctor_destroy will do
+>> it(however, it doesn't clean sci->sc_gc_inodes).
+>>
+>> Fixes: 7942b919f7321 ("nilfs2: ioctl operations")
+>> Signed-off-by: Wang Jianjian <wangjianjian3@huawei.com>
+>> Reported-by: fengaojigui88@gmail.com
+>> Closes: https://lore.kernel.org/linux-nilfs/CAO-4RZ2=4okHYZ-xCkpV-ekj-aSqKLnYGOsRM9A2dD8R4Ozzeg@mail.gmail.com/T/#u
+>> ---
+>>   fs/nilfs2/segment.c | 1 +
+>>   1 file changed, 1 insertion(+)
+>>
+>> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+>> index af0c3560444f..ea56a26041e8 100644
+>> --- a/fs/nilfs2/segment.c
+>> +++ b/fs/nilfs2/segment.c
+>> @@ -2588,6 +2588,7 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
+>>    out_unlock:
+>>          sci->sc_freesegs = NULL;
+>>          sci->sc_nfreesegs = 0;
+>> +       list_splice_tail_init(&sci->sc_gc_inodes, &nilfs->ns_gc_inodes);
+>>          nilfs_mdt_clear_shadow_map(nilfs->ns_dat);
+>>    bail_unlock:
+>>          nilfs_transaction_unlock(sb);
+>> --
+>> 2.34.1
+> Hi Wang Jianjian,
+>
+> Thank you for the patch.
+>
+> Previously, once GC entered the loop, it would retry until it
+> succeeded, so the sc_gc_inodes list was always emptied by
+> nilfs_remove_written_gcinodes().
+>
+> However, since commit ce5a5ad1a833 ("nilfs2: fix infinite loop in
+> nilfs_clean_segments()"), an escape path was added for when filesystem
+> corruption is detected, which broke that assumption.  This issue
+> really should have been addressed back then.
+>
+> Ideally, the GC inodes on the sc_gc_inodes list should be discarded in
+> this error path.  Also, since the cleanup handling on GC failure still
 
-The issue can be reproduced on a 160 MiB disk with this program:
+Hi Ryusuke,
 
-    #include <errno.h>
-    #include <fcntl.h>
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <string.h>
-    #include <sys/mman.h>
-    #include <unistd.h>
+Which error path do you mean? The error handling in 
+nilfs_segctor_do_construct() ?
 
-    int main(int argc, char *argv[])
-    {
-            size_t len = atol(argv[2]) << 20;
-            /* fresh anonymous memory: none of its pages is present yet */
-            char *buf = mmap(NULL, len, PROT_READ,
-                             MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-            int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
-            printf("write: %zd\n", write(fd, buf, len));
-            printf("fsync: %s\n", fsync(fd) ? strerror(errno) : "ok");
-            return 0;
-    }
-
-and these commands:
-
-    mkfs.nilfs2 -q /dev/vda
-    mount -t nilfs2 /dev/vda /mnt
-    ./cold /mnt/f 256
-    umount /mnt
-    mount -t nilfs2 /dev/vda /mnt
-    wc -c /mnt/f
-
-Before commit 665575cff098 ("filemap: move prefaulting out of hot write
-path"), the result is:
-
-    write: 67518464
-    fsync: ok
-    67518464 /mnt/f
-
-After that commit, the result is:
-
-    write: 268435456
-    fsync: No space left on device
-    wc: /mnt/f: No such file or directory
-
-With this patch, the result is:
-
-    write: 70217728
-    fsync: ok
-    70217728 /mnt/f
-
-Count the buffers that block_write_end() is going to dirty, including
-the zero-filled new ones, before calling generic_write_end().
-
-Fixes: 665575cff098 ("filemap: move prefaulting out of hot write path")
-Cc: stable@vger.kernel.org # v6.14
-Signed-off-by: Hengyu Liang <hengyul@cs.unc.edu>
----
-I found this while comparing the behavior of different kernel versions.
-I used an LLM to analyze the problem and to draft the patch and this
-message, and I analyzed the result myself.
-
-Tested on nilfs2 for-next (8fef1a9dec7b) with KASAN and lockdep: after
-single writes (new, appended and overwritten blocks; cold, warm and
-unaligned sources; 4 KiB and 1 KiB blocks) dirty_data_blocks_count in
-sysfs grows by the number of blocks written, as on v6.8, and a nearly
-full volume stops such a write at the same size as on v6.8.
-
-A write into page cache pages that were read from a hole is not counted
-either, on v6.8 as well, because __block_write_begin_int() dirties the
-new buffers of an uptodate folio itself; this patch does not change that.
-
- fs/nilfs2/inode.c |  3 +--
- fs/nilfs2/page.c  | 41 +++++++++++++++++++++++++++++++++++++++++
- fs/nilfs2/page.h  |  4 ++++
- 3 files changed, 46 insertions(+), 2 deletions(-)
-
-diff --git a/fs/nilfs2/inode.c b/fs/nilfs2/inode.c
-index b217eee57c36..dd0bed24972a 100644
---- a/fs/nilfs2/inode.c
-+++ b/fs/nilfs2/inode.c
-@@ -249,8 +249,7 @@ static int nilfs_write_end(const struct kiocb *iocb,
- 	unsigned int nr_dirty;
- 	int err;
- 
--	nr_dirty = nilfs_page_count_clean_buffers(folio, start,
--						  start + copied);
-+	nr_dirty = nilfs_page_count_buffers_to_dirty(folio, start, len, copied);
- 	copied = generic_write_end(iocb, mapping, pos, len, copied, folio,
- 				   fsdata);
- 	nilfs_set_file_dirty(inode, nr_dirty);
-diff --git a/fs/nilfs2/page.c b/fs/nilfs2/page.c
-index 857926da9f21..0dec7b5b27c4 100644
---- a/fs/nilfs2/page.c
-+++ b/fs/nilfs2/page.c
-@@ -481,6 +481,47 @@ unsigned int nilfs_page_count_clean_buffers(struct folio *folio,
- 	return nc;
- }
- 
-+/**
-+ * nilfs_page_count_buffers_to_dirty - count buffers a write will dirty
-+ * @folio:  folio being written to
-+ * @from:   offset of the write in @folio
-+ * @len:    number of bytes to be written
-+ * @copied: number of bytes copied into @folio
-+ *
-+ * Count the clean buffers of @folio that block_write_end() is going to mark
-+ * dirty: those overlapping the copied range and, after a short copy, the
-+ * newly allocated ones in the rest of the range, which it zero-fills.  As
-+ * there, a short copy into a folio that is not uptodate counts as a
-+ * zero-length write.
-+ *
-+ * Return: Number of buffers that the write changes from clean to dirty.
-+ */
-+unsigned int nilfs_page_count_buffers_to_dirty(struct folio *folio,
-+					       unsigned int from,
-+					       unsigned int len,
-+					       unsigned int copied)
-+{
-+	unsigned int to = from + len, end = from + copied;
-+	unsigned int block_start, block_end;
-+	struct buffer_head *bh, *head;
-+	unsigned int nc = 0;
-+
-+	if (copied < len && !folio_test_uptodate(folio))
-+		end = from;
-+
-+	for (bh = head = folio_buffers(folio), block_start = 0;
-+	     bh != head || !block_start;
-+	     block_start = block_end, bh = bh->b_this_page) {
-+		block_end = block_start + bh->b_size;
-+		if (buffer_dirty(bh))
-+			continue;
-+		if ((block_end > from && block_start < end) ||
-+		    (buffer_new(bh) && block_end > end && block_start < to))
-+			nc++;
-+	}
-+	return nc;
-+}
-+
- /*
-  * NILFS2 needs clear_page_dirty() in the following two cases:
-  *
-diff --git a/fs/nilfs2/page.h b/fs/nilfs2/page.h
-index c3ba3468af5c..4ccd740966ec 100644
---- a/fs/nilfs2/page.h
-+++ b/fs/nilfs2/page.h
-@@ -45,6 +45,10 @@ void nilfs_clear_folio_dirty(struct folio *folio, bool force);
- void nilfs_clear_dirty_pages(struct address_space *mapping, bool force);
- unsigned int nilfs_page_count_clean_buffers(struct folio *folio,
- 		unsigned int from, unsigned int to);
-+unsigned int nilfs_page_count_buffers_to_dirty(struct folio *folio,
-+					       unsigned int from,
-+					       unsigned int len,
-+					       unsigned int copied);
- unsigned long nilfs_find_uncommitted_extent(struct inode *inode,
- 					    sector_t start_blk,
- 					    sector_t *blkoff);
-
-base-commit: 8fef1a9dec7bf58a29bc8a7ee6909ab629401cd3
--- 
-2.53.0
-
+> looks somewhat questionable, we may eventually want to split the error
+> path clearly.  However, as this works as a workaround, I plan to
+> accept it as is unless additional testing reveals any issues.
+>
+> I will run follow-up tests, revisit the GC error handling logic, and
+> then forward it to Viacheslav.
+And what kind of tests you you usually run ? other than normal fs 
+tests(such as fsstress, xfstests, ...), do you have any nilfs specific 
+tests?
+>
+> Thanks,
+> Ryusuke Konishi
