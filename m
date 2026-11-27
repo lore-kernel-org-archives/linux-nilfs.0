@@ -1,82 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795754560;
-	b=ygYmY56ibPgZUra/VDrnHW5pjXF9P24WAfxh0O9QwKNKWtfMM83MeFIj1EeokfMsUKF1
-	 S5eOFtTjZ+uYE57LtnVSH5E07EUmu1UKXuacCwjmHpLXiub5xzw+amys7Do0rYxWvENZG
-	 Vnk2CFtMCI8SzlJgOF+2bqOVey6siNpjbZdAEea8aIsteQCAdXf/UScwHbg7eov5ALYo8
-	 GspsjtRh0quKPd4hU4uSwRDUi5qpoOy5gsOx6khou6mlT1sasHtFktMzc76t67hAOU7cl
-	 Xln9ERMqn9TsyAIj+rL8d5lHQDPeUugLGHQDdke+JK71xkBERKcuoFTFJYWTbRixZog==
+	t=1795754562;
+	b=sFQZ8mt15dkcInpG9m/i24kinLmpHKIhfefQA5rTVu6ZIYb7bN3iHwAxTf7gd1RDQ4Qs
+	 frIWkblZs2T9fgxdGY+NfSD+l078Ifq5cPNw+TFCdOXDZ3Qa7sbtW94P7UPupDGBGLw71
+	 j2TFi2WBRcCLm1i+piYdZ/vBK2fXwU9x170FzcRz/dp49ONlk6mCoSF6XkfrecKr4jDwm
+	 wWrrziFh9TIy7ON8RE8FRwb55Qv0jbspKMBH9A3YO8NSdXAulGcj4sGHEKqsfgjM2w13F
+	 7+imUnh0Sh6itT/zHv78+LEB7TZpkAfMoI2Be7YMm91eT8+xglfL7rRpyvdB6HrZtaw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795754560;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795754562;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=fTkNUFbOEJacY/AArIMMZE4synA3rFS1O0j/Gy2pLMc=;
-	b=XSRC3FjboNqdpUr970/gs1iPB/5nci8UY8Uxu453VIAos0QFAe8FgLUQK7kOsSUHyPMB
-	 /7a+B8QmXRJAHNJNmbFEB0oO8SF3zSLp2t9LDSygSXeiZbRuNxrOLnUcraQSiMBv2h7TY
-	 tIaOy8XZ2OLGahdZ0ZaqhUWIublbO/Zp7BkMDNJ3DsJdwavIb74slX1ZE+2MZe0MaOQdk
-	 utsEMC3WeVCFbEAiHY93nsDHDNuvlNPld0sIjqGQDsrP0LZBMHVCGBgl5bECEZ/aaLV6F
-	 +3tC9beOeMBAdv/OIvDJs4mqyoEj90+Zj7V23Kv7rquT6YBf+5BMoe7zcfR1zUbxZDg==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=5OwI7aiL42uUdQVwTE/xjv216C9AaTLHeX4bUu2Ny4Y=;
+	b=BZ+XcJ6hqlEm8dIq4DwIQPC8Ry2+VQzgPq8g4z33A+kzWwsR1Hdg7JensH+gICI/xmsE
+	 p71XAR8QThVKnQYHWzX5pNeuxMK3UrL/FNqRLTkyt6FTlZZD5qFDxI6GjWj8IIsMgCVrt
+	 fqYywvw+JgBq0Vxt0WgRHPBcOaIs2w1h7ZGHVyPui6bnkj+nIdT0POHls/s1zlhsS5E1M
+	 Pj/GZeAl87UvPIe1yYyYFTNCkJdRZVFw9/CKicClHEYIN9qgbe49cPxH9BlBcpzBcBe7+
+	 iLjoXviy61j0EgceuThBQ4p1Hqw7JaUWVsqQbVetwGLfHneUYAKDyaOq+jVoN+i3zHA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=w4bQNgov;
-	arc=none smtp.remote-ip=74.125.82.47
-Received: from mail-dl1-f47.google.com (mail-dl1-f47.google.com [74.125.82.47])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=EegywdNx;
+	arc=none smtp.remote-ip=74.125.82.50
+Received: from mail-dl1-f50.google.com (mail-dl1-f50.google.com [74.125.82.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9AB7606A68C
-	for <linux-nilfs@vger.kernel.org>; Fri, 27 Nov 2026 04:42:36 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D9AB7606A68C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0CADF606A699
+	for <linux-nilfs@vger.kernel.org>; Fri, 27 Nov 2026 04:42:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0CADF606A699
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=w4bQNgov
-Received: by mail-dl1-f47.google.com with SMTP id a92af1059eb24-14394530ec6so1439240c88.1
-        for <linux-nilfs@vger.kernel.org>; Thu, 26 Nov 2026 20:42:36 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=EegywdNx
+Received: by mail-dl1-f50.google.com with SMTP id a92af1059eb24-14394530ec6so1439323c88.1
+        for <linux-nilfs@vger.kernel.org>; Thu, 26 Nov 2026 20:42:41 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795754556; x=1796359356; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=fTkNUFbOEJacY/AArIMMZE4synA3rFS1O0j/Gy2pLMc=;
-        b=w4bQNgovzBqbn7wxOtFeBfzCfEE0u5Fil39UVkVXhFPypQYAdMCS1RQ+grYYbfB/GZ
-         P+5SKNxUSFFzHSISI09IXvqpBKdHMWWLped1dL9ulASEktS8UgtIuYUdUqgcjohqYb+f
-         MYLUP144mAKp0vK2ZrL0F1hwmFHh1dU66k+jG2Ld40jQowLRB7wyXe7d69ID9NU9PpO0
-         o6kKT06AUBD9IHuGQ8IBOgsmp+Zozg46EMx/CEFIXdXO5wcMs7QuKhcB9UqHwS8YkKdW
-         Alfe2fhsS/SxqXGaFNEHedVoBUVxvm9y+0pVY62nNewws/zdJyk4JKIVjnQ5fZqm6pXg
-         QZdg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795754556; x=1796359356;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20260707; t=1795754561; x=1796359361; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=fTkNUFbOEJacY/AArIMMZE4synA3rFS1O0j/Gy2pLMc=;
-        b=pPNMVdyo8D+w+3PZs/s1GDhPS3q7Hea1hv+OieXtDxGkiv7An1g5CHzJdFasce3YKZ
-         kUsaLYhjOd0kTYqZVGBhwwTnqGm2iX9znfY8clXHyGkrhmE5fZgW1grf7Jpf8QTpKG9N
-         +aoKEd2NVFRG7yKh2JMLE9eccLKeMUYAAmI1aoT/KgOCvk3UZihQ3g6SenaPfLBqNmZi
-         jUf2T4ffv5/bOkyazEq1HOTrPQlIhnRWhumd7CMndsAFJv7t2x9uNhUruZs4T8nefL59
-         4mGbT6HLjVK8bnift2Za0XhDwebl7VhXc+4/S55M6slvibxRuZY0JN13JjSHJDqdTI2j
-         TgFA==
-X-Forwarded-Encrypted: i=1; AL+hErFTkj89hWVECUOXFjg9Dm+YNXNiizx48rEo1TZYpaAgpSU+YzQUuEcwb5o9lTj0JVdaQNe4jLINcbOd6Q==@vger.kernel.org
-X-Gm-Message-State: APuU4Z8EDMJdCTloV016XTOf4b4YPZs40jaTQLvMNK6mZGLBkTb/dC/l
-	Fdajilndf7m6/L3tDmd3DfZtBaSUFdUVVHfH5CAj/zSMy3gfbsKzF1jfsC68ng==
-X-Gm-Gg: AZFdTZfpTM/loesj4YvDk7hxiY7OvWznGcunKdT8tjDZPF+qH5gEdiCnOeZIlMaDD8k
-	29j5uYiHap974Bln+tn/MH48z3DJ3rjncUKixFJ57CFa8ri/q0j4HY/yA6X8bvnuQ5VeApkYqc7
-	djOXJELuN2mUYhT6Mvo36HtrQxeueQfkVWgvib+KD9mQXgoPuUHc/+Mgg2hFdmflwGblO4d38ET
-	uRmzBKjBYF3+zxxjLGLNX4wTPl9yf23asT8DywMPsMqK9E9GEWpi1lOxTvw3TyA3b2unT85/yHi
-	ueD7n9RQ8b/aNzIlQ8MVHtIzSsdJxpgKlb9FAi6hI4/HxWBof4R83bs1ZLwCAwV/9TJvfVL/T0J
-	zECwW3yzO/VCyx7a7Kall7RqXuBlaB2tvZCBAWy7JBjEs8kP0zGXTBgxvv/NN/MeY6WlfFFfVu3
-	4QZOgZfVk9orxDgtx7Ay2sewC6Z7EYnqUgcgSNka0Zr5+UAvHZhd0Pd3osqk4S/TlZbF/uwJFAE
-	tfq6dk0TDZc4kMs6AtQ7lyQxG75WGFTLvfOpFY8+72z7TzTCJiV72UFvoTc9ZuC3WxN80tNFQDD
-	uCQkJebxkVNLKJo4PI+gE0eyFlavuIljHCRbctBxoilaj3JF/6ujWp+a2MO/CmQ1
-X-Received: by 2002:a05:7022:f516:b0:143:26cf:8615 with SMTP id a92af1059eb24-1b5568ded03mr20134659c88.25.1795754555855;
-        Thu, 26 Nov 2026 20:42:35 -0800 (PST)
+        bh=5OwI7aiL42uUdQVwTE/xjv216C9AaTLHeX4bUu2Ny4Y=;
+        b=EegywdNxlMW7z+ECBrzDPvt1rmgqQHEbZ9Ls4lh3u9J1TyEWaNJz4ez0N7rYbMqNdh
+         M2DEzXQk/fQkkgPSjphO+Ckcp59bvvvTcE2I3AxgGXjwWOaqvWXN2ixe+O3AgZ23T14c
+         QNMk1RsaJLiP3DUwAsXF5UDJ30oy3bCt2dXYzKuRJ3pSBTX+KG7PK3xsysiPN8ZpL9rk
+         HAUWivC/xOthYT6Lw7fCRCK6aX/4KzyTY/LJbblNa1eRJ52PI8hnY6J7xStD1q5azTsP
+         t2mcwJG3SpyFbaUvfdVwQgq1TKSf+Pcze+wbhVlZgaWMfsTZ3SLBOh4IB3gxitN/W3Bp
+         vCtQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795754561; x=1796359361;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=5OwI7aiL42uUdQVwTE/xjv216C9AaTLHeX4bUu2Ny4Y=;
+        b=ILvIhTEIyZ9Ek1MfTpYkkMDpuiT5Tevdf6HdReh2pwdF8BgzJsk6zn2P0lLSj3CxmC
+         hIvHBqMUwTsEF3nWgbjAryin3PfG4igRIxcqlnKcoLsslpcSy0DAkGixR7xfKI+dKqC4
+         YfYsIr7Mpk22bw3pSIc3LWTUtr0W2THqACXMroI0GbSIR6Nl76cVvcrVd6E8+moaw0zK
+         7Ndtren0CrFl8poiw/jB3x12R0X4c9SEgTmhl5aBv5a31AGLel4Oxj9lbrB7ExhH1lTV
+         6mbBibAbdcx0ofDnLamFxj8eS1dd4pKLhzNhYuRpafQZ3fU3cVQlTbF8H/Adp++Y+Iwo
+         nZRw==
+X-Forwarded-Encrypted: i=1; AL+hErFHFeWx63GTpOxCU/DYGYzjz3kzUqaYsxj0cm3/5Q3ZpkOJC474TfTTyLX7VOPKNgOKB5yGXfTigsrE3g==@vger.kernel.org
+X-Gm-Message-State: APuU4Z9/sBYEhd+9kW0hT+JLtY0mbgzY9ICAI71XAPFciLyL7ZPfhmQO
+	XF8PwAKE93g2eM5/F5gi9jwJSFCtYfkHZ8iHzYrqwKJrUV2oxx4JjwFsVEhSMA==
+X-Gm-Gg: AZFdTZczy60z9AEJOnIjkQ1ru/C/PymM3H5OIPItjhnDfXYrNzv28/fKzV3dXvf1jUm
+	GB/WDE0WWac5BlARb0evWkRLtuTrc211mSh4TK98erQM1m7uuHC7bzcFjaLvftxIFM554Emd6dr
+	HfsIg+VjHwI5GPTSD+DOJztYCZrSVa4dDDt9xDcd1uEKZCv28PTSs9vya+ip1BN38Gyw+wraaMz
+	11PEeAqJWgz+C2E5X+eVb4aqBtefSxl0/3HXQui2t4XViDRjLXRNUWBBDjWg7K2sob8cxDRxWv6
+	aXPifkWmaC6JTuzg9mleEuoeF9IalKIIJYqbQdjr/Do+TkJcQNTWiKcTlsPR4DzVqFjcp34l5yG
+	VESvnK62xozTqdnp2QmQ6UlXoMnOCHTf/tvhWoZLxdbK/BUTl2KdGvyoQB/aKzVRNORJnJJr3/8
+	aRjZVn4qCC0/J6Ls7B8kYm1kGjWpirfN++fpWUtQLmw1C9IIxd55o3rnNM6iHaOvA6x9ad6yxn1
+	xWR/zKLzL/IbyInknj8EhMLrxGBEKtL9g5wvD+8JPSlrju8iTBFB7PldRGtqfQYeafgj3qpli19
+	JstbQM21pobf8A/cuV2hD2nPsq5HizAZIUADh7ahQl7zXJPID/w9FQ28xQP3RFA=
+X-Received: by 2002:a05:701a:ccc9:10b0:166:f097:6f12 with SMTP id a92af1059eb24-1b5568b3e73mr22698115c88.15.1795754561058;
+        Thu, 26 Nov 2026 20:42:41 -0800 (PST)
 Received: from carrot.home.local (madb688455.ap.nuro.jp. [219.104.132.85])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1b556829d31sm88000388c88.9.2026.11.26.20.42.33
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1b556829d31sm88000388c88.9.2026.11.26.20.42.38
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 26 Nov 2026 20:42:34 -0800 (PST)
+        Thu, 26 Nov 2026 20:42:39 -0800 (PST)
 From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 To: Viacheslav Dubeyko <slava@dubeyko.com>
 Cc: Wang Jianjian <wangjianjian3@huawei.com>,
@@ -84,10 +85,12 @@ Cc: Wang Jianjian <wangjianjian3@huawei.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Zheng Zheng <fengaojigui88@gmail.com>,
 	Joshua Crofts <joshua.crofts1@gmail.com>
-Subject: [PATCH 0/8] nilfs2: support GC error rollback and avoid infinite retry hangs
-Date: Fri, 27 Nov 2026 13:40:53 +0900
-Message-ID: <20261127044231.37630-1-konishi.ryusuke@gmail.com>
+Subject: [PATCH 2/8] nilfs2: cancel the relocation of GC-targeted blocks if log writing fails
+Date: Fri, 27 Nov 2026 13:40:55 +0900
+Message-ID: <20261127044231.37630-3-konishi.ryusuke@gmail.com>
 X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261127044231.37630-1-konishi.ryusuke@gmail.com>
+References: <20261127044231.37630-1-konishi.ryusuke@gmail.com>
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -99,96 +102,267 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Hi Viacheslav,
+Since commit ce5a5ad1a833 ("nilfs2: fix infinite loop in
+nilfs_clean_segments()"), an escape path was added to exit the GC loop
+in nilfs_clean_segments() when GC fails.
 
-Please apply this series for the next cycle.
+When log writing fails, dirty metadata and data buffers for regular
+inodes remain dirty in memory, so retrying the log write causes no
+inconsistency.  However, for blocks relocated by garbage collection,
+their physical block mappings in the DAT have already been updated to
+the new locations during log writing.  If GC aborts on error and
+discards its cached GC inodes without reverting these DAT mappings,
+subsequent data reads or B-tree lookups will end up reading unwritten
+block locations.
 
-This patch series rectifies an early design flaw in the garbage
-collection mechanism itself and fundamentally resolves the task hang
-issue seen in the GC ioctl (NILFS_IOCTL_CLEAN_SEGMENTS).  To make GC
-safely abortable upon errors, this series strengthens the error-recovery
-and rollback logic for metadata updated during GC, specifically segment
-usage information (sufile) and virtual block address mappings (DAT).
+To allow safely bailing out of the GC loop on error, add a mechanism to
+cancel the relocation of GC-targeted blocks and partially restore the
+DAT when log writing fails in a GC context.  Specifically, introduce
+nilfs_dat_undo_move() to restore original physical block numbers from
+the saved buffers in the DAT shadow mapping, expose it through a new
+bmap operation bop_undo_assign and nilfs_bmap_undo_assign() (set only
+for GC inodes), and invoke nilfs_cancel_block_relocation() from
+nilfs_segctor_abort_construction() when nilfs_doing_gc() is true.
 
-Historically, NILFS2 GC was designed around a point of no return: once
-the log writer started, it looped until a full-format log (including a
-checkpoint and a super root) was successfully written out.  Because GC
-runs exclusively while holding ns_segctor_sem for writing, any
-persistent error during GC blocked the log writer thread and write
-operations indefinitely, causing filesystem hangs.
+Fixes: ce5a5ad1a833 ("nilfs2: fix infinite loop in nilfs_clean_segments()")
+Cc: stable@vger.kernel.org
+Signed-off-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+---
+ fs/nilfs2/bmap.h    | 23 ++++++++++++++++++
+ fs/nilfs2/btree.c   |  8 +++++++
+ fs/nilfs2/dat.c     | 58 +++++++++++++++++++++++++++++++++++++++++++++
+ fs/nilfs2/dat.h     |  1 +
+ fs/nilfs2/direct.c  |  1 +
+ fs/nilfs2/segment.c | 35 +++++++++++++++++++++++++++
+ 6 files changed, 126 insertions(+)
 
-An initial fix by Joshua Crofts (commit ce5a5ad1a833) took the right
-direction by introducing an escape path when the filesystem
-transitioned to read-only mode (-EROFS).  However, two issues remained:
-
-1. Cached GC inodes were leaked when GC exited on error, which Wang
-   Jianjian addressed in the first patch of this series.
-2. Persistent errors that do not trigger read-only remounts (such as
-   -EIO or -ENOSPC) still caused infinite retry loops, as further
-   reported by Zheng Zheng.
-
-Whenever GC aborts mid-way, however, an underlying issue arises:
-bailing out of the GC loop leaves irreversible inconsistencies in
-on-disk and in-memory metadata.  While this was previously masked
-because the escape path was only taken during emergency read-only
-degradation, expanding error exits to general errors exposes this
-problem, breaking subsequent GC runs and causing userland tools such
-as "lssu -l" to fail permanently.
-
-To build upon commit ce5a5ad1a833 and make error exits safe, this
-series implements dedicated undo mechanisms for each metadata change
-performed during GC before allowing nilfs_clean_segments() to bail
-out on general errors:
-
-- Patch 1 (by Wang Jianjian) fixes the GC inode leak on error paths.
-- Patch 2 makes physical block location updates in the DAT for
-  GC-relocated blocks (other than DAT blocks themselves) reversible by
-  restoring them from the shadow mapping on error.
-- Patch 3 makes the removal of GC target segment usage entries in
-  sufile reversible by saving and restoring them on abort.
-- Patch 4 fixes an issue where stale nilfs_redirected flags remain on
-  primary DAT buffers when GC is aborted.
-- Patches 5-6 make the deletion of obsolete virtual block entries from
-  the DAT during GC reversible by saving and restoring them on abort.
-- Patch 7 defers this virtual block deletion to a safe stage so that the
-  freed entries cannot be reallocated while GC is in progress, which is
-  required now that GC can abort mid-way.
-- Patch 8 updates nilfs_clean_segments() to bail out immediately on
-  errors, retaining only a minimal bounded retry loop for transient
-  cases.
-
-Thanks,
-Ryusuke Konishi
-
-
-Ryusuke Konishi (7):
-  nilfs2: cancel the relocation of GC-targeted blocks if log writing
-    fails
-  nilfs2: restore segment usage from the save buffer when aborting GC
-  nilfs2: drop redirected buffer flag from DAT when clearing shadow map
-  nilfs2: save DAT entry blocks to shadow mapping before freeing
-  nilfs2: restore removed DAT entries when aborting GC
-  nilfs2: free virtual block numbers just before collecting DAT changes
-  nilfs2: avoid infinite retry loop on GC failure
-
-Wang Jianjian (1):
-  nilfs2: fix leak of gc inodes on error
-
- fs/nilfs2/alloc.c   |  14 +++-
- fs/nilfs2/alloc.h   |   3 +-
- fs/nilfs2/bmap.h    |  23 ++++++
- fs/nilfs2/btree.c   |   8 ++
- fs/nilfs2/dat.c     | 181 +++++++++++++++++++++++++++++++++++++++++++-
- fs/nilfs2/dat.h     |   5 +-
- fs/nilfs2/direct.c  |   1 +
- fs/nilfs2/ioctl.c   |  36 +--------
- fs/nilfs2/mdt.c     |  41 ++++++++--
- fs/nilfs2/segment.c | 108 +++++++++++++++++++++++---
- fs/nilfs2/segment.h |   7 ++
- fs/nilfs2/sufile.c  |  27 ++++---
- fs/nilfs2/sufile.h  |  37 ++++-----
- 13 files changed, 404 insertions(+), 87 deletions(-)
-
+diff --git a/fs/nilfs2/bmap.h b/fs/nilfs2/bmap.h
+index a72f3c308a5d..6493217b1a7f 100644
+--- a/fs/nilfs2/bmap.h
++++ b/fs/nilfs2/bmap.h
+@@ -53,6 +53,7 @@ struct nilfs_bmap_stats {
+  *                            mapping root
+  * @bop_lookup_dirty_buffers: operation to collect dirty block buffers
+  * @bop_assign:               disk block address assignment operation
++ * @bop_undo_assign:          undo disk block address assignment operation
+  * @bop_mark:                 operation to mark in-use blocks as dirty for
+  *                            relocation by GC
+  * @bop_seek_key:             find valid block key operation
+@@ -74,6 +75,8 @@ struct nilfs_bmap_operations {
+ 			  struct buffer_head **,
+ 			  sector_t,
+ 			  union nilfs_binfo *);
++	void (*bop_undo_assign)(struct nilfs_bmap *bmap,
++				struct buffer_head *bh);
+ 	int (*bop_mark)(struct nilfs_bmap *, __u64, int);
+ 
+ 	int (*bop_seek_key)(const struct nilfs_bmap *, __u64, __u64 *);
+@@ -182,6 +185,26 @@ static inline int nilfs_bmap_lookup(struct nilfs_bmap *bmap, __u64 key,
+ 	return nilfs_bmap_lookup_at_level(bmap, key, 1, ptr);
+ }
+ 
++/**
++ * nilfs_bmap_undo_assign - restore the block number to its original position
++ * @bmap:    bmap
++ * @bh:      buffer head for which the block number should be undone
++ *
++ * nilfs_bmap_undo_assign() undoes the block relocation performed during
++ * garbage collection for the buffer @bh and restores its original block
++ * position.  For regular bmaps where bop_undo_assign is %NULL, this
++ * function is a no-op.
++ */
++static inline void nilfs_bmap_undo_assign(struct nilfs_bmap *bmap,
++					struct buffer_head *bh)
++{
++	if (bmap->b_ops->bop_undo_assign) {
++		down_write(&bmap->b_sem);
++		bmap->b_ops->bop_undo_assign(bmap, bh);
++		up_write(&bmap->b_sem);
++	}
++}
++
+ /*
+  * Internal use only
+  */
+diff --git a/fs/nilfs2/btree.c b/fs/nilfs2/btree.c
+index 6b8332e8c0db..8c12b78c0e9d 100644
+--- a/fs/nilfs2/btree.c
++++ b/fs/nilfs2/btree.c
+@@ -2378,6 +2378,12 @@ static int nilfs_btree_assign_gc(struct nilfs_bmap *btree,
+ 	return 0;
+ }
+ 
++static void nilfs_btree_undo_assign_gc(struct nilfs_bmap *btree,
++				struct buffer_head *bh)
++{
++	nilfs_dat_undo_move(nilfs_bmap_get_dat(btree), bh->b_blocknr);
++}
++
+ static int nilfs_btree_mark(struct nilfs_bmap *btree, __u64 key, int level)
+ {
+ 	struct buffer_head *bh;
+@@ -2423,6 +2429,7 @@ static const struct nilfs_bmap_operations nilfs_btree_ops = {
+ 	.bop_lookup_dirty_buffers =	nilfs_btree_lookup_dirty_buffers,
+ 
+ 	.bop_assign		=	nilfs_btree_assign,
++	.bop_undo_assign	=	NULL,
+ 	.bop_mark		=	nilfs_btree_mark,
+ 
+ 	.bop_seek_key		=	nilfs_btree_seek_key,
+@@ -2445,6 +2452,7 @@ static const struct nilfs_bmap_operations nilfs_btree_ops_gc = {
+ 	.bop_lookup_dirty_buffers =	nilfs_btree_lookup_dirty_buffers,
+ 
+ 	.bop_assign		=	nilfs_btree_assign_gc,
++	.bop_undo_assign	=	nilfs_btree_undo_assign_gc,
+ 	.bop_mark		=	NULL,
+ 
+ 	.bop_seek_key		=	NULL,
+diff --git a/fs/nilfs2/dat.c b/fs/nilfs2/dat.c
+index 888dc1831c86..d2718944368b 100644
+--- a/fs/nilfs2/dat.c
++++ b/fs/nilfs2/dat.c
+@@ -379,6 +379,64 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
+ 	return 0;
+ }
+ 
++/**
++ * nilfs_dat_undo_move - undo the change to the block number
++ * @dat:      DAT file inode
++ * @vblocknr: virtual block number
++ *
++ * nilfs_dat_undo_move() restores the original physical block number for
++ * @vblocknr from the frozen DAT entry buffer in the shadow mapping, if such
++ * a saved buffer exists and is marked uptodate; otherwise, it does nothing.
++ */
++void nilfs_dat_undo_move(struct inode *dat, __u64 vblocknr)
++{
++	struct buffer_head *entry_bh, *saved_bh;
++	int ret;
++
++	if (WARN_ON_ONCE(!nilfs_doing_gc()))
++		return;
++
++	ret = nilfs_palloc_get_entry_block(dat, vblocknr, 0, &entry_bh);
++	if (ret < 0) {
++		if (unlikely(ret != -ENOENT)) {
++			nilfs_warn(dat->i_sb,
++				"%s: error %d loading the entry block for vblocknr = %llu",
++				__func__, ret, (unsigned long long)vblocknr);
++		}
++		return;
++	}
++
++	if (!buffer_nilfs_redirected(entry_bh))
++		goto release_entry_bh;
++
++	saved_bh = nilfs_mdt_get_frozen_buffer(dat, entry_bh);
++	if (!saved_bh)
++		goto release_entry_bh;
++
++	if (likely(buffer_uptodate(saved_bh))) {
++		struct nilfs_dat_entry *entry, *saved_entry;
++		__le64 cur_blocknr, orig_blocknr;
++		size_t offset;
++
++		offset = nilfs_palloc_entry_offset(dat, vblocknr, entry_bh);
++		entry = kmap_local_folio(entry_bh->b_folio, offset);
++		saved_entry = kmap_local_folio(saved_bh->b_folio, offset);
++		cur_blocknr = entry->de_blocknr;
++		entry->de_blocknr = orig_blocknr = saved_entry->de_blocknr;
++		kunmap_local(saved_entry);
++		kunmap_local(entry);
++		if (cur_blocknr != orig_blocknr) {
++			mark_buffer_dirty(entry_bh);
++			nilfs_mdt_mark_dirty(dat);
++		}
++	}
++
++	brelse(saved_bh);
++
++release_entry_bh:
++	brelse(entry_bh);
++}
++
+ /**
+  * nilfs_dat_translate - translate a virtual block number to a block number
+  * @dat: DAT file inode
+diff --git a/fs/nilfs2/dat.h b/fs/nilfs2/dat.h
+index 468c82d26183..4f67f31f928b 100644
+--- a/fs/nilfs2/dat.h
++++ b/fs/nilfs2/dat.h
+@@ -39,6 +39,7 @@ void nilfs_dat_abort_update(struct inode *, struct nilfs_palloc_req *,
+ int nilfs_dat_mark_dirty(struct inode *, __u64);
+ int nilfs_dat_freev(struct inode *, __u64 *, size_t);
+ int nilfs_dat_move(struct inode *, __u64, sector_t);
++void nilfs_dat_undo_move(struct inode *dat, __u64 vblocknr);
+ ssize_t nilfs_dat_get_vinfo(struct inode *, void *, unsigned int, size_t);
+ 
+ int nilfs_dat_read(struct super_block *sb, size_t entry_size,
+diff --git a/fs/nilfs2/direct.c b/fs/nilfs2/direct.c
+index 64da677dc8d4..18a700db76ed 100644
+--- a/fs/nilfs2/direct.c
++++ b/fs/nilfs2/direct.c
+@@ -375,6 +375,7 @@ static const struct nilfs_bmap_operations nilfs_direct_ops = {
+ 	.bop_lookup_dirty_buffers	=	NULL,
+ 
+ 	.bop_assign		=	nilfs_direct_assign,
++	.bop_undo_assign	=	NULL,
+ 	.bop_mark		=	NULL,
+ 
+ 	.bop_seek_key		=	nilfs_direct_seek_key,
+diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
+index 4c2d51f6550c..24f8fa8cf864 100644
+--- a/fs/nilfs2/segment.c
++++ b/fs/nilfs2/segment.c
+@@ -1860,6 +1860,39 @@ static void nilfs_abort_logs(struct list_head *logs, int err)
+ 	nilfs_end_folio_io(fs_folio, err);
+ }
+ 
++/**
++ * nilfs_cancel_block_relocation - cancel relocation of GC-targeted blocks
++ * @logs: list of segment buffers whose log write failed or was aborted
++ *
++ * nilfs_cancel_block_relocation() iterates through the payload buffers of
++ * each segment buffer in @logs (excluding the super root block) and calls
++ * nilfs_bmap_undo_assign() to revert the DAT mappings of blocks relocated
++ * by garbage collection.  This is necessary to prevent subsequent data reads
++ * or B-tree lookups from accessing unwritten block locations via the DAT
++ * after GC aborts on error and discards the cached GC inodes.
++ */
++static void nilfs_cancel_block_relocation(struct list_head *logs)
++{
++	struct nilfs_segment_buffer *segbuf;
++	struct buffer_head *bh;
++	struct inode *inode;
++
++	list_for_each_entry(segbuf, logs, sb_list) {
++		list_for_each_entry(bh, &segbuf->sb_payload_buffers,
++				    b_assoc_buffers) {
++			if (bh == segbuf->sb_super_root)
++				break;
++			inode = bh->b_folio->mapping->host;
++			/*
++			 * NILFS_I(inode)->i_bmap points to the primary inode's
++			 * bmap structure, whether the inode serves as a cache
++			 * for B-tree nodes or as the primary inode itself.
++			 */
++			nilfs_bmap_undo_assign(NILFS_I(inode)->i_bmap, bh);
++		}
++	}
++}
++
+ static void nilfs_segctor_abort_construction(struct nilfs_sc_info *sci,
+ 					     struct the_nilfs *nilfs, int err)
+ {
+@@ -1874,6 +1907,8 @@ static void nilfs_segctor_abort_construction(struct nilfs_sc_info *sci,
+ 	if (list_empty(&logs))
+ 		return; /* if the first segment buffer preparation failed */
+ 
++	if (nilfs_doing_gc())
++		nilfs_cancel_block_relocation(&logs);
+ 	nilfs_cancel_segusage(&logs, nilfs->ns_sufile);
+ 	nilfs_free_incomplete_logs(&logs, nilfs);
+ 
 -- 
 2.53.0
 
