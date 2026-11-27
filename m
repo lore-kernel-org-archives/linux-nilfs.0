@@ -1,62 +1,93 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=113.46.200.217
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795570100;
-	b=Um2lNnfiuh7ldCglkVBz6d9dvxsMLEFzbKnCDJe8xVn3EG99kBh6dZcLONX4rAh7Dgjt
-	 qiC2dVqugRvW+DeasetoMf3+d/LHb0kjbmsbJ9TOB5KPn1YaahIOdjlwNCuxDKuDsHX/s
-	 RTYZfR9N0sXiywhbjKEpvwPSDmDNzwFojjBu+tA2DQ+mUAVVkypQnNaSAqYg+RddSRcbV
-	 ru9Lhn1Qyl69NxZpA7tM0udaSvB8FPDJyJnl0AzufWlo6O5W8OXkiWQPkWLSqVJeDzmhl
-	 b3GFEbEz9cVANdAuKhvN9nnLmHZMzI4Xwll+q7I9VxJqtgI3g14GB6rjhZaMZVf1b9Q==
+	t=1795754560;
+	b=ygYmY56ibPgZUra/VDrnHW5pjXF9P24WAfxh0O9QwKNKWtfMM83MeFIj1EeokfMsUKF1
+	 S5eOFtTjZ+uYE57LtnVSH5E07EUmu1UKXuacCwjmHpLXiub5xzw+amys7Do0rYxWvENZG
+	 Vnk2CFtMCI8SzlJgOF+2bqOVey6siNpjbZdAEea8aIsteQCAdXf/UScwHbg7eov5ALYo8
+	 GspsjtRh0quKPd4hU4uSwRDUi5qpoOy5gsOx6khou6mlT1sasHtFktMzc76t67hAOU7cl
+	 Xln9ERMqn9TsyAIj+rL8d5lHQDPeUugLGHQDdke+JK71xkBERKcuoFTFJYWTbRixZog==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795570100;
-	h=DMARC-Filter:dkim-signature:Received:Received:Received:Received:
-	 Message-ID:Date:MIME-Version:User-Agent:Subject:To:CC:References:
-	 Content-Language:From:In-Reply-To:Content-Type:
-	 Content-Transfer-Encoding:X-Originating-IP:X-ClientProxiedBy;
-	bh=UaOi+lu8BF/lBpKWa6kqj9advTlQZvEf13deKbaVXbs=;
-	b=b4KjFI5UHBUo7d4ZeSDfYNuW8Fkw9pfF6pb9eoIixPAUS8eruHSfi8Y9yreknzPuBqfU
-	 gqHx+C6boumCiK6nChqQnAUcBORk9DDESr7IpNFDK/lddDZPse/dZLagDOHhtyEahmNIJ
-	 1LsbHk6fQqXu33Ql5f8lyMsw7HwlJa+yIjGV2tXYZB/OOjzvh+6vogCjeo5JDPaVKao4D
-	 +nco/pQN+wPAQ+aM+vGPg53ZArVlgHt2Vy4K6sSRSPygv8uO+oALvuqSYWM0q3mjLN+um
-	 9yv67dNFOyJ5IOgbVLpRZPTl5OlT+wrpSUKqN5y0hGUlsU4DeZdyZb7ohjTF3DA5iXQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795754560;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=fTkNUFbOEJacY/AArIMMZE4synA3rFS1O0j/Gy2pLMc=;
+	b=XSRC3FjboNqdpUr970/gs1iPB/5nci8UY8Uxu453VIAos0QFAe8FgLUQK7kOsSUHyPMB
+	 /7a+B8QmXRJAHNJNmbFEB0oO8SF3zSLp2t9LDSygSXeiZbRuNxrOLnUcraQSiMBv2h7TY
+	 tIaOy8XZ2OLGahdZ0ZaqhUWIublbO/Zp7BkMDNJ3DsJdwavIb74slX1ZE+2MZe0MaOQdk
+	 utsEMC3WeVCFbEAiHY93nsDHDNuvlNPld0sIjqGQDsrP0LZBMHVCGBgl5bECEZ/aaLV6F
+	 +3tC9beOeMBAdv/OIvDJs4mqyoEj90+Zj7V23Kv7rquT6YBf+5BMoe7zcfR1zUbxZDg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=huawei.com;
-	spf=pass smtp.mailfrom=huawei.com;
-	dkim=pass header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=CiYCstWz;
-	arc=none smtp.remote-ip=113.46.200.217
-Received: from canpmsgout02.his.huawei.com (canpmsgout02.his.huawei.com [113.46.200.217])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=w4bQNgov;
+	arc=none smtp.remote-ip=74.125.82.47
+Received: from mail-dl1-f47.google.com (mail-dl1-f47.google.com [74.125.82.47])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7AF76606A31E
-	for <linux-nilfs@vger.kernel.org>; Wed, 25 Nov 2026 01:28:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7AF76606A31E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9AB7606A68C
+	for <linux-nilfs@vger.kernel.org>; Fri, 27 Nov 2026 04:42:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D9AB7606A68C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=CiYCstWz
-dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
-	c=relaxed/relaxed; q=dns/txt;
-	h=From;
-	bh=UaOi+lu8BF/lBpKWa6kqj9advTlQZvEf13deKbaVXbs=;
-	b=CiYCstWz6DcyvDe8TxrLcQmlQfkiXV27rTtiZjAsd2Yr9LkFyRAF28MARUUyxeecPV2MqvPyB
-	5p/1wQolgmXEiP3BGZB/xETjWm8eD8OAaFoyG7m/NQjKPAnz7N9AsoVf6KxXsxZtTSMhUjRFT3t
-	G0psQrn4GvHwi9LlpX/7UQg=
-Received: from mail.maildlp.com (unknown [172.19.162.223])
-	by canpmsgout02.his.huawei.com (SkyGuard) with ESMTPS id 4jZ28f6qF6zcb44;
-	Wed, 25 Nov 2026 09:26:58 +0800 (CST)
-Received: from dggpemr100013.china.huawei.com (unknown [7.185.36.198])
-	by mail.maildlp.com (Postfix) with ESMTPS id C365140575;
-	Wed, 25 Nov 2026 09:28:03 +0800 (CST)
-Received: from kwepemq500016.china.huawei.com (7.202.194.202) by
- dggpemr100013.china.huawei.com (7.185.36.198) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.2562.56; Wed, 25 Nov 2026 09:28:03 +0800
-Received: from [10.108.234.194] (10.108.234.194) by
- kwepemq500016.china.huawei.com (7.202.194.202) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.2562.56; Wed, 25 Nov 2026 09:28:02 +0800
-Message-ID: <ed215e42-eae7-46a6-afca-835e8f56298a@huawei.com>
-Date: Wed, 25 Nov 2026 09:28:02 +0800
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=w4bQNgov
+Received: by mail-dl1-f47.google.com with SMTP id a92af1059eb24-14394530ec6so1439240c88.1
+        for <linux-nilfs@vger.kernel.org>; Thu, 26 Nov 2026 20:42:36 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795754556; x=1796359356; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=fTkNUFbOEJacY/AArIMMZE4synA3rFS1O0j/Gy2pLMc=;
+        b=w4bQNgovzBqbn7wxOtFeBfzCfEE0u5Fil39UVkVXhFPypQYAdMCS1RQ+grYYbfB/GZ
+         P+5SKNxUSFFzHSISI09IXvqpBKdHMWWLped1dL9ulASEktS8UgtIuYUdUqgcjohqYb+f
+         MYLUP144mAKp0vK2ZrL0F1hwmFHh1dU66k+jG2Ld40jQowLRB7wyXe7d69ID9NU9PpO0
+         o6kKT06AUBD9IHuGQ8IBOgsmp+Zozg46EMx/CEFIXdXO5wcMs7QuKhcB9UqHwS8YkKdW
+         Alfe2fhsS/SxqXGaFNEHedVoBUVxvm9y+0pVY62nNewws/zdJyk4JKIVjnQ5fZqm6pXg
+         QZdg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795754556; x=1796359356;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=fTkNUFbOEJacY/AArIMMZE4synA3rFS1O0j/Gy2pLMc=;
+        b=pPNMVdyo8D+w+3PZs/s1GDhPS3q7Hea1hv+OieXtDxGkiv7An1g5CHzJdFasce3YKZ
+         kUsaLYhjOd0kTYqZVGBhwwTnqGm2iX9znfY8clXHyGkrhmE5fZgW1grf7Jpf8QTpKG9N
+         +aoKEd2NVFRG7yKh2JMLE9eccLKeMUYAAmI1aoT/KgOCvk3UZihQ3g6SenaPfLBqNmZi
+         jUf2T4ffv5/bOkyazEq1HOTrPQlIhnRWhumd7CMndsAFJv7t2x9uNhUruZs4T8nefL59
+         4mGbT6HLjVK8bnift2Za0XhDwebl7VhXc+4/S55M6slvibxRuZY0JN13JjSHJDqdTI2j
+         TgFA==
+X-Forwarded-Encrypted: i=1; AL+hErFTkj89hWVECUOXFjg9Dm+YNXNiizx48rEo1TZYpaAgpSU+YzQUuEcwb5o9lTj0JVdaQNe4jLINcbOd6Q==@vger.kernel.org
+X-Gm-Message-State: APuU4Z8EDMJdCTloV016XTOf4b4YPZs40jaTQLvMNK6mZGLBkTb/dC/l
+	Fdajilndf7m6/L3tDmd3DfZtBaSUFdUVVHfH5CAj/zSMy3gfbsKzF1jfsC68ng==
+X-Gm-Gg: AZFdTZfpTM/loesj4YvDk7hxiY7OvWznGcunKdT8tjDZPF+qH5gEdiCnOeZIlMaDD8k
+	29j5uYiHap974Bln+tn/MH48z3DJ3rjncUKixFJ57CFa8ri/q0j4HY/yA6X8bvnuQ5VeApkYqc7
+	djOXJELuN2mUYhT6Mvo36HtrQxeueQfkVWgvib+KD9mQXgoPuUHc/+Mgg2hFdmflwGblO4d38ET
+	uRmzBKjBYF3+zxxjLGLNX4wTPl9yf23asT8DywMPsMqK9E9GEWpi1lOxTvw3TyA3b2unT85/yHi
+	ueD7n9RQ8b/aNzIlQ8MVHtIzSsdJxpgKlb9FAi6hI4/HxWBof4R83bs1ZLwCAwV/9TJvfVL/T0J
+	zECwW3yzO/VCyx7a7Kall7RqXuBlaB2tvZCBAWy7JBjEs8kP0zGXTBgxvv/NN/MeY6WlfFFfVu3
+	4QZOgZfVk9orxDgtx7Ay2sewC6Z7EYnqUgcgSNka0Zr5+UAvHZhd0Pd3osqk4S/TlZbF/uwJFAE
+	tfq6dk0TDZc4kMs6AtQ7lyQxG75WGFTLvfOpFY8+72z7TzTCJiV72UFvoTc9ZuC3WxN80tNFQDD
+	uCQkJebxkVNLKJo4PI+gE0eyFlavuIljHCRbctBxoilaj3JF/6ujWp+a2MO/CmQ1
+X-Received: by 2002:a05:7022:f516:b0:143:26cf:8615 with SMTP id a92af1059eb24-1b5568ded03mr20134659c88.25.1795754555855;
+        Thu, 26 Nov 2026 20:42:35 -0800 (PST)
+Received: from carrot.home.local (madb688455.ap.nuro.jp. [219.104.132.85])
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1b556829d31sm88000388c88.9.2026.11.26.20.42.33
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 26 Nov 2026 20:42:34 -0800 (PST)
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+To: Viacheslav Dubeyko <slava@dubeyko.com>
+Cc: Wang Jianjian <wangjianjian3@huawei.com>,
+	linux-nilfs <linux-nilfs@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Zheng Zheng <fengaojigui88@gmail.com>,
+	Joshua Crofts <joshua.crofts1@gmail.com>
+Subject: [PATCH 0/8] nilfs2: support GC error rollback and avoid infinite retry hangs
+Date: Fri, 27 Nov 2026 13:40:53 +0900
+Message-ID: <20261127044231.37630-1-konishi.ryusuke@gmail.com>
+X-Mailer: git-send-email 2.53.0
 X-Mailing-List: linux-nilfs@vger.kernel.org
 List-Id: <linux-nilfs.vger.kernel.org>
 List-Post: <mailto:linux-nilfs@vger.kernel.org>
@@ -66,194 +97,98 @@ List-Unsubscribe: <mailto:linux-nilfs+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-nilfs+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] nilfs2: fix leak of gc inodes on error
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-CC: <slava@dubeyko.com>, <linux-nilfs@vger.kernel.org>,
-	<fengaojigui88@gmail.com>
-References: <20261119083809.3918948-1-wangjianjian3@huawei.com>
- <CAKFNMokeofZ8NU+nbn+FnYHNuQi5JJKhC_oS5+=bH-vhgrOUJg@mail.gmail.com>
- <70c39f48-e9af-44a0-b9de-ebafe285fd10@huawei.com>
- <CAKFNMomnLBAwvZhua-BygyT_MGyWv6Ka1AggO7cwm-y-YMYmeg@mail.gmail.com>
-Content-Language: en-US
-From: "wangjianjian (C)" <wangjianjian3@huawei.com>
-In-Reply-To: <CAKFNMomnLBAwvZhua-BygyT_MGyWv6Ka1AggO7cwm-y-YMYmeg@mail.gmail.com>
-Content-Type: text/plain; charset="UTF-8"; format=flowed
 Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: kwepems200002.china.huawei.com (7.221.188.68) To
- kwepemq500016.china.huawei.com (7.202.194.202)
+
+Hi Viacheslav,
+
+Please apply this series for the next cycle.
+
+This patch series rectifies an early design flaw in the garbage
+collection mechanism itself and fundamentally resolves the task hang
+issue seen in the GC ioctl (NILFS_IOCTL_CLEAN_SEGMENTS).  To make GC
+safely abortable upon errors, this series strengthens the error-recovery
+and rollback logic for metadata updated during GC, specifically segment
+usage information (sufile) and virtual block address mappings (DAT).
+
+Historically, NILFS2 GC was designed around a point of no return: once
+the log writer started, it looped until a full-format log (including a
+checkpoint and a super root) was successfully written out.  Because GC
+runs exclusively while holding ns_segctor_sem for writing, any
+persistent error during GC blocked the log writer thread and write
+operations indefinitely, causing filesystem hangs.
+
+An initial fix by Joshua Crofts (commit ce5a5ad1a833) took the right
+direction by introducing an escape path when the filesystem
+transitioned to read-only mode (-EROFS).  However, two issues remained:
+
+1. Cached GC inodes were leaked when GC exited on error, which Wang
+   Jianjian addressed in the first patch of this series.
+2. Persistent errors that do not trigger read-only remounts (such as
+   -EIO or -ENOSPC) still caused infinite retry loops, as further
+   reported by Zheng Zheng.
+
+Whenever GC aborts mid-way, however, an underlying issue arises:
+bailing out of the GC loop leaves irreversible inconsistencies in
+on-disk and in-memory metadata.  While this was previously masked
+because the escape path was only taken during emergency read-only
+degradation, expanding error exits to general errors exposes this
+problem, breaking subsequent GC runs and causing userland tools such
+as "lssu -l" to fail permanently.
+
+To build upon commit ce5a5ad1a833 and make error exits safe, this
+series implements dedicated undo mechanisms for each metadata change
+performed during GC before allowing nilfs_clean_segments() to bail
+out on general errors:
+
+- Patch 1 (by Wang Jianjian) fixes the GC inode leak on error paths.
+- Patch 2 makes physical block location updates in the DAT for
+  GC-relocated blocks (other than DAT blocks themselves) reversible by
+  restoring them from the shadow mapping on error.
+- Patch 3 makes the removal of GC target segment usage entries in
+  sufile reversible by saving and restoring them on abort.
+- Patch 4 fixes an issue where stale nilfs_redirected flags remain on
+  primary DAT buffers when GC is aborted.
+- Patches 5-6 make the deletion of obsolete virtual block entries from
+  the DAT during GC reversible by saving and restoring them on abort.
+- Patch 7 defers this virtual block deletion to a safe stage so that the
+  freed entries cannot be reallocated while GC is in progress, which is
+  required now that GC can abort mid-way.
+- Patch 8 updates nilfs_clean_segments() to bail out immediately on
+  errors, retaining only a minimal bounded retry loop for transient
+  cases.
+
+Thanks,
+Ryusuke Konishi
 
 
-On 11/23/2026 7:06 PM, Ryusuke Konishi wrote:
-> On Mon, Nov 23, 2026 at 6:47 PM wangjianjian (C)  wrote:
->>
->> On 11/19/2026 7:32 PM, Ryusuke Konishi wrote:
->>> On Thu, Nov 19, 2026 at 5:41 PM Wang Jianjian wrote:
->>>> Zhengzheng reported below syz problems:
->>>>
->>>> NILFS (loop5): disposed unprocessed dirty file(s) when stopping log writer
->>>> VFS: Busy inodes after unmount of loop5 (nilfs2)
->>>>
->>>> The reproducer called ioctl clean_segments on a corrupted image. It's
->>>> first argument is { ino = 8, cno = 0xffffffffffffffff, vd_vblocknr = 34,
->>>> vd_period = [0x30000000000000, 0x10), vd_blocknr = 6, vd_offset =
->>>> 7,...}.
->>>>
->>>> nilfs_ioctl_clean_segments
->>>>     nilfs_ioctl_move_blocks // gc iget 8, get one inode reference
->>>>     nilfs_clean_segments
->>>>       nilfs->ns_gc_inodes move to sci->sc_gc_inodes
->>>>       nilfs_segctor_construct
->>>>         nilfs_segctor_do_construct
->>>>           nilfs_segctor_assign
->>>>             nilfs_segctor_update_payload_blocknr
->>>>               nilfs_bmap_assign
->>>>                 nilfs_btree_assign_gc
->>>>                   nilfs_dat_move
->>>>                     // since there is no dat entry for vblknr 34
->>>>                     // (entry->de_blocknr == 0), return -EINVAL
->>>>                     // fs will be remounted to readonly
->>>>      // clean segments loop will be break because readonly fs
->>>>      nilfs_remove_all_gcinodes
->>>>           // since nilfs->ns_gc_inodes empty, it
->>>>           // clean nothing
->>>>
->>>> ioctl_clean_segment will get one extra reference of inode 8 and when
->>>> segments construct do GC move vblock 34 and do bmap assign, it lookup
->>>> DAT table and get de_blocknr = 0, so it return -EINVAL. And since
->>>> nilfs->ns_gc_inodes is empty, nilfs_remove_all_gcinodes will do nothing
->>>> and the extra inode reference won't be released.
->>>>
->>>> To fix this, splice sci->sc_gc_inodes back to nilfs->ns_gc_inodes when
->>>> got error.
->>>>
->>>> Note that, when normal files add to nilfs dirty list by
->>>> nilfs_set_file_dirty, it will got one reference and when
->>>> nilfs_bmap_assign got error, nilfs_segctor_do_construct() also doesn't
->>>> put the inode, but as a last resort, nilfs_segctor_destroy will do
->>>> it(however, it doesn't clean sci->sc_gc_inodes).
->>>>
->>>> Fixes: 7942b919f7321 ("nilfs2: ioctl operations")
->>>> Signed-off-by: Wang Jianjian <wangjianjian3@huawei.com>
->>>> Reported-by: fengaojigui88@gmail.com
->>>> Closes: https://lore.kernel.org/linux-nilfs/CAO-4RZ2=4okHYZ-xCkpV-ekj-aSqKLnYGOsRM9A2dD8R4Ozzeg@mail.gmail.com/T/#u
->>>> ---
->>>>    fs/nilfs2/segment.c | 1 +
->>>>    1 file changed, 1 insertion(+)
->>>>
->>>> diff --git a/fs/nilfs2/segment.c b/fs/nilfs2/segment.c
->>>> index af0c3560444f..ea56a26041e8 100644
->>>> --- a/fs/nilfs2/segment.c
->>>> +++ b/fs/nilfs2/segment.c
->>>> @@ -2588,6 +2588,7 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
->>>>     out_unlock:
->>>>           sci->sc_freesegs = NULL;
->>>>           sci->sc_nfreesegs = 0;
->>>> +       list_splice_tail_init(&sci->sc_gc_inodes, &nilfs->ns_gc_inodes);
->>>>           nilfs_mdt_clear_shadow_map(nilfs->ns_dat);
->>>>     bail_unlock:
->>>>           nilfs_transaction_unlock(sb);
->>>> --
->>>> 2.34.1
->>> Hi Wang Jianjian,
->>>
->>> Thank you for the patch.
->>>
->>> Previously, once GC entered the loop, it would retry until it
->>> succeeded, so the sc_gc_inodes list was always emptied by
->>> nilfs_remove_written_gcinodes().
->>>
->>> However, since commit ce5a5ad1a833 ("nilfs2: fix infinite loop in
->>> nilfs_clean_segments()"), an escape path was added for when filesystem
->>> corruption is detected, which broke that assumption.  This issue
->>> really should have been addressed back then.
->>>
->>> Ideally, the GC inodes on the sc_gc_inodes list should be discarded in
->>> this error path.  Also, since the cleanup handling on GC failure still
->> Hi Ryusuke,
->>
->> Which error path do you mean? The error handling in
->> nilfs_segctor_do_construct() ?
-> Hi Wang Jianjian,
->
-> I am currently focused on reviewing another patch and want to wrap
-> that up first, so please bear with me for a little while.
->
-> I will most likely take your patch as is.  However, to properly handle
-> GC error cases -- including the additional GC-related bug reports that
-> have come in -- multiple fixes will be needed, and I expect to adopt
-> your patch as the first patch in that fix series. Please give me a
-> little more time.
->
-> When I mentioned revisiting the logic, I was referring to the entire
-> error path where log writing -- including the series of operations in
-> nilfs_segctor_do_construct() -- fails from that GC loop.  Originally,
-> the GC ioctl loop had no escape path on error because log writing
-> accompanied by GC is irreversible; while retrying is safe, aborting
-> out of it breaks consistency.
->
-> However, the current looping causes hangs reported separately and is
-> not desirable in the first place.  I am therefore reviewing all
-> operations performed by the log writer and their side effects,
-> examining what issues arise and what approach can resolve them so that
-> we can cleanly bail out when an error occurs during a GC log write.
->
-> Specifically, the log writer is implemented to undo changes on error
-> for certain metadata files such as the checkpoint file (cpfile) and
-> the segment usage file (sufile).
-> Also, the bmap/B-tree of regular inodes is designed and implemented so
-> that buffer dirty flags are not lost on error and retry, causing no
-> issues as long as they remain in memory.  However, the DAT metadata
-> file, which manages the translation from virtual block addresses to
-> physical block addresses, cannot be rolled back all at once once a log
-> write has started (doing so would break overall consistency).
-> Therefore, I am adding a new partial restore mechanism for GC to make
-> error bail-out possible.
->
-> I am working on this right now, and the direction of the fix is
-> already settled.  I hope to send it together with your patch to
-> Viacheslav within this week.
-Got it.
->
->>> looks somewhat questionable, we may eventually want to split the error
->>> path clearly.  However, as this works as a workaround, I plan to
->>> accept it as is unless additional testing reveals any issues.
->>>
->>> I will run follow-up tests, revisit the GC error handling logic, and
->>> then forward it to Viacheslav.
->> And what kind of tests you you usually run ? other than normal fs
->> tests(such as fsstress, xfstests, ...), do you have any nilfs specific
->> tests?
-> As for how I test patches, I run the following checks and tests in a
-> local automated environment:
->
-> Style and static analysis checks: scripts/checkpatch.pl and make C=2
-> fs/nilfs2/nilfs2.ko
->
-> Build tests: make allmodconfig, cross-compilation for other
-> architectures (such as powerpc), builds with CC=clang, and
-> builds/tests on a 32-bit kernel (686-pae)
->
-> Functional and stress tests: basic I/O tests (read/write, O_DIRECT,
-> sendfile, aio, etc.), iozone, fsstress, GC tests (nilfs-clean), and
-> NILFS2-specific mount tests
-> (https://github.com/konis/nilfs-test-tools.git)
->
-> For individual bug reports, I run the reproducers manually.  When
-> verifying specific features such as atime or Direct-IO, I also run the
-> relevant test cases from xfstests. Occasionally, I temporarily modify
-> the code to intentionally inject errors and test error paths.
->
-> It would be great to integrate these custom tests into xfstests,
-> though I haven't had the bandwidth to get around to it yet.  If you
-> would like to help out with that, contributions are very welcome --
-> consolidating them into xfstests is definitely the right way forward.
->
-> Hope this helps.
-Sure, this helps a lot. And I can look it later.
->
-> Thanks,
-> Ryusuke Konishi
->
->>> Thanks,
->>> Ryusuke Konishi
+Ryusuke Konishi (7):
+  nilfs2: cancel the relocation of GC-targeted blocks if log writing
+    fails
+  nilfs2: restore segment usage from the save buffer when aborting GC
+  nilfs2: drop redirected buffer flag from DAT when clearing shadow map
+  nilfs2: save DAT entry blocks to shadow mapping before freeing
+  nilfs2: restore removed DAT entries when aborting GC
+  nilfs2: free virtual block numbers just before collecting DAT changes
+  nilfs2: avoid infinite retry loop on GC failure
+
+Wang Jianjian (1):
+  nilfs2: fix leak of gc inodes on error
+
+ fs/nilfs2/alloc.c   |  14 +++-
+ fs/nilfs2/alloc.h   |   3 +-
+ fs/nilfs2/bmap.h    |  23 ++++++
+ fs/nilfs2/btree.c   |   8 ++
+ fs/nilfs2/dat.c     | 181 +++++++++++++++++++++++++++++++++++++++++++-
+ fs/nilfs2/dat.h     |   5 +-
+ fs/nilfs2/direct.c  |   1 +
+ fs/nilfs2/ioctl.c   |  36 +--------
+ fs/nilfs2/mdt.c     |  41 ++++++++--
+ fs/nilfs2/segment.c | 108 +++++++++++++++++++++++---
+ fs/nilfs2/segment.h |   7 ++
+ fs/nilfs2/sufile.c  |  27 ++++---
+ fs/nilfs2/sufile.h  |  37 ++++-----
+ 13 files changed, 404 insertions(+), 87 deletions(-)
+
+-- 
+2.53.0
+
